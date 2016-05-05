@@ -49,4 +49,17 @@ extern enum MPU MPU_CURRENT;
 */
 enum MPU getMPU(void);
 
+
+
+//---
+//	Internal API.
+//	Referenced here for documentation purposes only. Do not call.
+//---
+
+/*
+	mpu_init()
+	Determines the MPU type and stores the result into MPU_CURRENT.
+*/
+void mpu_init(void)	__attribute__((constructor));
+
 #endif // _MPU_H

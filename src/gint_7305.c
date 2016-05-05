@@ -16,6 +16,35 @@
 
 
 //---
+//	Various MPU-dependent procedures.
+//---
+
+/*
+	gint_setRTCFrequency()
+	Sets the RTC interrupt frequency and enables interrupts.
+
+	@arg	frequency
+*/
+void gint_setRTCFrequency_7305(enum RTCFrequency frequency)
+{
+	if(frequency < 1 || frequency > 7) return;
+	RTC.RCR2.BYTE = (frequency << 4) | 0x09;
+}
+
+/*
+	gint_getRTCFrequency()
+	Returns the RTC interrupt frequency.
+
+	@return	RTC interrupt frequency.
+*/
+enum RTCFrequency gint_getRTCFrequency_7305(void)
+{
+	return (RTC.RCR2.BYTE & 0x70) >> 4;
+}
+
+
+
+//---
 //	Keyboard management.
 //---
 
@@ -272,15 +301,16 @@ void gint_setup_7305(void)
 {
 	gint_priority_lock_7305();
 
-	// Configuring the RTC to have a 16-Hz keyboard.
+	// Saving the RTC configuration.
 	rcr2 = RTC.RCR2.BYTE;
-	RTC.RCR2.BYTE = 0x39;
+	// Disabling RTC interrupts by default.
+	RTC.RCR2.BYTE = 0x09;
 }
 
 void gint_stop_7305(void)
 {
 	gint_priority_unlock_7305();
 
-	// Stopping the RTC interrupt.
+	// Restoring the RTC configuration.
 	RTC.RCR2.BYTE = rcr2;
 }

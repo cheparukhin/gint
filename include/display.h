@@ -35,6 +35,12 @@ enum BlendingMode
 	Blend_Checker	= 0x10,
 };
 
+/*
+	enum ImageFormat
+	Describes the various image formats available. Colors may be encoded
+	as monochrome (1 layer) or gray (2 layers). Whatever the color map, any
+	bitmap may also have an additional alpha layer.
+*/
 enum ImageFormat
 {
 	ImageFormat_Mono	= 0x01,
@@ -45,6 +51,13 @@ enum ImageFormat
 	ImageFormat_ColorMask	= 0x0f,
 };
 
+/*
+	struct Image
+	This structure holds information about a bitmap encoded with fxconv.
+	Data is accessed using longword operations, which *requires* many
+	sizes to be multiples of 4 (structure alignment, data alignment, layer
+	size, ...).
+*/
 struct Image
 {
 	unsigned char width;
@@ -57,11 +70,12 @@ struct Image
 	const unsigned char __attribute__((aligned(4))) data[];
 
 } __attribute__((aligned(4)));
-
+// Useful shorthand for user code.
 typedef struct Image Image;
 
 
 
+// A few other constants.
 #define	DISPLAY_WIDTH	128
 #define	DISPLAY_HEIGHT	64
 
@@ -73,18 +87,31 @@ typedef struct Image Image;
 
 /*
 	display_getLocalVRAM()
-	Returns the local video ram. This address should not be used directly
-	when running the gray engine.
+	Returns the local video ram. This function always return the same
+	address.
+	The buffer returned by this function should not be used directly when
+	running the gray engine.
 
 	@return	Video ram address of the monochrome display module.
 */
 void *display_getLocalVRAM(void);
 
 /*
+	display_getCurrentVRAM()
+	Returns the current video ram. This function usually returns the
+	parameter of the last call to display_useVRAM(), unless the gray engine
+	is running (in which case the result is undefined). Returns the local
+	vram address by default.
+*/
+void *display_getCurrentVRAM(void);
+
+/*
 	display_useVRAM()
-	Changes the current video ram address. Expects a *4-aligned* 1024-byte
-	buffer.
-	Do not use this function while running the gray engine.
+	Changes the current video ram address. The argument *MUST* be a
+	4-aligned 1024 buffer ; otherwise any drawing operation will crash the
+	program.
+	This function will most likely have no effect when running the gray
+	engine.
 
 	@arg	New video ram address.
 */
@@ -169,7 +196,7 @@ void dline(int x1, int y1, int x2, int y2, enum Color color);
 
 /*
 	dimage()
-	Displays an image in the vram.
+	Displays an image in the vram. Does a real lot of optimization.
 
 	@arg	image
 	@arg	x

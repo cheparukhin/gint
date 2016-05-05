@@ -23,18 +23,37 @@ unsigned int gint_getVBR(void);
 unsigned int gint_systemVBR(void);
 
 /*
+	enum RTCFrequency
+	Describes the possible frequencies available for the real-time clock
+	interrupt.
+*/
+enum RTCFrequency
+{
+	RTCFreq_500mHz	= 7,
+	RTCFreq_1Hz	= 6,
+	RTCFreq_2Hz	= 5,
+	RTCFreq_4Hz	= 4,
+	RTCFreq_16Hz	= 3,
+	RTCFreq_64Hz	= 2,
+	RTCFreq_256Hz	= 1,
+};
+
+/*
 	gint_setRTCCallback()
 	Sets the callback function for the real-time clock interrupt. If
 	frequency is non-NULL, the clock frequency is set to the given value.
+
+	@arg	callback	Callback function.
+	@arg	frequency	Interrupt frequency.
 */
-void gint_setRTCCallback(void (*callback)(void), enum GintFrequency frequency);
+void gint_setRTCCallback(void (*callback)(void), enum RTCFrequency frequency);
 
 /*
 	gint_getRTCCallback()
 	Returns the callback function. If frequency is non-NULL, it is set to
 	the current frequency value.
 */
-void (*(gint_getRTCCallback)(void))(enum GintFrequency *frequency);
+void (*gint_getRTCCallback(enum RTCFrequency *frequency))(void);
 
 
 
@@ -89,12 +108,28 @@ void gint_stop_7305(void);
 	gint()
 	Handles interrupts.
 */
-void gint(void) __attribute__((
-	section(".gint.int.entry"),
-	interrupt_handler
-));
-void gint_7705(void)		__attribute__((section(".gint.int")));
-void gint_7305(void)		__attribute__((section(".gint.int")));
+void gint(void)		__attribute__((section(".gint.int.entry"),
+				interrupt_handler));
+void gint_7705(void)	__attribute__((section(".gint.int")));
+void gint_7305(void)	__attribute__((section(".gint.int")));
+
+/*
+	gint_setRTCFrequency()
+	Sets the RTC interrupt frequency and enables interrupts.
+
+	@arg	frequency
+*/
+void gint_setRTCFrequency_7705(enum RTCFrequency frequency);
+void gint_setRTCFrequency_7305(enum RTCFrequency frequency);
+
+/*
+	gint_getRTCFrequency()
+	Returns the RTC interrupt frequency.
+
+	@return	RTC interrupt frequency.
+*/
+enum RTCFrequency gint_getRTCFrequency_7705(void);
+enum RTCFrequency gint_getRTCFrequency_7305(void);
 
 
 

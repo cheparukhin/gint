@@ -2,9 +2,14 @@
 #include <mpu.h>
 #include <stddef.h>
 
+//---
+//	Internal declarations.
+//	Timer structure and running  information (callbacks, repeats etc.)
+//---
+
 /*
 	struct Timer
-	This structure handles a running timer information.
+	This structure holds information for a running timer.
 */
 struct Timer
 {
@@ -17,7 +22,8 @@ static struct Timer timers[3] = { { NULL, 0 }, { NULL, 0 }, { NULL, 0 } };
 
 /*
 	struct mod_tmu
-	This structure allows access to a timer using its address.
+	This structure holds information about the timer unit (peripheral
+	module) registers.
 */
 struct mod_tmu
 {
@@ -48,6 +54,10 @@ struct mod_tmu
 
 
 
+//---
+//	Internal API.
+//---
+
 /*
 	timer_get()
 
@@ -57,7 +67,7 @@ struct mod_tmu
 	@arg	tmu	mod_tmu structure pointer address.
 	@arg	tstr	mod_tstr structure pointer address.
 */
-void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr)
+static void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr)
 {
 	// Using SH7705 information for SH-3-based MPUs.
 	if(MPU_CURRENT == MPU_SH7337 || MPU_CURRENT == MPU_SH7355)
@@ -75,6 +85,37 @@ void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr)
 	// Shifting tmu value to get to the timer-nth timer in the unit.
 	if(tmu) *tmu += timer;
 }
+
+/*
+	timer_interrupt()
+	Handles the interrupt for the given timer.
+
+	@timer	Timer that generated the interrupt.
+*/
+void timer_interrupt(int timer)
+{
+	// Getting the timer address.
+	struct mod_tmu *tmu;
+	timer_get(timer, &tmu, NULL);
+
+	// Resetting the interrupt flag.
+	(*tmu).TCR.UNF = 0;
+
+	// Calling the callback function.
+	if(timers[timer].callback) timers[timer].callback();
+
+	// Reducing the number of repetitions left, if not infinite.
+	if(!timers[timer].repetitions) return;
+	// And stopping it if necessary.
+	if(timers[timer].repetitions == 1) timer_stop(timer);
+	else timers[timer].repetitions--;
+}
+
+
+
+//---
+//	Public API.
+//---
 
 /*
 	timer_start()
@@ -134,29 +175,4 @@ void timer_stop(int timer)
 
 	// Stopping the timer.
 	*tstr &= ~byte;
-}
-
-/*
-	timer_interrupt()
-	Handles the interrupt for the given timer.
-
-	@timer	Timer that generated the interrupt.
-*/
-void timer_interrupt(int timer)
-{
-	// Getting the timer address.
-	struct mod_tmu *tmu;
-	timer_get(timer, &tmu, NULL);
-
-	// Resetting the interrupt flag.
-	(*tmu).TCR.UNF = 0;
-
-	// Calling the callback function.
-	if(timers[timer].callback) timers[timer].callback();
-
-	// Reducing the number of repetitions left, if not infinite.
-	if(!timers[timer].repetitions) return;
-	// And stopping it if necessary.
-	if(timers[timer].repetitions == 1) timer_stop(timer);
-	else timers[timer].repetitions--;
 }

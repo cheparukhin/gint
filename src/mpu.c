@@ -63,13 +63,13 @@ enum MPU getMPU(void)
 	return MPU_Unknown;
 }
 
-static void mpu_init(void)
-	__attribute__((
-		section(".pretext"),
-		constructor
-	));
 
-static void mpu_init(void)
+
+/*
+	mpu_init()
+	Determines the MPU type and stores the result into MPU_CURRENT.
+*/
+void mpu_init(void)
 {
 	MPU_CURRENT = getMPU();
 }

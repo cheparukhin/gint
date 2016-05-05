@@ -1,6 +1,10 @@
 #ifndef	_SCREEN_H
 #define	_SCREEN_H	1
 
+//---
+//	Public API.
+//---
+
 /*
 	screen_display()
 	Displays contents on the full screen. Expects a 1024-byte buffer.

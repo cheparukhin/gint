@@ -1,9 +1,11 @@
 - multi-getkey repeats (if possible, which doesn't seem likely)
-- getkey() may unwantedly repeat a key if it was triggered for multigetkey()
 
 - write and test gray engine
 - full rtc driver (time)
 - callbacks and complete user API
+
+- exhaustive save for setjmp()
+- registers that need to be saved when configuring gint
 
 _ 7305.h
 _ libc

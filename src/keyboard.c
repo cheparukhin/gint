@@ -214,7 +214,7 @@ int keylast(int *repeat_count)
 /*
 	keystate()
 	Returns the address of the keyboard state array. The returned address
-	if the handler's buffer, therefore it contains volatile data.
+	is the handler's buffer, therefore it contains volatile data.
 
 	@return	10-byte keyboard state buffer.
 */

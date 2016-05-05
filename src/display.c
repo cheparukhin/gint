@@ -41,7 +41,7 @@ static int *vram = local_vram;
 
 
 //---
-//	Local helper functions.
+//	Local functions.
 //---
 
 /*
@@ -115,14 +115,25 @@ static void getmasks(int x1, int x2, unsigned int *masks)
 //---
 
 /*
-	display_getVRAM()
-	Returns the current video ram.
+	display_getLocalVRAM()
+	Returns the local video ram.
 
 	@return	Video ram address.
 */
 void *display_getLocalVRAM(void)
 {
-	return (void*)local_vram;
+	return (void *)local_vram;
+}
+
+/*
+	display_getCurrentVRAM()
+	Returns the current vido ram.
+
+	@return	Video ram address.
+*/
+void *display_getCurrentVRAM(void)
+{
+	return (void *)vram;
 }
 
 /*
@@ -370,7 +381,7 @@ void dline(int x1, int y1, int x2, int y2, enum Color color)
 //	the same : get a part of the image in an operator, shift it depending
 //	on the drawing x-coordinate, compute a mask that indicates which bits
 //	of the operator contain information, and modify a vram long using the
-//	operator.
+//	operator and the mask.
 //---
 
 /*

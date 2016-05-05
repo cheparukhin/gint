@@ -16,13 +16,42 @@
 
 
 //---
+//	Various MPU-dependent procedures.
+//---
+
+/*
+	gint_setRTCFrequency()
+	Sets the RTC interrupt frequency and enables interrupts.
+
+	@arg	frequency
+*/
+void gint_setRTCFrequency_7705(enum RTCFrequency frequency)
+{
+	if(frequency < 1 || frequency > 7) return;
+	RTC.RCR2.BYTE = (frequency << 4) | 0x09;
+}
+
+/*
+	gint_getRTCFrequency()
+	Returns the RTC interrupt frequency.
+
+	@return	RTC interrupt frequency.
+*/
+enum RTCFrequency gint_getRTCFrequency_7705(void)
+{
+	return (RTC.RCR2.BYTE & 0x70) >> 4;
+}
+
+
+
+//---
 //	Keyboard management.
 //---
 
 /*
 	kdelay()
 	Used to be a low-level sleep using the watchdog, as in the system. This
-	way seems ok at least, and it doesn't create column effects as for
+	way seems OK at least, and it doesn't create column effects as for
 	SH7305.
 */
 static void kdelay(void)
@@ -181,6 +210,7 @@ void gint_7705(void)
 //---
 
 static unsigned short iprs[8];
+static unsigned char rcr2;
 
 static void gint_priority_lock_7705(void)
 {
@@ -230,11 +260,16 @@ void gint_setup_7705(void)
 {
 	gint_priority_lock_7705();
 
-	// Configuring the RTC to have a 16-Hz keyboard.
-	RTC.RCR2.BYTE = 0x39;
+	// Saving the RTC configuration.
+	rcr2 = RTC.RCR2.BYTE;
+	// Disabling RTC interrupts by default.
+	RTC.RCR2.BYTE = 0x09;
 }
 
 void gint_stop_7705(void)
 {
 	gint_priority_unlock_7705();
+
+	// Restoring the RTC configuration.
+	RTC.RCR2.BYTE = rcr2;
 }

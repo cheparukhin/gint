@@ -17,7 +17,7 @@ void print_clear(void)
 {
 	char *empty_line = "                     ";
 	int i = 0;
-	while(i < 8) print(empty_line, 0, i++);
+	while(i < 8) __Print(empty_line, 0, i++);
 }
 void print(const char *str, int x, int y)
 {
@@ -66,30 +66,38 @@ void print_hexa(unsigned int n, int digits, int x, int y)
 
 /*
 	Keyboard tests.
+	The user timer reproduces the parameters of the keyboard timer.
 */
+
+void keyboard_test_timer(void)
+{
+	volatile unsigned char *state = keystate();
+
+	print_bin(state[0], 0, 1);
+	print_bin(state[1], 0, 2);
+	print_bin(state[2], 0, 3);
+	print_bin(state[3], 0, 4);
+	print_bin(state[4], 0, 5);
+
+	print_bin(state[5], 9, 1);
+	print_bin(state[6], 9, 2);
+	print_bin(state[7], 9, 3);
+	print_bin(state[8], 9, 4);
+	print_bin(state[9], 9, 5);
+}
 
 void keyboard_test(void)
 {
-/*
-		print_bin(keyboard_state[0], 0, 2);
-		print_bin(keyboard_state[1], 0, 3);
-		print_bin(keyboard_state[2], 0, 4);
-		print_bin(keyboard_state[3], 0, 5);
-		print_bin(keyboard_state[4], 0, 6);
-
-		print_bin(keyboard_state[5], 9, 2);
-		print_bin(keyboard_state[6], 9, 3);
-		print_bin(keyboard_state[7], 9, 4);
-		print_bin(keyboard_state[8], 9, 5);
-		print_bin(keyboard_state[9], 9, 6);
-*/
-
 	int x = 0;
 	char str[3];
 	int keys[4] = { 0 };
 	int i;
 
+	timer_start(TIMER_USER, 1700, TIMER_Po_256, keyboard_test_timer, 0);
+
 	print_clear();
+	print("Keyboard state:", 0, 0);
+	print("multi-getkey ^^", 6, 7);
 
 	while(1)
 	{
@@ -114,6 +122,8 @@ void keyboard_test(void)
 
 		#undef	hexa
 	}
+
+	timer_stop(TIMER_USER);
 }
 
 /*

@@ -17,7 +17,7 @@ typedef	unsigned int jmp_buf[16];
 
 	@arg	env	Empty jump buffer.
 */
-int	setjmp(jmp_buf env);
+int setjmp(jmp_buf env);
 
 /*
 	longjmp()
@@ -26,6 +26,6 @@ int	setjmp(jmp_buf env);
 	@arg	env	Jump buffer configure with setjmp().
 	@arg	value	setjmp() will return this integer after the jump.
 */
-void	longjmp(jmp_buf env, int value);
+void longjmp(jmp_buf env, int value);
 
 #endif	// _SETJMP_H
