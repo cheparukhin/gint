@@ -1,7 +1,7 @@
 gint project
 ============
 
-gint (pronounce guin) is a low-level library for fx-9860G calculators. It
+gint (pronounce 'guin') is a low-level library for fx-9860G calculators. It
 provides the tools needed to develop programs under Linux using the gcc
 toolchain (sh3eb-elf).
 
@@ -31,3 +31,16 @@ Public Interface
 gint's API provides access to keyboard, timers, clock and more. It does some
 powerful drawing and offers reliable multi-getkey, a gray engine, facilitates
 register access and implements a few standard functions.
+
+
+
+Building and installing
+-----------------------
+
+The easiest way to build gint is simply to enter a terminal and execute `make`.
+This will build the following components :
+* `libgint.a`, the gint library
+* `libc.a`, a (very) few standard procedures
+* `ginttest.g1a`, a test application
+
+The common `clean`, `mrproper`, and `distclean` rules will clean the directory.

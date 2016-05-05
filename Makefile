@@ -18,9 +18,9 @@ ob = sh3eb-elf-objcopy
 wr = g1a-wrapper
 
 # Output files
-g1a = addin.g1a
-bin = build/addin.bin
-elf = build/addin.elf
+g1a = ginttest.g1a
+bin = build/ginttest.bin
+elf = build/ginttest.elf
 
 #  Command-line options
 cflags	= -m3 -mb -nostdlib -ffreestanding \
@@ -51,7 +51,7 @@ obj-std = $(addprefix build/, $(addsuffix .o, $(src-std)))
 hdr-std = $(addprefix include/, $(hea-std))
 
 #  Test application.
-src-app = addin.c
+src-app = ginttest.c
 res-app = icon.o swords.o sprites.o symbol.o symbol2.o
 
 
@@ -59,7 +59,7 @@ res-app = icon.o swords.o sprites.o symbol.o symbol2.o
 #	Building rules.
 #
 
-all: build libgint.a libc.a addin.g1a
+all: build libgint.a libc.a ginttest.g1a
 
 build:
 	mkdir -p build
@@ -74,12 +74,12 @@ libc.a: $(obj-std)
 	@ echo "\033[32;1mStandard file size: "`stat -c %s libc.a` \
 		"bytes\033[0m"
 
-addin.g1a: libgint.a $(src-app) $(res-app)
-	$(cc) $(src-app) $(res-app) -T addin.ld -o $(elf) $(cflags) $(lib)
+ginttest.g1a: libgint.a $(src-app) $(res-app)
+	$(cc) $(src-app) $(res-app) -T ginttest.ld -o $(elf) $(cflags) $(lib)
 	$(ob) -R .comment -R .bss -O binary $(elf) $(bin)
-	$(wr) $(bin) -o addin.g1a -i icon.bmp
+	$(wr) $(bin) -o ginttest.g1a -i icon.bmp
 	@ echo "\033[32;1mBinary file size: "`stat -c %s $(bin)`" bytes\033[0m"
-#	@ sh3eb-elf-objdump -h build/addin.elf
+#	@ sh3eb-elf-objdump -h build/ginttest.elf
 
 build/%.c.o: src/%.c $(hdr-lib) $(hdr-std)
 	$(cc) $(cflags) -O2 -c $< -o $@
@@ -104,10 +104,12 @@ build/gint.c.o: src/gint.c $(hdr-lib) $(hdr-std)
 
 clean:
 	@ rm -f $(obj-lib) $(obj-std) $(obj-app) $(bin) $(elf)
-fclean: clean
+mrproper: clean
 	@ rm -f build/*
-	@ rm -f addin.g1a libc.a libgint.a
-re: fclean all
+	@ rm -f ginttest.g1a libc.a libgint.a
+distclean: mrproper
+
+re: distclean all
 
 
 
@@ -116,4 +118,4 @@ re: fclean all
 #
 
 install:
-	usb-connector SEND addin.g1a addin.g1a fls0
+	usb-connector SEND ginttest.g1a ginttest.g1a fls0
