@@ -1,0 +1,91 @@
+fxos lephe$ fxos disasm -s 0x24b sh7305.fls -l 200
+Syscall table:    0x801cdd84
+Syscall id:       0x24b
+Syscall address:  0x4cfc0380
+
+===================================
+
+Stack state:
+r4	s1: Parameter of call located at <e>
+pr
+r14
+r13
+------	Bottom
+
+===================================
+
+Missing information:
+
+- Function of <fffffe44> (negative offset relative to <e>)
+- Function of <fffffdde> (negative offset relative to <3e>, does not seem to be
+  the same as <fffffe44>, curiously)
+- Function of <8003e8c8> (probably syscall, but not found)
+
+===================================
+
+#
+#	Initialization.
+#
+
+# Saves the registers.
+   0:	2fd6	mov.l	r13, @-r15
+   2:	2fe6	mov.l	r14, @-r15
+   4:	4f22	sts.l	pr, @-r15
+   6:	7ffc	add	#-4, r15
+   8:	2f42	mov.l	r4, @r15
+
+# Loads 1 into r13. If jump at <16> is performed, r13 is changed to 0.
+   a:	ed01	mov	#1, r13
+# r14 gets decremented whenever call at <e> is looped (considering the
+# documentation, it is probably the number of tries before the function
+# gives up).
+   c:	ee05	mov	#5, r14
+
+
+
+#
+#	Main loop, calls <fffffe44>. No more than initial_r14 turns.
+#
+
+# Calls <fffffe44>(r4).
+   e:	bf19	bsr	<fffffe44>
+  10:	64f2	mov.l	@r15, r4
+
+# If result != 0, then <1a>, else <24>.
+  12:	2008	tst	r0, r0
+  14:	8b01	bf	<1a>
+  16:	a005	bra	<24>
+  18:	ed00	mov	#0, r13
+
+
+
+#
+#	When <fffffe44> returns non-zero, calls <8003e8c8>, decrements r14 and
+#	loops.
+#
+
+# Call <fffffe44> returned non-zero (r13 = 1).
+# Calls <8003e8c8>(10).
+  1a:	d22d	mov.l	<d0>(0x8003e8c8), r2
+  1c:	420b	jsr	@r2
+  1e:	e40a	mov	#10, r4
+# Decrementing the number of tries before returning, and looping to <e> if the
+# number of tries has not been exceeded.
+  20:	4e10	dt	r14
+  22:	8bf4	bf	<e>
+
+
+
+#
+#	When <fffffe44> returns zero or the number of tries has been exceeded,
+#	return from the function with the correct value.
+#
+
+# Call <fffffe44> returned zero (r13 = 0). Ends the function and returns 1 if
+# the key is pressed, 0 otherwise.
+  24:	60d3	mov	r13, r0
+  26:	7f04	add	#4, r15
+  28:	4f26	lds.l	@r15+, pr
+  2a:	6ef6	mov.l	@r15+, r14
+  2c:	000b	rts
+  2e:	6df6	mov.l	@r15+, r13

@@ -1,0 +1,558 @@
+
+-----------------------------------
+Syscall information
+-----------------------------------
+
+    Syscall id:       0x24a
+    Syscall address:  0x8003fa28
+
+    r4	{short *matrixcode}
+
+
+
+-----------------------------------
+Stack
+-----------------------------------
+
+    #1
+    pr
+    r8
+    r9
+    r10
+    r11
+    r12
+    r13
+    r14
+    ------	Bottom
+
+
+
+-----------------------------------
+Variables
+-----------------------------------
+
+  r14	Current row
+  r13
+  r12
+  r11	Delay routine address
+  r10	1 << r14 ? Could be the data register mask.
+  r9	Current column.
+  r8	{short *matrixcode}
+
+
+
+-----------------------------------
+Syscall code
+-----------------------------------
+
+# Saves r8-r14 to the stack. Loads data:
+# r13 = 8, r12 = 1, r11 = 8003 e47a, r10 = 1, r9 = 0, r8 = {short *matrixcode}.
+ 3fa28:  2fe6	mov.l	r14, @-r15
+ 3fa2a:  2fd6	mov.l	r13, @-r15
+ 3fa2c:  2fc6	mov.l	r12, @-r15
+ 3fa2e:  ed08	mov	#8, r13
+ 3fa30:  2fb6	mov.l	r11, @-r15
+ 3fa32:  ec01	mov	#1, r12
+ 3fa34:  2fa6	mov.l	r10, @-r15
+ 3fa36:  6ac3	mov	r12, r10
+ 3fa38:  2f96	mov.l	r9, @-r15
+ 3fa3a:  e900	mov	#0, r9
+ 3fa3c:  db22	mov.l	#0x8003e47a, r11
+ 3fa3e:  2f86	mov.l	r8, @-r15
+ 3fa40:  4f22	sts.l	pr, @-r15
+ 3fa42:  6843	mov	r4, r8
+
+# r14 = 0, pushes #1 on the stack and branches to <3fb1a>. This branch does
+# nothing if r14 is lower than 12 (thus here it does nothing).
+ 3fa44:  7ffc	add	#-4, r15
+ 3fa46:  2fc2	mov.l	r12, @r15
+ 3fa48:  a067	bra	<3fb1a>
+ 3fa4a:  6e93	mov	r9, r14
+
+# Sets gbr = a400 0100: area where the port control registers are located.
+ 3fa4c:  d21f	mov.l	#0xa4000100, r2
+ 3fa4e:  421e	ldc	r2, gbr
+
+# B_CTRL = h'aaaa
+ 3fa50:  d01f	mov.l	#0x0000aaaa, r0
+ 3fa52:  c101	mov.w	r0, @(2, gbr)
+
+# M_CTRL = h'__55
+ 3fa54:  c50c	mov.w	@(24, gbr), r0
+ 3fa56:  d31f	mov.l	#0x0000ff00, r3
+ 3fa58:  2039	and	r3, r0
+ 3fa5a:  cbaa	or	#0x55, r0
+ 3fa5c:  c10c	mov.w	r0, @(24, gbr)
+
+# Delay.
+ 3fa5e:  4b0b	jsr	@r11
+ 3fa60:  e402	mov	#2, r4
+
+# Loads 801b e65c as a data segment base. It contains words in this order:
+# aaa9 aaa6 aa9a aa6a ... 9aaa 6aaa 00a9 00a6 009a 006a.
+# These words are the B_CTRL/M_CTRL values.
+# Loads the r14-th word into B_CTRL (r14 <= 8) or the lowest byte of M_CTRL
+# (r14 > 8). The row-to-check pin is configured as output, and all the others
+# are configured as inputs.
+ 3fa62:  3ed3	cmp/ge	r13, r14
+ 3fa64:  d41c	mov.l	#0x801be65c, r4
+ 3fa66:  8904	bt	<3fa72>
+ 3fa68:  60e3	mov	r14, r0
+ 3fa6a:  4000	shll	r0
+ 3fa6c:  004d	mov.w	@(r0, r4), r0
+ 3fa6e:  a009	bra	<3fa84>
+ 3fa70:  c101	mov.w	r0, @(2, gbr)
+ 3fa72:  60e3	mov	r14, r0
+ 3fa74:  4000	shll	r0
+ 3fa76:  004d	mov.w	@(r0, r4), r0
+ 3fa78:  6203	mov	r0, r2
+ 3fa7a:  c50c	mov.w	@(24, gbr), r0
+ 3fa7c:  d315	mov.l	#0x0000ff00, r3
+ 3fa7e:  2039	and	r3, r0
+ 3fa80:  202b	or	r2, r0
+ 3fa82:  c10c	mov.w	r0, @(24, gbr)
+
+# Delay.
+ 3fa84:  4b0b	jsr	@r11
+ 3fa86:  e402	mov	#2, r4
+
+# Loads the port data registers section into gbr.
+ 3fa88:  d314	mov.l	#0xa4000120, r3
+ 3fa8a:  431e	ldc	r3, gbr
+ 3fa8c:  3ed3	cmp/ge	r13, r14
+ 3fa8e:  8d27	bt/s	<3fae0>
+
+# When the row-to-check is lower than or equal to 8.
+# Writes ~r10 to B_DATA. Sets M_DATA to 0x-f.
+ 3fa90:  64a7	not	r10, r4
+ 3fa92:  6043	mov	r4, r0
+ 3fa94:  c002	mov.b	r0, @(2, gbr)
+ 3fa96:  c418	mov.b	@(24, gbr), r0
+ 3fa98:  c9f0	and	#0xf0, r0
+ 3fa9a:  a026	bra	<3faea>
+ 3fa9c:  cb0f	or	#15, r0
+
+ 3fa9e:  0000	.word 0x0000
+ 3faa0:  801b	mov.b	r0, @(11, r1)
+ 3faa2:  e6dc	mov	#-36, r6
+ 3faa4:  8006	mov.b	r0, @(6, r0)
+ 3faa6:  9088	mov.w	<3fbba>(#0xc10c), r0
+ 3faa8:  8002	mov.b	r0, @(2, r0)
+ 3faaa:  4e4e	ldc	r14, spc
+ 3faac:  8800	cmp/eq	#0, r0
+ 3faae:  77ed	add	#-19, r7
+ 3fab0:  8003	mov.b	r0, @(3, r0)
+ 3fab2:  d446	mov.l	<3fbcc>(#0x004da007), r4
+ 3fab4:  8003	mov.b	r0, @(3, r0)
+ 3fab6:  da54	mov.l	<3fc08>(#0x0000aaaa), r10
+ 3fab8:  8003	mov.b	r0, @(3, r0)
+ 3faba:  de9c	mov.l	<3fd2c>(#0xee00eb0a), r14
+ 3fabc:  8006	mov.b	r0, @(6, r0)
+ 3fabe:  90d8	mov.w	<3fc72>(#0x421e), r0
+ 3fac0:  8006	mov.b	r0, @(6, r0)
+ 3fac2:  2ed8	tst	r13, r14
+ 3fac4:  8800	cmp/eq	#0, r0
+ 3fac6:  7054	add	#84, r0
+
+# Data segment.
+ 3fac8:  8003 e47a
+ 3facc:  a400 0100
+ 3fad0:  0000 aaaa
+ 3fad4:  0000 ff00
+ 3fad8:  801b e65c
+ 3fadc:  a400 0120
+
+# When the row-to-check is strictly greater than 8.
+# Writes 0xff to B_DATA, and ~r10 to M_DATA.
+ 3fae0:  908e	mov.w	<3fc00>(#0x00ff), r0
+ 3fae2:  c002	mov.b	r0, @(2, gbr)
+ 3fae4:  c418	mov.b	@(24, gbr), r0
+ 3fae6:  c9f0	and	#0xf0, r0
+ 3fae8:  204b	or	r4, r0
+
+# Delay.
+ 3faea:  c018	mov.b	r0, @(24, gbr)
+ 3faec:  4b0b	jsr	@r11
+ 3faee:  e402	mov	#2, r4
+
+# Loads result in r5, as ~A_DATA.
+ 3faf0:  c400	mov.b	@(0, gbr), r0
+ 3faf2:  6507	not	r0, r5
+
+# r9 = 0 the first time. Compares r12 with the result. If none of the bits of
+# r12 are set in checked row, branches to <3fb04>.
+ 3faf4:  6493	mov	r9, r4
+ 3faf6:  635c	extu.b	r5, r3
+ 3faf8:  23c8	tst	r12, r3
+ 3fafa:  8903	bt	<3fb04>
+
+# r9 seems to be the key column and r14 the row.
+ 3fafc:  2840	mov.b	r4, @r8
+ 3fafe:  60e3	mov	r14, r0
+ 3fb00:  a00f	bra	<3fb22>
+ 3fb02:  8081	mov.b	r0, @(1, r8)
+
+ 3fb04:  655c	extu.b	r5, r5
+ 3fb06:  4501	shlr	r5
+ 3fb08:  7401	add	#1, r4
+ 3fb0a:  34d3	cmp/ge	r13, r4
+ 3fb0c:  8bf3	bf	<3faf6>
+ 3fb0e:  4a00	shll	r10
+ 3fb10:  60e3	mov	r14, r0
+ 3fb12:  8807	cmp/eq	#7, r0
+ 3fb14:  8f01	bf/s	<3fb1a>
+ 3fb16:  7e01	add	#1, r14
+ 3fb18:  6ac3	mov	r12, r10
+ 3fb1a:  e30c	mov	#12, r3
+ 3fb1c:  3e33	cmp/ge	r3, r14
+ 3fb1e:  8b95	bf	<3fa4c>
+ 3fb20:  2f92	mov.l	r9, @r15
+
+# Ends the procedure and restores everything ?
+
+# B_CTRL = 0xaaaa. M_CTRL = 0x--aa. Delay.
+ 3fb22:  d338	mov.l	<3fc04>(#0xa4000100), r3
+ 3fb24:  d038	mov.l	<3fc08>(#0x0000aaaa), r0
+ 3fb26:  431e	ldc	r3, gbr
+ 3fb28:  c101	mov.w	r0, @(2, gbr)
+ 3fb2a:  c50c	mov.w	@(24, gbr), r0
+ 3fb2c:  d237	mov.l	<3fc0c>(#0x0000ff00), r2
+ 3fb2e:  2029	and	r2, r0
+ 3fb30:  cbaa	or	#0xaa, r0
+ 3fb32:  c10c	mov.w	r0, @(24, gbr)
+ 3fb34:  4b0b	jsr	@r11
+ 3fb36:  e402	mov	#2, r4
+
+# B_CTRL = 0x5555. M_CTRL = 0x--55. Delay.
+ 3fb38:  9063	mov.w	<3fc02>(#0x5555), r0
+ 3fb3a:  c101	mov.w	r0, @(2, gbr)
+ 3fb3c:  c50c	mov.w	@(24, gbr), r0
+ 3fb3e:  d333	mov.l	<3fc0c>(#0x0000ff00), r3
+ 3fb40:  2039	and	r3, r0
+ 3fb42:  cb55	or	#0x55, r0
+ 3fb44:  c10c	mov.w	r0, @(24, gbr)
+ 3fb46:  4b0b	jsr	@r11
+ 3fb48:  e402	mov	#2, r4
+
+# B_DATA = 0x00. M_DATA = 0x-0.
+ 3fb4a:  e000	mov	#0, r0
+ 3fb4c:  d230	mov.l	<3fc10>(#0xa4000120), r2
+ 3fb4e:  421e	ldc	r2, gbr
+ 3fb50:  c002	mov.b	r0, @(2, gbr)
+ 3fb52:  c418	mov.b	@(24, gbr), r0
+ 3fb54:  c9f0	and	#0xf0, r0
+ 3fb56:  c018	mov.b	r0, @(24, gbr)
+
+# Returns the value at the top of the stack (originally 1).
+ 3fb58:  60f2	mov.l	@r15, r0
+ 3fb5a:  7f04	add	#4, r15
+ 3fb5c:  4f26	lds.l	@r15+, pr
+ 3fb5e:  68f6	mov.l	@r15+, r8
+ 3fb60:  69f6	mov.l	@r15+, r9
+ 3fb62:  6af6	mov.l	@r15+, r10
+ 3fb64:  6bf6	mov.l	@r15+, r11
+ 3fb66:  6cf6	mov.l	@r15+, r12
+ 3fb68:  6df6	mov.l	@r15+, r13
+ 3fb6a:  000b	rts
+ 3fb6c:  6ef6	mov.l	@r15+, r14
+
+
+
+-----------------------------------
+First subroutine
+-----------------------------------
+
+# Go back to <3fa4c> (first call to this subroutine) until r14 reaches 12.
+ 3fb1a:  e30c	mov	#12, r3
+ 3fb1c:  3e33	cmp/ge	r3, r14
+ 3fb1e:  8b95	bf	<3fa4c>
+
+ 3fb20:  2f92	mov.l	r9, @r15
+ 3fb22:  d338	mov.l	<3fc04>(#0xa4000100), r3
+ 3fb24:  d038	mov.l	<3fc08>(#0x0000aaaa), r0
+ 3fb26:  431e	ldc	r3, gbr
+ 3fb28:  c101	mov.w	r0, @(2, gbr)
+ 3fb2a:  c50c	mov.w	@(24, gbr), r0
+ 3fb2c:  d237	mov.l	<3fc0c>(#0x0000ff00), r2
+ 3fb2e:  2029	and	r2, r0
+ 3fb30:  cbaa	or	#-86, r0
+ 3fb32:  c10c	mov.w	r0, @(24, gbr)
+ 3fb34:  4b0b	jsr	@r11
+ 3fb36:  e402	mov	#2, r4
+ 3fb38:  9063	mov.w	<3fc02>(#0x5555), r0
+ 3fb3a:  c101	mov.w	r0, @(2, gbr)
+ 3fb3c:  c50c	mov.w	@(24, gbr), r0
+ 3fb3e:  d333	mov.l	<3fc0c>(#0x0000ff00), r3
+ 3fb40:  2039	and	r3, r0
+ 3fb42:  cb55	or	#85, r0
+ 3fb44:  c10c	mov.w	r0, @(24, gbr)
+ 3fb46:  4b0b	jsr	@r11
+ 3fb48:  e402	mov	#2, r4
+ 3fb4a:  e000	mov	#0, r0
+ 3fb4c:  d230	mov.l	<3fc10>(#0xa4000120), r2
+ 3fb4e:  421e	ldc	r2, gbr
+ 3fb50:  c002	mov.b	r0, @(2, gbr)
+ 3fb52:  c418	mov.b	@(24, gbr), r0
+ 3fb54:  c9f0	and	#-16, r0
+ 3fb56:  c018	mov.b	r0, @(24, gbr)
+ 3fb58:  60f2	mov.l	@r15, r0
+ 3fb5a:  7f04	add	#4, r15
+ 3fb5c:  4f26	lds.l	@r15+, pr
+ 3fb5e:  68f6	mov.l	@r15+, r8
+ 3fb60:  69f6	mov.l	@r15+, r9
+ 3fb62:  6af6	mov.l	@r15+, r10
+ 3fb64:  6bf6	mov.l	@r15+, r11
+ 3fb66:  6cf6	mov.l	@r15+, r12
+ 3fb68:  6df6	mov.l	@r15+, r13
+ 3fb6a:  000b	rts
+ 3fb6c:  6ef6	mov.l	@r15+, r14
+
+
+
+-----------------------------------
+Second subroutine
+Just a delay ! If also configures IRQ0.
+-----------------------------------
+
+Stack:
+    gbr
+    macl
+    pr
+    r14
+    ------	Bottom
+
+# Saves r14, pr, macl and gbr to the stack. Saves parameter (r4 = 2) to r14.
+# Loads data: r2 = 8006 31dc, r5 = 1 (parameter 'set' for syscall 0x3ed).
+ 3e47a:  0312	stc	gbr, r3
+ 3e47c:  d235	mov.l	<3e554>(#0x800631dc), r2
+ 3e47e:  e501	mov	#1, r5
+ 3e480:  2fe6	mov.l	r14, @-r15
+ 3e482:  6e43	mov	r4, r14
+ 3e484:  4f22	sts.l	pr, @-r15
+ 3e486:  4f12	sts.l	macl, @-r15
+ 3e488:  7ffc	add	#-4, r15
+ 3e48a:  2f32	mov.l	r3, @r15
+
+# Sets the "watchdog occupied" status in the RAM interrupt status byte.
+ 3e48c:  420b	jsr	@r2
+ 3e48e:  e410	mov	#16, r4
+
+# Ensures 1 <= r14 <= 40 by setting r14 = 1 or 40 if needed.
+# Here r14 is always 2.
+ 3e490:  4e15	cmp/pl	r14
+ 3e492:  8d01	bt/s	<3e498>
+ 3e494:  e428	mov	#40, r4
+ 3e496:  ee01	mov	#1, r14
+ 3e498:  3e47	cmp/gt	r4, r14
+ 3e49a:  8b00	bf	<3e49e>
+ 3e49c:  6e43	mov	r4, r14
+
+# r4 = ~((r14 * 92) >> 4) on a single byte, which is 244 when r14 = 2.
+# 256 - r4 will be used as a delay for the watchdog timer.
+# Sets gbr to 0xfffffee0 and disables the watchdog interrupt.
+ 3e49e:  e45c	mov	#92, r4
+ 3e4a0:  924b	mov.w	<3e53a>(#0xfee0), r2
+ 3e4a2:  e3fc	mov	#-4, r3
+ 3e4a4:  0e47	mul.l	r4, r14
+ 3e4a6:  421e	ldc	r2, gbr
+ 3e4a8:  041a	sts	macl, r4
+ 3e4aa:  443c	shad	r3, r4
+ 3e4ac:  6447	not	r4, r4
+ 3e4ae:  644c	extu.b	r4, r4
+ 3e4b0:  c502	mov.w	@(4, gbr), r0
+ 3e4b2:  9343	mov.w	<3e53c>(#0x0fff), r3
+ 3e4b4:  2039	and	r3, r0
+ 3e4b6:  c102	mov.w	r0, @(4, gbr)
+
+# Loads the watchdog module base address into gbr. Resets everything in the
+# watchdog configuration. Then loads r4 (here 244) to the counter, sets the
+# frequency at Po/256, starts the timer and waits until it overflows.
+# This is probably just a way of delaying port usage.
+ 3e4b8:  d027	mov.l	<3e558>(#0x0000a500), r0
+ 3e4ba:  e180	mov	#-128, r1
+ 3e4bc:  411e	ldc	r1, gbr
+ 3e4be:  c103	mov.w	r0, @(6, gbr)
+ 3e4c0:  903d	mov.w	<3e53e>(#0x5a00), r0
+ 3e4c2:  204b	or	r4, r0
+ 3e4c4:  c102	mov.w	r0, @(4, gbr)
+ 3e4c6:  d025	mov.l	<3e55c>(#0x0000a505), r0
+ 3e4c8:  c103	mov.w	r0, @(6, gbr)
+ 3e4ca:  d025	mov.l	<3e560>(#0x0000a585), r0
+ 3e4cc:  c103	mov.w	r0, @(6, gbr)
+ 3e4ce:  e408	mov	#8, r4
+ 3e4d0:  c406	mov.b	@(6, gbr), r0
+ 3e4d2:  600c	extu.b	r0, r0
+ 3e4d4:  2048	tst	r4, r0
+ 3e4d6:  89fb	bt	<3e4d0>
+
+# Resets the overflow flag, then resets the whole configuration.
+ 3e4d8:  c406	mov.b	@(6, gbr), r0
+ 3e4da:  600c	extu.b	r0, r0
+ 3e4dc:  d31e	mov.l	<3e558>(#0x0000a500), r3
+ 3e4de:  c9f7	and	#0xf7, r0
+ 3e4e0:  203b	or	r3, r0
+ 3e4e2:  c103	mov.w	r0, @(6, gbr)
+ 3e4e4:  6033	mov	r3, r0
+ 3e4e6:  c103	mov.w	r0, @(6, gbr)
+
+# Resets the counter.
+ 3e4e8:  9029	mov.w	<3e53e>(#0x5a00), r0
+ 3e4ea:  c102	mov.w	r0, @(4, gbr)
+
+# Unsets the "watchdog occupied" bit in the RAM interrupt status byte.
+ 3e4ec:  d219	mov.l	<3e554>(#0x800631dc), r2
+ 3e4ee:  e500	mov	#0, r5
+ 3e4f0:  420b	jsr	@r2
+ 3e4f2:  e410	mov	#16, r4
+
+# Configures IRQ0 if possible (that is, if both the watchdog and the SD card
+# are idle).
+ 3e4f4:  d31b	mov.l	<3e564>(#0x8003dbec), r3
+ 3e4f6:  430b	jsr	@r3
+ 3e4f8:  0009	nop
+
+# Un-stacks everything and returns.
+ 3e4fa:  62f2	mov.l	@r15, r2
+ 3e4fc:  421e	ldc	r2, gbr
+ 3e4fe:  7f04	add	#4, r15
+ 3e500:  4f16	lds.l	@r15+, macl
+ 3e502:  4f26	lds.l	@r15+, pr
+ 3e504:  000b	rts
+ 3e506:  6ef6	mov.l	@r15+, r14
+
+
+
+-----------------------------------
+Third subroutine
+-----------------------------------
+
+# Erases the lowest bit in an unknown byte (probably an extension of the
+# interrupt status byte). Returns if this bit was 0.
+ 3dbec:  4f22	sts.l	pr, @-r15
+ 3dbee:  e501	mov	#1, r5
+ 3dbf0:  d349	mov.l	<3dd18>(#0x80063236), r3
+ 3dbf2:  430b	jsr	@r3
+ 3dbf4:  6453	mov	r5, r4
+ 3dbf6:  8801	cmp/eq	#1, r0
+ 3dbf8:  8b07	bf	<3dc0a>
+
+# Checks if the watchdog timer is occupied, or if the SD-card is busy (?).
+# If any of them is in use, aborts. Otherwise controls is transferred to the
+# extract below, as if called directly.
+# Probably the SD-card has something to do with generating IRQ0 interrupts.
+ 3dbfa:  e500	mov	#0, r5
+ 3dbfc:  d347	mov.l	<3dd1c>(#0x800631f6), r3
+ 3dbfe:  430b	jsr	@r3
+ 3dc00:  e418	mov	#24, r4
+ 3dc02:  2008	tst	r0, r0
+ 3dc04:  8b01	bf	<3dc0a>
+ 3dc06:  af82	bra	<3db0e>
+ 3dc08:  4f26	lds.l	@r15+, pr
+
+# Returns.
+ 3dc0a:  4f26	lds.l	@r15+, pr
+ 3dc0c:  000b	rts
+ 3dc0e:  0009	nop
+
+    Here's the extract of code that takes control when the interrupt conditions
+    required by the main procedure are fulfilled.
+    It configures IRQ0 interrupts.
+
+# Disables IRQ0 interrupt in IPRC.
+ 3db0e:  d32d	mov.l	<3dbc4>(#0xa4000000), r3
+ 3db10:  431e	ldc	r3, gbr
+ 3db12:  c50b	mov.w	@(22, gbr), r0
+ 3db14:  d22e	mov.l	<3dbd0>(#0x0000fff0), r2
+ 3db16:  2029	and	r2, r0
+ 3db18:  c10b	mov.w	r0, @(22, gbr)
+
+# Sets PTH0 to 'other functions' mode, which is IRQ0 and IRL0 input for the
+# interrupt controller.
+ 3db1a:  d12e	mov.l	<3dbd4>(#0xa4000100), r1
+ 3db1c:  411e	ldc	r1, gbr
+ 3db1e:  c507	mov.w	@(14, gbr), r0
+ 3db20:  d32d	mov.l	<3dbd8>(#0x0000fffc), r3
+ 3db22:  2039	and	r3, r0
+ 3db24:  c107	mov.w	r0, @(14, gbr)
+
+# Sets IRQ0 detection mode to low level input in ICR1.
+ 3db26:  d227	mov.l	<3dbc4>(#0xa4000000), r2
+ 3db28:  421e	ldc	r2, gbr
+ 3db2a:  c508	mov.w	@(16, gbr), r0
+ 3db2c:  2039	and	r3, r0
+ 3db2e:  cb02	or	#2, r0
+ 3db30:  c108	mov.w	r0, @(16, gbr)
+
+# Clears the IRQ0 interrupt flag.
+ 3db32:  c404	mov.b	@(4, gbr), r0
+ 3db34:  c9fe	and	#-2, r0
+ 3db36:  c004	mov.b	r0, @(4, gbr)
+
+# Enables IRQ0 interrupts with priority 13 in IPRC.
+ 3db38:  c50b	mov.w	@(22, gbr), r0
+ 3db3a:  d125	mov.l	<3dbd0>(#0x0000fff0), r1
+ 3db3c:  2019	and	r1, r0
+ 3db3e:  cb0d	or	#13, r0
+ 3db40:  c10b	mov.w	r0, @(22, gbr)
+
+# Returns 1.
+ 3db42:  000b	rts
+ 3db44:  e001	mov	#1, r0
+
+    Here is the first subroutine, that handles an unknown byte at 0x8800713d.
+    This byte may be an extension of the interrupt status byte.
+
+    Returns 1 if a bit in the unknown byte matches the mask r4.
+    Also, if r5 = 1, erases the bits according to the mask.
+
+# Sets r6 to 1 if a bit in the mask is set in the unknown byte, 0 otherwise.
+# Also sets r0 = r5.
+ 63236:  624c	extu.b	r4, r2
+ 63238:  d72a	mov.l	<632e4>(#0x8800713d), r7
+ 6323a:  6370	mov.b	@r7, r3
+ 6323c:  633c	extu.b	r3, r3
+ 6323e:  2328	tst	r2, r3
+ 63240:  8f02	bf/s	<63248>
+ 63242:  6053	mov	r5, r0
+ 63244:  a001	bra	<6324a>
+ 63246:  e600	mov	#0, r6
+ 63248:  e601	mov	#1, r6
+
+# Uses the mask comparison result as return value. If the operation is 0, then
+# stop there.
+ 6324a:  8801	cmp/eq	#1, r0
+ 6324c:  8f04	bf/s	<63258>
+ 6324e:  6063	mov	r6, r0
+
+# Otherwise, erase the mask in the unknown byte.
+ 63250:  6370	mov.b	@r7, r3
+ 63252:  6447	not	r4, r4
+ 63254:  2349	and	r4, r3
+ 63256:  2730	mov.b	r3, @r7
+ 63258:  000b	rts
+ 6325a:  0009	nop
+
+    Here is the second subroutine.
+    It does exactly the same as the first, except that it uses the common
+    interrupt status byte at 0x8800713c.
+    It's the syscall 0x3ee.
+
+ 631f6:  624c	extu.b	r4, r2
+ 631f8:  d739	mov.l	<632e0>(#0x8800713c), r7
+ 631fa:  6370	mov.b	@r7, r3
+ 631fc:  633c	extu.b	r3, r3
+ 631fe:  2328	tst	r2, r3
+ 63200:  8f02	bf/s	<63208>
+ 63202:  6053	mov	r5, r0
+ 63204:  a001	bra	<6320a>
+ 63206:  e600	mov	#0, r6
+ 63208:  e601	mov	#1, r6
+ 6320a:  8801	cmp/eq	#1, r0
+ 6320c:  8f04	bf/s	<63218>
+ 6320e:  6063	mov	r6, r0
+ 63210:  6370	mov.b	@r7, r3
+ 63212:  6447	not	r4, r4
+ 63214:  2349	and	r4, r3
+ 63216:  2730	mov.b	r3, @r7
+ 63218:  000b	rts
+ 6321a:  0009	nop

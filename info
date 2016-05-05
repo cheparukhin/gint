@@ -1,0 +1,16 @@
+
+Experimental power reduction as function of the keyboard analysis frequency. 
+
+SH3
+      None	   0 %
+      4 Hz	 2.8 %
+     16 Hz	 2.8 %
+     64 Hz	 2.8 %
+    256 Hz	20.0 %
+
+SH4
+      None	   0 %
+      4 Hz	 1.8 %
+     16 Hz	 1.8 %
+     64 Hz	 1.8 %
+    256 Hz	 3.6 %

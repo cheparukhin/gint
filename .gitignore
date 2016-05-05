@@ -1,0 +1,13 @@
+# Sources for old gint versions.
+gint.old.1/**
+gint.old.2/**
+
+# Build directory
+build/**
+
+# Sublime Text files
+*.sublime-project
+*.sublime-workspace
+
+# Object files.
+*.o

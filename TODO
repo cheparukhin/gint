@@ -1,0 +1,7 @@
+- screen, display
+- timer
+- gray engine
+- full rtc driver (time)
+
+_ 7305.h
+_ libc

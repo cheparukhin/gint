@@ -1,0 +1,31 @@
+#ifndef	_STDLIB_H
+#define	_STDLIB_H	1
+
+#include <stddef.h>
+
+// Common exit codes.
+#define	EXIT_SUCCESS	1
+#define	EXIT_FAILURE	0
+
+
+
+//---
+//	Program exit functions.
+//---
+
+/*
+	abort()
+	Aborts the program execution without calling the exit handlers.
+*/
+void abort(void);
+
+/*
+	exit()
+	Stops the program execution with the given status code, after calling
+	the exit handlers.
+
+	@arg	status
+*/
+void exit(int status);
+
+#endif	// _STDLIB_H
