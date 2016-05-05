@@ -1,10 +1,7 @@
 #include <gint.h>
+#include <timer.h>
+#include <keyboard.h>
 #include <7705.h>
-
-extern void print_hex(unsigned int value, int x, int y);
-extern void print_bin(unsigned char value, int x, int y);
-
-
 
 //---
 //	Interrupt codes.
@@ -12,6 +9,9 @@ extern void print_bin(unsigned char value, int x, int y);
 
 #define	IC_RTC_PRI	0x4a0
 #define	IC_PINT07	0x700
+#define	IC_TMU0_TUNI0	0x400
+#define	IC_TMU1_TUNI1	0x420
+#define	IC_TMU2_TUNI2	0x440
 
 
 
@@ -19,12 +19,11 @@ extern void print_bin(unsigned char value, int x, int y);
 //	Keyboard management.
 //---
 
-extern volatile unsigned char keyboard_state[10];
-extern void keyboard_interrupt(void);
-
 /*
 	kdelay()
-	Low-level sleep using the watchdog.
+	Used to be a low-level sleep using the watchdog, as in the system. This
+	way seems ok at least, and it doesn't create column effects as for
+	SH7305.
 */
 static void kdelay(void)
 {
@@ -39,7 +38,7 @@ static void kdelay(void)
 
 	#undef	r4
 
-/*
+	/* Watchdog version.
 	const int delay = 0xf4;
 
 	// Disabling the watchdog timer interrupt and resetting the
@@ -64,7 +63,7 @@ static void kdelay(void)
 
 	// Enabling back the watchdog timer interrupt.
 	INTC.IPRB.BIT._WDT = GINT_INTP_WDT;
-*/
+	*/
 }
 
 /*
@@ -134,16 +133,14 @@ static int krow(int row)
 }
 
 /*
-	kstate()
+	keyboard_updateState()
 	Updates the keyboard state.
 */
-static void kstate(void)
+void keyboard_updateState_7705(volatile unsigned char *keyboard_state)
 {
 	int i;
 
 	for(i = 0; i < 10; i++) keyboard_state[i] = krow(i);
-
-	keyboard_interrupt();
 }
 
 
@@ -160,23 +157,19 @@ void gint_7705(void)
 	switch(code)
 	{
 	case IC_RTC_PRI:
-		// Clearing the interrupt flag.
 		RTC.RCR2.BIT.PEF = 0;
-		// Updating the keyboard state.
-		kstate();
-/*
-		print_bin(keyboard_state[0], 0, 2);
-		print_bin(keyboard_state[1], 0, 3);
-		print_bin(keyboard_state[2], 0, 4);
-		print_bin(keyboard_state[3], 0, 5);
-		print_bin(keyboard_state[4], 0, 6);
+		break;
 
-		print_bin(keyboard_state[5], 9, 2);
-		print_bin(keyboard_state[6], 9, 3);
-		print_bin(keyboard_state[7], 9, 4);
-		print_bin(keyboard_state[8], 9, 5);
-		print_bin(keyboard_state[9], 9, 6);
-*/
+	case IC_TMU0_TUNI0:
+		timer_interrupt(TIMER_TMU0);
+		break;
+
+	case IC_TMU1_TUNI1:
+		timer_interrupt(TIMER_TMU1);
+		break;
+
+	case IC_TMU2_TUNI2:
+		timer_interrupt(TIMER_TMU2);
 		break;
 	}
 }
@@ -214,7 +207,10 @@ static void gint_priority_lock_7705(void)
 	INTX.IPRH.WORD = 0x0000;
 
 	// Allowing RTC, which handles keyboard.
-	INTC.IPRA.BIT._RTC = GINT_INTP_RTC;
+	INTC.IPRA.BIT._RTC	= GINT_INTP_RTC;
+	INTC.IPRA.BIT._TMU0	= GINT_INTP_KEY;
+	INTC.IPRA.BIT._TMU1	= GINT_INTP_GRAY;
+	INTC.IPRA.BIT._TMU2	= GINT_INTP_TIMER;
 }
 
 static void gint_priority_unlock_7705(void)

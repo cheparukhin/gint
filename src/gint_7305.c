@@ -1,10 +1,7 @@
 #include <gint.h>
+#include <timer.h>
+#include <keyboard.h>
 #include <7305.h>
-
-extern void print_hex(unsigned int value, int x, int y);
-extern void print_bin(unsigned char value, int x, int y);
-
-
 
 //---
 //	Interrupt codes.
@@ -12,15 +9,15 @@ extern void print_bin(unsigned char value, int x, int y);
 
 #define	IC_RTC_PRI	0xaa0
 #define	IC_KEYSC	0xbe0
+#define	IC_TMU0_TUNI0	0x400
+#define	IC_TMU0_TUNI1	0x420
+#define	IC_TMU0_TUNI2	0x440
 
 
 
 //---
 //	Keyboard management.
 //---
-
-extern volatile unsigned char keyboard_state[10];
-extern void keyboard_interrupt(void);
 
 /*
 	kdelay()
@@ -143,16 +140,14 @@ static int krow(int row)
 }
 
 /*
-	kstate()
+	keyboard_updateState()
 	Updates the keyboard state.
 */
-static void kstate(void)
+void keyboard_updateState_7305(volatile unsigned char *keyboard_state)
 {
 	int i;
 
 	for(i = 0; i < 10; i++) keyboard_state[i] = krow(i);
-
-	keyboard_interrupt();
 }
 
 
@@ -169,23 +164,19 @@ void gint_7305(void)
 	switch(code)
 	{
 	case IC_RTC_PRI:
-		// Clearing the interrupt flag.
 		RTC.RCR2.PEF = 0;
-		// Updating the keyboard state.
-		kstate();
-/*
-		print_bin(keyboard_state[0], 0, 2);
-		print_bin(keyboard_state[1], 0, 3);
-		print_bin(keyboard_state[2], 0, 4);
-		print_bin(keyboard_state[3], 0, 5);
-		print_bin(keyboard_state[4], 0, 6);
+		break;
 
-		print_bin(keyboard_state[5], 9, 2);
-		print_bin(keyboard_state[6], 9, 3);
-		print_bin(keyboard_state[7], 9, 4);
-		print_bin(keyboard_state[8], 9, 5);
-		print_bin(keyboard_state[9], 9, 6);
-*/
+	case IC_TMU0_TUNI0:
+		timer_interrupt(TIMER_TMU0);
+		break;
+
+	case IC_TMU0_TUNI1:
+		timer_interrupt(TIMER_TMU1);
+		break;
+
+	case IC_TMU0_TUNI2:
+		timer_interrupt(TIMER_TMU2);
 		break;
 	}
 }
@@ -245,7 +236,10 @@ static void gint_priority_lock_7305(void)
 	// Allowing RTC. Keyboard analysis is done regularly using a RTC
 	// because SH7305's special KEYSC interface does not allow us to clear
 	// the keyboard interrupt flags.
-	INTX.IPRK._RTC = GINT_INTP_RTC;
+	INTX.IPRK._RTC		= GINT_INTP_RTC;
+	INTX.IPRA.TMU0_0	= GINT_INTP_KEY;
+	INTX.IPRA.TMU0_1	= GINT_INTP_GRAY;
+	INTX.IPRA.TMU0_2	= GINT_INTP_TIMER;
 }
 
 static void gint_priority_unlock_7305(void)

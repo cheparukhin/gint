@@ -13,9 +13,9 @@
 #define	TIMER_2		2
 #define	TIMER_TMU2	TIMER_2
 // Timer function identifiers.
-#define	TIMER_GRAY	TIMER_TMU0
-#define	TIMER_USER1	TIMER_TMU1
-#define	TIMER_USER2	TIMER_TMU2
+#define	TIMER_KEYBOARD	TIMER_TMU0
+#define	TIMER_GRAY	TIMER_TMU1
+#define	TIMER_USER	TIMER_TMU2
 
 // Timer prescalers.
 #define	TIMER_Po_4	0
@@ -31,11 +31,12 @@
 //---
 
 /*
-	timer_set()
+	timer_start()
 	Configures and starts a timer.
 
-	@arg	timer		Timer identifier. Use only TIMER_USER1 and
-				TIMER_USER2.
+	@arg	timer		Timer name. Use only TIMER_USER. You may use
+				TIMER_GRAY, if you're not running the gray
+				engine.
 	@arg	delay		Delay before expiration, in clock counts.
 	@arg	prescaler	Clock prescaler value. Possible values are
 				TIMER_Po_4, TIMER_Po_16, TIMER_Po_64,
@@ -43,7 +44,7 @@
 	@arg	callback	Callback function.
 	@arg	repetitions	Number of repetitions, 0 for infinite.
 */
-void timer_set(int timer, int delay, int prescaler, void (*callback)(void),
+void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
 	int repetitions);
 
 /*
@@ -68,6 +69,6 @@ void timer_stop(int timer);
 
 	@timer	Timer that generated the interrupt.
 */
-void timer_interrupt(int timer);
+void timer_interrupt(int timer)		__attribute__((section(".gint.int")));
 
 #endif // _TIMER_H

@@ -3,11 +3,26 @@
 #include <mpu.h>
 #include <keyboard.h>
 #include <display.h>
+#include <timer.h>
+
+extern unsigned int gint_vbr, bgint, egint, gint_data;
+
+/*
+	A few procedures for displaying text in the system's vram.
+*/
 
 extern void __Print(const char *msg, int x, int y);
-extern unsigned int gint_vbr, bgint, egint, gint_data;
-#define print __Print
 
+void print_clear(void)
+{
+	char *empty_line = "                     ";
+	int i = 0;
+	while(i < 8) print(empty_line, 0, i++);
+}
+void print(const char *str, int x, int y)
+{
+	__Print(str, x, y);
+}
 void print_hex(unsigned int n, int x, int y)
 {
 	char ch[11] = "0x";
@@ -19,7 +34,7 @@ void print_hex(unsigned int n, int x, int y)
 		n >>= 4;
 	}
 	ch[10] = 0;
-	print(ch, x, y);
+	__Print(ch, x, y);
 }
 void print_bin(unsigned char n, int x, int y)
 {
@@ -32,9 +47,8 @@ void print_bin(unsigned char n, int x, int y)
 		n >>= 1;
 	}
 	ch[8] = 0;
-	print(ch, x, y);
+	__Print(ch, x, y);
 }
-
 void print_hexa(unsigned int n, int digits, int x, int y)
 {
 	char ch[20];
@@ -47,29 +61,35 @@ void print_hexa(unsigned int n, int digits, int x, int y)
 	}
 
 	ch[digits] = 0;
-	print(ch, x, y);
+	__Print(ch, x, y);
 }
 
-// Don't forget to enable key state debugging in the interrupt handler.
+/*
+	Keyboard tests.
+*/
+
 void keyboard_test(void)
 {
-	const char *names[] = {
-		"MPU_Unkown",
-		"MPU_SH7337",
-		"MPU_SH7355",
-		"MPU_SH7305",
-		"MPU_SH7724",
-		"Error"
-	};
+/*
+		print_bin(keyboard_state[0], 0, 2);
+		print_bin(keyboard_state[1], 0, 3);
+		print_bin(keyboard_state[2], 0, 4);
+		print_bin(keyboard_state[3], 0, 5);
+		print_bin(keyboard_state[4], 0, 6);
+
+		print_bin(keyboard_state[5], 9, 2);
+		print_bin(keyboard_state[6], 9, 3);
+		print_bin(keyboard_state[7], 9, 4);
+		print_bin(keyboard_state[8], 9, 5);
+		print_bin(keyboard_state[9], 9, 6);
+*/
+
 	int x = 0;
 	char str[3];
 	int keys[4] = { 0 };
 	int i;
 
-	print(names[MPU_CURRENT < 5 ? MPU_CURRENT : 5], 0, 0);
-
-	print("gint size:", 0, 1);
-	print_hex(&egint - &bgint, 11, 1);
+	print_clear();
 
 	while(1)
 	{
@@ -251,7 +271,7 @@ void btest_gint_icon(void)
 }
 */
 
-int main(void)
+void bitmap_test(void)
 {
 	extern Image binary_symbol_start;
 	extern Image binary_symbol2_start;
@@ -307,5 +327,69 @@ int main(void)
 	dupdate();
 
 	while(getkey() != KEY_EXE);
+}
+
+void test(void)
+{
+	static int x = 0;
+	x++;
+
+	print_hex(x, 0, 0);
+}
+
+int main_menu(void)
+{
+	/*
+		Main menu.
+	*/
+
+	const char *mpu_names[] = {
+		"MPU_Unkown",
+		"MPU_SH7337",
+		"MPU_SH7355",
+		"MPU_SH7305",
+		"MPU_SH7724",
+		"MPU Error !"
+	};
+	int key;
+
+	print_clear();
+
+	print("gint test application", 0, 0);
+	print("---------------------", 0, 1);
+
+	print("[1] Keyboard test", 2, 3);
+	print("[2] Drawing test", 2, 4);
+
+	print("mpu type:", 0, 6);
+	print(mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5], 11, 6);
+	print("gint size:", 0, 7);
+	print_hex(&egint - &bgint, 11, 7);
+
+	while(1)
+	{
+		key = getkey();
+		if(key == KEY_EXIT) return 0;
+
+		if(key == KEY_1) return 1;
+		if(key == KEY_2) return 2;
+	}
+
+	return 0;
+}
+
+int main(void)
+{
+	int app;
+
+	while(1)
+	{
+		app = main_menu();
+		if(!app) break;
+
+		if(app == 1) keyboard_test();
+		if(app == 2) bitmap_test();
+	}
+
 	return 0;
 }

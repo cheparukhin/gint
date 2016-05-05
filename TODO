@@ -1,7 +1,9 @@
-- screen, display
-- timer
-- gray engine
+- multi-getkey repeats (if possible, which doesn't seem likely)
+- getkey() may unwantedly repeat a key if it was triggered for multigetkey()
+
+- write and test gray engine
 - full rtc driver (time)
+- callbacks and complete user API
 
 _ 7305.h
 _ libc

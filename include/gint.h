@@ -22,6 +22,20 @@ unsigned int gint_getVBR(void);
 */
 unsigned int gint_systemVBR(void);
 
+/*
+	gint_setRTCCallback()
+	Sets the callback function for the real-time clock interrupt. If
+	frequency is non-NULL, the clock frequency is set to the given value.
+*/
+void gint_setRTCCallback(void (*callback)(void), enum GintFrequency frequency);
+
+/*
+	gint_getRTCCallback()
+	Returns the callback function. If frequency is non-NULL, it is set to
+	the current frequency value.
+*/
+void (*(gint_getRTCCallback)(void))(enum GintFrequency *frequency);
+
 
 
 //---
@@ -79,8 +93,8 @@ void gint(void) __attribute__((
 	section(".gint.int.entry"),
 	interrupt_handler
 ));
-void gint_7705(void)	__attribute__((section(".gint.int")));
-void gint_7305(void)	__attribute__((section(".gint.int")));
+void gint_7705(void)		__attribute__((section(".gint.int")));
+void gint_7305(void)		__attribute__((section(".gint.int")));
 
 
 
@@ -89,8 +103,11 @@ void gint_7305(void)	__attribute__((section(".gint.int")));
 //---
 
 #define	GINT_INTP_WDT	4
-#define	GINT_INTP_RTC	9
+#define	GINT_INTP_RTC	12
+
+#define GINT_INTP_GRAY	15
 #define	GINT_INTP_KEY	8
+#define	GINT_INTP_TIMER	10
 
 
 

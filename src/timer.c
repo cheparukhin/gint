@@ -77,7 +77,7 @@ void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr)
 }
 
 /*
-	timer_set()
+	timer_start()
 	Configures and starts a timer.
 
 	@arg	timer		Timer identifier.
@@ -86,7 +86,7 @@ void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr)
 	@arg	callback	Callback function.
 	@arg	repetitions	Number of repetitions, 0 for infinite.
 */
-void timer_set(int timer, int delay, int prescaler, void (*callback)(void),
+void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
 	int repetitions)
 {
 	// Getting the timer address. Using a byte to alter TSTR.

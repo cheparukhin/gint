@@ -1,14 +1,18 @@
 #include <keyboard.h>
+#include <timer.h>
 #include <mpu.h>
 
 //---
 //	Keyboard variables.
 //---
 
-volatile unsigned char keyboard_state[10] = { 0 };
+// These ones get modified by interrupts.
+static volatile unsigned char keyboard_state[10] = { 0 };
+static volatile int interrupt_flag = 0;
+
+// Key statistics.
 static int repeat_first = 10, repeat_next = 2;
 static int last_key = KEY_NONE, last_repeats = 0, last_events = 0;
-static volatile int interrupt_flag = 0;
 
 
 
@@ -18,9 +22,9 @@ static volatile int interrupt_flag = 0;
 
 /*
 	sleep()
-	Puts the CPU in sleep mode and waits for an interrupt to return.
+	Puts the CPU to sleep and waits for an interrupt.
 */
-void sleep(void)
+static void sleep(void)
 {
 	__asm__
 	(
@@ -34,7 +38,7 @@ void sleep(void)
 
 	@return	A pressed key.
 */
-int getPressedKey(void)
+static int getPressedKey(void)
 {
 	int row = 1, column = 0;
 	int state;
@@ -62,7 +66,7 @@ int getPressedKey(void)
 
 	@return	Number of actual pressed keys found.
 */
-int getPressedKeys(int *keys, int count)
+static int getPressedKeys(int *keys, int count)
 {
 	int row = 1, column;
 	int found = 0, actually_pressed;
@@ -109,14 +113,44 @@ int getPressedKeys(int *keys, int count)
 	return actually_pressed;
 }
 
+
+
+//---
+//	Interrupt management.
+//---
+
 /*
 	keyboard_interrupt()
 	Callback for keyboard update. Allows keyboard analysis functions to
-	wake only when RTC interrupts happen.
+	wake only when keyboard interrupts happen.
 */
 void keyboard_interrupt(void)
 {
+	if(isSH3())
+		keyboard_updateState_7705(keyboard_state);
+	else
+		keyboard_updateState_7305(keyboard_state);
+
 	interrupt_flag = 1;
+}
+
+/*
+	keyboard_init()
+	Starts the keyboard timer.
+*/
+void keyboard_init(void)
+{
+	timer_start(TIMER_KEYBOARD, 1700, TIMER_Po_256, keyboard_interrupt,
+		0);
+}
+
+/*
+	keyboard_quit()
+	Stops the keyboard timer.
+*/
+void keyboard_quit(void)
+{
+	timer_stop(TIMER_KEYBOARD);
 }
 
 
@@ -127,20 +161,12 @@ void keyboard_interrupt(void)
 
 /*
 	keyboard_setFrequency()
-	Sets the keyboard frequency. Does nothing when the argument is not a
-	valid KeyboardFrequency value.
+	Sets the keyboard frequency.
 
-	@arg	frequency
+	@arg	frequency	In Hz.
 */
-void keyboard_setFrequency(enum KeyboardFrequency frequency)
+void keyboard_setFrequency(int frequency)
 {
-	volatile unsigned char *rcr2;
-
-	if(frequency < 1 || frequency > 7) return;
-	rcr2 = (unsigned char *)(isSH3() ? 0xfffffede : 0xa413fede);
-
-	frequency <<= 4;
-	*rcr2 = (*rcr2 & 0x8f) | frequency;
 }
 
 /*
@@ -182,6 +208,21 @@ int keylast(int *repeat_count)
 	if(repeat_count) *repeat_count = last_repeats;
 	return last_key;
 }
+
+
+
+/*
+	keystate()
+	Returns the address of the keyboard state array. The returned address
+	if the handler's buffer, therefore it contains volatile data.
+
+	@return	10-byte keyboard state buffer.
+*/
+volatile unsigned char *keystate(void)
+{
+	return keyboard_state;
+}
+
 
 
 
@@ -330,6 +371,18 @@ void multigetkey(int *keys, int count, int max_cycles)
 		if(max_cycles > 0) max_cycles--;
 
 		number = getPressedKeys(keys, count);
+
+		// We need to update the last key data, in case multigetkey()
+		// returns a single key, and getkey() is called a short time
+		// after. Otherwise getkey() could re-send an event for this
+		// key.
+		if(number == 1)
+		{
+			last_key = keys[0];
+			last_repeats = 0;
+			last_events = 0;
+		}
+
 		if(number) return;
 
 		// Handle key repetitions.

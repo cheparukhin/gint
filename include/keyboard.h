@@ -84,41 +84,23 @@
 //---
 
 /*
-	enum KeyboardFrequency
-	Describes the various frequencies available for the keyboard analysis.
-	Default frequency is 16 Hz (system frequency is about 40 Hz). Very few
-	applications will need to change this setting.
-	Be aware that you will miss key hits at low frequencies.
-	At high frequencies, you will lose important execution power. Some
-	loop-driven programs will freeze at 64 Hz because they will never
-	leave the interrupt handling routine. SH3 also have difficulties with
-	64 Hz.
-*/
-enum KeyboardFrequency {
-	KeyFreq_500mHz	= 7,
-	KeyFreq_1Hz	= 6,
-	KeyFreq_2Hz	= 5,
-	KeyFreq_4Hz	= 4,
-	KeyFreq_16Hz	= 3,
-	KeyFreq_64Hz	= 2,
-	KeyFreq_256Hz	= 1,
-};
-
-/*
 	keyboard_setFrequency()
-	Sets the keyboard frequency. Does nothing when the argument is not a
-	valid KeyboardFrequency value.
+	Sets the keyboard frequency. The default frequency is 32 Hz. Very few
+	Very few applications will need to change this setting.
+	The actual frequency is guaranteed to be greater than the argument.
+	Be aware that you will miss key hits at low frequencies. At higher
+	frequencies, you will lose important execution power.
 
-	@arg	frequency
+	@arg	frequency	Frequency in Hz (1 Hz = 1 event / second).
 */
-void keyboard_setFrequency(enum KeyboardFrequency frequency);
+// Currently not implemented.
+// void keyboard_setFrequency(int frequency);
 
 /*
 	keyboard_setRepeatRate()
 	Sets the default repeat rate for key events. The unit for the argument
-	is the keyboard period.
-	For example at 16 Hz, values of (10, 2) will imitate the system
-	default.
+	is the keyboard period. For example at 32 Hz, values of (20, 4) will
+	imitate the system default.
 	Set to 0 to disable repetition. If first = 0, no repetition will be
 	allowed. If first != 0 and next = 0, only one repetition will be
 	allowed.
@@ -169,6 +151,19 @@ enum GetkeyOpt
 	@return	Key matrix code.
 */
 int keylast(int *repeat_count);
+
+/*
+	keystate()
+	Returns the address of the keyboard state array. The keyboard state
+	consists in 10 bytes, in which every key is represented as a bit.
+	The returned address is the original buffer address. You should avoid
+	editing the array. It wouldn't influence the behavior of the keyboard
+	functions, but the buffer data is very volatile. Therefore, data
+	written to the buffer could be replaced anytime.
+
+	@return	10-byte keyboard state buffer.
+*/
+volatile unsigned char *keystate(void);
 
 /*
 	getkey()
@@ -250,5 +245,42 @@ int keychar(int key);
 	@return	Key type.
 */
 enum KeyType keytype(int key);
+
+
+
+//---
+//	Internal API.
+//	Reference here for documentation purposes only. Do not call.
+//---
+
+/*
+	keyboard_interrupt()
+	Notifies the keyboard module that an interrupt request has been issued,
+	and updates the keyboard state.
+*/
+void keyboard_interrupt(void)		__attribute__((section(".gint.int")));
+
+/*
+	keyboard_updateState()
+	Updates the keyboard state.
+
+	@arg	state	10-byte state buffer.
+*/
+void keyboard_updateState_7705(volatile unsigned char *state)
+					__attribute__((section(".gint.int")));
+void keyboard_updateState_7305(volatile unsigned char *state)
+					__attribute__((section(".gint.int")));
+
+/*
+	keyboard_init()
+	Starts the keyboard timer.
+*/
+void keyboard_init(void)		__attribute__((constructor));
+
+/*
+	keyboard_quit()
+	Stops the keyboard timer.
+*/
+void keyboard_quit(void)		__attribute__((destructor));
 
 #endif	// _KEYBOARD_H
