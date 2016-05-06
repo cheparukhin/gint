@@ -37,7 +37,7 @@ lib	= -lgcc -L. -lgint -lc
 # Gint library.
 src-lib = crt0.c syscalls.s \
           gint.c gint_vbr.s gint_7705.c gint_7305.c \
-          mpu.c keyboard.c screen.c display.c gray.c timer.c
+          mpu.c keyboard.c screen.c display.c bopti.c gray.c timer.c
 hea-lib = 7305.h 7705.h gint.h \
           stdlib.h \
           mpu.h keyboard.h screen.h display.h gray.h timer.h
@@ -52,7 +52,8 @@ hdr-std = $(addprefix include/, $(hea-std))
 
 #  Test application.
 src-app = ginttest.c
-res-app = icon.o swords.o sprites.o symbol.o symbol2.o
+img-app = bitmap_opt.bmp swords.bmp sprites.bmp symbol.bmp symbol2.bmp
+res-app = $(addprefix build/, $(addsuffix .o, $(img-app)))
 
 
 #
@@ -81,11 +82,23 @@ ginttest.g1a: libgint.a $(src-app) $(res-app)
 	@ echo "\033[32;1mBinary file size: "`stat -c %s $(bin)`" bytes\033[0m"
 #	@ sh3eb-elf-objdump -h build/ginttest.elf
 
+
+
+#
+#	Resource management.
+#
+
 build/%.c.o: src/%.c $(hdr-lib) $(hdr-std)
 	$(cc) $(cflags) -O2 -c $< -o $@
+
 build/%.s.o: src/%.s
 	$(as) -c $^ -o $@
 
+build/%.bmp.o: resources/%.bmp
+	fxconv $^ -o $@
+
+# File gint.c should not be optimized... looks like attribute((interrupt_
+# handler)) doesn't like it. (It could be a gint bug also, I should check.)
 build/gint.c.o: src/gint.c $(hdr-lib) $(hdr-std)
 	$(cc) $(cflags) -c $< -o $@
 
@@ -93,8 +106,6 @@ build/gint.c.o: src/gint.c $(hdr-lib) $(hdr-std)
 	$(cc) $(cflags) -c $< -o $@
 %.s.o: %.s
 	$(as) -c $^ -o $@
-%.o: %.bmp
-	fxconv $^
 
 
 
@@ -103,7 +114,8 @@ build/gint.c.o: src/gint.c $(hdr-lib) $(hdr-std)
 #
 
 clean:
-	@ rm -f $(obj-lib) $(obj-std) $(obj-app) $(bin) $(elf)
+	@ rm -f $(obj-lib) $(obj-std) $(obj-app) $(res-app)
+	@ rm -f $(bin) $(elf)
 mrproper: clean
 	@ rm -f build/*
 	@ rm -f ginttest.g1a libc.a libgint.a

@@ -1,4 +1,6 @@
 - multi-getkey repeats (if possible, which doesn't seem likely)
+- it appears that multi-getkey does not always trigger rectangle effects on
+  sh7305
 
 - write and test gray engine
 - full rtc driver (time)
@@ -6,6 +8,8 @@
 
 - exhaustive save for setjmp()
 - registers that need to be saved when configuring gint
+
+- check possible bug for optimization of __attribute__((interrupt_handler))
 
 _ 7305.h
 _ libc

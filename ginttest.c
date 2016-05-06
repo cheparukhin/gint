@@ -5,11 +5,11 @@
 #include <display.h>
 #include <timer.h>
 
-extern unsigned int gint_vbr, bgint, egint, gint_data;
+extern unsigned int bgint, egint;
 
-/*
-	A few procedures for displaying text in the system's vram.
-*/
+//---
+//	A few procedures for displaying text in the system's vram.
+//---
 
 extern void __Print(const char *msg, int x, int y);
 
@@ -283,16 +283,45 @@ void btest_gint_icon(void)
 
 void bitmap_test(void)
 {
-	extern Image binary_symbol_start;
-	extern Image binary_symbol2_start;
-	extern Image binary_icon_start;
-	extern Image binary_sprites_start;
-	extern Image binary_swords_start;
+	extern Image binary_resources_bitmap_opt_start;
+	extern Image binary_resources_symbol_start;
+	extern Image binary_resources_symbol2_start;
+	extern Image binary_resources_sprites_start;
+	extern Image binary_resources_swords_start;
 
-	extern const void *vrams[4];
+	Image *opt	= &binary_resources_bitmap_opt_start;
+	Image *sprites	= &binary_resources_sprites_start;
+	Image *sybl	= &binary_resources_symbol_start;
+	Image *sybl2	= &binary_resources_symbol2_start;
 
-	Image *sybl = &binary_symbol_start;
-	Image *sybl2 = &binary_symbol2_start;
+	enum BlendingMode blend = Blend_Or;
+	uint32_t a32 = 0xffffffff;
+	int key;
+
+	while(1)
+	{
+		dclear();
+
+		if(blend != Blend_Or) dreverse_area(0, 0, 127, 63);
+		dimage(opt, 0, 57, Blend_Invert);
+
+		dimage(sprites, 2 & a32, 2, blend);
+		dimage(sybl, 98 & a32, 4, blend);
+		dimage(sybl2, 98 & a32, 24, blend);
+
+		dupdate();
+
+		key = getkey();
+		if(key == KEY_EXIT) break;
+
+		if(key == KEY_F1) blend = Blend_Or;
+		if(key == KEY_F2) blend = Blend_And;
+		if(key == KEY_F3) blend = Blend_Invert;
+
+		if(key == KEY_F4) a32 ^= 31;
+	}
+
+	return;
 
 	dclear();
 	dreverse_area(0, 0, 127, 30);
@@ -308,10 +337,8 @@ void bitmap_test(void)
 	dimage(sybl2, 40, 20, Blend_Or | Blend_And);
 	dimage(sybl2, 90, 20, Blend_Or | Blend_Invert);
 
-	dimage(&binary_icon_start, 2, 35, Blend_Or);
-
 	dreverse_area(35, 31, 127, 63);
-	dimage(&binary_sprites_start, 50, 31, Blend_And);
+	dimage(&binary_resources_sprites_start, 50, 31, Blend_And);
 
 	dupdate();
 /*
@@ -333,7 +360,7 @@ void bitmap_test(void)
 	while(getkey() != KEY_EXE);
 
 	dclear();
-	dimage(&binary_swords_start, 20, 20, Blend_Or);
+	dimage(&binary_resources_swords_start, 20, 20, Blend_Or);
 	dupdate();
 
 	while(getkey() != KEY_EXE);
