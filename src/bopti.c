@@ -187,7 +187,7 @@ static void bopti_rest_nover(const unsigned char *rest, int x, int y,
 	int vram_offset = (y << 2) + (x >> 5);
 	int row;
 
-	// We *have* shift > 0 because of this function's 'no overlap'
+	// We *have* shift >= 0 because of this function's 'no overlap'
 	// requirement.
 	int shift_base = (4 - element_size) << 3;
 	int shift = shift_base - (x & 31);
@@ -212,6 +212,32 @@ static void bopti_rest(const unsigned char *rest, int x, int y, int width,
 	{
 		bopti_rest_nover(rest, x, y, width, height, mode);
 		return;
+	}
+
+	int element_size = (width > 16) ? (4) : (width > 8) ? (2) : (1);
+	int vram_offset = (y << 2) + (x >> 5);
+	int row;
+
+	int shift_base = (4 - element_size) << 3;
+	int shift1 = (x & 31) - shift_base;
+	int shift2 = shift_base + 32 - (x & 31);
+
+	uint32_t and_mask_0 = 0xffffffff >> (x & 31);
+	uint32_t and_mask_1 = 0xffffffff << (64 - width - (x & 31));
+
+	uint32_t row_data, operator;
+
+	for(row = 0; row < height; row++)
+	{
+		row_data = bopti_rest_get(&rest, element_size);
+
+		operator = row_data >> shift1;
+		bopti_op(vram_offset, operator, and_mask_0, mode);
+
+		operator = row_data << shift2;
+		bopti_op(vram_offset + 1, operator, and_mask_1, mode);
+
+		vram_offset += 4;
 	}
 }
 

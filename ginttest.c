@@ -296,18 +296,19 @@ void bitmap_test(void)
 
 	enum BlendingMode blend = Blend_Or;
 	uint32_t a32 = 0xffffffff;
+	int black_bg = 0;
 	int key;
 
 	while(1)
 	{
 		dclear();
 
-		if(blend != Blend_Or) dreverse_area(0, 0, 127, 63);
+		if(black_bg) dreverse_area(0, 0, 127, 63);
 		dimage(opt, 0, 57, Blend_Invert);
 
 		dimage(sprites, 2 & a32, 2, blend);
-		dimage(sybl, 98 & a32, 4, blend);
-		dimage(sybl2, 98 & a32, 24, blend);
+		dimage(sybl, 30 & a32, 40, blend);
+		dimage(sybl2, 62 & a32, 40, blend);
 
 		dupdate();
 
@@ -318,7 +319,8 @@ void bitmap_test(void)
 		if(key == KEY_F2) blend = Blend_And;
 		if(key == KEY_F3) blend = Blend_Invert;
 
-		if(key == KEY_F4) a32 ^= 31;
+		if(key == KEY_F4) black_bg = !black_bg;
+		if(key == KEY_F5) a32 ^= 31;
 	}
 
 	return;

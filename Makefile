@@ -80,7 +80,7 @@ ginttest.g1a: libgint.a $(src-app) $(res-app)
 	$(ob) -R .comment -R .bss -O binary $(elf) $(bin)
 	$(wr) $(bin) -o ginttest.g1a -i icon.bmp
 	@ echo "\033[32;1mBinary file size: "`stat -c %s $(bin)`" bytes\033[0m"
-#	@ sh3eb-elf-objdump -h build/ginttest.elf
+	@ sh3eb-elf-objdump -h build/ginttest.elf
 
 
 
