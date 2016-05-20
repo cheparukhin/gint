@@ -4,6 +4,11 @@
 #include <keyboard.h>
 #include <display.h>
 #include <timer.h>
+#include <gray.h>
+#include <tales.h>
+
+#include <stdint.h>
+#include <7305.h>
 
 extern unsigned int bgint, egint;
 
@@ -11,17 +16,9 @@ extern unsigned int bgint, egint;
 //	A few procedures for displaying text in the system's vram.
 //---
 
-extern void __Print(const char *msg, int x, int y);
-
-void print_clear(void)
-{
-	char *empty_line = "                     ";
-	int i = 0;
-	while(i < 8) __Print(empty_line, 0, i++);
-}
 void print(const char *str, int x, int y)
 {
-	__Print(str, x, y);
+	print_raw(str, x, y);
 }
 void print_hex(unsigned int n, int x, int y)
 {
@@ -34,7 +31,7 @@ void print_hex(unsigned int n, int x, int y)
 		n >>= 4;
 	}
 	ch[10] = 0;
-	__Print(ch, x, y);
+	print(ch, x, y);
 }
 void print_bin(unsigned char n, int x, int y)
 {
@@ -47,7 +44,7 @@ void print_bin(unsigned char n, int x, int y)
 		n >>= 1;
 	}
 	ch[8] = 0;
-	__Print(ch, x, y);
+	print(ch, x, y);
 }
 void print_hexa(unsigned int n, int digits, int x, int y)
 {
@@ -61,31 +58,48 @@ void print_hexa(unsigned int n, int digits, int x, int y)
 	}
 
 	ch[digits] = 0;
-	__Print(ch, x, y);
+	print(ch, x, y);
 }
 
-/*
-	Keyboard tests.
-	The user timer reproduces the parameters of the keyboard timer.
-*/
 
+
+//---
+//	Test applications.
+//---
+
+/*
+	keyboard_test_timer()
+	Displays a keyboard test. The keyboard state is displayed as well, but	
+	there is a timer artifact. The keyboard state timer uses the same
+	period as the (internal) keyboard analysis timer, but there is a time
+	gap between a keyboard analysis and an update on the screen.
+*/
 void keyboard_test_timer(void)
 {
 	volatile unsigned char *state = keystate();
 
-	print_bin(state[0], 0, 1);
-	print_bin(state[1], 0, 2);
-	print_bin(state[2], 0, 3);
-	print_bin(state[3], 0, 4);
-	print_bin(state[4], 0, 5);
+	dclear_area(5, 10, 71, 34);
 
-	print_bin(state[5], 9, 1);
-	print_bin(state[6], 9, 2);
-	print_bin(state[7], 9, 3);
-	print_bin(state[8], 9, 4);
-	print_bin(state[9], 9, 5);
+	print_bin(state[0], 5, 10);
+	print_bin(state[1], 5, 16);
+	print_bin(state[2], 5, 22);
+	print_bin(state[3], 5, 28);
+	print_bin(state[4], 5, 34);
+
+	print_bin(state[5], 40, 10);
+	print_bin(state[6], 40, 16);
+	print_bin(state[7], 40, 22);
+	print_bin(state[8], 40, 28);
+	print_bin(state[9], 40, 34);
+
+	dupdate();
 }
 
+/*
+	keyboard_test()
+	Displays a multi-getkey test as well as the keyboard state in real
+	time.
+*/
 void keyboard_test(void)
 {
 	int x = 0;
@@ -95,36 +109,39 @@ void keyboard_test(void)
 
 	timer_start(TIMER_USER, 1700, TIMER_Po_256, keyboard_test_timer, 0);
 
-	print_clear();
-	print("Keyboard state:", 0, 0);
-	print("multi-getkey ^^", 6, 7);
-
 	while(1)
 	{
 		multigetkey(keys, 4, 0);
-
 		if(keys[0] == KEY_EXIT && keys[1] == KEY_NONE) break;
+
+		dclear();
+		print("Keyboard state:", 0, 0);
+		print("multi-getkey ^^", 50, 55);
 
 		#define	hexa(h) ('0' + (h) + 39 * ((h) > 9))
 
 		x = (x + 1) & 15;
 		str[0] = hexa(x);
 		str[1] = 0;
-		print(str, 20, 0);
+		print(str, 100, 0);
 
 		for(i = 0; i < 4; i++)
 		{
 			str[0] = hexa((keys[i] >> 4) & 0x0f);
 			str[1] = hexa(keys[i] & 0x0f);
 			str[2] = 0;
-			print(str, 19, i + 3);
+			print(str, 100, 16 + 10 * i);
 		}
 
 		#undef	hexa
+
+		dupdate();
 	}
 
 	timer_stop(TIMER_USER);
 }
+
+
 
 /*
 const unsigned char data[1024] = {
@@ -180,114 +197,16 @@ const unsigned char data[1024] = {
 255, 15, 31, 252, 31 };
 */
 
-
 /*
-static const unsigned char icon[76] = {
-0, 0, 0, 0, 51, 156, 10, 68, 74, 82, 11, 68, 74, 82, 234, 196, 122, 82, 10,
-68, 75, 156, 10, 68, 0, 0, 0, 4, 0, 254, 0, 4, 0, 130, 124, 4, 0, 130, 68, 4,
-0, 2, 4, 4, 3, 238, 196, 4, 2, 170, 93, 252, 0, 254, 65, 252, 7, 40, 65, 252,
-5, 232, 65, 252, 7, 15, 193, 252, 0, 0, 1, 252, 127, 255, 255, 252 };
-
-char *ML_vram_adress(void)
-{
-	return display_getVRAM();
-}
-
-void ML_bmp_or_cl(const unsigned char *bmp, int x, int y, int width, int height)
-{
-	unsigned short line;
-	char shift, *screen, *p;
-	int i, j, real_width, begin_x, end_x, begin_y, end_y;
-	char bool1=1, bool2=1, bool3;
-	if(!bmp || x<1-width || x>127 || y<1-height || y>63 || height<1 || width<1) return;
-	p = (char*)&line;
-	real_width = (width-1>>3<<3)+8;
-	if(y < 0) begin_y = -y;
-	else begin_y = 0;
-	if(y+height > 64) end_y = 64-y;
-	else end_y = height;
-	shift = 8-(x&7);
-	if(x<0)
-	{
-		begin_x = -x>>3;
-		if(shift != 8) bool1 = 0;
-	} else begin_x = 0;
-	if(x+real_width > 128) end_x = 15-(x>>3), bool2 = 0;
-	else end_x = real_width-1>>3;
-	bool3 = (end_x == real_width-1>>3);
-	screen = ML_vram_adress()+(y+begin_y<<4)+(x>>3);
-
-	for(i=begin_y ; i<end_y ; i++)
-	{
-		if(begin_x < end_x)
-		{
-			line = bmp[i*(real_width>>3)+begin_x] << shift;
-			if(bool1) screen[begin_x] |= *p;
-			if(shift!=8) screen[begin_x+1] |= *(p+1);
-			for(j=begin_x+1 ; j<end_x ; j++)
-			{
-				line = bmp[i*(real_width>>3)+j] << shift;
-				screen[j] |= *p;
-				if(shift!=8) screen[j+1] |= *(p+1);
-			}
-		}
-		line = bmp[i*(real_width>>3)+end_x];
-		if(bool3) line &= -1<<real_width-width;
-		line <<= shift;
-		if(begin_x < end_x || bool1) screen[end_x] |= *p;
-		if(bool2) screen[end_x+1] |= *(p+1);
-		screen += 16;
-	}
-}
+	bitmap_test()
+	Displays various bitmaps to ensure bopti is working correctly.
 */
-
-#include <stdint.h>
-#include <7305.h>
-
-/*
-unsigned int exec(void (*f)(void))
-{
-	int t, s, dt, ds;
-
-	t = (int)RTC.R64CNT;
-	s = 10 * (RTC.RSECCNT.TENS) + RTC.RSECCNT.ONES;
-
-	(*f)();
-
-	dt = (int)RTC.R64CNT - t;
-	ds = (10 * (RTC.RSECCNT.TENS) + RTC.RSECCNT.ONES) - s;
-	if(dt < 0) ds--, dt += 64;
-
-	return (ds << 8) | dt;
-}
-
-void btest_ml_icon(void)
-{
-	int i;
-	for(i = 0; i < 5000; i++)
-	{
-		ML_bmp_or_cl(icon, 0, 30, 30, 19);
-	}
-}
-void btest_gint_icon(void)
-{
-	extern Image binary_icon_start;
-
-	int i;
-	for(i = 0; i < 5000; i++)
-	{
-		dimage(&binary_icon_start, 0, 0, Blend_Or);
-	}
-}
-*/
-
 void bitmap_test(void)
 {
 	extern Image binary_resources_bitmap_opt_start;
 	extern Image binary_resources_symbol_start;
 	extern Image binary_resources_symbol2_start;
 	extern Image binary_resources_sprites_start;
-	extern Image binary_resources_swords_start;
 
 	Image *opt	= &binary_resources_bitmap_opt_start;
 	Image *sprites	= &binary_resources_sprites_start;
@@ -324,64 +243,78 @@ void bitmap_test(void)
 	}
 
 	return;
+}
 
-	dclear();
-	dreverse_area(0, 0, 127, 30);
 
-	dimage(sybl, 0, 0, Blend_Or);
-	dimage(sybl, 20, 0, Blend_And);
-	dimage(sybl, 40, 0, Blend_Or | Blend_And);
-	dimage(sybl, 90, 0, Blend_Or | Blend_Invert);
 
-	dimage(sybl2, 0, 20, Blend_Or);
-	dimage(sybl2, 20, 20, Blend_And);
-	dimage(sybl2, 28, 20, Blend_And);
-	dimage(sybl2, 40, 20, Blend_Or | Blend_And);
-	dimage(sybl2, 90, 20, Blend_Or | Blend_Invert);
-
-	dreverse_area(35, 31, 127, 63);
-	dimage(&binary_resources_sprites_start, 50, 31, Blend_And);
-
-	dupdate();
 /*
-	do key = getkey();
-	while(key != KEY_EXE && key != KEY_EXIT);
-	if(key == KEY_EXIT) return 0;
-
-	print("h'sszz 64z=1s", 0, 0);
-	print("ML", 14, 0);
-	print("gint", 17, 0);
-	print("---------------------", 0, 1);
-
-	print("30*19 icon", 0, 2);
-	print(wait, 12, 2);
-	print_hexa(exec(btest_ml_icon), 4, 12, 2);
-	print(wait, 17, 2);
-	print_hexa(exec(btest_gint_icon), 4, 17, 2);
+	text_test()
+	Renders text.
 */
-	while(getkey() != KEY_EXE);
+
+void text_test(void)
+{
+	extern Font binary_resources_font_start;
+	Font *font = &binary_resources_font_start;
+
+	print_configure(font, Blend_Or);
 
 	dclear();
-	dimage(&binary_resources_swords_start, 20, 20, Blend_Or);
+
+	print(" !\"#$%&'()*+,-./", 10, 10);
+	print("0123456789:;<=>?", 10, 16);
+	print("@ABCDEFGHIJKLMNO", 10, 22);
+	print("PQRSTUVWXYZ[\\]^_", 10, 28);
+	print("`abcdefghijklmno", 10, 34);
+	print("pqrstuvwxyz{|}~", 10, 40);
+
 	dupdate();
 
-	while(getkey() != KEY_EXE);
+	while(getkey() != KEY_EXIT);
 }
 
-void test(void)
+
+
+/*
+	gray_test()
+	Runs the gray engine.
+*/
+
+void gray_test(void)
 {
-	static int x = 0;
-	x++;
+	extern Image binary_resources_illustration_start;
+	Image *illustration = &binary_resources_illustration_start;
 
-	print_hex(x, 0, 0);
+	int light, dark;
+	int key;
+
+	gray_getDelays(&light, &dark);
+	gray_start();
+	dimage(illustration, 0, 0, Blend_Or);
+
+	while(1)
+	{
+		key = getkey();
+		if(key == KEY_EXIT) break;
+
+		if(key == KEY_F1) gray_setDelays(--light, dark);
+		if(key == KEY_F2) gray_setDelays(++light, dark);
+
+		if(key == KEY_F5) gray_setDelays(light, --dark);
+		if(key == KEY_F6) gray_setDelays(light, ++dark);
+	}
+
+	gray_stop();
 }
 
+/*
+	main_menu()
+	Displays the main menu and returns user's choice.
+
+	@return	User choice. 0 means EXIT, other numbers are applications.
+*/
 int main_menu(void)
 {
-	/*
-		Main menu.
-	*/
-
 	const char *mpu_names[] = {
 		"MPU_Unkown",
 		"MPU_SH7337",
@@ -392,18 +325,22 @@ int main_menu(void)
 	};
 	int key;
 
-	print_clear();
+	dclear();
 
-	print("gint test application", 0, 0);
-	print("---------------------", 0, 1);
+	print("gint test application", 19, 1);
+	dline(19, 8, 107, 8, Color_Black);
 
-	print("[1] Keyboard test", 2, 3);
-	print("[2] Drawing test", 2, 4);
+	print("[1] Keyboard", 10, 17);
+	print("[2] Bitmap drawing", 10, 24);
+	print("[3] Text rendering", 10, 31);
+	print("[4] Gray engine", 10, 38);
 
-	print("mpu type:", 0, 6);
-	print(mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5], 11, 6);
-	print("gint size:", 0, 7);
-	print_hex(&egint - &bgint, 11, 7);
+	print("mpu type:", 2, 49);
+	print(mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5], 50, 48);
+	print("gint size:", 2, 56);
+	print_hex(&egint - &bgint, 50, 56);
+
+	dupdate();
 
 	while(1)
 	{
@@ -412,13 +349,26 @@ int main_menu(void)
 
 		if(key == KEY_1) return 1;
 		if(key == KEY_2) return 2;
+		if(key == KEY_3) return 3;
+		if(key == KEY_4) return 4;
 	}
 
 	return 0;
 }
 
+/*
+	main()
+	Handles application calls.
+
+	@return	0.
+*/
 int main(void)
 {
+	extern Font binary_resources_font_start;
+	Font *font = &binary_resources_font_start;
+
+	print_configure(font, Blend_Or);
+
 	int app;
 
 	while(1)
@@ -428,6 +378,8 @@ int main(void)
 
 		if(app == 1) keyboard_test();
 		if(app == 2) bitmap_test();
+		if(app == 3) text_test();
+		if(app == 4) gray_test();
 	}
 
 	return 0;

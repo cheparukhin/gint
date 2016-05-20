@@ -56,6 +56,16 @@ void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
 */
 void timer_stop(int timer);
 
+/*
+	timer_reload()
+	Reloads the given timer with the given constant. Starts the timer if
+	it was stopped.
+
+	@arg	timer		Timer identifier.
+	@arg	new_delay
+*/
+void timer_reload(int timer, int new_delay);
+
 
 
 //---

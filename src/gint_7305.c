@@ -93,6 +93,7 @@ static void kdelay(void)
 	more details.
 
 	@arg	row	Row to check (0 <= row <= 9).
+
 	@return	Bit-based representation of pressed keys in the checked row.
 */
 static int krow(int row)

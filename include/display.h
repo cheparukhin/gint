@@ -2,6 +2,14 @@
 #define	_DISPLAY_H	1
 
 //---
+//	Included submodules.
+//---
+
+#include <tales.h>
+
+
+
+//---
 //	Types and constants.
 //---
 
@@ -60,12 +68,11 @@ enum ImageFormat
 */
 struct Image
 {
+	unsigned char magic;
+
 	unsigned char width;
 	unsigned char height;
 	unsigned char format;
-
-	// Ensures data is 4-aligned.
-	unsigned char gap;
 
 	const unsigned char __attribute__((aligned(4))) data[];
 
@@ -204,5 +211,7 @@ void dline(int x1, int y1, int x2, int y2, enum Color color);
 	@arg	mode
 */
 void dimage(struct Image *image, int x, int y, enum BlendingMode mode);
+
+
 
 #endif	// _DISPLAY_H

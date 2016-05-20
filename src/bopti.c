@@ -286,6 +286,8 @@ void dimage(struct Image *image, int x, int y, enum BlendingMode mode)
 	int height = image->height;
 	const unsigned char *data = (const unsigned char *)&(image->data);
 
+	if(image->magic != 0xb7) return;
+
 	// Computing the layer size.
 	int columns = image->width >> 5;
 	int rest = image->width & 31;

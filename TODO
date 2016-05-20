@@ -1,3 +1,15 @@
+@ vram overflow
+@ keyboard interface
+
+- upgraded blending modes
+- blending modes for text
+- information masks for text
+- test all font encodings
+- font clipping
+
+- bitmap parts
+- bitmap clipping
+
 - multi-getkey repeats (if possible, which doesn't seem likely)
 - it appears that multi-getkey does not always trigger rectangle effects on
   sh7305
@@ -11,5 +23,5 @@
 
 - check possible bug for optimization of __attribute__((interrupt_handler))
 
-_ 7305.h
-_ libc
+- 7305.h
+- libc

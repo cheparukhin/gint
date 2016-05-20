@@ -148,6 +148,7 @@ enum GetkeyOpt
 	non-NULL, it is set to the number of repetitions.
 
 	@arg	repeat_count
+
 	@return	Key matrix code.
 */
 int keylast(int *repeat_count);
@@ -223,6 +224,7 @@ enum KeyType
 	Ignores modifiers.
 
 	@arg	key
+
 	@return	Modified keycode.
 */
 int keyid(int key);
@@ -233,7 +235,8 @@ int keyid(int key);
 	other keys.
 
 	@arg	key
-	@return	Key character.
+
+	@return	Associated character.
 */
 int keychar(int key);
 
@@ -242,6 +245,7 @@ int keychar(int key);
 	Returns a key's type. Ignores modifiers.
 
 	@arg	key
+
 	@return	Key type.
 */
 enum KeyType keytype(int key);

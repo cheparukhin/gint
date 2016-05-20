@@ -1,11 +1,15 @@
 #include <display.h>
 #include <gray.h>
 #include <screen.h>
+#include <timer.h>
 
 static int internal_vrams[3][256];
 const void *vrams[4];
 
 static int current = 0;
+static int delays[2];
+
+#define	GRAY_PRESCALER	TIMER_Po_64
 
 /*
 	gray_start()
@@ -14,6 +18,7 @@ static int current = 0;
 */
 void gray_start(void)
 {
+	timer_start(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt, 0);
 }
 
 /*
@@ -23,6 +28,7 @@ void gray_start(void)
 */
 void gray_stop(void)
 {
+	timer_stop(TIMER_GRAY);
 	display_useVRAM(display_getLocalVRAM());
 }
 
@@ -45,6 +51,38 @@ void *gray_darkVRAM(void)
 }
 
 /*
+	gray_getDelays()
+	Returns the gray engine delays.
+
+	@arg	light	Will be set if non-NULL.
+	@arg	dark	Will be set if non-NULL.
+*/
+void gray_getDelays(int *light, int *dark)
+{
+	if(light) *light = delays[0];
+	if(dark) *dark = delays[1];
+}
+
+/*
+	gray_setDelays()
+	Changes the gray engine delays.
+
+	@arg	light	Light gray duration (the lower).
+	@arg	dark	Dark gray duration (the higher).
+*/
+void gray_setDelays(int light, int dark)
+{
+	delays[0] = light;
+	delays[1] = dark;
+}
+
+
+
+//---
+//	Internal API.
+//---
+
+/*
 	gray_swap()
 	Swaps the vram buffers.
 */
@@ -55,10 +93,11 @@ void gray_swap(void)
 
 /*
 	gray_interrupt()
-	Answers a timer interrupt. Swaps the two buffers.
+	Answers a timer interrupt. Swaps the buffers.
 */
 void gray_interrupt(void)
 {
+	timer_reload(TIMER_GRAY, delays[current & 1]);
 	screen_display(vrams[current]);
 	current ^= 1;
 }
@@ -73,4 +112,7 @@ void gray_init(void)
 	vrams[1] = (const void *)internal_vrams[0];
 	vrams[2] = (const void *)internal_vrams[1];
 	vrams[3] = (const void *)internal_vrams[2];
+
+	delays[0] = 3269;
+	delays[1] = 6987;
 }

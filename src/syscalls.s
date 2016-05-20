@@ -5,7 +5,9 @@
 
 	.global	___Hmem_SetMMU
 	.global	___GLibAddinAplExecutionCheck
-	.global	___Print
+	.global	_malloc
+	.global	_calloc
+	.global	_free
 
 
 
@@ -22,12 +24,26 @@ ___GLibAddinAplExecutionCheck:
 	jmp	@r2
 	nop
 
-___Print:
+_malloc:
 	mov.l	syscall_table, r2
 	mov.l	1f, r0
 	jmp	@r2
 	nop
-1:	.long	0x15d
+1:	.long	0xacd
+
+_calloc:
+	mov.l	syscall_table, r2
+	mov.l	1f, r0
+	jmp	@r2
+	nop
+1:	.long	0xe6b
+
+_free:
+	mov.l	syscall_table, r2
+	mov.l	1f, r0
+	jmp	@r2
+	nop
+1:	.long	0xacc
 
 
 

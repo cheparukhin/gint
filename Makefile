@@ -37,23 +37,25 @@ lib	= -lgcc -L. -lgint -lc
 # Gint library.
 src-lib = crt0.c syscalls.s \
           gint.c gint_vbr.s gint_7705.c gint_7305.c \
-          mpu.c keyboard.c screen.c display.c bopti.c gray.c timer.c
+          mpu.c keyboard.c screen.c display.c gray.c timer.c tales.c \
+          bopti.c
 hea-lib = 7305.h 7705.h gint.h \
           stdlib.h \
-          mpu.h keyboard.h screen.h display.h gray.h timer.h
+          mpu.h keyboard.h screen.h display.h gray.h timer.h tales.h
 obj-lib = $(addprefix build/, $(addsuffix .o, $(src-lib)))
 hdr-lib = $(addprefix include/, $(hea-lib))
 
 #  Standard library.
 src-std = setjmp.s string.c
-hea-std = setjmp.h string.h
+hea-std = setjmp.h string.h ctype.h
 obj-std = $(addprefix build/, $(addsuffix .o, $(src-std)))
 hdr-std = $(addprefix include/, $(hea-std))
 
 #  Test application.
 src-app = ginttest.c
-img-app = bitmap_opt.bmp swords.bmp sprites.bmp symbol.bmp symbol2.bmp
-res-app = $(addprefix build/, $(addsuffix .o, $(img-app)))
+img-app = bitmap_opt.bmp swords.bmp sprites.bmp symbol.bmp symbol2.bmp \
+          illustration.bmp
+res-app = build/font.o $(addprefix build/, $(addsuffix .o, $(img-app)))
 
 
 #
@@ -96,6 +98,9 @@ build/%.s.o: src/%.s
 
 build/%.bmp.o: resources/%.bmp
 	fxconv $^ -o $@
+
+build/font.o: resources/font.bmp
+	fxconv --font $^ -o $@
 
 # File gint.c should not be optimized... looks like attribute((interrupt_
 # handler)) doesn't like it. (It could be a gint bug also, I should check.)

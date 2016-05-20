@@ -31,6 +31,28 @@ void *gray_lightVRAM(void);
 */
 void *gray_darkVRAM(void);
 
+/*
+	gray_getDelays()
+	Returns the gray engine delays.
+
+	@arg	light	Will be set if non-NULL.
+	@arg	dark	Will be set if non-NULL.
+*/
+void gray_getDelays(int *light, int *dark);
+
+/*
+	gray_setDelays()
+	Changes the gray engine delays. Usually you don't need to call this,
+	because the engine has its default values.
+	Finding values that give proper grays is quite the hard part of the
+	gray engine. Usual values are about 1000, with light being between 75
+	and 90% of dark.
+
+	@arg	light	Light gray duration (the lower).
+	@arg	dark	Dark gray duration (the higher).
+*/
+void gray_setDelays(int light, int dark);
+
 //---
 //	Internal API.
 //	Referenced here for documentation purposes only. Do not call.
