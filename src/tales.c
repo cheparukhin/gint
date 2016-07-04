@@ -6,7 +6,6 @@
 #include <tales.h>
 
 static struct Font *font;
-static enum BlendingMode mode;
 
 //---
 //	Local functions.
@@ -198,10 +197,9 @@ static int update(uint32_t *operators, int height, int available,
 	@arg	font
 	@arg	mode
 */
-void print_configure(struct Font *next_font, enum BlendingMode next_mode)
+void print_configure(struct Font *next_font)
 {
 	font = next_font;
-	mode = next_mode;
 }
 
 /*

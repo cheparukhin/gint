@@ -213,7 +213,7 @@ void bitmap_test(void)
 	Image *sybl	= &binary_resources_symbol_start;
 	Image *sybl2	= &binary_resources_symbol2_start;
 
-	enum BlendingMode blend = Blend_Or;
+//	enum BlendingMode blend = Blend_Or;
 	uint32_t a32 = 0xffffffff;
 	int black_bg = 0;
 	int key;
@@ -223,20 +223,22 @@ void bitmap_test(void)
 		dclear();
 
 		if(black_bg) dreverse_area(0, 0, 127, 63);
-		dimage(opt, 0, 57, Blend_Invert);
+		dimage(opt, 0, 57);
 
-		dimage(sprites, 2 & a32, 2, blend);
-		dimage(sybl, 30 & a32, 40, blend);
-		dimage(sybl2, 62 & a32, 40, blend);
+		dimage(sprites, 2 & a32, 2);
+		dimage(sybl, 30 & a32, 40);
+		dimage(sybl2, 62 & a32, 40);
 
 		dupdate();
 
 		key = getkey();
 		if(key == KEY_EXIT) break;
 
+/*
 		if(key == KEY_F1) blend = Blend_Or;
 		if(key == KEY_F2) blend = Blend_And;
 		if(key == KEY_F3) blend = Blend_Invert;
+*/
 
 		if(key == KEY_F4) black_bg = !black_bg;
 		if(key == KEY_F5) a32 ^= 31;
@@ -257,7 +259,7 @@ void text_test(void)
 	extern Font binary_resources_font_start;
 	Font *font = &binary_resources_font_start;
 
-	print_configure(font, Blend_Or);
+	print_configure(font);
 
 	dclear();
 
@@ -290,18 +292,23 @@ void gray_test(void)
 
 	gray_getDelays(&light, &dark);
 	gray_start();
-	dimage(illustration, 0, 0, Blend_Or);
 
 	while(1)
 	{
+		gclear();
+		dimage(illustration, 0, 0);
+		gclear_area(64, 0, 127, 63);
+//		gupdate();
+
 		key = getkey();
 		if(key == KEY_EXIT) break;
-
+/*
 		if(key == KEY_F1) gray_setDelays(--light, dark);
 		if(key == KEY_F2) gray_setDelays(++light, dark);
 
 		if(key == KEY_F5) gray_setDelays(light, --dark);
 		if(key == KEY_F6) gray_setDelays(light, ++dark);
+*/
 	}
 
 	gray_stop();
@@ -367,7 +374,7 @@ int main(void)
 	extern Font binary_resources_font_start;
 	Font *font = &binary_resources_font_start;
 
-	print_configure(font, Blend_Or);
+	print_configure(font);
 
 	int app;
 

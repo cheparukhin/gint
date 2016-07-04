@@ -21,7 +21,7 @@
 			((c) >= 'a'	&& (c) <= 'f'))
 
 // Character manipulation macros.
-#define tolower(c) (isupper(c) ? (c)|32 : (c))
-#define toupper(c) (islower(c) ? (c)&~32 : (c))
+#define tolower(c) (isupper(c) ? (c) |  32 : (c))
+#define toupper(c) (islower(c) ? (c) & ~32 : (c))
 
 #endif // _CTYPE_H

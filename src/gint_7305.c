@@ -91,10 +91,6 @@ static void kdelay(void)
 	krow()
 	Reads a keyboard row. Works like krow() for SH7705. See gint_7705.c for
 	more details.
-
-	@arg	row	Row to check (0 <= row <= 9).
-
-	@return	Bit-based representation of pressed keys in the checked row.
 */
 static int krow(int row)
 {

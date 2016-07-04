@@ -8,8 +8,6 @@
 //	Types and constants.
 //---
 
-enum BlendingMode;
-
 /*
 	enum ImageFormat
 	This type holds information about the characters in the font. Each bit
@@ -78,7 +76,6 @@ typedef struct Font Font;
 
 
 
-
 //---
 //	Generic functions.
 //---
@@ -90,7 +87,7 @@ typedef struct Font Font;
 	@arg	font
 	@arg	mode
 */
-void print_configure(struct Font *font, enum BlendingMode mode);
+void print_configure(struct Font *font);
 
 /*
 	print_raw()

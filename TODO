@@ -1,27 +1,34 @@
-@ vram overflow
-@ keyboard interface
 
-- upgraded blending modes
-- blending modes for text
-- information masks for text
-- test all font encodings
-- font clipping
+                                 --------------
+                              Lots of things to do
+                                 --------------
 
-- bitmap parts
-- bitmap clipping
+  @    known bugs
+  +    simple improvements
+  -    important milestones
+  ~    needs investigation
 
-- multi-getkey repeats (if possible, which doesn't seem likely)
-- it appears that multi-getkey does not always trigger rectangle effects on
-  sh7305
 
-- write and test gray engine
-- full rtc driver (time)
-- callbacks and complete user API
+@  vram overflow
+@  keyboard test threading interface
 
-- exhaustive save for setjmp()
-- registers that need to be saved when configuring gint
++  compute frequencies
++  gray text
++  effective rtc callback
++  properly test gray drawing
++  upgraded blending modes
++  blending modes for text
++  information masks for text
++  test all font encodings
++  font clipping
++  bitmap parts
++  bitmap clipping
 
-- check possible bug for optimization of __attribute__((interrupt_handler))
+-  write and test gray engine
+-  full rtc driver (time)
+-  callbacks and complete user API
 
-- 7305.h
-- libc
+~  shadowy rectangle effect for Shift + Alpha + Left + Down
+~  exhaustive save for setjmp()
+~  registers that need to be saved when configuring gint
+~  possible bug when -O2 __attribute__((interrupt_handler))

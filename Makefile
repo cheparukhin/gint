@@ -1,8 +1,8 @@
-#
-#	fx-9860g lib Makefile.
-#
+#! /usr/bin/make -f
 
-.PHONY: all clean fclean re install
+#---
+#	fx-9860g lib Makefile.
+#---
 
 
 
@@ -23,8 +23,7 @@ bin = build/ginttest.bin
 elf = build/ginttest.elf
 
 #  Command-line options
-cflags	= -m3 -mb -nostdlib -ffreestanding \
-          -W -Wall -pedantic -std=c11 \
+cflags	= -m3 -mb -nostdlib -ffreestanding -W -Wall \
           -I . -isystem include
 lib	= -lgcc -L. -lgint -lc
 
@@ -42,20 +41,20 @@ src-lib = crt0.c syscalls.s \
 hea-lib = 7305.h 7705.h gint.h \
           stdlib.h \
           mpu.h keyboard.h screen.h display.h gray.h timer.h tales.h
-obj-lib = $(addprefix build/, $(addsuffix .o, $(src-lib)))
-hdr-lib = $(addprefix include/, $(hea-lib))
+obj-lib = $(patsubst %, build/%.o, $(src-lib))
+hdr-lib = $(patsubst %, include/%, $(hea-lib))
 
 #  Standard library.
 src-std = setjmp.s string.c
 hea-std = setjmp.h string.h ctype.h
-obj-std = $(addprefix build/, $(addsuffix .o, $(src-std)))
-hdr-std = $(addprefix include/, $(hea-std))
+obj-std = $(patsubst %, build/%.o, $(src-std))
+hdr-std = $(patsubst %, include/%, $(hea-str))
 
 #  Test application.
 src-app = ginttest.c
 img-app = bitmap_opt.bmp swords.bmp sprites.bmp symbol.bmp symbol2.bmp \
           illustration.bmp
-res-app = build/font.o $(addprefix build/, $(addsuffix .o, $(img-app)))
+res-app = $(patsubst %, build/%.o, $(img-app)) build/font.o
 
 
 #
@@ -77,7 +76,7 @@ libc.a: $(obj-std)
 	@ echo "\033[32;1mStandard file size: "`stat -c %s libc.a` \
 		"bytes\033[0m"
 
-ginttest.g1a: libgint.a $(src-app) $(res-app)
+$(g1a): libgint.a $(src-app) $(res-app)
 	$(cc) $(src-app) $(res-app) -T ginttest.ld -o $(elf) $(cflags) $(lib)
 	$(ob) -R .comment -R .bss -O binary $(elf) $(bin)
 	$(wr) $(bin) -o ginttest.g1a -i icon.bmp
@@ -97,7 +96,7 @@ build/%.s.o: src/%.s
 	$(as) -c $^ -o $@
 
 build/%.bmp.o: resources/%.bmp
-	fxconv $^ -o $@
+	fxconv $^ -o $@ --preview
 
 build/font.o: resources/font.bmp
 	fxconv --font $^ -o $@
@@ -136,3 +135,7 @@ re: distclean all
 
 install:
 	usb-connector SEND ginttest.g1a ginttest.g1a fls0
+
+
+
+.PHONY: all clean mrproper distclean re install

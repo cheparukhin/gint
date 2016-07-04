@@ -1,74 +1,152 @@
+//---
+//
+//	gint drawing module: bopti
+//
+//	bopti does every job related to display images. There is only one
+//	public function, but there are lots of internal optimizations.
+//
+//	Some bit-manipulation expressions may look written out of nowhere. The
+//	idea is always the same: get a part of the image in an 'operator',
+//	which is a 32-bit variable, shift this operator so that its bits
+//	correspond to the desired position for the bitmap on the screen, and
+//	edit the video-ram long entry which correspond to this position using
+//	a 'mask' that indicates which bits of the operator contain information.
+//
+//---
+
 #include <display.h>
 #include <stdint.h>
 #include <gray.h>
 
+
 //---
-//	Image drawing. There is only one public function dimage(), but there
-//	are lots of local methods and optimizations.
-//
-//	Some expressions may look nonsense sometimes. The procedure is always
-//	the same : get a part of the image in an operator, shift it depending
-//	on the drawing x-coordinate, compute a mask that indicates which bits
-//	of the operator contain information, and modify a vram long using the
-//	operator and the mask.
+//	Heading declarations.
 //---
 
-// This pointer is set by bopti().
-static int *vram;
+/*
+	enum Channel
+	Determines the kind of information written into a layer. Every image is
+	made of one or more channels.
+*/
+enum Channel
+{
+	Channel_Mono		= 0x01,
+	Channel_Light		= 0x02,
+	Channel_Dark		= 0x04,
+
+	Channel_FullAlpha	= 0x08,
+	Channel_LightAlpha	= 0x10,
+	Channel_DarkAlpha	= 0x20,
+};
+
+/*
+	enum Format
+	Describes the various combination of channels allowed by bopti.
+*/
+enum Format
+{
+	Format_Mono		= Channel_Mono,
+	Format_MonoAlpha	= Format_Mono | Channel_FullAlpha,
+	Format_Gray		= Channel_Light | Channel_Dark,
+	Format_GrayAlpha	= Format_Gray | Channel_FullAlpha,
+	Format_GreaterAlpha	= Format_Mono | Channel_LightAlpha |
+				  Channel_DarkAlpha
+};
+
+// These pointers are set by dimage() to avoid having to repeatedly determine
+// which video ram to use.
+static int *vram, *v1, *v2;
+// The following variables refer to parameters that do not change during the
+// drawing operation (at least for the time of a layer). They could be passed
+// on by every function from the module, but this would be heavy and useless.
+static enum Channel channel;
+static int height;
+static void (*op)(int offset, uint32_t operator, uint32_t op_mask);
+
+
+
+//---
+//	Drawing operation.
+//---
 
 /*
 	bopti_op()
 	Operates on a vram long. The operator will often not contain 32 bits of
-	image information. In this case, the bits outside the image must be set
-	to 0 for Or and Invert operations... 1 for And operations. Which means
-	that the calling procedure must indicate what part of the operator
-	belongs to the image, which is done through the image_mask argument.
-
-	@arg	offset		Vram offset where edition is planned.
-	@arg	operator	Longword to operate with.
-	@arg	image_mask	Part of the operator that is inside the image.
-	@arg	mode		Operation mode.
+	image information. Since neutral bits are not the same for all
+	operations, the op_mask argument indicates which bits should be used
+	for the operation. Which operation has to be done is determined by the
+	channel setting.
 */
-static void bopti_op(int offset, uint32_t operator, uint32_t image_mask,
-	enum BlendingMode mode)
+static void bopti_op_mono(int offset, uint32_t operator, uint32_t op_mask)
 {
-	if(mode & Blend_Checker)	operator &= 0x55555555;
-	if(mode & Blend_Or)		vram[offset] |= operator;
-	if(mode & Blend_Invert)		vram[offset] ^= operator;
-	operator |= ~image_mask;
-	if(mode & Blend_And)		vram[offset] &= operator;
+	operator &= op_mask;
+
+	switch(channel)
+	{
+	case Channel_Mono:
+		vram[offset] |= operator;
+		break;
+
+	case Channel_FullAlpha:
+		vram[offset] &= ~operator;
+		break;
+
+	default:
+		break;
+	}
+}
+static void bopti_op_gray(int offset, uint32_t operator, uint32_t op_mask)
+{
+	operator &= op_mask;
+
+	switch(channel)
+	{
+	case Channel_Mono:
+		v1[offset] |= operator;
+		v2[offset] |= operator;
+		break;
+
+	case Channel_Light:
+		v1[offset] |= operator;
+		break;
+
+	case Channel_Dark:
+		v2[offset] |= operator;
+		break;
+
+	case Channel_FullAlpha:
+		v1[offset] &= ~operator;
+		v2[offset] &= ~operator;
+		break;
+
+	case Channel_LightAlpha:
+	case Channel_DarkAlpha:
+		break;
+	}
 }
 
 /*
 	bopti_grid()		-- general form
 	bopti_grid_a32()	-- when x is a multiple of 32
 
-	Draws a layer whose length is a multiple of 32.
+	Draws the grid at the beginning of a layer's data. The length of this
+	grid is always a multiple of 32.
 	The need for bopti_grid_a32() is not only linked to optimization,
-	because one of the bit shifts in bopti_grid() will reach 32 when x is
-	a multiple of 32, which is undefined behavior.
-
-	@arg	layer		Raw column data (column data is located at the
-				beginning of layer data).
-	@arg	x
-	@arg	y
-	@arg	column_number
-	@arg	height
-	@arg	mode
+	because bopti_grid() will perform a 32-bit shift when x is a multiple
+	of 32, which is undefined behavior.
 */
-
 static void bopti_grid_a32(const uint32_t *layer, int x, int y,
-	int column_number, int height, enum BlendingMode mode)
+	int column_count)
 {
 	int vram_column_offset = (y << 2) + (x >> 5);
 	int vram_offset = vram_column_offset;
 	int column, row;
 
-	for(column = 0; column < column_number; column++)
+	for(column = 0; column < column_count; column++)
 	{
 		for(row = 0; row < height; row++)
 		{
-			bopti_op(vram_offset, *layer, 0xffffffff, mode);
+			(*op)(vram_offset, *layer, 0xffffffff);
 			layer++;
 			vram_offset += 4;
 		}
@@ -77,10 +155,15 @@ static void bopti_grid_a32(const uint32_t *layer, int x, int y,
 		vram_offset = vram_column_offset;
 	}
 }
-
-static void bopti_grid(const uint32_t *layer, int x, int y, int column_number,
-	int height, enum BlendingMode mode)
+static void bopti_grid(const uint32_t *layer, int x, int y, int column_count)
 {
+	if(!column_count) return;
+	if(!(x & 31))
+	{
+		bopti_grid_a32(layer, x, y, column_count);
+		return;
+	}
+
 	const uint32_t *p1, *p2;
 	uint32_t l1, l2;
 	int right_column, line;
@@ -95,33 +178,26 @@ static void bopti_grid(const uint32_t *layer, int x, int y, int column_number,
 	uint32_t and_mask_0 = 0xffffffff >> shift2;
 	uint32_t and_mask_1 = 0xffffffff << shift1;
 
-	if(!column_number) return;
-	if(!(x & 31))
-	{
-		bopti_grid_a32(layer, x, y, column_number, height, mode);
-		return;
-	}
-
 	// Initializing two pointers. Since the columns are written one after
 	// another, they will be updated directly to parse the whole grid.
 	p1 = layer - height;
 	p2 = layer;
 
 	// Drawing vram longwords, using pairs of columns.
-	for(right_column = 0; right_column <= column_number; right_column++)
+	for(right_column = 0; right_column <= column_count; right_column++)
 	{
 		and_mask = 0xffffffff;
 		if(right_column == 0)			and_mask &= and_mask_0;
-		if(right_column == column_number)	and_mask &= and_mask_1;
+		if(right_column == column_count)	and_mask &= and_mask_1;
 
 		for(line = 0; line < height; line++)
 		{
 			l1 = (right_column > 0) ? (*p1) : (0);
-			l2 = (right_column < column_number) ? (*p2) : (0);
+			l2 = (right_column < column_count) ? (*p2) : (0);
 			p1++, p2++;
 
 			operator = (l1 << shift1) | (l2 >> shift2);
-			bopti_op(vram_offset, operator, and_mask, mode);
+			(*op)(vram_offset, operator, and_mask);
 			vram_offset += 4;
 		}
 
@@ -131,65 +207,44 @@ static void bopti_grid(const uint32_t *layer, int x, int y, int column_number,
 }
 
 /*
-	bopti_rest_get()
-	Returns the line of a bitmap, whose width is lower than 32. The given
-	pointer is read and set according to the bitmap width.
-
-	@arg	ptr	Address of data pointer.
-	@arg	size	Element size (should be 1, 2, or 4 bytes).
+	bopti_end_get()
+	Returns an operator for the end of a line, whose width is lower than 32
+	(by design: otherwise, it would have been a column). The given pointer
+	is read and updated so that it points to the next line at the end of
+	the operation.
 */
-static uint32_t bopti_rest_get(const unsigned char **data, int size)
+static uint32_t bopti_end_get1(const unsigned char **data)
 {
-	uint32_t line;
-
-	if(size == 4)
-	{
-		line = *((uint32_t *)*data);
-		*data += 4;
-		return line;
-	}
-
-	else if(size == 2)
-	{
-		line = *((uint16_t *)*data);
-		*data += 2;
-		return line;
-	}
-
-	else
-	{
-		line = **data;
-		(*data)++;
-		return line;
-	}
+	uint32_t operator = **data;
+	*data += 1;
+	return operator;
+}
+static uint32_t bopti_end_get2(const unsigned char **data)
+{
+	uint32_t operator = *((uint16_t *)*data);
+	*data += 2;
+	return operator;
 }
 
 /*
 	bopti_rest()		-- general form
-	bopti_rest_nover()	-- when the bitmap does not overlap two longs
+	bopti_rest_nover()	-- when the end does not overlap two vram longs
 
-	Draws a bitmap, whose width is lower than 32. It is called the 'rest'
-	since the biggest part will be drawn by bopti_grid().
-
-	@arg	rest	Ending data. Encoded on 1, 2 or 4 bytes per line
-			depending on the rest width.
-	@arg	x
-	@arg	y
-	@arg	width	Rest width.
-	@arg	height
-	@arg	mode
+	Draws the end of a layer, which can be considered as a whole layer
+	whose with is lower than 32. (Actually is it lower or equal to 16;
+	otherwise it would have been a column and the end would be empty).
 */
-
-static void bopti_rest_nover(const unsigned char *rest, int x, int y,
-	int width, int height, enum BlendingMode mode)
+static void bopti_end_nover(const unsigned char *end, int x, int y, int width)
 {
-	int element_size = (width > 16) ? (4) : (width > 8) ? (2) : (1);
+	uint32_t (*get)(const unsigned char **data) =
+		(width > 8) ? bopti_end_get2 : bopti_end_get1;
+
 	int vram_offset = (y << 2) + (x >> 5);
 	int row;
 
 	// We *have* shift >= 0 because of this function's 'no overlap'
 	// requirement.
-	int shift_base = (4 - element_size) << 3;
+	int shift_base = (width > 8) ? 16 : 24;
 	int shift = shift_base - (x & 31);
 
 	uint32_t and_mask = (0xffffffff << (32 - width)) >> (x & 31);
@@ -197,28 +252,28 @@ static void bopti_rest_nover(const unsigned char *rest, int x, int y,
 
 	for(row = 0; row < height; row++)
 	{
-		operator = bopti_rest_get(&rest, element_size);
+		operator = (*get)(&end);
 		operator <<= shift;
 
-		bopti_op(vram_offset, operator, and_mask, mode);
+		(*op)(vram_offset, operator, and_mask);
 		vram_offset += 4;
 	}
 }
-
-static void bopti_rest(const unsigned char *rest, int x, int y, int width,
-	int height, enum BlendingMode mode)
+static void bopti_end(const unsigned char *end, int x, int y, int width)
 {
 	if((x & 31) + width <= 32)
 	{
-		bopti_rest_nover(rest, x, y, width, height, mode);
+		bopti_end_nover(end, x, y, width);
 		return;
 	}
 
-	int element_size = (width > 16) ? (4) : (width > 8) ? (2) : (1);
+	uint32_t (*get)(const unsigned char **data) =
+		(width > 8) ? (bopti_end_get2) : (bopti_end_get1);
+
 	int vram_offset = (y << 2) + (x >> 5);
 	int row;
 
-	int shift_base = (4 - element_size) << 3;
+	int shift_base = (width > 8) ? 16 : 24;
 	int shift1 = (x & 31) - shift_base;
 	int shift2 = shift_base + 32 - (x & 31);
 
@@ -229,99 +284,150 @@ static void bopti_rest(const unsigned char *rest, int x, int y, int width,
 
 	for(row = 0; row < height; row++)
 	{
-		row_data = bopti_rest_get(&rest, element_size);
+		row_data = (*get)(&end);
 
 		operator = row_data >> shift1;
-		bopti_op(vram_offset, operator, and_mask_0, mode);
+		(*op)(vram_offset, operator, and_mask_0);
 
 		operator = row_data << shift2;
-		bopti_op(vram_offset + 1, operator, and_mask_1, mode);
+		(*op)(vram_offset + 1, operator, and_mask_1);
 
 		vram_offset += 4;
 	}
 }
 
+
+
+//---
+//	Wrappers and various functions.
+//---
+
 /*
 	bopti()
-	Draws an image layer in the video ram.
-
-	@arg	bitmap	Raw layer data.
-	@arg	x
-	@arg	y
-	@arg	width
-	@arg	height
-	@arg	mode
+	Draws a layer in the video ram.
 */
 
-static void bopti(const unsigned char *layer, int x, int y, int width,
-	int height, enum BlendingMode mode)
+static void bopti(const unsigned char *layer, int x, int y, int columns,
+	int end_size)
 {
-	int column_number	= width >> 5;
-	int rest_width		= width & 31;
+	const unsigned char *end = layer + ((columns * height) << 2);
+	int end_x = x + (columns << 5);
 
-	vram = display_getCurrentVRAM();
+	bopti_grid((const uint32_t *)layer, x, y, columns);
+	if(end_size) bopti_end(end, end_x, y, end_size);
+}
 
-	// Skipping 'column_number' columns of 'height' longs.
-	const unsigned char *rest = layer + ((column_number * height) << 2);
-	int rest_x = x + (width - rest_width);
+/*
+	getStructure()
+	Determines the image size and data pointer.
+*/
+static void getStructure(struct Image *img, int *width, int *height,
+	int *layer_size, const unsigned char **data, int *columns,
+	int *end_size)
+{
+	int column_count, end, end_bytes, layer;
 
-	bopti_grid((const uint32_t *)layer, x, y, column_number, height, mode);
-	if(!rest_width) return;
-	bopti_rest(rest, rest_x, y, rest_width, height, mode);
+	// Large images.
+	if(!img->width && !img->height)
+	{
+		if(width)	*width  = (img->data[0] << 8) | img->data[1];
+		if(height)	*height = (img->data[2] << 8) | img->data[3];
+		if(data)	*data   = img->data + 4;
+
+		column_count = (*width + 31) >> 5;
+		end = end_bytes = 0;
+	}
+	else
+	{
+		if(width)	*width  = img->width;
+		if(height)	*height = img->height;
+		if(data)	*data   = img->data;
+
+		column_count = img->width >> 5;
+		end = img->width & 31;
+		end_bytes =
+			!end		? 0 :
+			end <= 8	? 1 :
+			end <= 16	? 2 :
+			4;
+	}
+
+	// The layer size must be rounded to a multiple of 4.
+	layer = img->height * ((column_count << 2) + end_bytes);
+	if(layer & 3) layer += 4 - (layer & 3);
+
+	if(columns)	*columns    = column_count;
+	if(end_size)	*end_size   = end;
+	if(layer_size)	*layer_size = layer;
 }
 
 /*
 	dimage()
-	Displays an image in the vram.
-
-	@arg	image
-	@arg	x
-	@arg	y
-	@arg	mode
+	Displays a monochrome image in the video ram.
 */
-
-void dimage(struct Image *image, int x, int y, enum BlendingMode mode)
+void dimage(struct Image *img, int x, int y)
 {
-	int width = image->width;
-	int height = image->height;
-	const unsigned char *data = (const unsigned char *)&(image->data);
+	int width, layer_size, columns, end;
+	int format = img->format, i = 0;
+	const unsigned char *data;
 
-	if(image->magic != 0xb7) return;
+	if(img->magic != 0xb7) return;
+	if(img->format != Format_Mono && img->format != Format_MonoAlpha)
+		return;
+	op = bopti_op_mono;
 
-	// Computing the layer size.
-	int columns = image->width >> 5;
-	int rest = image->width & 31;
-	int rest_size =
-		!rest		? 0 :
-		rest <= 8	? 1 :
-		rest <= 16	? 2 :
-		4;
-	int layer_size = ((columns << 2) + rest_size) * image->height;
-	// The layer size must be a multiple of 4.
-	if(layer_size & 3) layer_size += 4 - (layer_size & 3);
+	// 'height' refers to a static variable for this file.
+	getStructure(img, &width, &height, &layer_size, &data, &columns, &end);
 
-	switch(image->format & ImageFormat_ColorMask)
+	vram = display_getCurrentVRAM();
+
+	while(format)
 	{
-	case ImageFormat_Mono:
-		if(image->format & ImageFormat_Alpha)
+		// Drawing every layer, in order of formats.
+		if(format & 1)
 		{
-			bopti(data + layer_size, x, y, width, height,
-				Blend_And);
-		}
-		bopti(data, x, y, width, height, mode);
-		break;
-
-	case ImageFormat_Gray:
-		if(image->format & ImageFormat_Alpha)
-		{
-			bopti(data + 2 * layer_size, x, y, width, height,
-				Blend_And);
+			channel = (1 << i);
+			bopti(data, x, y, columns, end);
+			data += layer_size;
 		}
 
-		display_useVRAM(gray_darkVRAM());
-		bopti(data, x, y, width, height, mode);
-		display_useVRAM(gray_lightVRAM());
-		bopti(data + layer_size, x, y, width, height, mode);
-		break;
+		format >>= 1;
+		i++;
 	}
+
+}
+
+/*
+	gimage()
+	Displays a gray image in the video ram.
+*/
+void gimage(struct Image *img, int x, int y)
+{
+	int width, layer_size, columns, end;
+	int format = img->format, i = 0;
+	const unsigned char *data;
+
+	if(img->magic != 0xb7) return;
+	op = bopti_op_gray;
+
+	// 'height' refers to a static variable for this file.
+	getStructure(img, &width, &height, &layer_size, &data, &columns, &end);
+
+	v1 = gray_lightVRAM();
+	v2 = gray_darkVRAM();
+
+	while(format)
+	{
+		// Drawing every layer, in order of formats.
+		if(format & 1)
+		{
+			channel = (1 << i);
+			bopti(data, x, y, columns, end);
+			data += layer_size;
+		}
+
+		format >>= 1;
+		i++;
+	}
+
 }

@@ -1,9 +1,25 @@
+//---
+//
+//	gint core/drawing module: gray
+//
+//	Runs the gray engine and handles drawing for the dual-buffer system.
+//
+//---
+
 #ifndef	_GRAY_H
 #define	_GRAY_H	1
 
+#include <display.h>
+
 //---
-//	Public API.
+//	Engine control.
 //---
+
+/*
+	gray_runs()
+	Returns 1 if the gray engine is running, 0 otherwise.
+*/
+int gray_runs(void);
 
 /*
 	gray_start()
@@ -33,10 +49,7 @@ void *gray_darkVRAM(void);
 
 /*
 	gray_getDelays()
-	Returns the gray engine delays.
-
-	@arg	light	Will be set if non-NULL.
-	@arg	dark	Will be set if non-NULL.
+	Returns the gray engine delays. Pointers are not set if NULL.
 */
 void gray_getDelays(int *light, int *dark);
 
@@ -47,22 +60,71 @@ void gray_getDelays(int *light, int *dark);
 	Finding values that give proper grays is quite the hard part of the
 	gray engine. Usual values are about 1000, with light being between 75
 	and 90% of dark.
-
-	@arg	light	Light gray duration (the lower).
-	@arg	dark	Dark gray duration (the higher).
 */
 void gray_setDelays(int light, int dark);
+
+
+
+//---
+//	Global drawing functions.
+//---
+
+/*
+	gupdate()
+	Swaps the vram buffer sets.
+*/
+void gupdate(void);
+
+/*
+	gclear()
+	Clears the video ram.
+*/
+void gclear(void);
+
+/*
+	gclear_area()
+	Clears an area of the video ram. End points (x1, y1) and (x2, y2) are
+	included.
+*/
+void gclear_area(int x1, int y1, int x2, int y2);
+
+/*
+	greverse_area()
+	Reverses an area of the vram. End points (x1, y1) and (x2, y2) are
+	included.
+*/
+void greverse_area(int x1, int y1, int x2, int y2);
+
+
+
+//---
+//	Local drawing functions.
+//---
+
+/*
+	gpixel()
+	Puts a pixel in the vram.
+*/
+void gpixel(int x, int y, enum Color color);
+
+/*
+	gline()
+	Draws a line in the vram. Automatically optimizes special cases.
+*/
+void gline(int x1, int y1, int x2, int y2, enum Color color);
+
+/*
+	gimage()
+	Displays a gray image in the vram.
+*/
+void gimage(struct Image *image, int x, int y);
+
+
 
 //---
 //	Internal API.
 //	Referenced here for documentation purposes only. Do not call.
 //--
-
-/*
-	gray_swap()
-	Swaps the vram buffers.
-*/
-void gray_swap(void);
 
 /*
 	gray_interrupt()

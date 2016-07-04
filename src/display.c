@@ -1,27 +1,29 @@
-/*
-	display
-
-	Handles vram manipulation and drawing.
-
-	:: Rectangle masks
-
-	The concept of 'rectangle masks' is used several times in this module.
-	It consists in saying that an operation that affects a rectangle acts
-	the same on all the lines (considering that only the lines that
-	intersect the rectangle are changed) and therefore it is possible to
-	represent the behavior on a single line using 'masks' that indicate
-	whether a pixel is affected (1) or not (0).
-
-	For example when clearing the screen rectangle (16, 16, 112, 48), the
-	masks will represent information '16 to 112 on x-axis', and will hold
-	the following values : 0000ffff, ffffffff, ffffffff and ffff0000. These
-	masks can then be used by setting vram[offset] &= ~masks[i]. This
-	appears to be very flexible : for instance, reversing a rectangle of
-	vram only needs vram[offset] ^= masks[i].
-
-	This technique can also be used in more subtle cases with more complex
-	patterns, but within this module it is unlikely to happen.
-*/
+//---
+//
+//	gint drawing module: display
+//
+//	Handles vram manipulation and drawing.
+//
+//
+//	:: Rectangle masks
+//
+//	The concept of 'rectangle masks' is used several times in this module.
+//	It is based on the fact that an operation that affects a rectangle acts
+//	the same on all its lines. Therefore the behavior of the operation is
+//	determined by its behavior on a single line, which is represented using
+//	'masks' whose bits indicate whether a pixel is affected (1) or not (0).
+//
+//	For example when clearing the screen rectangle (16, 16, 112, 48), the
+//	masks will represent information '16 to 112 on x-axis', and will hold
+//	the following values : 0000ffff, ffffffff, ffffffff and ffff0000. These
+//	masks can then be used by setting vram[offset] &= ~masks[i]. This
+//	appears to be very flexible : for instance, vram[offset] ^= masks[i]
+//	will reverse the pixels in the same rectangle.
+//
+//	This technique can also be used in more subtle cases with more complex
+//	patterns, but within this module it is unlikely to happen.
+//
+//---
 
 #include <screen.h>
 #include <display.h>
@@ -47,14 +49,10 @@ static int *vram = local_vram;
 /*
 	adjust()
 	Adjusts the given rectangle coordinates to ensure that :
-	- The rectangle is entirely contained in the screen,
-	- x1 < x2 and y1 < y2,
+	- the rectangle is entirely contained in the screen
+	- x1 < x2
+	- y1 < y2
 	which is needed when working with screen rectangles.
-
-	@arg	x1
-	@arg	y1
-	@arg	x2
-	@arg	y2
 */
 static void adjust(int *x1, int *y1, int *x2, int *y2)
 {
@@ -75,11 +73,8 @@ static void adjust(int *x1, int *y1, int *x2, int *y2)
 	getmasks()
 
 	Computes the rectangle masks needed to affect pixels located between x1
-	and x2 (both included).
-
-	@arg	x1
-	@arg	x2
-	@arg	masks	Four-integer-array pointer.
+	and x2 (both included). The four masks are stored in the third argument
+	(seen as an array).
 */
 static void getmasks(int x1, int x2, unsigned int *masks)
 {
@@ -99,11 +94,10 @@ static void getmasks(int x1, int x2, unsigned int *masks)
 	// number of null bits to add in l1 and l2.
 	x1 &= 31;
 	// Inverting x2 is here the same as computing 32 - x, since 32 is a
-	// power of 2 (actually it creates positive bits at the left but those
-	// ones are removed by the bitwise-and mask).
+	// power of 2 (positive bits at the left are removed by the mask).
 	x2 = ~x2 & 31;
 
-	// Setting the last masks.
+	// Setting the first and last masks.
 	masks[l1] &= (0xffffffff >> x1);
 	masks[l2] &= (0xffffffff << x2);
 }
@@ -116,34 +110,37 @@ static void getmasks(int x1, int x2, unsigned int *masks)
 
 /*
 	display_getLocalVRAM()
-	Returns the local video ram.
-
-	@return	Video ram address.
+	Returns the local video ram address. This function always return the
+	same address.
+	The buffer returned by this function should not be used directly when
+	running the gray engine.
 */
-void *display_getLocalVRAM(void)
+inline void *display_getLocalVRAM(void)
 {
 	return (void *)local_vram;
 }
 
 /*
 	display_getCurrentVRAM()
-	Returns the current vido ram.
-
-	@return	Video ram address.
+	Returns the current video ram. This function usually returns the
+	parameter of the last call to display_useVRAM(), unless the gray engine
+	is running (in which case the result is undefined). Returns the local
+	vram address by default.
 */
-void *display_getCurrentVRAM(void)
+inline void *display_getCurrentVRAM(void)
 {
 	return (void *)vram;
 }
 
 /*
 	display_useVRAM()
-	Changes the current video ram address. Expects a *4-aligned* 1024-byte
-	buffer.
-
-	@arg	New video ram address.
+	Changes the current video ram address. The argument MUST be a 4-
+	aligned 1024-byte buffer ; otherwise any drawing operation will crash
+	the program.
+	This function will most likely have no effect when running the gray
+	engine.
 */
-void display_useVRAM(void *ptr)
+inline void display_useVRAM(void *ptr)
 {
 	vram = (int *)ptr;
 }
@@ -160,6 +157,7 @@ void display_useVRAM(void *ptr)
 */
 void dupdate(void)
 {
+	if(gray_runs()) return;
 	screen_display((const void *)local_vram);
 }
 
@@ -175,12 +173,8 @@ void dclear(void)
 
 /*
 	dclear_area()
-	Clears an area of the vram using rectangle masks.
-
-	@arg	x1
-	@arg	y1
-	@arg	x2
-	@arg	y2
+	Clears an area of the vram using rectangle masks. Both (x1, y1) and
+	(x2, y2) are cleared.
 */
 void dclear_area(int x1, int y1, int x2, int y2)
 {
@@ -188,23 +182,19 @@ void dclear_area(int x1, int y1, int x2, int y2)
 	adjust(&x1, &y1, &x2, &y2);
 	getmasks(x1, x2, masks);
 
-	int offset = y1 << 2;
+	int begin = y1 << 2;
 	int end = (y2 + 1) << 2;
 	int i;
 
 	for(i = 0; i < 4; i++) masks[i] = ~masks[i];
-	while(offset < end) vram[offset] &= masks[offset & 3], offset++;
+	for(i = begin; i < end; i++) vram[i] &= masks[i & 3];
 }
 
 /*
 	dreverse_area()
 	Reverses an area of the vram. This function is a simple application of
-	the rectangle masks concept.
-
-	@arg	x1
-	@arg	y1
-	@arg	x2
-	@arg	y2
+	the rectangle masks concept. (x1, y1) and (x2, y2) are reversed as
+	well.
 */
 void dreverse_area(int x1, int y1, int x2, int y2)
 {
@@ -212,10 +202,25 @@ void dreverse_area(int x1, int y1, int x2, int y2)
 	adjust(&x1, &y1, &x2, &y2);
 	getmasks(x1, x2, masks);
 
-	int offset = y1 << 2;
+	int begin = y1 << 2;
 	int end = (y2 + 1) << 2;
+	int i;
 
-	while(offset < end) vram[offset] ^= masks[offset & 3], offset++;
+	if(gray_runs())
+	{
+		int *v1 = gray_lightVRAM();
+		int *v2 = gray_darkVRAM();
+
+		for(i = begin; i < end; i++)
+		{
+			v1[i] ^= masks[i & 3];
+			v2[i] ^= masks[i & 3];
+		}
+	}
+	else for(i = begin; i < end; i++)
+	{
+		vram[i] ^= masks[i & 3];
+	}
 }
 
 
@@ -226,15 +231,12 @@ void dreverse_area(int x1, int y1, int x2, int y2)
 
 /*
 	dpixel()
-	Puts a pixel on the screen.
-
-	@arg	x
-	@arg	y
-	@arg	color
+	Puts a pixel in the vram.
 */
 void dpixel(int x, int y, enum Color color)
 {
 	if((unsigned int)x > 127 || (unsigned int)y > 63) return;
+
 	int offset = (y << 2) + (x >> 5);
 	int mask = 0x80000000 >> (x & 31);
 
@@ -248,11 +250,11 @@ void dpixel(int x, int y, enum Color color)
 		vram[offset] |= mask;
 		break;
 
-	case Color_None:
-		return;
-
 	case Color_Invert:
 		vram[offset] ^= mask;
+		break;
+
+	default:
 		break;
 	}
 }
@@ -261,12 +263,6 @@ void dpixel(int x, int y, enum Color color)
 	dline()
 	Draws a line on the screen. Automatically optimizes horizontal and
 	vertical lines.
-
-	@arg	x1
-	@arg	y1
-	@arg	x2
-	@arg	y2
-	@arg	color
 */
 
 static void dhline(int x1, int x2, int y, enum Color color)
@@ -275,9 +271,60 @@ static void dhline(int x1, int x2, int y, enum Color color)
 	int offset = y << 2;
 	int i;
 
+	// Swapping x1 and x2 if needed.
+	if(x1 > x2) x1 ^= x2, x2 ^= x1, x1 ^= x2;
 	getmasks(x1, x2, masks);
 
-	switch(color)
+	int *v1 = gray_lightVRAM();
+	int *v2 = gray_darkVRAM();
+
+	if(gray_runs()) switch(color)
+	{
+	case Color_White:
+		for(i = 0; i < 4; i++)
+		{
+			v1[offset + i] &= ~masks[i];
+			v2[offset + i] &= ~masks[i];
+		}
+		break;
+
+	case Color_Light:
+		for(i = 0; i < 4; i++)
+		{
+			v1[offset + i] |= masks[i];
+			v2[offset + i] &= ~masks[i];
+		}
+		break;
+
+	case Color_Dark:
+		for(i = 0; i < 4; i++)
+		{
+			v1[offset + i] &= ~masks[i];
+			v2[offset + i] |= masks[i];
+		}
+		break;
+
+	case Color_Black:
+		for(i = 0; i < 4; i++)
+		{
+			v1[offset + i] |= masks[i];
+			v2[offset + i] |= masks[i];
+		}
+		break;
+
+	case Color_Invert:
+		for(i = 0; i < 4; i++)
+		{
+			v1[offset + i] ^= masks[i];
+			v2[offset + i] ^= masks[i];
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	else switch(color)
 	{
 	case Color_White:
 		for(i = 0; i < 4; i++) vram[offset + i] &= ~masks[i];
@@ -287,11 +334,11 @@ static void dhline(int x1, int x2, int y, enum Color color)
 		for(i = 0; i < 4; i++) vram[offset + i] |= masks[i];
 		break;
 
-	case Color_None:
-		return;
-
 	case Color_Invert:
 		for(i = 0; i < 4; i++) vram[offset + i] ^= masks[i];
+		break;
+
+	default:
 		break;
 	}
 }
@@ -302,7 +349,61 @@ static void dvline(int y1, int y2, int x, enum Color color)
 	int end = (y2 << 2) + (x >> 5);
 	int mask = 0x80000000 >> (x & 31);
 
-	switch(color)
+	int *v1 = gray_lightVRAM();
+	int *v2 = gray_darkVRAM();
+
+	if(gray_runs()) switch(color)
+	{
+	case Color_White:
+		while(offset <= end)
+		{
+			v1[offset] &= ~mask;
+			v2[offset] &= ~mask;
+			offset += 4;
+		}
+		break;
+
+	case Color_Light:
+		while(offset <= end)
+		{
+			v1[offset] |= mask;
+			v2[offset] &= ~mask;
+			offset += 4;
+		}
+		break;
+
+	case Color_Dark:
+		while(offset <= end)
+		{
+			v1[offset] &= ~mask;
+			v2[offset] |= mask;
+			offset += 4;
+		}
+		break;
+
+	case Color_Black:
+		while(offset <= end)
+		{
+			v1[offset] |= mask;
+			v2[offset] |= mask;
+			offset += 4;
+		}
+		break;
+
+	case Color_Invert:
+		while(offset <= end)
+		{
+			v1[offset] ^= mask;
+			v2[offset] ^= mask;
+			offset += 4;
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	else switch(color)
 	{
 	case Color_White:
 		while(offset <= end) vram[offset] &= ~mask, offset += 4;
@@ -312,11 +413,11 @@ static void dvline(int y1, int y2, int x, enum Color color)
 		while(offset <= end) vram[offset] |= mask, offset += 4;
 		break;
 
-	case Color_None:
-		return;
-
 	case Color_Invert:
 		while(offset <= end) vram[offset] ^= mask, offset += 4;
+		break;
+
+	default:
 		break;
 	}
 }
