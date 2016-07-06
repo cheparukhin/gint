@@ -1,3 +1,12 @@
+//---
+//
+//	gint drawing module: tales
+//
+//	Text displaying. Does some good optimization, though requires dynamic
+//	allocation.
+//
+//---
+
 #ifndef	_TALES_H
 #define	_TALES_H	1
 
@@ -81,22 +90,21 @@ typedef struct Font Font;
 //---
 
 /*
-	print_configure()
+	text_configure()
 	Sets the font and mode to use for the following print operations.
-
-	@arg	font
-	@arg	mode
 */
-void print_configure(struct Font *font);
+void text_configure(struct Font *font);
 
 /*
-	print_raw()
+	dtext()
 	Prints the given string, without any analysis.
-
-	@arg	str
-	@arg	x
-	@arg	y
 */
-void print_raw(const char *str, int x, int y);
+void dtext(const char *str, int x, int y);
+
+/*
+	gtext()
+	Prints the given raw string.
+*/
+void gtext(const char *str, int x, int y);
 
 #endif	// _TALES_H

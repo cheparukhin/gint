@@ -44,3 +44,19 @@ This will build the following components :
 * `ginttest.g1a`, a test application
 
 The common `clean`, `mrproper`, and `distclean` rules will clean the directory.
+
+
+
+Source organization
+-------------------
+
+gint is made of *modules*. Each module has its own source directory (which is
+`/src/module`), and its associated header file in `/include`. A module folder
+contains three types of files :
+* Internal headers: shared only among the files of a module
+* Single-function source files: to avoid linking against the whole library,
+  some functions have their own object files. Their names are the function
+  names.
+* Other source files: contain multiple functions that always work together, or
+  are lightweight enough not to be separated. Their names often begin with
+  `module_`.

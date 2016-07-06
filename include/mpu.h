@@ -1,11 +1,22 @@
+//---
+//
+//	gint core module: mpu
+//
+//	Determines which kind of MPU is running the program. This module only
+//	provides the following test:
+//
+//	if(isSH3()) { ... }
+//	else { ... }
+//
+//---
+
 #ifndef	_MPU_H
 #define	_MPU_H	1
 
-//---
-//	enum MPU
-//	This type holds information about the calculator's MPU.
-//---
-
+/*
+	enum MPU
+	This type holds information about the calculator's MPU.
+*/
 enum MPU
 {
 	MPU_Unknown = 0,
@@ -19,15 +30,8 @@ enum MPU
 	MPU_SH7724 = 4
 };
 
-
-
-//---
-//	MPU type tests.
-//	Prefer using an 'if(isSH3()) { ... } else { ... }' alternative for best
-//	results.
-//---
-
-// Global MPU variable, accessible for direct tests.
+// Global MPU variable, accessible for direct tests. Initialized at the
+// beginning of execution.
 extern enum MPU MPU_CURRENT;
 
 // Quick SH3 test. It is safer to assume that an unknown model is SH4 because
@@ -44,8 +48,6 @@ extern enum MPU MPU_CURRENT;
 /*
 	getMPU()
 	Determines the MPU type and returns it. MPU_CURRENT is not updated.
-
-	@return	MPU type.
 */
 enum MPU getMPU(void);
 

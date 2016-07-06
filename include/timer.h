@@ -1,3 +1,12 @@
+//---
+//
+//	gint core module: timer
+//
+//	Basic timer unit manipulation. Starts and stops timers with variable
+//	number of repeats, and allows timer reloads without pause.
+//
+//---
+
 #ifndef	_TIMER_H
 #define	_TIMER_H	1
 
@@ -32,37 +41,33 @@
 
 /*
 	timer_start()
-	Configures and starts a timer.
-
-	@arg	timer		Timer name. Use only TIMER_USER. You may use
-				TIMER_GRAY, if you're not running the gray
-				engine.
-	@arg	delay		Delay before expiration, in clock counts.
-	@arg	prescaler	Clock prescaler value. Possible values are
-				TIMER_Po_4, TIMER_Po_16, TIMER_Po_64,
-				TIMER_Po_256 and TIMER_TCLK.
-	@arg	callback	Callback function.
-	@arg	repetitions	Number of repetitions, 0 for infinite.
+	Configures and starts a timer. The timer argument expects a timer name.
+	You can use TIMER_USER anytime. You may also use TIMER_GRAY if you're
+	not running the gray engine.
+	The delay is in clock counts unit. The possible values for the
+	prescaler are dividers of the peripheral clock frequency Po:
+	- TIMER_Po_4
+	- TIMER_Po_16
+	- TIMER_Po_64
+	- TIMER_Po_256
+	- TIMER_TCLK
+	The number of repeats may to set to 0. In this case, the timer will not
+	stop until timer_stop() is explicitly called.
 */
 void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
-	int repetitions);
+	int repeats);
 
 /*
 	timer_stop()
 	Stops the given timer. This function may be called even if the timer is
 	not running.
-
-	@arg	timer	Timer identifier.
 */
 void timer_stop(int timer);
 
 /*
 	timer_reload()
 	Reloads the given timer with the given constant. Starts the timer if
-	it was stopped.
-
-	@arg	timer		Timer identifier.
-	@arg	new_delay
+	it was stopped. The new delay uses the same unit as in timer_start().
 */
 void timer_reload(int timer, int new_delay);
 
@@ -76,8 +81,6 @@ void timer_reload(int timer, int new_delay);
 /*
 	timer_interrupt()
 	Handles the interrupt for the given timer.
-
-	@timer	Timer that generated the interrupt.
 */
 void timer_interrupt(int timer)		__attribute__((section(".gint.int")));
 

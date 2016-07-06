@@ -1,0 +1,34 @@
+#ifndef	_KEYBOARD_INTERNALS_H
+#define	_KEYBOARD_INTERNALS_H	1
+
+#include <keyboard.h>
+
+// Keyboard variables.
+extern volatile unsigned char keyboard_state[10];
+extern volatile int interrupt_flag = 0;
+
+// Key statistics.
+extern int repeat_first, repeat_next;
+extern int last_key, last_repeats, last_events;
+
+/*
+	sleep()
+	Puts the CPU into sleep until an interrupt request is accepted.
+*/
+void sleep(void);
+
+/*
+	getPressedKey()
+	Finds a pressed key in the keyboard state and returns it.
+*/
+int getPressedKey(volatile unsigned char *keyboard_state);
+
+/*
+	getPressedKeys()
+	Find 'count' pressed keys in the keyboard state and fills the 'keys'
+	array. Returns the number of actually-pressed keys found.
+*/
+int getPressedKeys(volatile unsigned char *keyboard_state, int *keys,
+	int count);
+
+#endif	// _KEYBOARD_INTERNALS_H

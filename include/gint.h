@@ -1,15 +1,22 @@
+//---
+//
+//	gint core module: interrupt handler
+//
+//	Central point of the library. Controls the interrupt handler and
+//	defines a few functions to configure callbacks for some interrupts.
+//
+//---
+
 #ifndef	_GINT_H
 #define	_GINT_H	1
 
 //---
-//	Public API.
+//	Interrupt handler control.
 //---
 
 /*
 	gint_getVBR()
 	Returns the current vbr address.
-
-	@return	vbr address currently in use.
 */
 unsigned int gint_getVBR(void);
 
@@ -17,10 +24,14 @@ unsigned int gint_getVBR(void);
 	gint_systemVBR()
 	Returns the vbr address used by the system (saved when execution
 	starts).
-
-	@return	vbr address used by the system.
 */
 unsigned int gint_systemVBR(void);
+
+
+
+//---
+//	Callback API.
+//---
 
 /*
 	enum RTCFrequency
@@ -42,9 +53,6 @@ enum RTCFrequency
 	gint_setRTCCallback()
 	Sets the callback function for the real-time clock interrupt. If
 	frequency is non-NULL, the clock frequency is set to the given value.
-
-	@arg	callback	Callback function.
-	@arg	frequency	Interrupt frequency.
 */
 void gint_setRTCCallback(void (*callback)(void), enum RTCFrequency frequency);
 
@@ -66,12 +74,8 @@ void (*gint_getRTCCallback(enum RTCFrequency *frequency))(void);
 
 /*
 	gint_setVBR()
-	Sets the vbr address and does some configuration while interrupts are
-	disabled.
-
-	@arg	new_vbr_address
-	@arg	setup	Will be called for configuration under interrupt-safe
-			environment.
+	Sets the vbr address and calls the configuration function while
+	interrupts are disabled.
 */
 void gint_setVBR(unsigned int new_vbr_address, void (*setup)(void));
 
@@ -108,16 +112,14 @@ void gint_stop_7305(void);
 	gint()
 	Handles interrupts.
 */
-void gint(void)		__attribute__((section(".gint.int.entry"),
-				interrupt_handler));
-void gint_7705(void)	__attribute__((section(".gint.int")));
-void gint_7305(void)	__attribute__((section(".gint.int")));
+void gint(void)			__attribute__((section(".gint.int.entry"),
+					interrupt_handler));
+void gint_7705(void)		__attribute__((section(".gint.int")));
+void gint_7305(void)		__attribute__((section(".gint.int")));
 
 /*
 	gint_setRTCFrequency()
 	Sets the RTC interrupt frequency and enables interrupts.
-
-	@arg	frequency
 */
 void gint_setRTCFrequency_7705(enum RTCFrequency frequency);
 void gint_setRTCFrequency_7305(enum RTCFrequency frequency);
@@ -125,8 +127,6 @@ void gint_setRTCFrequency_7305(enum RTCFrequency frequency);
 /*
 	gint_getRTCFrequency()
 	Returns the RTC interrupt frequency.
-
-	@return	RTC interrupt frequency.
 */
 enum RTCFrequency gint_getRTCFrequency_7705(void);
 enum RTCFrequency gint_getRTCFrequency_7305(void);

@@ -1,3 +1,15 @@
+//---
+//
+//	gint core module: keyboard analyzer
+//
+//	Probably the most difficult hardware interaction. There is very few
+//	documentation on how the system actually analyzes the keyboard. While
+//	disassembling syscalls reveals the following procedure (which was
+//	already documented by SimonLothar), there is nothing about the
+//	detection problems of the multi-getkey system.
+//
+//---
+
 #ifndef	_KEYBOARD_H
 #define	_KEYBOARD_H	1
 
@@ -85,29 +97,25 @@
 
 /*
 	keyboard_setFrequency()
-	Sets the keyboard frequency. The default frequency is 32 Hz. Very few
-	Very few applications will need to change this setting.
+	Sets the keyboard frequency. The default frequency is 32 Hz. The unit
+	for the argument is Hz. Very few applications will need to change this
+	setting.
 	The actual frequency is guaranteed to be greater than the argument.
 	Be aware that you will miss key hits at low frequencies. At higher
 	frequencies, you will lose important execution power.
-
-	@arg	frequency	Frequency in Hz (1 Hz = 1 event / second).
 */
 // Currently not implemented.
 // void keyboard_setFrequency(int frequency);
 
 /*
 	keyboard_setRepeatRate()
-	Sets the default repeat rate for key events. The unit for the argument
-	is the keyboard period. For example at 32 Hz, values of (20, 4) will
-	imitate the system default.
+	Sets the default repeat rate for key events. The delay before the first
+	repeat may have a different value (usually longer). The unit for the
+	argument is the keyboard period. For example at 32 Hz, values of
+	(20, 4) will imitate the system default.
 	Set to 0 to disable repetition. If first = 0, no repetition will be
 	allowed. If first != 0 and next = 0, only one repetition will be
 	allowed.
-
-	@arg	first	Delay before first repeat, in keyboard period units.
-	@arg	next	Delay before following repeats, in keyboard period
-			units.
 */
 void keyboard_setRepeatRate(int first, int next);
 
@@ -146,10 +154,6 @@ enum GetkeyOpt
 	keylast()
 	Returns the matrix code of the last pressed key. If repeat_count is
 	non-NULL, it is set to the number of repetitions.
-
-	@arg	repeat_count
-
-	@return	Key matrix code.
 */
 int keylast(int *repeat_count);
 
@@ -161,8 +165,6 @@ int keylast(int *repeat_count);
 	editing the array. It wouldn't influence the behavior of the keyboard
 	functions, but the buffer data is very volatile. Therefore, data
 	written to the buffer could be replaced anytime.
-
-	@return	10-byte keyboard state buffer.
 */
 volatile unsigned char *keystate(void);
 
@@ -222,10 +224,6 @@ enum KeyType
 	keyid()
 	Returns a non-matrix key code that can be used for array subscript.
 	Ignores modifiers.
-
-	@arg	key
-
-	@return	Modified keycode.
 */
 int keyid(int key);
 
@@ -233,20 +231,12 @@ int keyid(int key);
 	keychar()
 	Returns the ASCII character associated with a character key ; 0 for
 	other keys.
-
-	@arg	key
-
-	@return	Associated character.
 */
 int keychar(int key);
 
 /*
 	keytype()
 	Returns a key's type. Ignores modifiers.
-
-	@arg	key
-
-	@return	Key type.
 */
 enum KeyType keytype(int key);
 
@@ -267,8 +257,6 @@ void keyboard_interrupt(void)		__attribute__((section(".gint.int")));
 /*
 	keyboard_updateState()
 	Updates the keyboard state.
-
-	@arg	state	10-byte state buffer.
 */
 void keyboard_updateState_7705(volatile unsigned char *state)
 					__attribute__((section(".gint.int")));

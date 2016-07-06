@@ -1,0 +1,159 @@
+//---
+//
+//	gint core module: sh7305 interrupt handler
+//
+//	Of course all the work related to interrupts is heavily platform-
+//	dependent. This module handles interrupts and configures the MPU to
+//	save and restore the system's configuration when execution ends.
+//
+//---
+
+#include <gint.h>
+#include <timer.h>
+#include <7305.h>
+
+//---
+//	Interrupt codes.
+//---
+
+#define	IC_RTC_PRI	0xaa0
+#define	IC_KEYSC	0xbe0
+#define	IC_TMU0_TUNI0	0x400
+#define	IC_TMU0_TUNI1	0x420
+#define	IC_TMU0_TUNI2	0x440
+
+
+
+//---
+//	Interrupt handler.
+//---
+
+void gint_7305(void)
+{
+	volatile unsigned int *intevt  = (unsigned int *)0xff000028;
+	unsigned int code = *intevt;
+
+	switch(code)
+	{
+	case IC_RTC_PRI:
+		RTC.RCR2.PEF = 0;
+		break;
+
+	case IC_TMU0_TUNI0:
+		timer_interrupt(TIMER_TMU0);
+		break;
+
+	case IC_TMU0_TUNI1:
+		timer_interrupt(TIMER_TMU1);
+		break;
+
+	case IC_TMU0_TUNI2:
+		timer_interrupt(TIMER_TMU2);
+		break;
+	}
+}
+
+
+
+//---
+//	Setup.
+//---
+
+static unsigned short ipr[12];
+static unsigned char rcr2;
+// Saves of the keyboard registers. Could be better.
+static unsigned short inj1, inj2, det;
+static unsigned char data1, data2, keys, reg;
+
+static void gint_priority_lock_7305(void)
+{
+	// Saving the current interrupt priorities.
+	ipr[0]  = INTX.IPRA.WORD;
+	ipr[1]  = INTX.IPRB.WORD;
+	ipr[2]  = INTX.IPRC.WORD;
+	ipr[3]  = INTX.IPRD.WORD;
+	ipr[4]  = INTX.IPRE.WORD;
+	ipr[5]  = INTX.IPRF.WORD;
+	ipr[6]  = INTX.IPRG.WORD;
+	ipr[7]  = INTX.IPRH.WORD;
+	ipr[8]  = INTX.IPRI.WORD;
+	ipr[9]  = INTX.IPRJ.WORD;
+	ipr[10] = INTX.IPRK.WORD;
+	ipr[11] = INTX.IPRL.WORD;
+
+	// Disabling everything by default to avoid freezing on non-handled
+	// interrupts.
+	INTX.IPRA.WORD = 0x0000;
+	INTX.IPRB.WORD = 0x0000;
+	INTX.IPRC.WORD = 0x0000;
+	INTX.IPRD.WORD = 0x0000;
+	INTX.IPRE.WORD = 0x0000;
+	INTX.IPRF.WORD = 0x0000;
+	INTX.IPRG.WORD = 0x0000;
+	INTX.IPRH.WORD = 0x0000;
+	INTX.IPRI.WORD = 0x0000;
+	INTX.IPRJ.WORD = 0x0000;
+	INTX.IPRK.WORD = 0x0000;
+	INTX.IPRL.WORD = 0x0000;
+
+	// Saving keyboard registers.
+	inj1	= *((volatile unsigned short *)0xa4050116);
+	data1	= *((volatile unsigned char  *)0xa4050136);
+	inj2	= *((volatile unsigned short *)0xa4050118);
+	data2	= *((volatile unsigned char  *)0xa4050138);
+	det	= *((volatile unsigned short *)0xa405014c);
+	keys	= *((volatile unsigned char  *)0xa405016c);
+	reg	= *((volatile unsigned char  *)0xa40501c6);
+
+	// Allowing RTC. Keyboard analysis is done regularly using a RTC
+	// because SH7305's special KEYSC interface does not allow us to clear
+	// the keyboard interrupt flags.
+	INTX.IPRK._RTC		= GINT_INTP_RTC;
+	INTX.IPRA.TMU0_0	= GINT_INTP_KEY;
+	INTX.IPRA.TMU0_1	= GINT_INTP_GRAY;
+	INTX.IPRA.TMU0_2	= GINT_INTP_TIMER;
+}
+
+static void gint_priority_unlock_7305(void)
+{
+	// Restoring the interrupt priorities.
+	INTX.IPRA.WORD = ipr[0];
+	INTX.IPRB.WORD = ipr[1];
+	INTX.IPRC.WORD = ipr[2];
+	INTX.IPRD.WORD = ipr[3];
+	INTX.IPRE.WORD = ipr[4];
+	INTX.IPRF.WORD = ipr[5];
+	INTX.IPRG.WORD = ipr[6];
+	INTX.IPRH.WORD = ipr[7];
+	INTX.IPRI.WORD = ipr[8];
+	INTX.IPRJ.WORD = ipr[9];
+	INTX.IPRK.WORD = ipr[10];
+	INTX.IPRL.WORD = ipr[11];
+
+	// Restoring keyboard registers.
+	*((volatile unsigned short *)0xa4050116) = inj1;
+	*((volatile unsigned char  *)0xa4050136) = data1;
+	*((volatile unsigned short *)0xa4050118) = inj2;
+	*((volatile unsigned char  *)0xa4050138) = data2;
+	*((volatile unsigned short *)0xa405014c) = det;
+	*((volatile unsigned char  *)0xa405016c) = keys;
+	*((volatile unsigned char  *)0xa40501c6) = reg;
+}
+
+void gint_setup_7305(void)
+{
+	gint_priority_lock_7305();
+
+	// Saving the RTC configuration.
+	rcr2 = RTC.RCR2.BYTE;
+	// Disabling RTC interrupts by default.
+	RTC.RCR2.BYTE = 0x09;
+}
+
+void gint_stop_7305(void)
+{
+	gint_priority_unlock_7305();
+
+	// Restoring the RTC configuration.
+	RTC.RCR2.BYTE = rcr2;
+}

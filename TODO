@@ -12,6 +12,8 @@
 @  vram overflow
 @  keyboard test threading interface
 
++  use alloca() for tales
++  call exit handlers
 +  compute frequencies
 +  gray text
 +  effective rtc callback

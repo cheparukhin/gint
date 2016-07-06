@@ -1,15 +1,22 @@
+//---
+//
+//	gint display module: screen
+//
+//	Interacts with the physical screen. See other display modules for video
+//	ram management and drawing.
+//
+//	The screen basically has two input values, which are a register
+//	selector and the selected register's value. What this module does is
+//	essentially selecting registers by setting *selector and assigning them
+//	values by setting *data.
+//---
+
 #ifndef	_SCREEN_H
 #define	_SCREEN_H	1
-
-//---
-//	Public API.
-//---
 
 /*
 	screen_display()
 	Displays contents on the full screen. Expects a 1024-byte buffer.
-
-	@arg	vram	1024-byte video buffer.
 */
 void screen_display(const void *vram);
 
