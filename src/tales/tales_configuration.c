@@ -5,7 +5,7 @@
 	text_configure()
 	Sets the font and mode to use for the following print operations.
 */
-void text_configure(struct Font *font)
+void text_configure(struct Font *next_font)
 {
 	font = next_font;
 }

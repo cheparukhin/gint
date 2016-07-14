@@ -91,6 +91,11 @@ void gint_init(void)
 	unsigned int *ptr = &bgint;
 	unsigned int *src = &gint_data;
 
+	// This initialization routine is usually called before any
+	// constructor. We want to ensure that the MPU type is detected, but
+	// mpu_init() hasn't been called yet.
+	mpu_init();
+
 	// Loading the interrupt handler into the memory.
 	while(ptr < &egint) *ptr++ = *src++;
 

@@ -42,8 +42,7 @@ void keyboard_interrupt(void)
 */
 void keyboard_init(void)
 {
-	timer_start(TIMER_KEYBOARD, 1700, TIMER_Po_256, keyboard_interrupt,
-		0);
+	timer_start(TIMER_KEYBOARD, 1700, TIMER_Po_256, keyboard_interrupt, 0);
 }
 
 /*

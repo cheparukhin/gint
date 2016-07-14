@@ -1,6 +1,8 @@
 #include <gint.h>
 #include <mpu.h>
 
+#include <stddef.h>
+
 static void (*rtc_callback)(void) = NULL;
 
 /*

@@ -53,8 +53,8 @@ int start(void)
 	__GLibAddinAplExecutionCheck(0, 1, 1);
 
 	// Initializing everything.
-	init();
 	gint_init();
+	init();
 
 
 
@@ -69,8 +69,8 @@ int start(void)
 	// Remember to flush and close opened streams.
 
 	// Un-initializing everything.
-	gint_quit();
 	fini();
+	gint_quit();
 
 	return exit_code;
 }

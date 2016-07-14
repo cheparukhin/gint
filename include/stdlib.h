@@ -34,15 +34,15 @@ void exit(int status);
 
 /*
 	malloc()
-	Allocs 'size' bytes and returns a pointer to a free memory area.
+	Allocates 'size' bytes and returns a pointer to a free memory area.
 	Returns NULL on error.
 */
 void *malloc(size_t size);
 
 /*
 	calloc()
-	Allocs 'n' elements of size 'size' and wipes the memory area. Returns
-	NULL on error.
+	Allocates 'n' elements of size 'size' and wipes the memory area.
+	Returns NULL on error.
 */
 void *calloc(size_t n, size_t size);
 

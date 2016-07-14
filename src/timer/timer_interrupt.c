@@ -1,6 +1,8 @@
 #include <timer.h>
 #include <timer_internals.h>
 
+#include <stddef.h>
+
 struct Timer timers[3] = { { NULL, 0 }, { NULL, 0 }, { NULL, 0 } };
 
 /*
@@ -9,7 +11,6 @@ struct Timer timers[3] = { { NULL, 0 }, { NULL, 0 }, { NULL, 0 } };
 */
 void timer_interrupt(int timer)
 {
-	// Getting the timer address.
 	struct mod_tmu *tmu;
 	timer_get(timer, &tmu, NULL);
 

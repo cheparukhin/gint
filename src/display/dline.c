@@ -13,7 +13,7 @@
 
 static void dhline(int x1, int x2, int y, enum Color color)
 {
-	unsigned int masks[4];
+	uint32_t masks[4];
 	int offset = y << 2;
 	int i;
 

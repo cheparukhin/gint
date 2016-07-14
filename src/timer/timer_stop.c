@@ -1,6 +1,8 @@
 #include <timer.h>
 #include <timer_internals.h>
 
+#include <stddef.h>
+
 /*
 	timer_stop()
 	Stops the given timer. This function may be called even if the timer is

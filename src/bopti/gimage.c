@@ -1,4 +1,5 @@
 #include <bopti_internals.h>
+#include <display.h>
 #include <gray.h>
 
 /*
@@ -7,15 +8,31 @@
 */
 void gimage(struct Image *img, int x, int y)
 {
-	int width, layer_size, columns, end;
-	int format = img->format, i = 0;
-	const unsigned char *data;
-
 	if(img->magic != 0xb7) return;
-	op = bopti_op_gray;
 
-	// 'height' refers to a static variable for this file.
-	getStructure(img, &width, &height, &layer_size, &data, &columns, &end);
+	struct Structure s;
+	struct Command command;
+	int actual_width;
+	int format = img->format, i = 0;
+
+	getStructure(img, &s);
+
+	//---
+	//	Adjusting image parameters.
+	//---
+//-65:-68
+	if(x + s.width < 0 || x > 127 || y + s.height < 0 || y > 63) return;
+
+	command.top	= (y < 0) ? (-y) : (0);
+	command.bottom	= (y + s.height > 64) ? (64 - y) : (s.height);
+	command.left	= ((x < 0) ? (-x) : (0)) >> 5;
+	actual_width	= (x + s.width > 128) ? (128 - x) : (s.width);
+	command.right	= ((actual_width + 31) >> 5) - 1;
+
+	command.op	= bopti_op_gray;
+
+	if(x >= 0) getMasks(x, x + actual_width - 1, command.masks);
+	else getMasks(0, actual_width + x - 1, command.masks);
 
 	v1 = gray_lightVRAM();
 	v2 = gray_darkVRAM();
@@ -25,9 +42,13 @@ void gimage(struct Image *img, int x, int y)
 		// Drawing every layer, in order of formats.
 		if(format & 1)
 		{
-			channel = (1 << i);
-			bopti(data, x, y, columns, end);
-			data += layer_size;
+			// These members are modified by bopti()!
+			command.x = x;
+			command.y = y;
+			command.channel = (1 << i);
+
+			bopti(s.data, &s, &command);
+			s.data += s.layer_size;
 		}
 
 		format >>= 1;

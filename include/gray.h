@@ -60,6 +60,16 @@ void gray_getDelays(int *light, int *dark);
 	Finding values that give proper grays is quite the hard part of the
 	gray engine. Usual values are about 1000, with light being between 75
 	and 90% of dark.
+
+	Typical values:
+
+	values		stability	stripes		colors
+	---------------------------------------------------------
+	860, 1298	excellent	worst static	good
+	912, 1343	bad		none		very good
+	993, 1609	medium		light fast	good       (default)
+	---------------------------------------------------------
+
 */
 void gray_setDelays(int light, int dark);
 

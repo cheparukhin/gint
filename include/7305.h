@@ -62,7 +62,7 @@ struct _st_rtc
 	gap(1);
 
 	union {
-		unsigned char;
+		unsigned char BYTE;
 		struct {
 			unsigned		:2;
 			unsigned TENS		:2;
@@ -208,7 +208,7 @@ struct _st_rtc
 		struct {
 			unsigned ENB		:1;
 			unsigned		:7;
-		}
+		};
 	} RCR3;
 
 } __attribute__((packed));

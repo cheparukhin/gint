@@ -18,6 +18,7 @@
 #define	_BOPTI_INTERNALS_H	1
 
 #include <stdint.h>
+#include <display.h>
 
 /*
 	enum Channel
@@ -49,15 +50,43 @@ enum Format
 				  Channel_DarkAlpha
 };
 
-// The following variables refer to parameters that do not change during the
-// drawing operation (at least for the time of a layer). They could be passed
-// on by every function from the module, but this would be heavy and useless.
-// Using global variables is not really a proper solution but it does simplify
-// code much.
+/*
+	struct Structure
+	Describes an image's structure.
+*/
+struct Structure
+{
+	int width, height;
+	int layer_size;
+
+	const unsigned char *data;
+	int columns;
+	int end_size, end_bytes;
+};
+
+/*
+	struct Command
+	Contains a drawing operation's parameters.
+*/
+struct Command
+{
+	// Channel being drawn.
+	enum Channel channel;
+	// Operation used (whether bopti_op_mono() or bopti_op_gray()).
+	void (*op)(int offset, uint32_t operator, struct Command *command);
+	// Portion of the bitmap which is drawn. 'top' and 'bottom' refer to
+	// lines where 'left' and 'right' refer to column ids.
+	int left, right, top, bottom;
+	// Position of the bitmap on the screen.
+	int x, y;
+	// Rectangle masks.
+	uint32_t masks[4];
+};
+
+// The video ram addresses are set by the public functions and used internally
+// by the module.
+// Monochrome video ram, light and dark buffers (in this order).
 extern int *vram, *v1, *v2;
-extern enum Channel channel;
-extern int height;
-extern void (*op)(int offset, uint32_t operator, uint32_t op_mask);
 
 
 
@@ -69,12 +98,13 @@ extern void (*op)(int offset, uint32_t operator, uint32_t op_mask);
 	bopti_op()
 	Operates on a vram long. The operator will often not contain 32 bits of
 	image information. Since neutral bits are not the same for all
-	operations, the op_mask argument indicates which bits should be used
-	for the operation. Which operation has to be done is determined by the
-	channel setting.
+	operations, a mask is used to indicate which bits should be used for
+	the operation. This mask is taken for the image's rectangle masks (see
+	module display for more information on rectangle masks).
+	Which operation is performed is determined by the channel setting.
 */
-void bopti_op_mono(int offset, uint32_t operator, uint32_t op_mask);
-void bopti_op_gray(int offset, uint32_t operator, uint32_t op_mask);
+void bopti_op_mono(int offset, uint32_t operator, struct Command *c);
+void bopti_op_gray(int offset, uint32_t operator, struct Command *c);
 
 /*
 	bopti_grid()		-- general form
@@ -85,10 +115,12 @@ void bopti_op_gray(int offset, uint32_t operator, uint32_t op_mask);
 	The need for bopti_grid_a32() is not only linked to optimization,
 	because bopti_grid() will perform a 32-bit shift when x is a multiple
 	of 32, which is undefined behavior.
+	bopti_grid() calls bopti_grid_32() by default.
 */
-void bopti_grid_a32(const uint32_t *layer, int x, int y, int column_count);
-void bopti_grid(const uint32_t *layer, int x, int y, int column_count);
-
+void bopti_grid_a32(const uint32_t *layer, int columns, int height,
+	struct Command *c);
+void bopti_grid(const uint32_t *layer, int columns, int height,
+	struct Command *c);
 /*
 	bopti_end_get()
 	Returns an operator for the end of a line, whose width is lower than 32
@@ -105,23 +137,24 @@ uint32_t bopti_end_get2(const unsigned char **data);
 
 	Draws the end of a layer, which can be considered as a whole layer
 	whose with is lower than 32. (Actually is it lower or equal to 16;
-	otherwise it would have been a column and the end would be empty).
+	otherwise it would have been a column and the end would be empty). The
+	'size' arguments is in bytes.
+	Unlike bopti_grid_a32(), bopti_end_nover() is not called automatically
+	by bopti_end().
 */
-void bopti_end_nover(const unsigned char *end, int x, int y, int width);
-void bopti_end(const unsigned char *end, int x, int y, int width);
+void bopti_end_nover(const unsigned char *end, int size, struct Command *c);
+void bopti_end(const unsigned char *end, int size, struct Command *c);
 
 /*
 	bopti()
 	Draws a layer in the video ram.
 */
-void bopti(const unsigned char *layer, int x, int y, int columns,
-	int end_size);
+void bopti(const unsigned char *layer, struct Structure *s, struct Command *c);
 
 /*
 	getStructure()
 	Determines the image size and data pointer.
 */
-void getStructure(struct Image *img, int *width, int *height, int *layer_size,
-	const unsigned char **data, int *columns, int *end_size);
+void getStructure(struct Image *img, struct Structure *structure);
 
 #endif	// _BOPTI_INTERNALS_H

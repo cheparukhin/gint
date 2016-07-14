@@ -11,7 +11,7 @@
 #include <timer.h>
 
 static int internal_vrams[3][256];
-const void *vrams[4];
+static const void *vrams[4];
 
 static int current = 0;
 static int delays[2];
@@ -33,7 +33,10 @@ static int runs = 0;
 */
 void gray_start(void)
 {
+	if(runs) return;
+
 	timer_start(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt, 0);
+	current &= 1;
 	runs = 1;
 }
 
@@ -44,6 +47,8 @@ void gray_start(void)
 */
 void gray_stop(void)
 {
+	if(!runs) return;
+
 	timer_stop(TIMER_GRAY);
 	runs = 0;
 
@@ -79,18 +84,18 @@ inline int gray_runs(void)
 	gray_lightVRAM()
 	Returns the module's gray vram address.
 */
-inline void *gray_lightVRAM(void)
+void *gray_lightVRAM(void)
 {
-	return (void *)vrams[current & 2];
+	return (void *)vrams[~current & 2];
 }
 
 /*
 	gray_lightVRAM()
 	Returns the module's dark vram address.
 */
-inline void *gray_darkVRAM(void)
+void *gray_darkVRAM(void)
 {
-	return (void *)vrams[(current & 2) | 1];
+	return (void *)vrams[(~current & 2) | 1];
 }
 
 /*
@@ -130,7 +135,7 @@ inline void gupdate(void)
 */
 void gray_interrupt(void)
 {
-	timer_reload(TIMER_GRAY, delays[current & 1]);
+	timer_reload(TIMER_GRAY, delays[(~current) & 1]);
 	screen_display(vrams[current]);
 	current ^= 1;
 }
@@ -146,6 +151,6 @@ void gray_init(void)
 	vrams[2] = (const void *)internal_vrams[1];
 	vrams[3] = (const void *)internal_vrams[2];
 
-	delays[0] = 900;
-	delays[1] = 1000;
+	delays[0] = 993;
+	delays[1] = 1609;
 }

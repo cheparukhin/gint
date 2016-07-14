@@ -1,13 +1,12 @@
-#include <display_internals.h>
+#include <display.h>
 
 /*
 	getMasks()
 	Computes the rectangle masks needed to affect pixels located between x1
 	and x2 (both included). The four masks are stored in the third argument
 	(seen as an array).
-	See this module's internals header file for more information.
 */
-void getMasks(int x1, int x2, unsigned int *masks)
+void getMasks(int x1, int x2, uint32_t *masks)
 {
 	// Indexes of the first and last longs that are non-blank.
 	int l1 = x1 >> 5;

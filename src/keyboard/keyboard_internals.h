@@ -5,7 +5,7 @@
 
 // Keyboard variables.
 extern volatile unsigned char keyboard_state[10];
-extern volatile int interrupt_flag = 0;
+extern volatile int interrupt_flag;
 
 // Key statistics.
 extern int repeat_first, repeat_next;

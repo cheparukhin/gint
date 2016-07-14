@@ -12,6 +12,7 @@
 @  vram overflow
 @  keyboard test threading interface
 
++  gint vs. ML with 248x124 at (-60, -28)
 +  use alloca() for tales
 +  call exit handlers
 +  compute frequencies
@@ -26,6 +27,7 @@
 +  bitmap parts
 +  bitmap clipping
 
+-  install critical failure handler to prevent failing resets
 -  write and test gray engine
 -  full rtc driver (time)
 -  callbacks and complete user API
@@ -34,3 +36,15 @@
 ~  exhaustive save for setjmp()
 ~  registers that need to be saved when configuring gint
 ~  possible bug when -O2 __attribute__((interrupt_handler))
+
+
+
+Some notes
+----------
+
+Test cases for bitmap drawing:
+- aligned 32 / non-aligned 32
+- monochrome / gray
+- small / large
+- does not overflow / overflows
+# blending modes

@@ -1,18 +1,22 @@
 #include <bopti_internals.h>
 
+// Monochrome video ram, light and dark buffers (in this order).
+int *vram, *v1, *v2;
+
 /*
 	bopti_op()
 	Operates on a vram long. The operator will often not contain 32 bits of
 	image information. Since neutral bits are not the same for all
-	operations, the op_mask argument indicates which bits should be used
-	for the operation. Which operation has to be done is determined by the
-	channel setting.
+	operations, a mask is used to indicate which bits should be used for
+	the operation. This mask is taken for the image's rectangle masks (see
+	module display for more information on rectangle masks).
+	Which operation is performed is determined by the channel setting.
 */
-static void bopti_op_mono(int offset, uint32_t operator, uint32_t op_mask)
+void bopti_op_mono(int offset, uint32_t operator, struct Command *c)
 {
-	operator &= op_mask;
+	operator &= c->masks[offset & 3];
 
-	switch(channel)
+	switch(c->channel)
 	{
 	case Channel_Mono:
 		vram[offset] |= operator;
@@ -26,11 +30,11 @@ static void bopti_op_mono(int offset, uint32_t operator, uint32_t op_mask)
 		break;
 	}
 }
-static void bopti_op_gray(int offset, uint32_t operator, uint32_t op_mask)
+void bopti_op_gray(int offset, uint32_t operator, struct Command *c)
 {
-	operator &= op_mask;
+	operator &= c->masks[offset & 3];
 
-	switch(channel)
+	switch(c->channel)
 	{
 	case Channel_Mono:
 		v1[offset] |= operator;
@@ -66,74 +70,75 @@ static void bopti_op_gray(int offset, uint32_t operator, uint32_t op_mask)
 	because bopti_grid() will perform a 32-bit shift when x is a multiple
 	of 32, which is undefined behavior.
 */
-static void bopti_grid_a32(const uint32_t *layer, int x, int y,
-	int column_count)
+void bopti_grid_a32(const uint32_t *layer, int column_count, int height,
+	struct Command *c)
 {
-	int vram_column_offset = (y << 2) + (x >> 5);
+	int vram_column_offset = (c->y << 2) + (c->x >> 5);
 	int vram_offset = vram_column_offset;
 	int column, row;
 
 	for(column = 0; column < column_count; column++)
 	{
-		for(row = 0; row < height; row++)
+		for(row = c->top; row < c->bottom; row++)
 		{
-			(*op)(vram_offset, *layer, 0xffffffff);
-			layer++;
+			(*c->op)(vram_offset, layer[row], c);
 			vram_offset += 4;
 		}
 
 		vram_column_offset++;
 		vram_offset = vram_column_offset;
+		layer += height;
 	}
 }
-static void bopti_grid(const uint32_t *layer, int x, int y, int column_count)
+void bopti_grid(const uint32_t *layer, int column_count, int height,
+	struct Command *c)
 {
 	if(!column_count) return;
-	if(!(x & 31))
+	if(!(c->x & 31))
 	{
-		bopti_grid_a32(layer, x, y, column_count);
+		bopti_grid_a32(layer, column_count, height, c);
 		return;
 	}
 
 	const uint32_t *p1, *p2;
-	uint32_t l1, l2;
+	uint32_t l1, l2, operator;
 	int right_column, line;
 
-	int vram_column_offset = (y << 2) + (x >> 5);
+	int vram_column_offset = (c->y << 2) + (c->x >> 5) + (c->x < 0);
 	int vram_offset = vram_column_offset;
 
-	int shift1 = 32 - (x & 31);
-	int shift2 = (x & 31);
+	int shift1 = 32 - (c->x & 31);
+	int shift2 = (c->x & 31);
 
-	uint32_t operator, and_mask;
-	uint32_t and_mask_0 = 0xffffffff >> shift2;
-	uint32_t and_mask_1 = 0xffffffff << shift1;
-
-	// Initializing two pointers. Since the columns are written one after
-	// another, they will be updated directly to parse the whole grid.
+	// Initializing two pointers. They will read two adjacent columns at
+	// the same time (p2 is column ahead of p1). Since the columns are
+	// written one after another, incrementing them will suffice when
+	// reaching the end of two columns, to move them to the next ones.
 	p1 = layer - height;
 	p2 = layer;
 
-	// Drawing vram longwords, using pairs of columns.
-	for(right_column = 0; right_column <= column_count; right_column++)
-	{
-		and_mask = 0xffffffff;
-		if(right_column == 0)			and_mask &= and_mask_0;
-		if(right_column == column_count)	and_mask &= and_mask_1;
+	// We don't want to write the first vram column when x is negative.
+	if(c->x < 0) p1 += height, p2 += height;
+	right_column = (c->x < 0);
 
-		for(line = 0; line < height; line++)
+	// Drawing vram longwords, using pairs of columns.
+	while(right_column <= column_count)
+	{
+		for(line = c->top; line < c->bottom; line++)
 		{
-			l1 = (right_column > 0) ? (*p1) : (0);
-			l2 = (right_column < column_count) ? (*p2) : (0);
-			p1++, p2++;
+			l1 = (right_column > 0) ? p1[line] : (0);
+			l2 = (right_column < column_count) ? p2[line] : (0);
 
 			operator = (l1 << shift1) | (l2 >> shift2);
-			(*op)(vram_offset, operator, and_mask);
+			(*c->op)(vram_offset, operator, c);
 			vram_offset += 4;
 		}
 
+		p1 += height;
+		p2 += height;
 		vram_column_offset++;
 		vram_offset = vram_column_offset;
+		right_column++;
 	}
 }
 
@@ -144,13 +149,13 @@ static void bopti_grid(const uint32_t *layer, int x, int y, int column_count)
 	is read and updated so that it points to the next line at the end of
 	the operation.
 */
-static uint32_t bopti_end_get1(const unsigned char **data)
+uint32_t bopti_end_get1(const unsigned char **data)
 {
 	uint32_t operator = **data;
 	*data += 1;
 	return operator;
 }
-static uint32_t bopti_end_get2(const unsigned char **data)
+uint32_t bopti_end_get2(const unsigned char **data)
 {
 	uint32_t operator = *((uint16_t *)*data);
 	*data += 2;
@@ -165,63 +170,57 @@ static uint32_t bopti_end_get2(const unsigned char **data)
 	whose with is lower than 32. (Actually is it lower or equal to 16;
 	otherwise it would have been a column and the end would be empty).
 */
-static void bopti_end_nover(const unsigned char *end, int x, int y, int width)
+void bopti_end_nover(const unsigned char *end, int size, struct Command *c)
 {
 	uint32_t (*get)(const unsigned char **data) =
-		(width > 8) ? bopti_end_get2 : bopti_end_get1;
-
-	int vram_offset = (y << 2) + (x >> 5);
-	int row;
+		(size == 2) ? bopti_end_get2 : bopti_end_get1;
 
 	// We *have* shift >= 0 because of this function's 'no overlap'
 	// requirement.
-	int shift_base = (width > 8) ? 16 : 24;
-	int shift = shift_base - (x & 31);
-
-	uint32_t and_mask = (0xffffffff << (32 - width)) >> (x & 31);
+	int shift = (32 - (size << 3)) - (c->x & 31);
+	int vram_offset = (c->y << 2) + (c->x >> 5);
 	uint32_t operator;
+	int row;
 
-	for(row = 0; row < height; row++)
+	// Skipping c->top lines (because get() function only allows sequential
+	// access).
+	end += c->top * size;
+
+	for(row = c->top; row < c->bottom; row++)
 	{
 		operator = (*get)(&end);
 		operator <<= shift;
 
-		(*op)(vram_offset, operator, and_mask);
+		(*c->op)(vram_offset, operator, c);
 		vram_offset += 4;
 	}
 }
-static void bopti_end(const unsigned char *end, int x, int y, int width)
+void bopti_end(const unsigned char *end, int size, struct Command *c)
 {
-	if((x & 31) + width <= 32)
-	{
-		bopti_end_nover(end, x, y, width);
-		return;
-	}
-
 	uint32_t (*get)(const unsigned char **data) =
-		(width > 8) ? (bopti_end_get2) : (bopti_end_get1);
+		(size == 2) ? (bopti_end_get2) : (bopti_end_get1);
 
-	int vram_offset = (y << 2) + (x >> 5);
+	int vram_offset = (c->y << 2) + (c->x >> 5);
+	uint32_t row_data, operator;
 	int row;
 
-	int shift_base = (width > 8) ? 16 : 24;
-	int shift1 = (x & 31) - shift_base;
-	int shift2 = shift_base + 32 - (x & 31);
+	int shift_base = (32 - (size << 3));
+	int shift1 = (c->x & 31) - shift_base;
+	int shift2 = shift_base + 32 - (c-> x & 31);
 
-	uint32_t and_mask_0 = 0xffffffff >> (x & 31);
-	uint32_t and_mask_1 = 0xffffffff << (64 - width - (x & 31));
+	// Skipping c->top lines (because get() function only allows sequential
+	// access).
+	end += c->top * size;
 
-	uint32_t row_data, operator;
-
-	for(row = 0; row < height; row++)
+	for(row = c->top; row < c->bottom; row++)
 	{
 		row_data = (*get)(&end);
 
 		operator = row_data >> shift1;
-		(*op)(vram_offset, operator, and_mask_0);
+		(*c->op)(vram_offset, operator, c);
 
 		operator = row_data << shift2;
-		(*op)(vram_offset + 1, operator, and_mask_1);
+		(*c->op)(vram_offset + 1, operator, c);
 
 		vram_offset += 4;
 	}
@@ -237,41 +236,63 @@ static void bopti_end(const unsigned char *end, int x, int y, int width)
 	bopti()
 	Draws a layer in the video ram.
 */
-static void bopti(const unsigned char *layer, int x, int y, int columns,
-	int end_size)
+void bopti(const unsigned char *layer, struct Structure *s, struct Command *c)
 {
-	const unsigned char *end = layer + ((columns * height) << 2);
-	int end_x = x + (columns << 5);
+	const unsigned char *grid, *end;
+	int grid_columns, has_end;
 
-	bopti_grid((const uint32_t *)layer, x, y, columns);
-	if(end_size) bopti_end(end, end_x, y, end_size);
+	// Skipping columns at the beginning.
+	grid = layer + ((c->left * s->height) << 2);
+
+	// Updating the command arguments to eliminate some information about
+	// parts that are not being drawn.
+	c->x += (c->left << 5);
+	c->y += c->top;
+
+	// Columns are identified by ids 0 to s->columns - 1, and the end has
+	// id s->columns. So the end is drawn if this last column is included.
+	has_end = (c->right == s->columns);
+	// Computing number of grid columns to draw.
+	grid_columns = c->right - c->left + 1 - has_end;
+
+	bopti_grid((const uint32_t *)grid, grid_columns, s->height, c);
+
+	if(has_end)
+	{
+		end = layer + ((s->columns * s->height) << 2);
+		c->x += (grid_columns << 5);
+
+		if((c->x & 31) + s->end_size <= 32)
+			bopti_end_nover(end, s->end_bytes, c);
+		else
+			bopti_end(end, s->end_bytes, c);
+	}
 }
 
 /*
 	getStructure()
 	Determines the image size and data pointer.
 */
-static void getStructure(struct Image *img, int *width, int *height,
-	int *layer_size, const unsigned char **data, int *columns,
-	int *end_size)
+void getStructure(struct Image *img, struct Structure *s)
 {
 	int column_count, end, end_bytes, layer;
 
 	// Large images.
 	if(!img->width && !img->height)
 	{
-		if(width)	*width  = (img->data[0] << 8) | img->data[1];
-		if(height)	*height = (img->data[2] << 8) | img->data[3];
-		if(data)	*data   = img->data + 4;
+		s->width	= (img->data[0] << 8) | img->data[1];
+		s->height	= (img->data[2] << 8) | img->data[3];
+		s->data		= img->data + 4;
 
-		column_count = (*width + 31) >> 5;
-		end = end_bytes = 0;
+		column_count = (s->width + 31) >> 5;
+		end = 0;
+		end_bytes = 0;
 	}
 	else
 	{
-		if(width)	*width  = img->width;
-		if(height)	*height = img->height;
-		if(data)	*data   = img->data;
+		s->width	= img->width;
+		s->height	= img->height;
+		s->data		= img->data;
 
 		column_count = img->width >> 5;
 		end = img->width & 31;
@@ -280,13 +301,21 @@ static void getStructure(struct Image *img, int *width, int *height,
 			end <= 8	? 1 :
 			end <= 16	? 2 :
 			4;
+
+		if(end_bytes == 4)
+		{
+			column_count++;
+			end = 0;
+			end_bytes = 0;
+		}
 	}
 
 	// The layer size must be rounded to a multiple of 4.
 	layer = img->height * ((column_count << 2) + end_bytes);
 	if(layer & 3) layer += 4 - (layer & 3);
 
-	if(columns)	*columns    = column_count;
-	if(end_size)	*end_size   = end;
-	if(layer_size)	*layer_size = layer;
+	s->columns	= column_count;
+	s->end_bytes	= end_bytes;
+	s->end_size	= end;
+	s->layer_size	= layer;
 }
