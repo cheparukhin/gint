@@ -1,4 +1,4 @@
-#include <bopti_internals.h>
+#include <internals/bopti.h>
 
 // Monochrome video ram, light and dark buffers (in this order).
 int *vram, *v1, *v2;
@@ -103,6 +103,7 @@ void bopti_grid(const uint32_t *layer, int column_count, int height,
 	const uint32_t *p1, *p2;
 	uint32_t l1, l2, operator;
 	int right_column, line;
+	int actual_column_count;
 
 	int vram_column_offset = (c->y << 2) + (c->x >> 5) + (c->x < 0);
 	int vram_offset = vram_column_offset;
@@ -117,12 +118,19 @@ void bopti_grid(const uint32_t *layer, int column_count, int height,
 	p1 = layer - height;
 	p2 = layer;
 
-	// We don't want to write the first vram column when x is negative.
+	// We don't want to write the first vram column when x is negative
+	// because it's outside the screen.
 	if(c->x < 0) p1 += height, p2 += height;
 	right_column = (c->x < 0);
+	// For the same reason, we don't to draw the additional rightmost
+	// column when it begins after 96.
+	if(c->x + (column_count << 5) > 128)
+		actual_column_count = column_count - 1;
+	else
+		actual_column_count = column_count;
 
 	// Drawing vram longwords, using pairs of columns.
-	while(right_column <= column_count)
+	while(right_column <= actual_column_count)
 	{
 		for(line = c->top; line < c->bottom; line++)
 		{
@@ -311,7 +319,7 @@ void getStructure(struct Image *img, struct Structure *s)
 	}
 
 	// The layer size must be rounded to a multiple of 4.
-	layer = img->height * ((column_count << 2) + end_bytes);
+	layer = s->height * ((column_count << 2) + end_bytes);
 	if(layer & 3) layer += 4 - (layer & 3);
 
 	s->columns	= column_count;

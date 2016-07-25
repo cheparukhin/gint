@@ -1,4 +1,4 @@
-#include <display_internals.h>
+#include <internals/display.h>
 #include <display.h>
 
 #define sgn(x)	((x) < 0 ? -1 : 1)

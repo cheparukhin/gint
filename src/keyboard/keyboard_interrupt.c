@@ -2,7 +2,7 @@
 #include <timer.h>
 #include <mpu.h>
 
-#include <keyboard_internals.h>
+#include <internals/keyboard.h>
 
 //---
 //	Keyboard variables.

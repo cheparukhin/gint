@@ -1,4 +1,4 @@
-#include <bopti_internals.h>
+#include <internals/bopti.h>
 #include <display.h>
 
 /*
@@ -29,11 +29,10 @@ void dimage(struct Image *img, int x, int y)
 	actual_width	= (x + s.width > 128) ? (128 - x) : (s.width);
 	command.right	= ((actual_width + 31) >> 5) - 1;
 
-	command.x	= x;
-	command.y	= y;
 	command.op	= bopti_op_mono;
 
-	getMasks(x, x + actual_width - 1, command.masks);
+	if(x >= 0) getMasks(x, x + actual_width - 1, command.masks);
+	else getMasks(0, actual_width + x - 1, command.masks);
 
 	vram = display_getCurrentVRAM();
 
@@ -42,7 +41,11 @@ void dimage(struct Image *img, int x, int y)
 		// Drawing every layer, in order of formats.
 		if(format & 1)
 		{
+			// These members are modified by bopti()!
+			command.x	= x;
+			command.y	= y;
 			command.channel = (1 << i);
+
 			bopti(s.data, &s, &command);
 			s.data += s.layer_size;
 		}

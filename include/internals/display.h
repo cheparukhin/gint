@@ -6,9 +6,9 @@
 //
 //---
 
-#ifndef	_DISPLAY_INTERNALS_H
-#define	_DISPLAY_INTERNALS_H
+#ifndef	_INTERNALS_DISPLAY_H
+#define	_INTERNALS_DISPLAY_H	1
 
 extern int *vram;
 
-#endif	// _DISPLAY_INTERNALS_H
+#endif	// _INTERNALS_DISPLAY_H

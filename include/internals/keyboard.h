@@ -1,5 +1,5 @@
-#ifndef	_KEYBOARD_INTERNALS_H
-#define	_KEYBOARD_INTERNALS_H	1
+#ifndef	_INTERNALS_KEYBOARD_H
+#define	_INTERNALS_KEYBOARD_H	1
 
 #include <keyboard.h>
 
@@ -31,4 +31,4 @@ int getPressedKey(volatile unsigned char *keyboard_state);
 int getPressedKeys(volatile unsigned char *keyboard_state, int *keys,
 	int count);
 
-#endif	// _KEYBOARD_INTERNALS_H
+#endif	// _INTERNALS_KEYBOARD_H

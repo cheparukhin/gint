@@ -1,4 +1,4 @@
-#include <keyboard_internals.h>
+#include <internals/keyboard.h>
 
 /*
 	getPressedKeys()

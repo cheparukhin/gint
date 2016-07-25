@@ -1,24 +1,16 @@
 /*
 	gint core module: syscalls
 
-	All the system calls used by the library. Let's hope one day we won't
-	depend on them anymore.
+	All the system calls used by the library. Somehow "the less, the
+	better".
 */
 
-	.global	___Hmem_SetMMU
 	.global	___GLibAddinAplExecutionCheck
 	.global	_malloc
 	.global	_calloc
 	.global	_free
 
 
-
-___Hmem_SetMMU:
-	mov.l	syscall_table, r2
-	mov.l	1f, r0
-	jmp	@r2
-	nop
-1:	.long	0x3fa
 
 ___GLibAddinAplExecutionCheck:
 	mov.l	syscall_table, r2

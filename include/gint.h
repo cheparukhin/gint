@@ -10,6 +10,9 @@
 #ifndef	_GINT_H
 #define	_GINT_H	1
 
+#define	GINT_VERSION		0x01000000
+#define	GINT_VERSION_STR	"01.00"
+
 //---
 //	Interrupt handler control.
 //---
@@ -26,42 +29,6 @@ unsigned int gint_getVBR(void);
 	starts).
 */
 unsigned int gint_systemVBR(void);
-
-
-
-//---
-//	Callback API.
-//---
-
-/*
-	enum RTCFrequency
-	Describes the possible frequencies available for the real-time clock
-	interrupt.
-*/
-enum RTCFrequency
-{
-	RTCFreq_500mHz	= 7,
-	RTCFreq_1Hz	= 6,
-	RTCFreq_2Hz	= 5,
-	RTCFreq_4Hz	= 4,
-	RTCFreq_16Hz	= 3,
-	RTCFreq_64Hz	= 2,
-	RTCFreq_256Hz	= 1,
-};
-
-/*
-	gint_setRTCCallback()
-	Sets the callback function for the real-time clock interrupt. If
-	frequency is non-NULL, the clock frequency is set to the given value.
-*/
-void gint_setRTCCallback(void (*callback)(void), enum RTCFrequency frequency);
-
-/*
-	gint_getRTCCallback()
-	Returns the callback function. If frequency is non-NULL, it is set to
-	the current frequency value.
-*/
-void (*gint_getRTCCallback(enum RTCFrequency *frequency))(void);
 
 
 
@@ -108,33 +75,86 @@ void gint_setup_7305(void);
 void gint_stop_7705(void);
 void gint_stop_7305(void);
 
+
+
+//---
+//	Exception handling.
+//---
+
 /*
-	gint()
+	gint_exc()
+	Handles exceptions.
+*/
+void gint_exc(void)		__attribute__((section(".gint.exc.entry"),
+					interrupt_handler));
+void gint_exc_7705(void)	__attribute__((section(".gint.exc")));
+void gint_exc_7305(void)	__attribute__((section(".gint.exc")));
+
+/*
+	gint_tlb()
+	Handles TLB misses.
+*/
+void gint_tlb(void)		__attribute__((section(".gint.tlb.entry"),
+					interrupt_handler));
+void gint_tlb_7705(void)	__attribute__((section(".gint.tlb")));
+void gint_tlb_7305(void)	__attribute__((section(".gint.tlb")));
+
+/*
+	gint_int()
 	Handles interrupts.
 */
-void gint(void)			__attribute__((section(".gint.int.entry"),
+void gint_int(void)		__attribute__((section(".gint.int.entry"),
 					interrupt_handler));
-void gint_7705(void)		__attribute__((section(".gint.int")));
-void gint_7305(void)		__attribute__((section(".gint.int")));
-
-/*
-	gint_setRTCFrequency()
-	Sets the RTC interrupt frequency and enables interrupts.
-*/
-void gint_setRTCFrequency_7705(enum RTCFrequency frequency);
-void gint_setRTCFrequency_7305(enum RTCFrequency frequency);
-
-/*
-	gint_getRTCFrequency()
-	Returns the RTC interrupt frequency.
-*/
-enum RTCFrequency gint_getRTCFrequency_7705(void);
-enum RTCFrequency gint_getRTCFrequency_7305(void);
+void gint_int_7705(void)	__attribute__((section(".gint.int")));
+void gint_int_7305(void)	__attribute__((section(".gint.int")));
 
 
 
 //---
-//	Internal priority definitions.
+//	Register access.
+//---
+
+/*
+	enum Register
+	Represents common registers. Used as identifiers to retrieve their
+	values using gint_register().
+*/
+enum Register
+{
+	Register_EXPEVT,
+	Register_MMUCR,
+	Register_TEA,
+};
+
+/*
+	gint_register()
+	Returns the address of a common register. All common registers exist
+	on both platforms but they may hold different values for the same
+	information (f.i. EXPEVT may not return the same value for a given
+	exception on both 7705 and 7305).
+*/
+volatile void *gint_reg(enum Register reg);
+volatile void *gint_reg_7705(enum Register reg);
+volatile void *gint_reg_7305(enum Register reg);
+
+/*
+	gint_strerror()
+	Returns a string that describe the error set in EXPEVT in case of
+	general exception of TLB miss exception. This string is platform-
+	independent.
+	Some exception codes represent different errors when invoked inside the
+	general exception handler and the TLB error handler. Parameter 'is_tlb'
+	should be set to zero for general exception meanings, and anything non-
+	zero for TLB error meanings.
+*/
+const char *gint_strerror(int is_tlb);
+const char *gint_strerror_7705(int is_tlb);
+const char *gint_strerror_7305(int is_tlb);
+
+
+
+//---
+//	Internal platform-independent definitions.
 //---
 
 #define	GINT_INTP_WDT	4

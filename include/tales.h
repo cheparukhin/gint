@@ -96,6 +96,12 @@ typedef struct Font Font;
 void text_configure(struct Font *font);
 
 /*
+	text_configure_default()
+	Configures tales with the default font (which is part of gint).
+*/
+void text_configure_default(void)		__attribute__((constructor));
+
+/*
 	dtext()
 	Prints the given string, without any analysis.
 */

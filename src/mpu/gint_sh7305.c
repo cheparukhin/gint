@@ -8,9 +8,13 @@
 //
 //---
 
+#include <internals/gint.h>
 #include <gint.h>
 #include <timer.h>
 #include <7305.h>
+#include <rtc.h>
+
+#include <stddef.h>
 
 //---
 //	Interrupt codes.
@@ -25,10 +29,10 @@
 
 
 //---
-//	Interrupt handler.
+//	Exception handling.
 //---
 
-void gint_7305(void)
+void gint_int_7305(void)
 {
 	volatile unsigned int *intevt  = (unsigned int *)0xff000028;
 	unsigned int code = *intevt;
@@ -36,7 +40,7 @@ void gint_7305(void)
 	switch(code)
 	{
 	case IC_RTC_PRI:
-		RTC.RCR2.PEF = 0;
+		rtc_interrupt();
 		break;
 
 	case IC_TMU0_TUNI0:
@@ -51,6 +55,58 @@ void gint_7305(void)
 		timer_interrupt(TIMER_TMU2);
 		break;
 	}
+}
+
+/*
+	gint_reg()
+	Returns the address of a common register. All common registers exist
+	on both platforms but they may hold different values for the same
+	information (f.i. EXPEVT may not return the same value for a given
+	exception on both 7705 and 7305).
+*/
+volatile void *gint_reg_7305(enum Register reg)
+{
+	volatile unsigned int *expevt	= (unsigned int *)0xff000024;
+	volatile unsigned int *tea	= (unsigned int *)0xff00000c;
+	volatile unsigned int *mmucr	= (unsigned int *)0xff000010;
+
+	switch(reg)
+	{
+	case Register_EXPEVT:	return expevt;
+	case Register_TEA:	return tea;
+	case Register_MMUCR:	return mmucr;
+	default:		return NULL;
+	}
+}
+
+/*
+	gint_strerror()
+	Returns a string that describe the error set in EXPEVT. This string is
+	not platform-dependent.
+	Some exception codes represent different errors when invoked inside the
+	general exception handler and the TLB error handler. Parameter 'is_tlb'
+	should be set to zero for general exception meanings, and anything non-
+	zero for TLB error meanings.
+*/
+const char *gint_strerror_7305(int is_tlb)
+{
+	volatile unsigned int *expevt = gint_reg_7305(Register_EXPEVT);
+
+	switch(*expevt)
+	{
+	case 0x1e0: return gint_str[3];
+	case 0x0e0: return gint_str[8];
+	case 0x040: return gint_str[14];
+	case 0x0a0: return gint_str[17];
+	case 0x180: return gint_str[6];
+	case 0x1a0: return gint_str[7];
+	case 0x100: return gint_str[9];
+	case 0x060: return gint_str[15];
+	case 0x0c0: return gint_str[18];
+	case 0x080: return gint_str[20];
+	case 0x160: return gint_str[21];
+	}
+	return gint_str[0];
 }
 
 

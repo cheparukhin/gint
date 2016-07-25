@@ -1,5 +1,5 @@
-#ifndef _CTYPE_H
-#define _CTYPE_H 1
+#ifndef	_CTYPE_H
+#define	_CTYPE_H 1
 
 // Character definition macros.
 #define isalnum(c)	(isdigit(c)	|| isalpha(c))
@@ -24,4 +24,4 @@
 #define tolower(c) (isupper(c) ? (c) |  32 : (c))
 #define toupper(c) (islower(c) ? (c) & ~32 : (c))
 
-#endif // _CTYPE_H
+#endif	// _CTYPE_H

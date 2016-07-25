@@ -1,7 +1,9 @@
 #include <stdlib.h>
-#include <gint.h>
 #include <string.h>
 #include <setjmp.h>
+
+#include <gint.h>
+#include <internals/mmu.h>
 
 void	__Hmem_SetMMU(unsigned int, unsigned int, int);
 void	__GLibAddinAplExecutionCheck(int, int, int);
@@ -42,15 +44,14 @@ int start(void)
 	unsigned int *data = &bdata, *src = &romdata;
 	int x;
 
-	// Setting up the TLB.
-	__Hmem_SetMMU(0x08102000, 0x8801e000, 108);
-
 	// Clearing the .bss section.
 	while(bss < &ebss) *bss++ = 0;
 	// Copying the .data section.
 	while(data < &edata) *data++ = *src++;
 
 	__GLibAddinAplExecutionCheck(0, 1, 1);
+
+	mmu_pseudoTLBInit();
 
 	// Initializing everything.
 	gint_init();

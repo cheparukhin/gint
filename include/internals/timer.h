@@ -1,5 +1,5 @@
-#ifndef	_TIMER_INTERNALS_H
-#define	_TIMER_INTERNALS_H
+#ifndef	_INTERNALS_TIMER_H
+#define	_INTERNALS_TIMER_H	1
 
 /*
 	struct Timer
@@ -51,4 +51,4 @@ struct mod_tmu
 */
 void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr);
 
-#endif	// _TIMER_INTERNALS_H
+#endif	// _INTERNALS_TIMER_H

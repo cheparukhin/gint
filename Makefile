@@ -12,7 +12,8 @@
 #---
 
 # Modules
-modules-gint	= bopti core display gray keyboard mpu screen tales timer
+modules-gint	= core keyboard mmu mpu rtc screen timer \
+		  bopti display gray tales
 modules-libc	= setjmp string
 
 # Targets
@@ -28,7 +29,7 @@ ob	= sh3eb-elf-objcopy
 wr	= g1a-wrapper
 
 # Flags
-cflags		= -m3 -mb -nostdlib -I include -ffreestanding -std=c11
+cflags		= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os
 
 # Demo application (could be done better)
 demo-src	= $(notdir $(wildcard demo/*.[cs]))
@@ -39,6 +40,10 @@ demo-obj	= $(patsubst %,build/demo_%.o,$(demo-src) $(demo-res))
 demo-elf	= build/gintdemo.elf
 demo-bin	= build/gintdemo.bin
 demo-libs	= -lgcc -L. -lgint -lc
+
+# Specific objects
+obj-lib-spec	= build/display_font_system.bmp.o
+obj-std-spec	=
 
 
 
@@ -58,14 +63,16 @@ endef
 $(foreach mod, $(modules), $(eval \
 	mod-$(mod)-c	= $(notdir $(wildcard src/$(mod)/*.c))		$n\
 	mod-$(mod)-asm	= $(notdir $(wildcard src/$(mod)/*.s))		$n\
-	mod-$(mod)-dep	= $(wildcard include/*.h src/$(mod)/*.h)	$n\
 	mod-$(mod)-src	= $$(mod-$(mod)-c)$$(mod-$(mod)-asm)		$n\
 	mod-$(mod)-obj	= $$(patsubst %,build/$(mod)_%.o,$$(mod-$(mod)-src)) \
 ))
 
 # Target-scope variables.
-obj-std = $(foreach mod,$(modules-libc),$(mod-$(mod)-obj))
-obj-lib	= $(foreach mod,$(modules-gint),$(mod-$(mod)-obj))
+obj-std = $(foreach mod,$(modules-libc),$(mod-$(mod)-obj)) $(obj-std-spec)
+obj-lib	= $(foreach mod,$(modules-gint),$(mod-$(mod)-obj)) $(obj-lib-spec)
+
+# Dependencies
+hdr-dep = $(wildcard include/*.h include/internals/*.h)
 
 
 
@@ -77,8 +84,8 @@ obj-lib	= $(foreach mod,$(modules-gint),$(mod-$(mod)-obj))
 #   $1  module name
 #   $2  filename
 define rule-c-source
-build/$1_$2.o: src/$1/$2 $(mod-$1-dep)
-	$(cc) -c $$< -o $$@ $(cflags) -I src/$1 -O2
+build/$1_$2.o: src/$1/$2 $(hdr-dep)
+	$(cc) -c $$< -o $$@ $(cflags) -I src/$1
 endef
 
 # asm source file template:
@@ -98,21 +105,24 @@ endef
 # Generic rules
 
 all: build $(target-std) $(target-lib) $(target-g1a)
-	@ echo 'All done!'
+	@echo "[ \033[32;1mOK\033[0m ] All done!"
 
 build:
 	mkdir -p $@
 
 $(target-std): $(obj-std)
 	$(ar) rcs $@ $^
+	@echo "[ \033[32;1mOK\033[0m ] libc: `stat -c %s $@` bytes"
 
 $(target-lib): $(target-std) $(obj-lib)
 	$(ar) rcs $@ $(obj-lib)
+	@echo "[ \033[32;1mOK\033[0m ] libgint: `stat -c %s $@` bytes"
 
 $(target-g1a): $(target-std) $(target-lib) $(demo-obj)
 	$(cc) -o $(demo-elf) $(cflags) -T $(demo-ld) $(demo-obj) $(demo-libs)
 	$(ob) -R .comment -R .bss -O binary $(demo-elf) $(demo-bin)
 	$(wr) $(demo-bin) -o $@ -i $(demo-icon)
+	@echo "[ \033[32;1mOK\033[0m ] demo app: `stat -c %s $@` bytes"
 
 # Automated rules
 
@@ -123,21 +133,26 @@ $(foreach mod,$(modules), \
 		$(call rule-asm-source,$(mod),$(source)))) \
 )
 
+# Specific rules
+
 # This one should not be optimized. It makes __attribute__((interrupt_handler))
 # buggy... maybe. Anyway there's a bug in this file.
 build/core_gint.c.o: src/core/gint.c $(mod-core-dep)
-	$(cc) -c $< -o $@ $(cflags) -I src/core
+	$(cc) -c $< -o $@ $(cflags) -I src/core -O0
+
+build/display_font_system.bmp.o: src/display/font_system.bmp
+	fxconv $< -o $@ --font -n gint_font_system
 
 # Demo application
 
 build/demo_%.c.o: demo/%.c
 	$(cc) -c $< -o $@ $(cflags)
 
+build/demo_font_%.bmp.o: demo/resources/font_%.bmp
+	fxconv $< -o $@ --font -n $(patsubst demo/resources/%.bmp,res_%,$<)
+
 build/demo_%.bmp.o: demo/resources/%.bmp
 	fxconv $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
-
-build/demo_font.bmp.o: demo/resources/font.bmp
-	fxconv $< -o $@ --font -n res_font
 
 
 

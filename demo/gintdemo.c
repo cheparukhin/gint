@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include <mpu.h>
+#include <gint.h>
 #include <keyboard.h>
 #include <display.h>
 #include <timer.h>
@@ -10,62 +11,67 @@
 #include <stdint.h>
 #include <7305.h>
 
+
+
 //---
 //	A few ugly procedures for displaying text. Will have to enhance this
 //	soon -- which means printf().
 //---
 
-void print(const char *str, int x, int y)
+void locate(const char *str, int x, int y)
 {
-	dtext(str, x, y);
+	if(x < 1 || x > 21 || y < 1 || y > 8) return;
+	if(gray_runs()) gtext(str, x * 6 - 5, y * 8 - 7);
+	else dtext(str, x * 6 - 5, y * 8 - 7);
 }
-void print_hex(unsigned int n, int x, int y)
+
+void locate_hex(unsigned int n, int x, int y)
 {
-	char ch[11] = "0x";
+	char str[11] = "0x";
 	int i;
 
 	for(i = 0; i < 8; i++)
 	{
-		ch[9 - i] = (n & 0xf) + '0' + 39 * ((n & 0xf) > 9);
+		str[9 - i] = (n & 0xf) + '0' + 39 * ((n & 0xf) > 9);
 		n >>= 4;
 	}
-	ch[10] = 0;
-	print(ch, x, y);
+	str[10] = 0;
+	locate(str, x, y);
 }
-void print_bin(unsigned char n, int x, int y)
+void locate_bin(unsigned char n, int x, int y)
 {
-	char ch[9];
+	char str[9];
 	int i;
 
 	for(i = 0; i < 8;i ++)
 	{
-		ch[7 - i] = (n & 1) + '0';
+		str[7 - i] = (n & 1) + '0';
 		n >>= 1;
 	}
-	ch[8] = 0;
-	print(ch, x, y);
+	str[8] = 0;
+	locate(str, x, y);
 }
-void print_hexa(unsigned int n, int digits, int x, int y)
+void locate_hexa(unsigned int n, int digits, int x, int y)
 {
-	char ch[20];
+	char str[20];
 	int i;
 
 	for(i = digits - 1; i >= 0; i--)
 	{
-		ch[i] = (n & 0xf) + '0' + 39 * ((n & 0xf) > 9);
+		str[i] = (n & 0xf) + '0' + 39 * ((n & 0xf) > 9);
 		n >>= 4;
 	}
 
-	ch[digits] = 0;
-	print(ch, x, y);
+	str[digits] = 0;
+	locate(str, x, y);
 }
-void print_int(int n, int x, int y)
+void locate_int(int n, int x, int y)
 {
 	char str[20] = { 0 };
 	int i, o = 0;
 	int digits = 0, copy = n;
 
-	if(!n) { str[o++] = '0'; print(str, x, y); return; }
+	if(!n) { str[o++] = '0'; locate(str, x, y); return; }
 	if(n < 0) str[o++] = '-', n = -n;
 	while(copy) digits++, copy /= 10;
 
@@ -75,7 +81,7 @@ void print_int(int n, int x, int y)
 		n /= 10;
 	}
 
-	gtext(str, x, y);
+	locate(str, x, y);
 }
 
 
@@ -97,17 +103,17 @@ void keyboard_test_timer(void)
 
 	dclear_area(5, 10, 71, 34);
 
-	print_bin(state[0], 5, 10);
-	print_bin(state[1], 5, 16);
-	print_bin(state[2], 5, 22);
-	print_bin(state[3], 5, 28);
-	print_bin(state[4], 5, 34);
+	locate_bin(state[0], 5, 10);
+	locate_bin(state[1], 5, 16);
+	locate_bin(state[2], 5, 22);
+	locate_bin(state[3], 5, 28);
+	locate_bin(state[4], 5, 34);
 
-	print_bin(state[5], 40, 10);
-	print_bin(state[6], 40, 16);
-	print_bin(state[7], 40, 22);
-	print_bin(state[8], 40, 28);
-	print_bin(state[9], 40, 34);
+	locate_bin(state[5], 40, 10);
+	locate_bin(state[6], 40, 16);
+	locate_bin(state[7], 40, 22);
+	locate_bin(state[8], 40, 28);
+	locate_bin(state[9], 40, 34);
 
 	dupdate();
 }
@@ -127,8 +133,8 @@ void keyboard_test(void)
 	timer_start(TIMER_USER, 1700, TIMER_Po_256, keyboard_test_timer, 0);
 
 	dclear();
-	print("Keyboard state:", 0, 0);
-	print("multi-getkey ^^", 50, 55);
+	locate("Keyboard state:", 0, 0);
+	locate("multi-getkey ^^", 50, 55);
 	dupdate();
 
 	while(1)
@@ -142,14 +148,14 @@ void keyboard_test(void)
 		x = (x + 1) & 15;
 		str[0] = hexa(x);
 		str[1] = 0;
-		print(str, 100, 0);
+		locate(str, 100, 0);
 
 		for(i = 0; i < 4; i++)
 		{
 			str[0] = hexa((keys[i] >> 4) & 0x0f);
 			str[1] = hexa(keys[i] & 0x0f);
 			str[2] = 0;
-			print(str, 100, 16 + 10 * i);
+			locate(str, 100, 16 + 10 * i);
 		}
 
 		#undef	hexa
@@ -160,10 +166,12 @@ void keyboard_test(void)
 	timer_stop(TIMER_USER);
 }
 
+
 /*
 	bitmap_test()
 	Displays various bitmaps to ensure bopti is working correctly.
 */
+/*
 void bitmap_test(void)
 {
 	extern Image res_bitmap_opt_start;
@@ -171,12 +179,14 @@ void bitmap_test(void)
 	extern Image res_symbol2_start;
 	extern Image res_sprites_start;
 	extern Image res_swords_start;
+	extern Image res_items_start;
 
 	Image *opt	= &res_bitmap_opt_start;
 	Image *sybl	= &res_symbol_start;
 	Image *sybl2	= &res_symbol2_start;
 	Image *sprites	= &res_sprites_start;
 	Image *swords	= &res_swords_start;
+	Image *items	= &res_items_start;
 
 	uint32_t a32 = 0xffffffff;
 	int black_bg = 0, gray = 0;
@@ -191,10 +201,9 @@ void bitmap_test(void)
 			gclear();
 
 			if(black_bg) greverse_area(0, 0, 127, 63);
-			gimage(opt, 0, 57);
+			gimage(swords, 0, 57);
 
-			gimage(sprites, x, y);
-			gimage(swords, x, y + 35);
+			gimage(items, x, y);
 
 			gupdate();
 		}
@@ -229,29 +238,28 @@ void bitmap_test(void)
 	gray_stop();
 	return;
 }
-
+*/
 
 
 /*
 	text_test()
 	Renders text.
 */
-
 void text_test(void)
 {
-	extern Font res_font_start;
-	Font *font = &res_font_start;
+	extern Font res_font_modern_start;
+	Font *font = &res_font_modern_start;
 
 	text_configure(font);
 
 	dclear();
 
-	print(" !\"#$%&'()*+,-./", 10, 10);
-	print("0123456789:;<=>?", 10, 16);
-	print("@ABCDEFGHIJKLMNO", 10, 22);
-	print("PQRSTUVWXYZ[\\]^_", 10, 28);
-	print("`abcdefghijklmno", 10, 34);
-	print("pqrstuvwxyz{|}~", 10, 40);
+	dtext(" !\"#$%&'()*+,-./", 10, 10);
+	dtext("0123456789:;<=>?", 10, 16);
+	dtext("@ABCDEFGHIJKLMNO", 10, 22);
+	dtext("PQRSTUVWXYZ[\\]^_", 10, 28);
+	dtext("`abcdefghijklmno", 10, 34);
+	dtext("pqrstuvwxyz{|}~", 10, 40);
 
 	dupdate();
 
@@ -264,11 +272,9 @@ void text_test(void)
 	gray_test()
 	Runs the gray engine.
 */
-
 void gray_test(void)
 {
-	extern Image res_illustration_start;
-	Image *illustration = &res_illustration_start;
+	extern Image res_opt_gray_start;
 
 	int *v1, *v2;
 
@@ -297,16 +303,15 @@ void gray_test(void)
 					-(i < 32);
 			}
 
-//			gimage(illustration, 0, 0);
-//			gclear_area(64, 0, 127, 63);
+			locate("light", 15, 2);
+			locate_int(delays[0], 15, 3);
 
-			gtext("light", 78, 6);
-			print_int(delays[0], 103, 6);
+			locate("dark", 15, 5);
+			locate_int(delays[1], 15, 6);
 
-			gtext("dark", 78, 15);
-			print_int(delays[1], 103, 15);
+			locate("\x02", 14, selected ? 6 : 3);
 
-			gtext(">", 70, selected ? 15 : 6);
+			gimage(&res_opt_gray_start, 0, 56);
 			gupdate();
 		}
 
@@ -320,19 +325,15 @@ void gray_test(void)
 		switch(key)
 		{
 		case KEY_F1:
-			delays[0] = 860;
-			delays[1] = 1298;
+			selected = !selected;
 			break;
 		case KEY_F2:
-			delays[0] = 912;
-			delays[1] = 1343;
-			break;
-		case KEY_F3:
 			delays[0] = 993;
 			delays[1] = 1609;
 			break;
-		case KEY_F6:
-			selected = !selected;
+		case KEY_F3:
+			delays[0] = 860;
+			delays[1] = 1298;
 			break;
 		case KEY_UP:
 			delays[selected] += 10;
@@ -356,56 +357,6 @@ void gray_test(void)
 }
 
 /*
-	main_menu()
-	Displays the main menu and returns user's choice.
-
-	@return	User choice. 0 means EXIT, other numbers are applications.
-*/
-int main_menu(void)
-{
-	extern unsigned int bgint, egint;
-	const char *mpu_names[] = {
-		"MPU_Unkown",
-		"MPU_SH7337",
-		"MPU_SH7355",
-		"MPU_SH7305",
-		"MPU_SH7724",
-		"MPU Error !"
-	};
-	int key;
-
-	dclear();
-
-	print("gint test application", 19, 1);
-	dline(19, 8, 107, 8, Color_Black);
-
-	print("[1] Keyboard", 10, 17);
-	print("[2] Bitmap drawing", 10, 24);
-	print("[3] Text rendering", 10, 31);
-	print("[4] Gray engine", 10, 38);
-
-	print("mpu type:", 2, 49);
-	print(mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5], 50, 48);
-	print("gint size:", 2, 56);
-	print_hex(&egint - &bgint, 50, 56);
-
-	dupdate();
-
-	while(1)
-	{
-		key = getkey();
-		if(key == KEY_EXIT) return 0;
-
-		if(key == KEY_1) return 1;
-		if(key == KEY_2) return 2;
-		if(key == KEY_3) return 3;
-		if(key == KEY_4) return 4;
-		if(key == KEY_5) return 5;
-	}
-
-	return 0;
-}
-
 static const unsigned char screen[1024] = {
 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 0, 0, 0, 0, 0, 0, 0, 7, 159, 0, 0, 1, 192, 0, 0, 0, 0, 0, 121, 240, 0, 0, 0,
@@ -505,7 +456,7 @@ void ML_bmp_or_cl(const unsigned char *bmp, int x, int y, int width, int height)
 	}
 }
 
-#include <../src/timer/timer_internals.h>
+#include <internals/timer.h>
 void debug(void)
 {
 	extern Image res_screen_start;
@@ -551,32 +502,292 @@ void debug(void)
 	dupdate();
 	while(getkey() != KEY_EXIT);
 }
+*/
 
 /*
-	main()
-	Handles application calls.
-
-	@return	0.
+	tlb_debug()
+	Displays the TLB contents and some information. Only available for
+	SH7705, because the SH7305's TLB is much more complicated.
 */
-int main(void)
+void tlb_debug(void)
 {
-	extern Font res_font_start;
-	Font *font = &res_font_start;
+	// Entry address address (pointer in the address array), entry data
+	// address (pointer in the data address), and their contents.
+	unsigned int address, data, a, d;
+	// Virtual page number and physical page number.
+	unsigned int vpn, ppn;
+	// Contents of register MMUCR.
+	unsigned mmucr;
 
-	text_configure(font);
+	int i, r, key = 0;
+	int way = 0, entry = 0;
+	int pointer_base;
 
-	int app;
+	const char *protection[] = { "pr", "prw", "ar", "arw" };
+	mmucr = *((volatile unsigned int *)gint_reg(Register_MMUCR));
+
+	dclear();
+	locate("MMU register info", 1, 1);
+	locate("MMUCR.IX = ", 2, 3);
+	locate(mmucr & 0x02 ? "1" : "0", 13, 3);
+	dupdate();
+	getkey();
+
+	while(key != KEY_EXIT && way < 4)
+	{
+		dclear();
+
+		locate("TLB", 1, 1);
+		locate("way=", 8, 1);
+		locate("0\0001\0002\0003" + (way << 1), 12, 1);
+		locate_int(entry, 16 + (entry < 10), 1);
+		locate("-", 18, 1);
+		locate_int((entry + 2 > 31) ? (31) : (entry + 2) , 19, 1);
+
+		for(i = 0; i < 3 && entry < 32; i++, entry++)
+		{
+			address	= 0xf2000000 | (entry << 12) | (way << 8);
+			data	= 0xf3000000 | (entry << 12) | (way << 8);
+
+			a = *((volatile unsigned int *)address);
+			d = *((volatile unsigned int *)data);
+
+			ppn = (d >> 10) & 0x00007ffff;
+			// 4-kbyte page
+			if(d & 0x08)
+			{
+				vpn = (a >> 12) | entry;
+				pointer_base = vpn << 12;
+			}
+			// 1-kbyte page
+			else
+			{
+				vpn = (a >> 10) | (entry << 2);
+				pointer_base = vpn << 10;
+			}
+
+			r = 2 * i + 3;
+			locate_hexa(pointer_base, 8, 1, r);
+			locate(":", 11, r);
+			locate_hexa(ppn << 10, 8, 12, r);
+
+			r++;
+			locate((d & 0x08) ? "4k" : "1k", 1, r);
+			locate("pr=", 5, r);
+			locate(protection[(d >> 5) & 3], 8, r);
+			locate((d & 0x02) ? "shared" : "exclusive", 13, r);
+		}
+
+		if(entry == 32) entry = 0, way++;
+
+		dupdate();
+		key = getkey();
+	}
+}
+
+/*
+	main_menu()
+	Displays the main menu and returns user's choice: 0 for [EXIT],
+	application numbers otherwise. Sets the ctaegory and application
+	number.
+*/
+void main_menu(int *category, int *app)
+{
+	//---
+	//	Quite a few things to declare...
+	//---
+
+	extern Image res_opt_menu_start;
+
+	const char *mpu, *mpu_names[] = {
+		"Unknown",
+		"SH7337",
+		"SH7355",
+		"SH7305",
+		"SH7724",
+		"[error]"
+	};
+
+	const char *list_tests[] = {
+		"Keyboard",
+		"Gray engine",
+		"Image rendering",
+		"Text rendering",
+		"Real-time clock",
+		NULL
+	};
+	const char *list_perfs[] = {
+		"Image rendering",
+		"Text rendering",
+		NULL
+	};
+	const char *list_debug[] = {
+		"View TLB (SH3 only)",
+		NULL
+	};
+	const char **list;
+
+	extern unsigned int bgint, egint;
+	extern unsigned int romdata;
+	int gint_size = &egint - &bgint;
+
+
+
+	static int tab = 0, index = 0;
+	// Set to 1 when interface has to be redrawn.
+	int leave = 1;
+	int i;
+
+	mpu = mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5];
+	text_configure_default();
 
 	while(1)
 	{
-		app = main_menu();
-		if(!app) break;
+		//---
+		//	Displaying the current tab.
+		//---
 
-		if(app == 1) keyboard_test();
-		if(app == 2) bitmap_test();
-		if(app == 3) text_test();
-		if(app == 4) gray_test();
-		if(app == 5) debug();
+		dclear();
+		dupdate();
+
+		switch(tab)
+		{
+		case 0:
+			locate("Demo application", 1, 1);
+			locate("gint version:", 2, 3);
+			locate(GINT_VERSION_STR, 16, 3);
+			locate("handler size:", 2, 4);
+			locate_int(gint_size, (gint_size < 1000 ? 18 : 17), 4);
+			locate("mpu type:", 2, 5);
+			locate(mpu, 21 - strlen(mpu), 5);
+			locate("romdata:", 2, 6);
+			locate_hex((unsigned int)&romdata, 11, 6);
+
+			list = NULL;
+			break;
+
+		case 1:
+			locate("Test list", 1, 1);
+			list = list_tests;
+			break;
+
+		case 2:
+			locate("Performance", 1, 1);
+			list = list_perfs;
+			break;
+
+		case 3:
+			locate("Debug", 1, 1);
+			list = list_debug;
+			break;
+
+		default:
+			locate("Tab ", 1, 1);
+			locate_int(tab, 5, 1);
+			break;
+		}
+		dimage(&res_opt_menu_start, 0, 56);
+
+		if(list)
+		{
+			for(i = 0; list[i]; i++) locate(list[i], 2, i + 2);
+			dreverse_area(0, 8 * index + 9, 127, 8 * index + 16);
+		}
+		dupdate();
+
+		//---
+		//	Waiting for events.
+		//---
+
+		do
+		{
+			leave = 1;
+
+			switch(getkey())
+			{
+			case KEY_F1:
+				tab = 0;
+				index = 0;
+				break;
+			case KEY_F2:
+				tab = 1;
+				index = 0;
+				break;
+			case KEY_F3:
+				tab = 2;
+				index = 0;
+				break;
+			case KEY_F4:
+				tab = 3;
+				index = 0;
+				break;
+
+			case KEY_UP:
+				if(list && index) index--;
+				break;
+			case KEY_DOWN:
+				if(list && list[index + 1]) index++;
+				break;
+
+			case KEY_EXE:
+				if(!tab) break;
+				if(category) *category = tab;
+				if(app) *app = index + 1;
+				return;
+
+			case KEY_EXIT:
+			case KEY_MENU:
+				if(category) *category = 0;
+				if(app) *app = 0;
+				return;
+
+			default:
+				leave = 0;
+			}
+		}
+		while(!leave);
+	}
+
+	if(category) *category = 0;
+	if(app) *app = 0;
+	return;
+}
+
+/*
+	main()
+	No need for description.
+*/
+int main(void)
+{
+	int category, app;
+
+	while(1)
+	{
+		main_menu(&category, &app);
+		if(!category) break;
+
+		switch((category << 8) | app)
+		{
+		case 0x0101:
+			keyboard_test();
+			break;
+		case 0x0102:
+			gray_test();
+			break;
+		case 0x0103:
+//			bitmap_test();
+			break;
+		case 0x0104:
+			text_test();
+			break;
+		case 0x0105:
+//			rtc_test();
+			break;
+
+		case 0x0301:
+			if(isSH3()) tlb_debug();
+			break;
+		}
 	}
 
 	return 0;

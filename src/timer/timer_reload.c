@@ -1,5 +1,5 @@
+#include <internals/timer.h>
 #include <timer.h>
-#include <timer_internals.h>
 
 /*
 	timer_reload()

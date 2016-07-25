@@ -10,24 +10,21 @@
 
 
 @  vram overflow
-@  keyboard test threading interface
+@  keyboard test threaded interface
 
++  full and partial transparency
 +  gint vs. ML with 248x124 at (-60, -28)
-+  use alloca() for tales
 +  call exit handlers
 +  compute frequencies
 +  gray text
-+  effective rtc callback
-+  properly test gray drawing
 +  upgraded blending modes
 +  blending modes for text
 +  information masks for text
 +  test all font encodings
 +  font clipping
 +  bitmap parts
-+  bitmap clipping
 
--  install critical failure handler to prevent failing resets
+-  improve exception handler debugging information (if possible)
 -  write and test gray engine
 -  full rtc driver (time)
 -  callbacks and complete user API
@@ -35,7 +32,7 @@
 ~  shadowy rectangle effect for Shift + Alpha + Left + Down
 ~  exhaustive save for setjmp()
 ~  registers that need to be saved when configuring gint
-~  possible bug when -O2 __attribute__((interrupt_handler))
+~  possible bug when -O2'ing __attribute__((interrupt_handler))
 
 
 
@@ -43,8 +40,8 @@ Some notes
 ----------
 
 Test cases for bitmap drawing:
-- aligned 32 / non-aligned 32
+- 32-alignment
 - monochrome / gray
 - small / large
-- does not overflow / overflows
+- clipping
 # blending modes

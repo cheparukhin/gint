@@ -1,4 +1,4 @@
-#include <display_internals.h>
+#include <internals/display.h>
 
 /*
 	adjustRectangle()

@@ -1,4 +1,4 @@
-#include <bopti_internals.h>
+#include <internals/bopti.h>
 #include <display.h>
 #include <gray.h>
 
@@ -20,7 +20,7 @@ void gimage(struct Image *img, int x, int y)
 	//---
 	//	Adjusting image parameters.
 	//---
-//-65:-68
+
 	if(x + s.width < 0 || x > 127 || y + s.height < 0 || y > 63) return;
 
 	command.top	= (y < 0) ? (-y) : (0);
@@ -54,5 +54,4 @@ void gimage(struct Image *img, int x, int y)
 		format >>= 1;
 		i++;
 	}
-
 }

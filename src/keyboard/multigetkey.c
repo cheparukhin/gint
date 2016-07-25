@@ -1,5 +1,5 @@
 #include <keyboard.h>
-#include <keyboard_internals.h>
+#include <internals/keyboard.h>
 
 /*
 	multigetkey()

@@ -17,9 +17,8 @@ ENTRY(_start)
 MEMORY
 {
 	rom	: o = 0x00300200, l = 512k
-	ram	: o = 0x08100000, l = 64k
-	/* The "real ram" accessible length remains unknown because some parts
-	are used by the system. At least 12k seem accessible. Use with care. */
+	/* 0x0810000 is apparently mapped to 0x8801c0000. */
+	ram	: o = 0x08100000, l = 8k
 	realram	: o = 0x8800d000, l = 12k
 }
 
@@ -46,6 +45,7 @@ SECTIONS
 	} > rom
 
 	.rodata : {
+		*(.rodata.fxconv);
 		*(.rodata)
 		*(.rodata.*)
 
@@ -84,15 +84,24 @@ SECTIONS
 
 
 	/*
-		Real RAM : interrupt handler.
+		Real RAM : interrupt, exception and TLB miss handlers.
 	*/
 
-	.gint_int : AT(_gint_data) ALIGN(4) {
+	.gint : AT(_gint_data) ALIGN(4) {
 		/* The vbr needs to be 0x100-aligned because of an ld issue. */
 		. = ALIGN(0x100) ;
 		_gint_vbr = . ;
-
 		_bgint = . ;
+
+		/* Exception handler. */
+		. = _gint_vbr + 0x100 ;
+		*(.gint.exc.entry)
+		*(.gint.exc)
+
+		/* TLB miss handler. */
+		. = _gint_vbr + 0x400 ;
+		*(.gint.tlb.entry)
+		*(.gint.tlb)
 
 		/* Interrupt handler. */
 		. = _gint_vbr + 0x600 ;

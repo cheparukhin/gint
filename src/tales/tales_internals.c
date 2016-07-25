@@ -1,4 +1,4 @@
-#include <tales_internals.h>
+#include <internals/tales.h>
 #include <ctype.h>
 
 struct Font *font;

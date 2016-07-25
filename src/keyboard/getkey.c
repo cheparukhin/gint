@@ -1,5 +1,5 @@
+#include <internals/keyboard.h>
 #include <keyboard.h>
-#include <keyboard_internals.h>
 
 /*
 	getkey()

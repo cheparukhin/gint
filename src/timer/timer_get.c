@@ -1,4 +1,4 @@
-#include <timer_internals.h>
+#include <internals/timer.h>
 #include <mpu.h>
 
 /*

@@ -1,8 +1,9 @@
-#include <tales_internals.h>
+#include <internals/tales.h>
 #include <tales.h>
 
 #include <stdlib.h>
 #include <string.h>
+#include <alloca.h>
 
 /*
 	dtext()
@@ -24,6 +25,8 @@ void dtext(const char *str, int x, int y)
 	// format requires it: it allows greater optimization.
 	int height;
 
+	int i;
+
 
 
 	if(!font) return;
@@ -32,7 +35,8 @@ void dtext(const char *str, int x, int y)
 	height = font->data_height;
 	if(x > 127 || y > 63 || y <= -height) return;
 
-	operators = calloc(height, sizeof(uint32_t));
+	operators = alloca(height * sizeof(uint32_t));
+	for(i = 0; i < height; i++) operators[i] = 0;
 	if(!operators) return;
 
 	// Computing the initial operator offset to have 32-aligned operators.
@@ -84,5 +88,5 @@ void dtext(const char *str, int x, int y)
 	// Final operation.
 	if(x <= 96 && available < 32) operate(operators, height, x, y);
 
-	free(operators);
+//	free(operators);
 }

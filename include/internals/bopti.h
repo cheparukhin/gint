@@ -14,8 +14,8 @@
 //
 //---
 
-#ifndef	_BOPTI_INTERNALS_H
-#define	_BOPTI_INTERNALS_H	1
+#ifndef	_INTERNALS_BOPTI_H
+#define	_INTERNALS_BOPTI_H	1
 
 #include <stdint.h>
 #include <display.h>
@@ -157,4 +157,4 @@ void bopti(const unsigned char *layer, struct Structure *s, struct Command *c);
 */
 void getStructure(struct Image *img, struct Structure *structure);
 
-#endif	// _BOPTI_INTERNALS_H
+#endif	// _INTERNALS_BOPTI_H

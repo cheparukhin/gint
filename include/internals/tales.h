@@ -7,8 +7,8 @@
 //
 //---
 
-#ifndef	_TALES_INTERNALS_H
-#define	_TALES_INTERNALS_H	1
+#ifndef	_INTERNALS_TALES_H
+#define	_INTERNALS_TALES_H	1
 
 #include <tales.h>
 #include <stdint.h>
@@ -44,4 +44,4 @@ void operate(uint32_t *operators, int height, int x, int y);
 */
 int update(uint32_t *operators, int height, int available, uint32_t *glyph);
 
-#endif	// _TALES_INTERNALS_H
+#endif	// _INTERNALS_TALES_H
