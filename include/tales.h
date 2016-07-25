@@ -2,8 +2,8 @@
 //
 //	gint drawing module: tales
 //
-//	Text displaying. Does some good optimization, though requires dynamic
-//	allocation.
+//	Text displaying. Does some pretty good optimization, though requires
+//	dynamic allocation. The stack is used.
 //
 //---
 
@@ -112,5 +112,17 @@ void dtext(const char *str, int x, int y);
 	Prints the given raw string.
 */
 void gtext(const char *str, int x, int y);
+
+/*
+	dprint()
+	Prints a formatted string. Works the same as printf().
+*/
+void dprint(int x, int y, const char *format, ...);
+
+/*
+	gprint()
+	Prints a formatted string. Works the same as printf().
+*/
+void gprint(int x, int y, const char *format, ...);
 
 #endif	// _TALES_H

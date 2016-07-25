@@ -1,3 +1,11 @@
+//---
+//
+//	standard library module: ctype
+//
+//	Some character manipulation.
+//
+//---
+
 #ifndef	_CTYPE_H
 #define	_CTYPE_H 1
 

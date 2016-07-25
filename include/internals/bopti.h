@@ -86,7 +86,7 @@ struct Command
 // The video ram addresses are set by the public functions and used internally
 // by the module.
 // Monochrome video ram, light and dark buffers (in this order).
-extern int *vram, *v1, *v2;
+extern int *bopti_vram, *bopti_v1, *bopti_v2;
 
 
 

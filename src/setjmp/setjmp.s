@@ -1,5 +1,5 @@
 /*
-	gint standard module: setjmp
+	standard library module: setjmp
 
 	Long jumps. The register contents are saved in a buffer when setjmp()
 	is called and restored at any time when longjmp() performs the jump.

@@ -5,7 +5,8 @@
 	Double-underscore prefixed structures (e.g. __st_rtc_counter) are used
 	internally but are not meant to be used in user programs.
 
-	Underscore-prefixed names (e.g. _R64CNT) indicate write-only registers.
+	Underscore-prefixed names (e.g. _R64CNT) are used to avoid name
+	conflicts (e.g. STRUCTURE.RTC would expand to STRUCTURE.((T *)0x...)).
 */
 
 #pragma pack(push, 1)
@@ -20,7 +21,6 @@
 struct _st_rtc
 {
 	unsigned char const R64CNT;
-
 	gap(1);
 
 	union {
@@ -31,7 +31,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RSECCNT;
-
 	gap(1);
 
 	union {
@@ -42,7 +41,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RMINCNT;
-
 	gap(1);
 
 	union {
@@ -53,12 +51,10 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RHRCNT;
-
 	gap(1);
 
 	// 0=Sunday, 1=Monday, ..., 6=Saturday, 7=Reserved (prohibited).
 	unsigned char RWKCNT;
-
 	gap(1);
 
 	union {
@@ -69,7 +65,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RDAYCNT;
-
 	gap(1);
 
 	union {
@@ -80,7 +75,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RMONCNT;
-
 	gap(1);
 
 	union {
@@ -101,7 +95,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RSECAR;
-
 	gap(1);
 
 	union {
@@ -112,7 +105,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RMINAR;
-
 	gap(1);
 
 	union {
@@ -124,7 +116,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RHRAR;
-
 	gap(1);
 
 	union {
@@ -136,7 +127,6 @@ struct _st_rtc
 			unsigned DAY		:3;
 		};
 	} RWKAR;
-
 	gap(1);
 
 	union {
@@ -148,7 +138,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RDAYAR;
-
 	gap(1);
 
 	union {
@@ -160,7 +149,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RMONAR;
-
 	gap(1);
 
 	union {
@@ -174,7 +162,6 @@ struct _st_rtc
 			unsigned AF		:1;
 		};
 	} RCR1;
-
 	gap(1);
 
 	union {
@@ -188,7 +175,6 @@ struct _st_rtc
 			unsigned START		:1;
 		};
 	} RCR2;
-
 	gap(1);
 
 	union {
@@ -200,7 +186,6 @@ struct _st_rtc
 			unsigned ONES		:4;
 		};
 	} RYRAR;
-
 	gap(2);
 
 	union {
@@ -357,7 +342,6 @@ struct _st_intx
 			unsigned IrDA		:4;
 		};
 	} IPRA;
-
 	gap(2);
 
 	union {
@@ -369,7 +353,6 @@ struct _st_intx
 			unsigned BEU2_1		:4;
 		};
 	} IPRB;
-
 	gap(2);
 
 	union {
@@ -381,7 +364,6 @@ struct _st_intx
 			unsigned SPU		:4;
 		};
 	} IPRC;
-
 	gap(2);
 
 	union {
@@ -393,7 +375,6 @@ struct _st_intx
 			unsigned ATAPI		:4;
 		};
 	} IPRD;
-
 	gap(2);
 
 	union {
@@ -405,19 +386,17 @@ struct _st_intx
 			unsigned VPU5F		:4;
 		};
 	} IPRE;
-
 	gap(2);
 
 	union {
 		unsigned short WORD;
 		struct {
-			unsigned KEYSC		:4;
+			unsigned _KEYSC		:4;
 			unsigned DMAC0B		:4;
 			unsigned USB01		:4;
 			unsigned CMT		:4;
 		};
 	} IPRF;
-
 	gap(2);
 
 	union {
@@ -429,7 +408,6 @@ struct _st_intx
 			unsigned VEU3F0		:4;
 		};
 	} IPRG;
-
 	gap(2);
 
 	union {
@@ -441,7 +419,6 @@ struct _st_intx
 			unsigned I2C0		:4;
 		};
 	} IPRH;
-
 	gap(2);
 
 	union {
@@ -453,7 +430,6 @@ struct _st_intx
 			unsigned _2DG_ICB	:4;
 		};
 	} IPRI;
-
 	gap(2);
 
 	union {
@@ -465,7 +441,6 @@ struct _st_intx
 			unsigned SDHI1		:4;
 		};
 	} IPRJ;
-
 	gap(2);
 
 	union {
@@ -477,7 +452,6 @@ struct _st_intx
 			unsigned SDHI0		:4;
 		};
 	} IPRK;
-
 	gap(2);
 
 	union {
@@ -489,7 +463,6 @@ struct _st_intx
 			unsigned _2DDMAC	:4;
 		};
 	} IPRL;
-
 	char gap1[82];
 
 	union 
@@ -506,7 +479,6 @@ struct _st_intx
 			unsigned SDHII0		:1;
 		};
 	} IMR0;
-
 	gap(3);
 
 	union 
@@ -523,7 +495,6 @@ struct _st_intx
 			unsigned DEI0		:1;
 		};
 	} IMR1;
-
 	gap(3);
 
 	union 
@@ -538,7 +509,6 @@ struct _st_intx
 			unsigned SCIFA0		:1;
 		};
 	} IMR2;
-
 	gap(3);
 
 	union 
@@ -553,7 +523,6 @@ struct _st_intx
 			unsigned IRDAI		:1;
 		};
 	} IMR3;
-
 	gap(3);
 
 	union 
@@ -569,7 +538,6 @@ struct _st_intx
 			unsigned LCDCI		:1;
 		};
 	} IMR4;
-
 	gap(3);
 
 	union 
@@ -586,7 +554,6 @@ struct _st_intx
 			unsigned SCIF0		:1;
 		};
 	} IMR5;
-
 	gap(3);
 
 	union 
@@ -602,7 +569,6 @@ struct _st_intx
 			unsigned MSIOFI1	:1;
 		};
 	} IMR6;
-
 	gap(3);
 
 	union 
@@ -619,7 +585,6 @@ struct _st_intx
 			unsigned AL1I		:1;
 		};
 	} IMR7;
-
 	gap(3);
 
 	union 
@@ -635,7 +600,6 @@ struct _st_intx
 			unsigned FSI		:1;
 		};
 	} IMR8;
-
 	gap(3);
 
 	union 
@@ -650,7 +614,6 @@ struct _st_intx
 			unsigned 		:1;
 		};
 	} IMR9;
-
 	gap(3);
 
 	union 
@@ -667,7 +630,6 @@ struct _st_intx
 			unsigned CUI		:1;
 		};
 	} IMR10;
-
 	gap(3);
 
 	union 
@@ -684,7 +646,6 @@ struct _st_intx
 			unsigned TSIFI		:1;
 		};
 	} IMR11;
-
 	gap(3);
 
 	union 
@@ -695,7 +656,6 @@ struct _st_intx
 			unsigned _2DDMAC	:1;
 		};
 	} IMR12;
-
 	char gap2[15];
 
 	union 
@@ -712,7 +672,6 @@ struct _st_intx
 			unsigned SDHII0		:1;
 		};
 	} _IMCR0;
-
 	gap(3);
 
 	union 
@@ -729,7 +688,6 @@ struct _st_intx
 			unsigned DEI0		:1;
 		};
 	} _IMCR1;
-
 	gap(3);
 
 	union 
@@ -744,7 +702,6 @@ struct _st_intx
 			unsigned SCIFA0		:1;
 		};
 	} _IMCR2;
-
 	gap(3);
 
 	union 
@@ -759,7 +716,6 @@ struct _st_intx
 			unsigned IRDAI		:1;
 		};
 	} _IMCR3;
-
 	gap(3);
 
 	union 
@@ -775,7 +731,6 @@ struct _st_intx
 			unsigned LCDCI		:1;
 		};
 	} _IMCR4;
-
 	gap(3);
 
 	union 
@@ -792,7 +747,6 @@ struct _st_intx
 			unsigned SCIF0		:1;
 		};
 	} _IMCR5;
-
 	gap(3);
 
 	union 
@@ -808,7 +762,6 @@ struct _st_intx
 			unsigned MSIOFI1	:1;
 		};
 	} _IMCR6;
-
 	gap(3);
 
 	union 
@@ -825,7 +778,6 @@ struct _st_intx
 			unsigned AL1I		:1;
 		};
 	} _IMCR7;
-
 	gap(3);
 
 	union 
@@ -841,7 +793,6 @@ struct _st_intx
 			unsigned FSI		:1;
 		};
 	} _IMCR8;
-
 	gap(3);
 
 	union 
@@ -856,7 +807,6 @@ struct _st_intx
 			unsigned 		:1;
 		};
 	} _IMCR9;
-
 	gap(3);
 
 	union 
@@ -873,7 +823,6 @@ struct _st_intx
 			unsigned CUI		:1;
 		};
 	} _IMCR10;
-
 	gap(3);
 
 	union 
@@ -890,7 +839,6 @@ struct _st_intx
 			unsigned TSIFI		:1;
 		};
 	} _IMCR11;
-
 	gap(3);
 
 	union 

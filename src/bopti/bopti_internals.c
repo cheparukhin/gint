@@ -1,7 +1,7 @@
 #include <internals/bopti.h>
 
 // Monochrome video ram, light and dark buffers (in this order).
-int *vram, *v1, *v2;
+int *bopti_vram, *bopti_v1, *bopti_v2;
 
 /*
 	bopti_op()
@@ -19,11 +19,11 @@ void bopti_op_mono(int offset, uint32_t operator, struct Command *c)
 	switch(c->channel)
 	{
 	case Channel_Mono:
-		vram[offset] |= operator;
+		bopti_vram[offset] |= operator;
 		break;
 
 	case Channel_FullAlpha:
-		vram[offset] &= ~operator;
+		bopti_vram[offset] &= ~operator;
 		break;
 
 	default:
@@ -37,21 +37,21 @@ void bopti_op_gray(int offset, uint32_t operator, struct Command *c)
 	switch(c->channel)
 	{
 	case Channel_Mono:
-		v1[offset] |= operator;
-		v2[offset] |= operator;
+		bopti_v1[offset] |= operator;
+		bopti_v2[offset] |= operator;
 		break;
 
 	case Channel_Light:
-		v1[offset] |= operator;
+		bopti_v1[offset] |= operator;
 		break;
 
 	case Channel_Dark:
-		v2[offset] |= operator;
+		bopti_v2[offset] |= operator;
 		break;
 
 	case Channel_FullAlpha:
-		v1[offset] &= ~operator;
-		v2[offset] &= ~operator;
+		bopti_v1[offset] &= ~operator;
+		bopti_v2[offset] &= ~operator;
 		break;
 
 	case Channel_LightAlpha:

@@ -1,3 +1,12 @@
+//---
+//
+//	standard library module: stdlib
+//
+//	Provides standard functionalities such as dynamic allocation,
+//	string/numeric conversion, and abort calls.
+//
+//---
+
 #ifndef	_STDLIB_H
 #define	_STDLIB_H	1
 

@@ -1,5 +1,5 @@
 #include <internals/bopti.h>
-#include <display.h>
+#include <internals/display.h>
 #include <gray.h>
 
 /*
@@ -34,8 +34,8 @@ void gimage(struct Image *img, int x, int y)
 	if(x >= 0) getMasks(x, x + actual_width - 1, command.masks);
 	else getMasks(0, actual_width + x - 1, command.masks);
 
-	v1 = gray_lightVRAM();
-	v2 = gray_darkVRAM();
+	bopti_v1 = gray_lightVRAM();
+	bopti_v2 = gray_darkVRAM();
 
 	while(format)
 	{

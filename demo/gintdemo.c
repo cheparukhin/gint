@@ -9,79 +9,36 @@
 #include <gray.h>
 
 #include <stdint.h>
+#include <stdarg.h>
 #include <7305.h>
 
+#include <internals/stdio.h>
+
 
 
 //---
-//	A few ugly procedures for displaying text. Will have to enhance this
-//	soon -- which means printf().
+//	A few procedures for displaying text aligned on a 21*8 grid.
+//	Not really beautiful... but this will do.
 //---
+
+void print(int x, int y, const char *format, ...)
+{
+	if(x < 1 || x > 21 || y < 1 || y > 8) return;
+
+	va_list args;
+	va_start(args, format);
+	__printf(0, format, args);
+	va_end(args);
+
+	if(gray_runs()) gtext(__stdio_buffer, x * 6 - 5, y * 8 - 8);
+	else dtext(__stdio_buffer, x * 6 - 5, y * 8 - 8);
+}
 
 void locate(const char *str, int x, int y)
 {
 	if(x < 1 || x > 21 || y < 1 || y > 8) return;
-	if(gray_runs()) gtext(str, x * 6 - 5, y * 8 - 7);
-	else dtext(str, x * 6 - 5, y * 8 - 7);
-}
-
-void locate_hex(unsigned int n, int x, int y)
-{
-	char str[11] = "0x";
-	int i;
-
-	for(i = 0; i < 8; i++)
-	{
-		str[9 - i] = (n & 0xf) + '0' + 39 * ((n & 0xf) > 9);
-		n >>= 4;
-	}
-	str[10] = 0;
-	locate(str, x, y);
-}
-void locate_bin(unsigned char n, int x, int y)
-{
-	char str[9];
-	int i;
-
-	for(i = 0; i < 8;i ++)
-	{
-		str[7 - i] = (n & 1) + '0';
-		n >>= 1;
-	}
-	str[8] = 0;
-	locate(str, x, y);
-}
-void locate_hexa(unsigned int n, int digits, int x, int y)
-{
-	char str[20];
-	int i;
-
-	for(i = digits - 1; i >= 0; i--)
-	{
-		str[i] = (n & 0xf) + '0' + 39 * ((n & 0xf) > 9);
-		n >>= 4;
-	}
-
-	str[digits] = 0;
-	locate(str, x, y);
-}
-void locate_int(int n, int x, int y)
-{
-	char str[20] = { 0 };
-	int i, o = 0;
-	int digits = 0, copy = n;
-
-	if(!n) { str[o++] = '0'; locate(str, x, y); return; }
-	if(n < 0) str[o++] = '-', n = -n;
-	while(copy) digits++, copy /= 10;
-
-	for(i = 0; i < digits; i++)
-	{
-		str[o + digits - i - 1] = n % 10 + '0';
-		n /= 10;
-	}
-
-	locate(str, x, y);
+	if(gray_runs()) gtext(str, x * 6 - 5, y * 8 - 8);
+	else dtext(str, x * 6 - 5, y * 8 - 8);
 }
 
 
@@ -89,6 +46,26 @@ void locate_int(int n, int x, int y)
 //---
 //	Test applications.
 //---
+
+/*
+	keyboard_test_binary()
+	Prints a byte as binary/
+*/
+void keyboard_test_binary(int byte, int x, int y)
+{
+	char str[9];
+	int i = 7;
+
+	str[8] = 0;
+	while(i >= 0)
+	{
+		str[i] = '0' + (byte & 1);
+		byte >>= 1;
+		i--;
+	}
+
+	locate(str, x, y);
+}
 
 /*
 	keyboard_test_timer()
@@ -103,17 +80,17 @@ void keyboard_test_timer(void)
 
 	dclear_area(5, 10, 71, 34);
 
-	locate_bin(state[0], 5, 10);
-	locate_bin(state[1], 5, 16);
-	locate_bin(state[2], 5, 22);
-	locate_bin(state[3], 5, 28);
-	locate_bin(state[4], 5, 34);
+	keyboard_test_binary(state[0], 1, 1);
+	keyboard_test_binary(state[1], 1, 2);
+	keyboard_test_binary(state[2], 1, 3);
+	keyboard_test_binary(state[3], 1, 4);
+	keyboard_test_binary(state[4], 1, 5);
 
-	locate_bin(state[5], 40, 10);
-	locate_bin(state[6], 40, 16);
-	locate_bin(state[7], 40, 22);
-	locate_bin(state[8], 40, 28);
-	locate_bin(state[9], 40, 34);
+	keyboard_test_binary(state[5], 10, 1);
+	keyboard_test_binary(state[6], 10, 2);
+	keyboard_test_binary(state[7], 10, 3);
+	keyboard_test_binary(state[8], 10, 4);
+	keyboard_test_binary(state[9], 10, 5);
 
 	dupdate();
 }
@@ -304,10 +281,10 @@ void gray_test(void)
 			}
 
 			locate("light", 15, 2);
-			locate_int(delays[0], 15, 3);
+			print(15, 3, "%d", delays[0]);
 
 			locate("dark", 15, 5);
-			locate_int(delays[1], 15, 6);
+			print(15, 6, "%d", delays[1]);
 
 			locate("\x02", 14, selected ? 6 : 3);
 
@@ -328,7 +305,7 @@ void gray_test(void)
 			selected = !selected;
 			break;
 		case KEY_F2:
-			delays[0] = 993;
+			delays[0] = isSH3() ? 985 : 994;
 			delays[1] = 1609;
 			break;
 		case KEY_F3:
@@ -354,6 +331,25 @@ void gray_test(void)
 	}
 
 	gray_stop();
+}
+
+/*
+	printf_test()
+	Tests formatting functions.
+*/
+void printf_test(void)
+{
+	dclear();
+	locate("Formatted printing", 1, 1);
+
+	print(2, 3, "%%4.2d   5 :\"%4.2d\"", 5);
+	print(2, 4, "%%-3c   '&':\"%-3c\"", '&');
+	print(2, 5, "%%#05x  27 :\"%#05x\"", 27);
+	print(2, 6, "%%1s   \"tr\":\"%1s\"", "tr");
+	print(2, 7, "%%6p  NULL :\"%7p\"", NULL);
+
+	dupdate();
+	while(getkey() != KEY_EXIT);
 }
 
 /*
@@ -537,12 +533,8 @@ void tlb_debug(void)
 	{
 		dclear();
 
-		locate("TLB", 1, 1);
-		locate("way=", 8, 1);
-		locate("0\0001\0002\0003" + (way << 1), 12, 1);
-		locate_int(entry, 16 + (entry < 10), 1);
-		locate("-", 18, 1);
-		locate_int((entry + 2 > 31) ? (31) : (entry + 2) , 19, 1);
+		print(1, 1, "TLB    way=%d   %d-%d", way, entry,
+			entry > 29 ? 31 : entry + 2);
 
 		for(i = 0; i < 3 && entry < 32; i++, entry++)
 		{
@@ -567,14 +559,11 @@ void tlb_debug(void)
 			}
 
 			r = 2 * i + 3;
-			locate_hexa(pointer_base, 8, 1, r);
-			locate(":", 11, r);
-			locate_hexa(ppn << 10, 8, 12, r);
+			print(1, r, "%08x  :%08x", pointer_base, ppn << 10);
 
 			r++;
 			locate((d & 0x08) ? "4k" : "1k", 1, r);
-			locate("pr=", 5, r);
-			locate(protection[(d >> 5) & 3], 8, r);
+			print(5, r, "pr=%s", protection[(d >> 5) & 3]);
 			locate((d & 0x02) ? "shared" : "exclusive", 13, r);
 		}
 
@@ -614,6 +603,7 @@ void main_menu(int *category, int *app)
 		"Image rendering",
 		"Text rendering",
 		"Real-time clock",
+		"Text formatting",
 		NULL
 	};
 	const char *list_perfs[] = {
@@ -626,14 +616,15 @@ void main_menu(int *category, int *app)
 		NULL
 	};
 	const char **list;
+	int list_len;
 
 	extern unsigned int bgint, egint;
 	extern unsigned int romdata;
-	int gint_size = &egint - &bgint;
+	int gint_size = (char *)&egint - (char *)&bgint;
 
 
 
-	static int tab = 0, index = 0;
+	static int tab = 0, index = 0, scroll = 0;
 	// Set to 1 when interface has to be redrawn.
 	int leave = 1;
 	int i;
@@ -654,14 +645,10 @@ void main_menu(int *category, int *app)
 		{
 		case 0:
 			locate("Demo application", 1, 1);
-			locate("gint version:", 2, 3);
-			locate(GINT_VERSION_STR, 16, 3);
-			locate("handler size:", 2, 4);
-			locate_int(gint_size, (gint_size < 1000 ? 18 : 17), 4);
-			locate("mpu type:", 2, 5);
-			locate(mpu, 21 - strlen(mpu), 5);
-			locate("romdata:", 2, 6);
-			locate_hex((unsigned int)&romdata, 11, 6);
+			print(2, 3, "gint version: %5s", GINT_VERSION_STR);
+			print(2, 4, "handler size: %5d", gint_size);
+			print(2, 5, "mpu type:   %7s", mpu);
+			print(2, 6, "romdata:   %08x", &romdata);
 
 			list = NULL;
 			break;
@@ -682,16 +669,24 @@ void main_menu(int *category, int *app)
 			break;
 
 		default:
-			locate("Tab ", 1, 1);
-			locate_int(tab, 5, 1);
+			print(1, 1, "Tab %d", tab);
 			break;
 		}
 		dimage(&res_opt_menu_start, 0, 56);
 
 		if(list)
 		{
-			for(i = 0; list[i]; i++) locate(list[i], 2, i + 2);
-			dreverse_area(0, 8 * index + 9, 127, 8 * index + 16);
+			list_len = 0;
+			while(list[list_len]) list_len++;
+
+			for(i = scroll; list[i] && i < scroll + 6; i++)
+				locate(list[i], 2, i - scroll + 2);
+
+			if(scroll > 0) locate("\x0d", 20, 2);
+			if(scroll + 6 < list_len) locate("\x0e", 20, 7);
+
+			dreverse_area(0, 8 * (index - scroll) + 8, 127,
+				8 * (index - scroll) + 15);
 		}
 		dupdate();
 
@@ -706,27 +701,58 @@ void main_menu(int *category, int *app)
 			switch(getkey())
 			{
 			case KEY_F1:
-				tab = 0;
-				index = 0;
+				tab	= 0;
+				index	= 0;
 				break;
 			case KEY_F2:
-				tab = 1;
-				index = 0;
+				tab	= 1;
+				index	= 0;
+				scroll	= 0;
 				break;
 			case KEY_F3:
-				tab = 2;
-				index = 0;
+				tab	= 2;
+				index	= 0;
+				scroll	= 0;
 				break;
 			case KEY_F4:
-				tab = 3;
-				index = 0;
+				tab	= 3;
+				index	= 0;
+				scroll	= 0;
 				break;
 
 			case KEY_UP:
-				if(list && index) index--;
+				if(list && list_len > 1)
+				{
+					if(index)
+					{
+						index--;
+						if(index < scroll) scroll--;
+					}
+					else
+					{
+						index = list_len - 1;
+						scroll = list_len - 6;
+						if(scroll < 0) scroll = 0;
+					}
+				}
+				else leave = 0;
 				break;
 			case KEY_DOWN:
-				if(list && list[index + 1]) index++;
+				if(list && list_len > 1)
+				{
+					if(list[index + 1])
+					{
+						index++;
+						if(index >= scroll + 6)
+							scroll++;
+					}
+					else
+					{
+						index = 0;
+						scroll = 0;
+					}
+				}
+				else leave = 0;
 				break;
 
 			case KEY_EXE:
@@ -735,7 +761,6 @@ void main_menu(int *category, int *app)
 				if(app) *app = index + 1;
 				return;
 
-			case KEY_EXIT:
 			case KEY_MENU:
 				if(category) *category = 0;
 				if(app) *app = 0;
@@ -782,6 +807,9 @@ int main(void)
 			break;
 		case 0x0105:
 //			rtc_test();
+			break;
+		case 0x0106:
+			printf_test();
 			break;
 
 		case 0x0301:

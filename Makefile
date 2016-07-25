@@ -14,7 +14,7 @@
 # Modules
 modules-gint	= core keyboard mmu mpu rtc screen timer \
 		  bopti display gray tales
-modules-libc	= setjmp string
+modules-libc	= setjmp string stdio
 
 # Targets
 target-g1a	= gintdemo.g1a
@@ -39,7 +39,7 @@ demo-res	= $(notdir $(wildcard demo/resources/*))
 demo-obj	= $(patsubst %,build/demo_%.o,$(demo-src) $(demo-res))
 demo-elf	= build/gintdemo.elf
 demo-bin	= build/gintdemo.bin
-demo-libs	= -lgcc -L. -lgint -lc
+demo-libs	= -L. -lgint -lc -lgcc
 
 # Specific objects
 obj-lib-spec	= build/display_font_system.bmp.o

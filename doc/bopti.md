@@ -38,7 +38,8 @@ bitwise instructions, so that performance is maintained.
 
 Consider for instance a logical and operation (`(a, b) -> a & b`).
 Operating on pixels would need to move some data, test the value of a bit in
-the mask, edit the vram data, and eventually shift both the data and the mask, for all of the 32 pixels.
+the mask, edit the vram data, and eventually shift both the data and the mask,
+for all of the 32 pixels.
 One could not expect this from happening in less than 150 processor cycles
 (in comparison, using generic-purpose `setPixel()`-like functions would be at
 least 10 times as long). The smarter method operates directly on the longword
@@ -76,10 +77,9 @@ operations that correspond to the kind of image.
 
 *Detailed article: [Gray engine](gray-engine)*
 
-Gray pixels are made of one four colors, each of which is represented by two
-bits. Arguments `light` and `dark` of gray operation functions are longwords
-containing the least significant and most significant of these bits,
-respectively.
+Gray pixels are made of four colors represented by pairs of bits. Arguments
+`light` and `dark` of gray operation functions are longwords containing the
+least significant and most significant of these bits, respectively.
 
 	white     = 0 [00]
 	lightgray = 1 [01]
@@ -168,7 +168,7 @@ darken(light, dark, x) = (light | (dark & x), (light & x) | (x ^ dark))
 darken2(light, dark, x) = (light | x, (light & x) | dark)
 ~~~
 
-One could easily check that these functions do their jobs when `x  = 1` and
+One could easily check that these functions do their jobs when `x = 1` and
 leave the data unchanged when `x = 0`.
 
 
@@ -183,7 +183,8 @@ Images are made of *layers*, each of which describe the mask for an operation.
 When an image is rendered, *bopti* draws some of those layers in the vram
 using the operation functions.
 
-* Non-transparent monochrome images only have one layer, which describes the mask for the `draw` operation.
+* Non-transparent monochrome images only have one layer, which describes the
+mask for the `draw` operation.
 * Transparent monochrome images have two layers. The first describes the mask
 for the `draw` operation, while the other is the `alpha` operation mask (which
 means that it indicates which pixels are transparent).
@@ -199,7 +200,7 @@ transparent), and the third indicates the color.
 Layers are encoded as a bit map. The image is split into a *grid*, which is
 made of 32-pixel *columns*, and an *end*.
 
-	   32     32     32    e
+	   32     32     32   end
 	+------+------+------+---+
 	|      |      |      |   |
 	|      |      |      |   |

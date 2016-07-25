@@ -1,5 +1,5 @@
 #include <internals/bopti.h>
-#include <display.h>
+#include <internals/display.h>
 
 /*
 	dimage()
@@ -34,7 +34,7 @@ void dimage(struct Image *img, int x, int y)
 	if(x >= 0) getMasks(x, x + actual_width - 1, command.masks);
 	else getMasks(0, actual_width + x - 1, command.masks);
 
-	vram = display_getCurrentVRAM();
+	bopti_vram = display_getCurrentVRAM();
 
 	while(format)
 	{

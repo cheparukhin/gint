@@ -33,6 +33,45 @@ unsigned int gint_systemVBR(void);
 
 
 //---
+//	Register access.
+//---
+
+/*
+	enum Register
+	Represents common registers. Used as identifiers to retrieve their
+	values using gint_register().
+*/
+enum Register
+{
+	Register_EXPEVT,
+	Register_MMUCR,
+	Register_TEA,
+};
+
+/*
+	gint_register()
+	Returns the address of a common register. All common registers exist
+	on both platforms but they may hold different values for the same
+	information (f.i. EXPEVT may not return the same value for a given
+	exception on both 7705 and 7305).
+*/
+volatile void *gint_reg(enum Register reg);
+
+/*
+	gint_strerror()
+	Returns a string that describe the error set in EXPEVT in case of
+	general exception of TLB miss exception. This string is platform-
+	independent.
+	Some exception codes represent different errors when invoked inside the
+	general exception handler and the TLB error handler. Parameter 'is_tlb'
+	should be set to zero for general exception meanings, and anything non-
+	zero for TLB error meanings.
+*/
+const char *gint_strerror(int is_tlb);
+
+
+
+//---
 //	Internal API.
 //	Referenced here for documentation purposes only.
 //	Do NOT call these functions, you'll most probably screw up the whole
@@ -75,6 +114,15 @@ void gint_setup_7305(void);
 void gint_stop_7705(void);
 void gint_stop_7305(void);
 
+/*
+	gint_reg()
+	gint_strerror()
+	See "Register access" section.
+*/
+volatile void *gint_reg_7705(enum Register reg);
+volatile void *gint_reg_7305(enum Register reg);
+const char *gint_strerror_7705(int is_tlb);
+const char *gint_strerror_7305(int is_tlb);
 
 
 //---
@@ -107,49 +155,6 @@ void gint_int(void)		__attribute__((section(".gint.int.entry"),
 					interrupt_handler));
 void gint_int_7705(void)	__attribute__((section(".gint.int")));
 void gint_int_7305(void)	__attribute__((section(".gint.int")));
-
-
-
-//---
-//	Register access.
-//---
-
-/*
-	enum Register
-	Represents common registers. Used as identifiers to retrieve their
-	values using gint_register().
-*/
-enum Register
-{
-	Register_EXPEVT,
-	Register_MMUCR,
-	Register_TEA,
-};
-
-/*
-	gint_register()
-	Returns the address of a common register. All common registers exist
-	on both platforms but they may hold different values for the same
-	information (f.i. EXPEVT may not return the same value for a given
-	exception on both 7705 and 7305).
-*/
-volatile void *gint_reg(enum Register reg);
-volatile void *gint_reg_7705(enum Register reg);
-volatile void *gint_reg_7305(enum Register reg);
-
-/*
-	gint_strerror()
-	Returns a string that describe the error set in EXPEVT in case of
-	general exception of TLB miss exception. This string is platform-
-	independent.
-	Some exception codes represent different errors when invoked inside the
-	general exception handler and the TLB error handler. Parameter 'is_tlb'
-	should be set to zero for general exception meanings, and anything non-
-	zero for TLB error meanings.
-*/
-const char *gint_strerror(int is_tlb);
-const char *gint_strerror_7705(int is_tlb);
-const char *gint_strerror_7305(int is_tlb);
 
 
 

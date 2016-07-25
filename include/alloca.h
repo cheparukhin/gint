@@ -1,6 +1,6 @@
 //---
 //
-//	gint core module: alloca
+//	standard library module: alloca
 //
 //	Allows dynamic memory allocation on the stack. Memory is automatically
 //	freed when the calling function exits.

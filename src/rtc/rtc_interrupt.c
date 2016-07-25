@@ -14,7 +14,7 @@ static void (*rtc_callback)(void) = NULL;
 	Sets the callback function for the real-time clock interrupt. If
 	frequency is non-NULL, the clock frequency is set to the given value.
 */
-void gint_setRTCCallback(void (*callback)(void), enum RTCFrequency frequency)
+void rtc_setCallback(void (*callback)(void), enum RTCFrequency frequency)
 {
 	rtc_callback = callback;
 	if(frequency < 1 || frequency > 7) return;
@@ -30,7 +30,7 @@ void gint_setRTCCallback(void (*callback)(void), enum RTCFrequency frequency)
 	Returns the callback function. If frequency is non-NULL, it is set to
 	the current frequency value.
 */
-void (*gint_getRTCCallback(enum RTCFrequency *frequency))(void)
+void (*rtc_getCallback(enum RTCFrequency *frequency))(void)
 {
 	if(!frequency) return rtc_callback;
 
