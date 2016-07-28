@@ -63,4 +63,18 @@ void free(void *ptr);
 
 
 
+//---
+//	Integer arithmetic.
+//---
+
+/*
+	abs()
+	Returns the absolute value of an integer.
+*/
+int abs(int x);
+// Use a macro instead, when possible.
+#define abs(x) ((x) < 0 ? -(x) : (x))
+
+
+
 #endif	// _STDLIB_H

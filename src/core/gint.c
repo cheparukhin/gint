@@ -110,7 +110,7 @@ void gint_quit(void)
 //---
 
 #include <display.h>
-#define print(str, x, y) dtext(str, 6 * (x) - 5, 8 * (y) - 7)
+#define print(str, x, y) dtext(6 * (x) - 5, 8 * (y) - 7, str)
 #define hexdigit(n) ((n) + '0' + 39 * ((n) > 9))
 
 void hex(unsigned int x, int digits, char *str)
@@ -138,7 +138,7 @@ void gint_exc(void)
 	unsigned int spc;
 	char str[11];
 
-	text_configure_default();
+	text_configure(NULL, Color_Black);
 
 	__asm__("\tstc spc, %0" : "=r"(spc));
 
@@ -175,7 +175,7 @@ void gint_tlb(void)
 	unsigned int spc;
 	char str[11];
 
-	text_configure_default();
+	text_configure(NULL, Color_Black);
 
 	__asm__("\tstc spc, %0" : "=r"(spc));
 
@@ -242,5 +242,5 @@ const char *gint_strerror(int is_tlb)
 	if(isSH3())
 		return gint_strerror_7705(is_tlb);
 	else
-		return gint_strerror_7305(is_tlb);
+		return gint_strerror_7305();
 }

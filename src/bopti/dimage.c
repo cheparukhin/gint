@@ -5,7 +5,7 @@
 	dimage()
 	Displays a monochrome image in the video ram.
 */
-void dimage(struct Image *img, int x, int y)
+void dimage(int x, int y, struct Image *img)
 {
 	if(img->magic != 0xb7) return;
 

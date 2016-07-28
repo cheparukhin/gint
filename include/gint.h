@@ -122,7 +122,7 @@ void gint_stop_7305(void);
 volatile void *gint_reg_7705(enum Register reg);
 volatile void *gint_reg_7305(enum Register reg);
 const char *gint_strerror_7705(int is_tlb);
-const char *gint_strerror_7305(int is_tlb);
+const char *gint_strerror_7305(void);
 
 
 //---

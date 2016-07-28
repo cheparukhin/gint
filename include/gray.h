@@ -127,7 +127,16 @@ void gline(int x1, int y1, int x2, int y2, enum Color color);
 	gimage()
 	Displays a gray image in the vram.
 */
-void gimage(struct Image *image, int x, int y);
+void gimage(int x, int y, struct Image *image);
+
+/*
+	gimage_part()
+	Draws a portion of a gray image, defined by its bounding rectangle.
+	Point (left, top) is included, but (left + width, top + height) is
+	excluded.
+*/
+void gimage_part(int x, int y, struct Image *image, int left, int top,
+	int width, int height);
 
 
 

@@ -171,38 +171,52 @@ volatile unsigned char *keystate(void);
 /*
 	getkey()
 	Blocking function with auto-repeat and SHIFT modifying functionalities.
-	Reproduces the behavior of the system's GetKey().
-
-	@return	Pressed key matrix code.
+	Reproduces the behavior of the system's GetKey(). Returns the matrix
+	code with a possible MOD_SHIFT bit.
 */
 int getkey(void);
 
 /*
 	getkey_opt()
-	Enhances getkey() with most general functionalities.
+	Enhances getkey() with most general functionalities. An OR-combination
+	of options may be given as second argument.
 	If max_cycles is non-zero and positive, getkey_opt() will return
 	KEY_NOEVENT if no event occurs during max_cycle analysis.
-
-	@arg	options		OR-combination of GetkeyOpt values.
-	@arg	max_cycles
-
-	@return	Pressed key matrix code.
+	As getkey(), returns the pressed key matrix code, possibly with
+	modifiers depending on the options.
 */
 int getkey_opt(enum GetkeyOpt options, int max_cycles);
 
 /*
 	multigetkey()
-	Listens the keyboard for simultaneous key hits. Uses the same options
-	as getkey_opt().
-	multigetkey() fills the 'keys' array with 'count' key codes, adding
-	KEY_NONE if less than 'count' keys are pressed.
-	Be aware that rectangle and column effects can make multigetkey() read
-	unpressed keys as pressed (see documentation for more information).
-	Setting count = 3 is generally safe.
 
-	@arg	keys		Key code array.
-	@arg	count		Maximum number of keys that will be read.
-	@arg	max_cycles
+	Listens the keyboard for simultaneous key hits. This functions fills
+	array `keys` with `count` keycodes, adding KEY_NONE at the end if
+	more than `count` keys are pressed.
+	If `max_cycles` is non-zero and nothing happens after `max_cycles`
+	cycles, this function returns an array of KEY_NONE.
+
+	WARNING:
+	Because of hardware limitations, this function generally yields poor
+	results. Rectangle and column effects make it read unpressed keys as
+	pressed (see documentation for more information). The more pressed
+	keys, the more errors.
+
+	The results are guaranteed to be exact if two keys or less are pressed.
+	With three keys or more, column effects (on SH4) and rectangle effects
+	(on both platforms) mess up the results by making this function think
+	that some keys that are actually unpressed, are pressed.
+
+	This function is designed to make combinations of one or two arrow keys
+	with another key as viable as possible. On SH4, this works pretty well
+	even if combinations like Left + Down + SHIFT trigger ALPHA sometimes.
+	On SH3, rectangle effects are *always* present, making it impossible to
+	use Left + Down or Up + Right with any other key in their rows without
+	having this function return junk.
+
+	Any other combination of keys may quite randomly result in variably
+	incorrect results. Please do not expect multigetkey() to work as an
+	ideal multi-key analyzer.
 */
 void multigetkey(int *keys, int count, int max_cycles);
 

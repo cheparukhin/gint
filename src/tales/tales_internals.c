@@ -1,7 +1,20 @@
 #include <internals/tales.h>
+#include <alloca.h>
+#include <string.h>
 #include <ctype.h>
+#include <gray.h>
 
 struct Font *font;
+enum Color color;
+
+/*
+	tales_init()
+	Configures tales with the default font (which is part of gint).
+*/
+void tales_init(void)
+{
+	text_configure(NULL, Color_Black);
+}
 
 /*
 	getCharacterIndex()
@@ -78,16 +91,72 @@ int getCharacterIndex(int c)
 	Operates on the vram using the given operators. The x-coordinate should
 	be a multiple of 32. There should be `height` operators.
 */
-void operate(uint32_t *operators, int height, int x, int y)
+void operate_mono(OPERATE_ARGS)
 {
 	int *vram = display_getCurrentVRAM();
 	int vram_offset = (x >> 5) + (y << 2);
+	uint32_t op;
 	int i;
 
 	for(i = 0; i < height; i++)
 	{
-		// TODO BLENDING MODES //
-		vram[vram_offset] |= operators[i];
+		op = operators[i];
+
+		switch(color)
+		{
+		case Color_White:
+			vram[vram_offset] &= ~op;
+			break;
+		case Color_Black:
+			vram[vram_offset] |= op;
+			break;
+		case Color_Invert:
+			vram[vram_offset] ^= op;
+			break;
+		default:
+			break;
+		}
+
+		vram_offset += 4;
+	}
+}
+void operate_gray(OPERATE_ARGS)
+{
+	int *vl = gray_lightVRAM();
+	int *vd = gray_darkVRAM();
+	int vram_offset = (x >> 5) + (y << 2);
+	uint32_t op;
+	int i;
+
+	for(i = 0; i < height; i++)
+	{
+		op = operators[i];
+
+		switch(color)
+		{
+		case Color_White:
+			vl[vram_offset] &= ~op;
+			vd[vram_offset] &= ~op;
+			break;
+		case Color_Light:
+			vl[vram_offset] |= op;
+			vd[vram_offset] &= ~op;
+			break;
+		case Color_Dark:
+			vl[vram_offset] &= ~op;
+			vd[vram_offset] |= op;
+			break;
+		case Color_Black:
+			vl[vram_offset] |= op;
+			vd[vram_offset] |= op;
+			break;
+		case Color_Invert:
+			vl[vram_offset] ^= op;
+			vd[vram_offset] ^= op;
+			break;
+		default:
+			break;
+		}
 
 		vram_offset += 4;
 	}
@@ -161,4 +230,89 @@ int update(uint32_t *operators, int height, int available,
 	}
 
 	return available - width;
+}
+
+/*
+	render()
+	Renders text without any formatting analysis, using the given operation
+	function.
+*/
+void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
+{
+	// Operator data, and number of available bits in the operators (which
+	// is the same for all operators, since they are treated equally).
+	uint32_t *operators;
+	int available;
+
+	// Raw glyph data, each glyph being represented by one or several
+	// longwords, and an index in this array.
+	uint32_t *data = (uint32_t *)font->glyphs;
+	int index;
+
+	// Height of each glyph. This value is constant because the storage
+	// format requires it: it allows greater optimization.
+	int height;
+
+	int i;
+
+
+
+	if(!font) return;
+
+	// Allocating data. There will be one operator for each line.
+	height = font->data_height;
+	if(x > 127 || y > 63 || y <= -height) return;
+
+	operators = alloca(height * sizeof(uint32_t));
+	for(i = 0; i < height; i++) operators[i] = 0;
+	if(!operators) return;
+
+	// Computing the initial operator offset to have 32-aligned operators.
+	// This allows to write directly video ram longs instead of having to
+	// shift operators, and do all the vram operation twice.
+	available = 32 - (x & 31);
+	x &= ~31;
+
+	// Displaying character after another.
+	while(*str)
+	{
+		index = getCharacterIndex(*str++);
+		if(index < 0) continue;
+
+		// Updating the operators.
+		available = update(operators, height, available, data + index);
+
+		// Continue until operators are full (this includes an
+		// additional bit to add a space between each character).
+		if(available > 1)
+		{
+			available--;
+			continue;
+		}
+
+		// When operators are full, updating the video ram and
+		// preparing the operators for another row.
+
+		(*op)(operators, height, x, y);
+		x += 32;
+		if(x > 96) break;
+
+		memset(operators, 0, height << 2);
+		if(available >= 0)
+		{
+			available = 31 + available;
+			continue;
+		}
+
+		// Finishing update, in case it has been only partially done,
+		// because there was not enough bits available to fit all the
+		// information. Also adding a space, assuming that characters
+		// aren't more than 30 bits wide.
+		available += 32 + (data[index] >> 24);
+		available = update(operators, height, available, data + index);
+		available--;
+	}
+
+	// Final operation.
+	if(x <= 96 && available < 32) (*op)(operators, height, x, y);
 }

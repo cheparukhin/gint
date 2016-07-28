@@ -18,12 +18,12 @@ void bopti_op_mono(int offset, uint32_t operator, struct Command *c)
 
 	switch(c->channel)
 	{
-	case Channel_Mono:
-		bopti_vram[offset] |= operator;
-		break;
-
 	case Channel_FullAlpha:
 		bopti_vram[offset] &= ~operator;
+		break;
+
+	case Channel_Mono:
+		bopti_vram[offset] |= operator;
 		break;
 
 	default:
@@ -36,6 +36,15 @@ void bopti_op_gray(int offset, uint32_t operator, struct Command *c)
 
 	switch(c->channel)
 	{
+	case Channel_FullAlpha:
+		bopti_v1[offset] &= ~operator;
+		bopti_v2[offset] &= ~operator;
+		break;
+
+	case Channel_LightAlpha:
+	case Channel_DarkAlpha:
+		break;
+
 	case Channel_Mono:
 		bopti_v1[offset] |= operator;
 		bopti_v2[offset] |= operator;
@@ -47,15 +56,6 @@ void bopti_op_gray(int offset, uint32_t operator, struct Command *c)
 
 	case Channel_Dark:
 		bopti_v2[offset] |= operator;
-		break;
-
-	case Channel_FullAlpha:
-		bopti_v1[offset] &= ~operator;
-		bopti_v2[offset] &= ~operator;
-		break;
-
-	case Channel_LightAlpha:
-	case Channel_DarkAlpha:
 		break;
 	}
 }

@@ -165,7 +165,6 @@ static struct Format get_format(const char **pointer)
 
 	const char *string = *pointer, *ptr;
 	int c, i;
-	char precision[10];
 
 	// Moving the string pointer after the '%' character.
 	string++;
@@ -601,7 +600,6 @@ static void format_u(struct Format format)
 	int bspaces, zeros, digits = 0, espaces;
 	int x = format._unsigned;
 	int multiplier = 1;
-	int c;
 
 	// Computing number of digits.
 	if(!x) digits = 1;

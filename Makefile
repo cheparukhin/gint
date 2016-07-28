@@ -29,10 +29,12 @@ ob	= sh3eb-elf-objcopy
 wr	= g1a-wrapper
 
 # Flags
-cflags		= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os
+cflags		= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
+-W -Wall -Wextra -pedantic
 
 # Demo application (could be done better)
 demo-src	= $(notdir $(wildcard demo/*.[cs]))
+demo-dep	= $(wildcard demo/*.h)
 demo-ld		= demo/gintdemo.ld
 demo-icon	= demo/icon.bmp
 demo-res	= $(notdir $(wildcard demo/resources/*))
@@ -83,8 +85,9 @@ hdr-dep = $(wildcard include/*.h include/internals/*.h)
 # C source file template:
 #   $1  module name
 #   $2  filename
+#   $3  dependencies
 define rule-c-source
-build/$1_$2.o: src/$1/$2 $(hdr-dep)
+build/$1_$2.o: src/$1/$2 $3
 	$(cc) -c $$< -o $$@ $(cflags) -I src/$1
 endef
 
@@ -128,7 +131,7 @@ $(target-g1a): $(target-std) $(target-lib) $(demo-obj)
 
 $(foreach mod,$(modules), \
 	$(foreach source,$(mod-$(mod)-c), $(eval \
-		$(call rule-c-source,$(mod),$(source)))) \
+		$(call rule-c-source,$(mod),$(source),$(hdr-dep)))) \
 	$(foreach source,$(mod-$(mod)-asm), $(eval \
 		$(call rule-asm-source,$(mod),$(source)))) \
 )
@@ -145,7 +148,7 @@ build/display_font_system.bmp.o: src/display/font_system.bmp
 
 # Demo application
 
-build/demo_%.c.o: demo/%.c
+build/demo_%.c.o: demo/%.c $(hdr-dep) $(demo-dep)
 	$(cc) -c $< -o $@ $(cflags)
 
 build/demo_font_%.bmp.o: demo/resources/font_%.bmp

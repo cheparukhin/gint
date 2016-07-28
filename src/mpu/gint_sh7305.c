@@ -83,12 +83,8 @@ volatile void *gint_reg_7305(enum Register reg)
 	gint_strerror()
 	Returns a string that describe the error set in EXPEVT. This string is
 	not platform-dependent.
-	Some exception codes represent different errors when invoked inside the
-	general exception handler and the TLB error handler. Parameter 'is_tlb'
-	should be set to zero for general exception meanings, and anything non-
-	zero for TLB error meanings.
 */
-const char *gint_strerror_7305(int is_tlb)
+const char *gint_strerror_7305(void)
 {
 	volatile unsigned int *expevt = gint_reg_7305(Register_EXPEVT);
 

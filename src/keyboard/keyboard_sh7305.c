@@ -22,7 +22,7 @@
 	Should sleep during a few milliseconds. Well...
 	This delay has a great influence on key detection. Here are a few
 	observations of what happens with common numbers of "nop" (without
-	overclock). Take care of the effect of overclock !
+	overclock). Take care of the effect of overclock!
 
 	Column effects
 	May have something to do with register HIZCRB not being used here. When
@@ -48,9 +48,7 @@ static void kdelay(void)
 
 	__asm__
 	(
-		r4("nop\n\t")
-		r4("nop\n\t")
-		r4("nop\n\t")
+		"nop\n\t"
 	);
 
 	#undef	r4
@@ -142,5 +140,10 @@ void keyboard_updateState_7305(volatile unsigned char *keyboard_state)
 {
 	int i;
 
-	for(i = 0; i < 10; i++) keyboard_state[i] = krow(i);
+	keyboard_state[8] = krow(8);
+	for(i = 0; i < 10; i++)
+	{
+		if(i != 7 && i != 8) keyboard_state[i] = krow(i);
+	}
+	keyboard_state[7] = krow(7);
 }

@@ -30,8 +30,6 @@ static void kdelay(void)
 	__asm__
 	(
 		r4("nop\n\t")
-		r4("nop\n\t")
-		r4("nop\n\t")
 	);
 
 	#undef	r4

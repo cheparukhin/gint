@@ -77,7 +77,7 @@ struct Font
 
 	uint16_t index[16];
 
-	__attribute__((aligned(4))) const struct FontGlyph glyphs[];
+	__attribute__((aligned(4))) const uint32_t glyphs[];
 
 } __attribute__((aligned(4)));
 // Useful shorthand for user code.
@@ -91,27 +91,22 @@ typedef struct Font Font;
 
 /*
 	text_configure()
-	Sets the font and mode to use for the following print operations.
+	Sets the font and color to use for subsequent text operations. Pass
+	font = NULL to use the default font.
 */
-void text_configure(struct Font *font);
-
-/*
-	text_configure_default()
-	Configures tales with the default font (which is part of gint).
-*/
-void text_configure_default(void)		__attribute__((constructor));
+void text_configure(struct Font *font, enum Color color);
 
 /*
 	dtext()
 	Prints the given string, without any analysis.
 */
-void dtext(const char *str, int x, int y);
+void dtext(int x, int y, const char *str);
 
 /*
 	gtext()
 	Prints the given raw string.
 */
-void gtext(const char *str, int x, int y);
+void gtext(int x, int y, const char *str);
 
 /*
 	dprint()

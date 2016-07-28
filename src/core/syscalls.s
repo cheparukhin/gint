@@ -25,13 +25,6 @@ _malloc:
 	nop
 1:	.long	0xacd
 
-_calloc:
-	mov.l	syscall_table, r2
-	mov.l	1f, r0
-	jmp	@r2
-	nop
-1:	.long	0xe6b
-
 _free:
 	mov.l	syscall_table, r2
 	mov.l	1f, r0

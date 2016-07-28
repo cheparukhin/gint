@@ -6,7 +6,7 @@
 	gimage()
 	Displays a gray image in the video ram.
 */
-void gimage(struct Image *img, int x, int y)
+void gimage(int x, int y, struct Image *img)
 {
 	if(img->magic != 0xb7) return;
 
@@ -21,7 +21,7 @@ void gimage(struct Image *img, int x, int y)
 	//	Adjusting image parameters.
 	//---
 
-	if(x + s.width < 0 || x > 127 || y + s.height < 0 || y > 63) return;
+	if(x + s.width <= 0 || x > 127 || y + s.height <= 0 || y > 63) return;
 
 	command.top	= (y < 0) ? (-y) : (0);
 	command.bottom	= (y + s.height > 64) ? (64 - y) : (s.height);

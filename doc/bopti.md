@@ -187,7 +187,7 @@ using the operation functions.
 mask for the `draw` operation.
 * Transparent monochrome images have two layers. The first describes the mask
 for the `draw` operation, while the other is the `alpha` operation mask (which
-means that it indicates which pixels are transparent).
+means that it indicates which pixels are not transparent).
 * Non-transparent gray images also have two layers: one for each
 [gray buffer](gray-engine). Both are for the `draw` operation.
 * Transparent gray images have three layers. Two of them constitute the two-bit

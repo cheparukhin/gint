@@ -14,8 +14,6 @@
 //	Heading declarations.
 //---
 
-#include <internals/tales.h>
-
 enum Color
 {
 	Color_White	= 0,
@@ -25,6 +23,9 @@ enum Color
 	Color_None	= 4,
 	Color_Invert	= 5,
 };
+
+// This header needs enum Color to be defined.
+#include <tales.h>
 
 /*
 	struct Image
@@ -146,6 +147,15 @@ void dline(int x1, int y1, int x2, int y2, enum Color color);
 	Displays a monochrome image in the vram. Does a real lot of
 	optimization.
 */
-void dimage(struct Image *image, int x, int y);
+void dimage(int x, int y, struct Image *image);
+
+/*
+	dimage_part()
+	Draws a portion of an image, defined by its bounding rectangle.
+	Point (left, top) is included, but (left + width, top + height) is
+	excluded.
+*/
+void dimage_part(int x, int y, struct Image *img, int left, int top,
+	int width, int height);
 
 #endif	// _DISPLAY_H

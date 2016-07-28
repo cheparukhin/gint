@@ -9,21 +9,15 @@
   ~    needs investigation
 
 
-@  vram overflow
-@  keyboard test threaded interface
+@  possibility of vram overflow with text
 
++  bitmap blending modes
 +  have timers use structures from 7705.h and 7305.h
-+  full and partial transparency
++  partial transparency
 +  gint vs. ML with 248x124 at (-60, -28)
 +  call exit handlers
 +  compute frequencies
-+  gray text
-+  upgraded blending modes
-+  blending modes for text
-+  information masks for text
 +  test all font encodings
-+  font clipping
-+  bitmap parts
 
 -  improve exception handler debugging information (if possible)
 -  full rtc driver (time)

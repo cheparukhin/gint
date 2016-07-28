@@ -27,13 +27,13 @@
 */
 enum Channel
 {
-	Channel_Mono		= 0x01,
-	Channel_Light		= 0x02,
-	Channel_Dark		= 0x04,
+	Channel_FullAlpha	= 0x01,
+	Channel_LightAlpha	= 0x02,
+	Channel_DarkAlpha	= 0x04,
 
-	Channel_FullAlpha	= 0x08,
-	Channel_LightAlpha	= 0x10,
-	Channel_DarkAlpha	= 0x20,
+	Channel_Mono		= 0x08,
+	Channel_Light		= 0x10,
+	Channel_Dark		= 0x20,
 };
 
 /*

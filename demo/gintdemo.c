@@ -1,16 +1,10 @@
-#include <stdlib.h>
-#include <string.h>
+#include "gintdemo.h"
 
 #include <mpu.h>
 #include <gint.h>
 #include <keyboard.h>
 #include <display.h>
-#include <timer.h>
 #include <gray.h>
-
-#include <stdint.h>
-#include <stdarg.h>
-#include <7305.h>
 
 #include <internals/stdio.h>
 
@@ -21,207 +15,28 @@
 //	Not really beautiful... but this will do.
 //---
 
-void print(int x, int y, const char *format, ...)
+void locate(int x, int y, const char *str)
 {
 	if(x < 1 || x > 21 || y < 1 || y > 8) return;
+	if(gray_runs()) gtext(x * 6 - 5, y * 8 - 8, str);
+	else dtext(x * 6 - 5, y * 8 - 8, str);
+}
 
+void print(int x, int y, const char *format, ...)
+{
 	va_list args;
+
 	va_start(args, format);
 	__printf(0, format, args);
 	va_end(args);
 
-	if(gray_runs()) gtext(__stdio_buffer, x * 6 - 5, y * 8 - 8);
-	else dtext(__stdio_buffer, x * 6 - 5, y * 8 - 8);
+	locate(x, y, __stdio_buffer);
 }
-
-void locate(const char *str, int x, int y)
-{
-	if(x < 1 || x > 21 || y < 1 || y > 8) return;
-	if(gray_runs()) gtext(str, x * 6 - 5, y * 8 - 8);
-	else dtext(str, x * 6 - 5, y * 8 - 8);
-}
-
-
-
-//---
-//	Test applications.
-//---
-
-/*
-	keyboard_test_binary()
-	Prints a byte as binary/
-*/
-void keyboard_test_binary(int byte, int x, int y)
-{
-	char str[9];
-	int i = 7;
-
-	str[8] = 0;
-	while(i >= 0)
-	{
-		str[i] = '0' + (byte & 1);
-		byte >>= 1;
-		i--;
-	}
-
-	locate(str, x, y);
-}
-
-/*
-	keyboard_test_timer()
-	Displays a keyboard test. The keyboard state is displayed as well, but	
-	there is a timer artifact. The keyboard state timer uses the same
-	period as the (internal) keyboard analysis timer, but there is a time
-	gap between a keyboard analysis and an update on the screen.
-*/
-void keyboard_test_timer(void)
-{
-	volatile unsigned char *state = keystate();
-
-	dclear_area(5, 10, 71, 34);
-
-	keyboard_test_binary(state[0], 1, 1);
-	keyboard_test_binary(state[1], 1, 2);
-	keyboard_test_binary(state[2], 1, 3);
-	keyboard_test_binary(state[3], 1, 4);
-	keyboard_test_binary(state[4], 1, 5);
-
-	keyboard_test_binary(state[5], 10, 1);
-	keyboard_test_binary(state[6], 10, 2);
-	keyboard_test_binary(state[7], 10, 3);
-	keyboard_test_binary(state[8], 10, 4);
-	keyboard_test_binary(state[9], 10, 5);
-
-	dupdate();
-}
-
-/*
-	keyboard_test()
-	Displays a multi-getkey test as well as the keyboard state in real
-	time.
-*/
-void keyboard_test(void)
-{
-	int x = 0;
-	char str[3];
-	int keys[4] = { 0 };
-	int i;
-
-	timer_start(TIMER_USER, 1700, TIMER_Po_256, keyboard_test_timer, 0);
-
-	dclear();
-	locate("Keyboard state:", 0, 0);
-	locate("multi-getkey ^^", 50, 55);
-	dupdate();
-
-	while(1)
-	{
-		multigetkey(keys, 4, 0);
-		if(keys[0] == KEY_EXIT && keys[1] == KEY_NONE) break;
-
-
-		#define	hexa(h) ('0' + (h) + 39 * ((h) > 9))
-
-		x = (x + 1) & 15;
-		str[0] = hexa(x);
-		str[1] = 0;
-		locate(str, 100, 0);
-
-		for(i = 0; i < 4; i++)
-		{
-			str[0] = hexa((keys[i] >> 4) & 0x0f);
-			str[1] = hexa(keys[i] & 0x0f);
-			str[2] = 0;
-			locate(str, 100, 16 + 10 * i);
-		}
-
-		#undef	hexa
-
-		dupdate();
-	}
-
-	timer_stop(TIMER_USER);
-}
-
-
-/*
-	bitmap_test()
-	Displays various bitmaps to ensure bopti is working correctly.
-*/
-/*
-void bitmap_test(void)
-{
-	extern Image res_bitmap_opt_start;
-	extern Image res_symbol_start;
-	extern Image res_symbol2_start;
-	extern Image res_sprites_start;
-	extern Image res_swords_start;
-	extern Image res_items_start;
-
-	Image *opt	= &res_bitmap_opt_start;
-	Image *sybl	= &res_symbol_start;
-	Image *sybl2	= &res_symbol2_start;
-	Image *sprites	= &res_sprites_start;
-	Image *swords	= &res_swords_start;
-	Image *items	= &res_items_start;
-
-	uint32_t a32 = 0xffffffff;
-	int black_bg = 0, gray = 0;
-	int key;
-	int x = 20, y = 10;
-
-	while(1)
-	{
-		if(gray)
-		{
-			gray_start();
-			gclear();
-
-			if(black_bg) greverse_area(0, 0, 127, 63);
-			gimage(swords, 0, 57);
-
-			gimage(items, x, y);
-
-			gupdate();
-		}
-		else
-		{
-			gray_stop();
-			dclear();
-
-			if(black_bg) dreverse_area(0, 0, 127, 63);
-			dimage(opt, 0, 57);
-
-			dimage(sybl, 30 & a32, 40);
-			dimage(sybl2, 62 & a32, 40);
-
-			dupdate();
-
-		}
-
-		key = getkey();
-		if(key == KEY_EXIT) break;
-
-		if(key == KEY_F1) gray = !gray;
-		if(key == KEY_F2) a32 ^= 31;
-		if(key == KEY_F3) black_bg = !black_bg;
-
-		if(key == KEY_UP) y--;
-		if(key == KEY_DOWN) y++;
-		if(key == KEY_LEFT) x--;
-		if(key == KEY_RIGHT) x++;
-	}
-
-	gray_stop();
-	return;
-}
-*/
-
 
 /*
 	text_test()
 	Renders text.
-*/
+
 void text_test(void)
 {
 	extern Font res_font_modern_start;
@@ -242,115 +57,27 @@ void text_test(void)
 
 	while(getkey() != KEY_EXIT);
 }
-
-
-
-/*
-	gray_test()
-	Runs the gray engine.
 */
-void gray_test(void)
-{
-	extern Image res_opt_gray_start;
-
-	int *v1, *v2;
-
-	int delays[2]; // { light, dark }
-	int key, changed = 1, i;
-	int selected = 0;
-
-	gray_getDelays(delays, delays + 1);
-	gray_start();
-
-	while(1)
-	{
-		if(changed)
-		{
-			gray_setDelays(delays[0], delays[1]);
-			gclear();
-
-			v1 = gray_lightVRAM();
-			v2 = gray_darkVRAM();
-
-			for(i = 0; i < 63; i++)
-			{
-				v1[(i << 2)] = v1[(i << 2) + 1] =
-					-((i & 31) < 16);
-				v2[(i << 2)] = v2[(i << 2) + 1] =
-					-(i < 32);
-			}
-
-			locate("light", 15, 2);
-			print(15, 3, "%d", delays[0]);
-
-			locate("dark", 15, 5);
-			print(15, 6, "%d", delays[1]);
-
-			locate("\x02", 14, selected ? 6 : 3);
-
-			gimage(&res_opt_gray_start, 0, 56);
-			gupdate();
-		}
-
-		changed = 0;
-
-		key = getkey_opt(Getkey_RepeatArrowKeys, 1);
-		if(key == KEY_EXIT) break;
-
-		changed = 1;
-
-		switch(key)
-		{
-		case KEY_F1:
-			selected = !selected;
-			break;
-		case KEY_F2:
-			delays[0] = isSH3() ? 985 : 994;
-			delays[1] = 1609;
-			break;
-		case KEY_F3:
-			delays[0] = 860;
-			delays[1] = 1298;
-			break;
-		case KEY_UP:
-			delays[selected] += 10;
-			break;
-		case KEY_DOWN:
-			if(delays[selected] >= 110) delays[selected] -= 10;
-			break;
-		case KEY_RIGHT:
-			delays[selected]++;
-			break;
-		case KEY_LEFT:
-			if(delays[selected] >= 101) delays[selected]--;
-			break;
-		default:
-			changed = 0;
-			break;
-		}
-	}
-
-	gray_stop();
-}
 
 /*
 	printf_test()
 	Tests formatting functions.
-*/
+
 void printf_test(void)
 {
 	dclear();
-	locate("Formatted printing", 1, 1);
+	locate(1, 1, "Formatted printing");
 
 	print(2, 3, "%%4.2d   5 :\"%4.2d\"", 5);
 	print(2, 4, "%%-3c   '&':\"%-3c\"", '&');
 	print(2, 5, "%%#05x  27 :\"%#05x\"", 27);
 	print(2, 6, "%%1s   \"tr\":\"%1s\"", "tr");
-	print(2, 7, "%%6p  NULL :\"%7p\"", NULL);
+	print(2, 7, "%%6p  NULL :\"%6p\"", NULL);
 
 	dupdate();
 	while(getkey() != KEY_EXIT);
 }
+*/
 
 /*
 static const unsigned char screen[1024] = {
@@ -504,7 +231,7 @@ void debug(void)
 	tlb_debug()
 	Displays the TLB contents and some information. Only available for
 	SH7705, because the SH7305's TLB is much more complicated.
-*/
+
 void tlb_debug(void)
 {
 	// Entry address address (pointer in the address array), entry data
@@ -573,6 +300,7 @@ void tlb_debug(void)
 		key = getkey();
 	}
 }
+*/
 
 /*
 	main_menu()
@@ -615,8 +343,8 @@ void main_menu(int *category, int *app)
 		"View TLB (SH3 only)",
 		NULL
 	};
-	const char **list;
-	int list_len;
+	const char **list = NULL;
+	int list_len = 0;
 
 	extern unsigned int bgint, egint;
 	extern unsigned int romdata;
@@ -630,7 +358,7 @@ void main_menu(int *category, int *app)
 	int i;
 
 	mpu = mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5];
-	text_configure_default();
+	text_configure(NULL, Color_Black);
 
 	while(1)
 	{
@@ -644,7 +372,7 @@ void main_menu(int *category, int *app)
 		switch(tab)
 		{
 		case 0:
-			locate("Demo application", 1, 1);
+			locate(1, 1, "Demo application");
 			print(2, 3, "gint version: %5s", GINT_VERSION_STR);
 			print(2, 4, "handler size: %5d", gint_size);
 			print(2, 5, "mpu type:   %7s", mpu);
@@ -654,17 +382,17 @@ void main_menu(int *category, int *app)
 			break;
 
 		case 1:
-			locate("Test list", 1, 1);
+			locate(1, 1, "Test list");
 			list = list_tests;
 			break;
 
 		case 2:
-			locate("Performance", 1, 1);
+			locate(1, 1, "Performance");
 			list = list_perfs;
 			break;
 
 		case 3:
-			locate("Debug", 1, 1);
+			locate(1, 1, "Debug");
 			list = list_debug;
 			break;
 
@@ -672,7 +400,7 @@ void main_menu(int *category, int *app)
 			print(1, 1, "Tab %d", tab);
 			break;
 		}
-		dimage(&res_opt_menu_start, 0, 56);
+		dimage(0, 56, &res_opt_menu_start);
 
 		if(list)
 		{
@@ -680,10 +408,10 @@ void main_menu(int *category, int *app)
 			while(list[list_len]) list_len++;
 
 			for(i = scroll; list[i] && i < scroll + 6; i++)
-				locate(list[i], 2, i - scroll + 2);
+				locate(2, i - scroll + 2, list[i]);
 
-			if(scroll > 0) locate("\x0d", 20, 2);
-			if(scroll + 6 < list_len) locate("\x0e", 20, 7);
+			if(scroll > 0) locate(20, 2, "\x0d");
+			if(scroll + 6 < list_len) locate(20, 7, "\x0e");
 
 			dreverse_area(0, 8 * (index - scroll) + 8, 127,
 				8 * (index - scroll) + 15);
@@ -794,26 +522,33 @@ int main(void)
 		switch((category << 8) | app)
 		{
 		case 0x0101:
-			keyboard_test();
+			test_keyboard();
 			break;
 		case 0x0102:
-			gray_test();
+			test_gray();
 			break;
 		case 0x0103:
-//			bitmap_test();
+			test_bopti();
 			break;
 		case 0x0104:
-			text_test();
+			test_tales();
 			break;
 		case 0x0105:
-//			rtc_test();
+//			test_rtc();
 			break;
 		case 0x0106:
-			printf_test();
+//			test_printf();
+			break;
+
+		case 0x0201:
+//			perf_bopti();
+			break;
+		case 0x0202:
+//			perf_tales();
 			break;
 
 		case 0x0301:
-			if(isSH3()) tlb_debug();
+//			if(isSH3()) debug_tlb();
 			break;
 		}
 	}

@@ -13,7 +13,16 @@
 #include <tales.h>
 #include <stdint.h>
 
+#define	OPERATE_ARGS	uint32_t *operators, int height, int x, int y
+
 extern struct Font *font;
+extern enum Color color;
+
+/*
+	tales_init()
+	Configures tales with the default font (which is part of gint).
+*/
+void tales_init(void)				__attribute__((constructor));
 
 /*
 	getCharacterIndex()
@@ -29,7 +38,8 @@ int getCharacterIndex(int c);
 	Operates on the vram using the given operators. The x-coordinate should
 	be a multiple of 32. There should be `height` operators.
 */
-void operate(uint32_t *operators, int height, int x, int y);
+void operate_mono(OPERATE_ARGS);
+void operate_gray(OPERATE_ARGS);
 
 /*
 	update()
@@ -43,5 +53,12 @@ void operate(uint32_t *operators, int height, int x, int y);
 	negative, call operate() and update() again.
 */
 int update(uint32_t *operators, int height, int available, uint32_t *glyph);
+
+/*
+	render()
+	Renders text without any formatting analysis, using the given operation
+	function.
+*/
+void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS));
 
 #endif	// _INTERNALS_TALES_H

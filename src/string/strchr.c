@@ -6,6 +6,6 @@
 */
 const char *strchr(const char *str, int value)
 {
-	while(*str && *str != value) *str++;
+	while(*str && *str != value) str++;
 	return *str ? str : NULL;
 }
