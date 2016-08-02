@@ -10,6 +10,43 @@
 #define	_RTC_H	1
 
 //---
+//	Time access.
+//---
+
+/*
+	struct RTCTime
+	Defines a point in time. This structure *is* the standard struct tm to
+	avoid useless data copy in the interface between this module and the
+	standard time module.
+*/
+struct RTCTime
+{
+	int seconds;		// Seconds in range 0-59
+	int minutes;		// Minutes in range 0-59
+	int hours;		// Hours in range 0-23
+	int month_day;		// Day of month in range 1-31
+	int month;		// Month in range 0-11
+	int year;		// Number of years since 1900
+	int week_day;		// Day of week in range 0(Sunday)-6(Saturday).
+	int year_day;		// Day of the year in range 0-365.
+	int daylight_saving;	// As far as I known the RTC does not use DST.
+};
+
+/*
+	rtc_getTime()
+	Reads the current time from the RTC.
+*/
+struct RTCTime rtc_getTime(void);
+
+/*
+	rtc_setTime()
+	Sets the time in the RTC registers.
+*/
+void rtc_setTime(struct RTCTime time);
+
+
+
+//---
 //	Callback API.
 //---
 

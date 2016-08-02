@@ -23,6 +23,10 @@ extern unsigned int
 static int exit_code = EXIT_SUCCESS;
 static jmp_buf env;
 
+// Exit handlers.
+void (*atexit_handlers[ATEXIT_MAX])(void);
+int atexit_index = 0;
+
 
 
 /*
@@ -69,6 +73,9 @@ int start(void)
 
 	// Remember to flush and close opened streams.
 
+	// Calling exit handlers.
+	while(atexit_index > 0) (*atexit_handlers[--atexit_index])();
+
 	// Un-initializing everything.
 	fini();
 	gint_quit();
@@ -76,6 +83,10 @@ int start(void)
 	return exit_code;
 }
 
+/*
+	init()
+	Calls the constructors.
+*/
 static void init(void)
 {
 	extern void
@@ -83,7 +94,6 @@ static void init(void)
 		(*ectors)(void);
 	void (**func)(void) = &bctors;
 
-	// Calling the constructors.
 	while(func < &ectors)
 	{
 		(*(*func))();
@@ -91,6 +101,10 @@ static void init(void)
 	}
 }
 
+/*
+	fini()
+	Calls the destructors.
+*/
 static void fini(void)
 {
 	extern void
@@ -98,7 +112,6 @@ static void fini(void)
 		(*edtors)(void);
 	void (**func)(void) = &bdtors;
 
-	// Calling the destructors.
 	while(func < &edtors)
 	{
 		(*(*func))();
@@ -112,10 +125,13 @@ static void fini(void)
 	abort()
 	Immediately ends the program without invoking the exit handlers.
 */
-
 void abort(void)
 {
 	exit_code = EXIT_FAILURE;
+
+	// Avoiding any exit handler call.
+	atexit_index = 0;
+
 	longjmp(env, 1);
 }
 
@@ -129,10 +145,21 @@ void abort(void)
 	of achieving this goal while minimizing interaction with the operating
 	system.
 */
-
 void exit(int status)
 {
 	exit_code = status;
 	longjmp(env, 1);
+}
+
+/*
+	atexit()
+	Registers a function to be called at normal program termination.
+*/
+int atexit(void (*function)(void))
+{
+	if(atexit_index >= ATEXIT_MAX) return 1;
+
+	atexit_handlers[atexit_index++] = function;
+	return 0;
 }
 

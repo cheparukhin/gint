@@ -10,9 +10,11 @@
 
 
 @  possibility of vram overflow with text
+@  garbage displayed as year in the clock, possibly during edition (could not
+   reproduce)
 
 +  bitmap blending modes
-+  have timers use structures from 7705.h and 7305.h
++  minimize use of 7705.h and 7305.h; use local structures instead
 +  partial transparency
 +  gint vs. ML with 248x124 at (-60, -28)
 +  call exit handlers
@@ -23,7 +25,7 @@
 -  full rtc driver (time)
 -  callbacks and complete user API
 
-~  shadowy rectangle effect for Shift + Alpha + Left + Down
+~  packed bit fields
 ~  exhaustive save for setjmp()
 ~  registers that need to be saved when configuring gint
 ~  possible bug when -O2'ing __attribute__((interrupt_handler))

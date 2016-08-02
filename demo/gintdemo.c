@@ -34,32 +34,6 @@ void print(int x, int y, const char *format, ...)
 }
 
 /*
-	text_test()
-	Renders text.
-
-void text_test(void)
-{
-	extern Font res_font_modern_start;
-	Font *font = &res_font_modern_start;
-
-	text_configure(font);
-
-	dclear();
-
-	dtext(" !\"#$%&'()*+,-./", 10, 10);
-	dtext("0123456789:;<=>?", 10, 16);
-	dtext("@ABCDEFGHIJKLMNO", 10, 22);
-	dtext("PQRSTUVWXYZ[\\]^_", 10, 28);
-	dtext("`abcdefghijklmno", 10, 34);
-	dtext("pqrstuvwxyz{|}~", 10, 40);
-
-	dupdate();
-
-	while(getkey() != KEY_EXIT);
-}
-*/
-
-/*
 	printf_test()
 	Tests formatting functions.
 
@@ -534,7 +508,7 @@ int main(void)
 			test_tales();
 			break;
 		case 0x0105:
-//			test_rtc();
+			test_rtc();
 			break;
 		case 0x0106:
 //			test_printf();

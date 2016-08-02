@@ -62,9 +62,6 @@ void test_keyboard(void)
 
 	while(1)
 	{
-		multigetkey(keys, 4, 1);
-		if(keys[0] == KEY_EXIT && keys[1] == KEY_NONE) break;
-
 		dclear();
 		locate(1, 1, "Keyboard driver");
 		locate(8, 3, "Pressed keys:");
@@ -78,5 +75,8 @@ void test_keyboard(void)
 		}
 
 		dupdate();
+
+		multigetkey(keys, 4, 1);
+		if(keys[0] == KEY_EXIT && keys[1] == KEY_NONE) break;
 	}
 }

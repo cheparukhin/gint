@@ -14,7 +14,7 @@
 # Modules
 modules-gint	= core keyboard mmu mpu rtc screen timer \
 		  bopti display gray tales
-modules-libc	= setjmp string stdio
+modules-libc	= setjmp string stdio stdlib
 
 # Targets
 target-g1a	= gintdemo.g1a

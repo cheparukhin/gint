@@ -11,11 +11,11 @@ struct Timer timers[3] = { { NULL, 0 }, { NULL, 0 }, { NULL, 0 } };
 */
 void timer_interrupt(int timer)
 {
-	struct mod_tmu *tmu;
+	volatile struct mod_tmu *tmu;
 	timer_get(timer, &tmu, NULL);
 
 	// Resetting the interrupt flag.
-	(*tmu).TCR.UNF = 0;
+	tmu->TCR.UNF = 0;
 
 	// Calling the callback function.
 	if(timers[timer].callback) timers[timer].callback();

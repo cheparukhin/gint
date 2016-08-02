@@ -38,7 +38,7 @@ void dimage_part(int x, int y, struct Image *img, int left, int top,
 	command.bottom	= top + ((y + height > 64) ? (64 - y) : height);
 	command.left	= ((x < 0) ? (left - x) : left) >> 5;
 	actual_width	= (x + width > 128) ? (128 - x) : width;
-	command.right	= left + ((actual_width + 31) >> 5) - 1;
+	command.right	= ((left + actual_width + 31) >> 5) - 1;
 
 	command.op	= bopti_op_mono;
 

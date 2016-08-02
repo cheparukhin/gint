@@ -20,35 +20,29 @@ extern struct Timer timers[3];
 */
 struct mod_tmu
 {
-	// Timer constant register.
-	unsigned int TCOR;
-	// Timer counter.
-	unsigned int TCNT;
+	unsigned int TCOR;	// Timer constant register.
+	unsigned int TCNT;	// Timer counter.
 
-	// Timer control register.
 	union
 	{
 		unsigned short WORD;
 		struct
 		{
 			unsigned	:7;
-			// Underflow flag.
-			unsigned UNF	:1;
+			unsigned UNF	:1;	// Underflow flag.
 			unsigned	:2;
-			// Underflow interrupt enable.
-			unsigned UNIE	:1;
-			// Clock edge, reserved on SH7305.
-			unsigned CKEG	:2;
-			// Timer prescaler.
-			unsigned TPSC	:3;
+			unsigned UNIE	:1;	// Underflow interrupt enable.
+			unsigned CKEG	:2;	// Clock edge (SH7705 only).
+			unsigned TPSC	:3;	// Timer prescaler.
 		};
-	} TCR;
+	} TCR;	// Timer control register.
 };
 
 /*
 	timer_get()
 	Returns the timer and TSTR register addresses.
 */
-void timer_get(int timer, struct mod_tmu **tmu, unsigned char **tstr);
+void timer_get(int timer, volatile struct mod_tmu **tmu,
+	volatile unsigned char **tstr);
 
 #endif	// _INTERNALS_TIMER_H

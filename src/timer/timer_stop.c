@@ -10,11 +10,9 @@
 */
 void timer_stop(int timer)
 {
-	// Getting TSTR address and the corresponding byte.
-	unsigned char *tstr;
+	volatile unsigned char *tstr;
 	int byte = (1 << timer);
-	timer_get(timer, NULL, &tstr);
 
-	// Stopping the timer.
+	timer_get(timer, NULL, &tstr);
 	*tstr &= ~byte;
 }

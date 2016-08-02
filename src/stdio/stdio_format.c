@@ -9,7 +9,7 @@
 	Internal buffer.
 
 	Using a buffer *really* simplifies everything. But it also has
-	disadvantages, such a memory loss and limited output size.
+	disadvantages, such as some memory loss and limited output size.
 
 	So, in case we find a possibility to get rid of this buffer, we will
 	just have to change function character(), which is for now the only
@@ -20,35 +20,34 @@ char __stdio_buffer[__stdio_buffer_size];
 
 
 /*
-	Format composed types.
+	Composed types for format definition.
 
-	Format structure handles everything in a format, from data type to
-	given value, including alternative forms, alignment and digit numbers.
+	The Format structure handles everything in a format: data type, value,
+	alternative forms, alignment and character number, precision... there
+	are mainly a data type (altered by a size option), a value to print
+	and a number of characters.
 
-	A format is made of a data type, which can be altered by a size option,
-	a number of integer and decimal digits, and additional flags.
-
-	The FormatFlags enumeration handles the various flags that can be added
-	to a printf()-family format.
+	Other options are handled by The FormatFlags enumeration. See the
+	description of functions __printf() for further description on option
+	precedence and influence.
 */
 
 enum FormatFlags
 {
-	// Option '#' specifies alternatives forms, mainly '0' and '0x'
-	// prefixes in integer display.
+	// Alternatives forms add '0' and '0x' prefixes in octal and
+	// hexadecimal bases. (#)
 	Alternative	= 1,
 	// Under specific conditions, zero-padding may be used instead of
-	// whitespace-padding.
+	// whitespace-padding. (0)
 	ZeroPadded	= 2,
 	// Left alignment specifies that additional spaces should be added
-	// after the value.
+	// after the value instead of before. (-)
 	LeftAlign	= 4,
 	// In numeric display, this forces a blank sign to be written before
-	// positive values.
+	// positive values. ( )
 	BlankSign	= 8,
 	// In numeric display, this forces an explicit sign in all cases. This
-	// option overrides BlankSign (see __printf() description for further
-	// information on option precedence and influence).
+	// option overrides BlankSign. (+)
 	ForceSign	= 16
 };
 
@@ -72,7 +71,7 @@ struct Format
 	{
 		// Signed int with formats %c, %d and %i.
 		signed int _int;
-		// Insigned int with formats %o, %u, %x and %X.
+		// Unsigned int with formats %o, %u, %x and %X.
 		unsigned int _unsigned;
 		// Double with formats %f, %F, %e, %E, %g and %G.
 //		double _double;
@@ -364,8 +363,7 @@ static void get_spacing(struct Format format, int *begin_spaces, int *sign,
 	__printf()
 
 	Basic buffered formatted printing function. Fully-featured, so that
-	ant call to a printf()-family function can be translated into a
-	__printf() call.
+	any call to a printf()-family function can be performed by __printf().
 
 	It always returns the number of characters of the theoretic formatted
 	output. The real output may be limited in size by the given size
@@ -376,30 +374,27 @@ static void get_spacing(struct Format format, int *begin_spaces, int *sign,
 	argument handling (because flag effects depend on format type, which
 	is unknown when the flags are read). Also, length modifiers 'hh' is
 	stored as 'i' to simplify structure handling. 'll' is not supported.
-	Format '%LF' is allowed by C99 and therefore supported.
+	Support for format '%lf' (C99) is planned.
 
 	Generic information on options precedence and influence.
-	-	Influences of integer part and mantissa digit numbers depend on
-		the type of data that is being displayed.
-	-	Option '#' doesn't contend with any other.
-	-	Option '+' overrides options ' '.
-	-	In integer display, option '0' translates spaces to zeros, but
-		only if no decimal digit number is specified.
-		The option '-' also overrides it, forcing whitespaces to be
-		written at the end of the format.
+	-  Number of characters and precision represent different lengths
+	   depending on the data type.
+	-  '#' is independent.
+	-  '+' overrides ' '.
+	-  In integer display, '0' replaces spaces to zeros, only if no
+	   precision (decimal digit number) is specified.
+	-  '-' also overrides it, forcing whitespaces to be written at the end.
 
-	Limit of function.
-	-	Internal buffer size (should be customizable with a -D option
-		when compiling).
-	-	Precision values (format %a.b) are written on 8 bits, therefore
-		limited to 127.
+	Limits of function.
+	-  Internal buffer size (there should be a loop to allow larger data).
+	-  Precision values (format %a.b) are limited to 127.
 
 	Unsupported features.
-	-	Flag character ''' (single quote) for thousands grouping
-	-	Flag character 'I', that outputs locale's digits (glibc 2.2)
-	-	Length modifiers 'll' and 'q' (libc 5 and 4.4 BSD)
-	-	This is not really a feature but incorrect characters in
-		formats are ignored and don't invalidate the format.
+	-  ''' (single quote) (thousands grouping)
+	-  'I' (outputs locale's digits (glibc 2.2))
+	-  Length modifiers 'll' and 'q' (libc 5 and 4.4 BSD)
+	-  This is not really a feature but incorrect characters in formats are
+	   ignored and don't invalidate the format.
 */
 int __printf(size_t size, const char *string, va_list args)
 {
@@ -409,7 +404,7 @@ int __printf(size_t size, const char *string, va_list args)
 	if(!size || size > __stdio_buffer_size)
 		size = __stdio_buffer_size;
 
-	// Initializing character() working values.
+	// Initializing character() variables.
 	written	= 0;
 	total	= 0;
 	max	= size;
@@ -437,8 +432,7 @@ int __printf(size_t size, const char *string, va_list args)
 		format = get_format(&string);
 		if(!format.type) break;
 
-/*
-		// Displaying an information message.
+		/* Some debugging...
 		printf(
 			"Format found :%s%c%c, options %d, and %d.%d "
 			"digits\n",
@@ -448,8 +442,7 @@ int __printf(size_t size, const char *string, va_list args)
 			format.flags,
 			format.digits,
 			format.mantissa
-		);
-*/
+		); */
 
 		switch(format.type)
 		{
@@ -459,15 +452,8 @@ int __printf(size_t size, const char *string, va_list args)
 			format._int = va_arg(args, signed int);
 
 			// Reducing value depending on format size.
-			switch(format.size)
-			{
-			case 'h':
-				format._int &= 0x0000ffff;
-				break;
-			case 'i':
-				format._int &= 0x000000ff;
-				break;
-			}
+			if(format.size == 'h') format._int &= 0x0000ffff;
+			if(format.size == 'i') format._int &= 0x000000ff;
 
 			format_di(format);
 			break;
@@ -877,7 +863,7 @@ void format_p(struct Format format)
 
 	unsigned int x = format._unsigned;
 	int bspaces, zeros, digits = 0, espaces;
-	int c;
+	int c, i;
 
 	digits = x ? 10 : 5;
 	get_spacing(format, &bspaces, NULL, &zeros, digits, &espaces);
@@ -889,7 +875,7 @@ void format_p(struct Format format)
 	{
 		character('0');
 		character('x');
-		while(x)
+		for(i = 0; i < 8; i++)
 		{
 			c = x >> 28;
 			c += '0' + 39 * (c > 9);
