@@ -17,6 +17,11 @@ static int bcd16(int integer)
 	return (bcd8(integer / 100) << 8) | bcd8(integer % 100);
 }
 
+/*
+	rtc_setTime()
+	Sets the time in the RTC registers. The week day is set to 0 if greater
+	than 6. Other fields are not checked.
+*/
 void rtc_setTime(struct RTCTime time)
 {
 	volatile struct mod_rtc *rtc = isSH3() ? RTC_SH7705 : RTC_SH7305;
@@ -26,6 +31,6 @@ void rtc_setTime(struct RTCTime time)
 	rtc->RHRCNT.BYTE	= bcd8(time.hours);
 	rtc->RDAYCNT.BYTE	= bcd8(time.month_day);
 	rtc->RMONCNT.BYTE	= bcd8(time.month);
-	rtc->RYRCNT.WORD	= bcd16(time.year + 1900);
+	rtc->RYRCNT.WORD	= bcd16(time.year);
 	rtc->RWKCNT		= time.week_day < 7 ? time.week_day : 0;
 }

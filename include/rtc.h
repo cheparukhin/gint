@@ -15,9 +15,7 @@
 
 /*
 	struct RTCTime
-	Defines a point in time. This structure *is* the standard struct tm to
-	avoid useless data copy in the interface between this module and the
-	standard time module.
+	Defines a point in time.
 */
 struct RTCTime
 {
@@ -26,21 +24,21 @@ struct RTCTime
 	int hours;		// Hours in range 0-23
 	int month_day;		// Day of month in range 1-31
 	int month;		// Month in range 0-11
-	int year;		// Number of years since 1900
+	int year;		// Years (full value)
 	int week_day;		// Day of week in range 0(Sunday)-6(Saturday).
-	int year_day;		// Day of the year in range 0-365.
-	int daylight_saving;	// As far as I known the RTC does not use DST.
 };
 
 /*
 	rtc_getTime()
-	Reads the current time from the RTC.
+	Reads the current time from the RTC. There is no guarantee that the
+	week day is correct (use the time API for that).
 */
 struct RTCTime rtc_getTime(void);
 
 /*
 	rtc_setTime()
-	Sets the time in the RTC registers.
+	Sets the time in the RTC registers. The week day is set to 0 if greater
+	than 6. Other fields are not checked.
 */
 void rtc_setTime(struct RTCTime time);
 

@@ -10,3 +10,8 @@ build/**
 
 # Some notes.
 LIBC
+
+# Output files
+libc.a
+libgint.a
+gintdemo.g1a

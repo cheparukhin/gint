@@ -38,7 +38,7 @@ register access and implements a few standard functions.
 Building and installing
 -----------------------
 
-There a some dependencies:
+There are some dependencies:
 * The `sh3eb-elf` toolchain somewhere in the PATH
 * The fxSDK installed and available in the PATH
 

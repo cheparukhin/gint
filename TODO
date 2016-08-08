@@ -18,11 +18,10 @@
 +  partial transparency
 +  gint vs. ML with 248x124 at (-60, -28)
 +  call exit handlers
-+  compute frequencies
++  compute frequencies and CLOCKS_PER_SEC
 +  test all font encodings
 
 -  improve exception handler debugging information (if possible)
--  full rtc driver (time)
 -  callbacks and complete user API
 
 ~  packed bit fields

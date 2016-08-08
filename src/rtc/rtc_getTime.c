@@ -16,23 +16,11 @@ static int integer16(int bcd)
 		+ 1000 * (bcd >> 12);
 }
 
-static int year_day(int year, int year_bcd, int month, int month_day)
-{
-	int days_in_month[12] = {
-		31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-	int leap;
-	int hundreds = integer8(year_bcd >> 8);
-	int day, i;
-
-	leap = !(year & 3);			// Take multiples of 4
-	if(!((year_bcd >> 8) & 0xf)) leap = 0;	// Remove multiples of 100
-	if(!(hundreds & 3)) leap = 1;		// Take multiples of 400
-
-	day = leap && (month > 2);
-	for(i = 0; i < month - 1; i++) day += days_in_month[i];
-	return day + month_day - 1;
-}
-
+/*
+	rtc_getTime()
+	Reads the current time from the RTC. There is no guarantee that the
+	week day is correct (use the time API for that).
+*/
 struct RTCTime rtc_getTime(void)
 {
 	volatile struct mod_rtc *rtc = isSH3() ? RTC_SH7705 : RTC_SH7305;
@@ -43,11 +31,8 @@ struct RTCTime rtc_getTime(void)
 	time.hours	= integer8(rtc->RHRCNT.BYTE);
 	time.month_day	= integer8(rtc->RDAYCNT.BYTE);
 	time.month	= integer8(rtc->RMONCNT.BYTE);
-	time.year	= integer16(rtc->RYRCNT.WORD) - 1900;
+	time.year	= integer16(rtc->RYRCNT.WORD);
 	time.week_day	= rtc->RWKCNT;
-	time.year_day	= year_day(time.year + 1900, rtc->RYRCNT.WORD,
-		time.month, time.month_day);
 
-	time.daylight_saving = 0;
 	return time;
 }
