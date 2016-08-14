@@ -10,7 +10,7 @@
 void dreverse_area(int x1, int y1, int x2, int y2)
 {
 	uint32_t masks[4];
-	adjustRectangle(&x1, &y1, &x2, &y2);
+	if(adjustRectangle(&x1, &y1, &x2, &y2)) return;
 	getMasks(x1, x2, masks);
 
 	int begin = y1 << 2;

@@ -173,7 +173,7 @@ mrproper: clean
 distclean: mrproper
 
 install:
-	usb-connector SEND $(target-g1a) $(target-g1a) fls0
+	CasioUsbUploader -f $(target-g1a) -w -l 1
 
 
 .PHONY: all clean mrproper distclean

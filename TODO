@@ -9,10 +9,12 @@
   ~    needs investigation
 
 
-@  possibility of vram overflow with text
+@  possibility of vram left-overflow with text
 @  garbage displayed as year in the clock, possibly during edition (could not
    reproduce)
+@  a few key hits ignored after leaving the application
 
++  rect functions
 +  bitmap blending modes
 +  minimize use of 7705.h and 7305.h; use local structures instead
 +  partial transparency

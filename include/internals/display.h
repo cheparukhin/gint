@@ -41,8 +41,9 @@ extern int *vram;
 	- x1 < x2
 	- y1 < y2
 	which is needed when working with screen rectangles.
+	Returns non-zero if the rectangle is outside the screen.
 */
-void adjustRectangle(int *x1, int *y1, int *x2, int *y2);
+int adjustRectangle(int *x1, int *y1, int *x2, int *y2);
 
 /*
 	getMasks()

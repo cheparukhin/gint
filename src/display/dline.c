@@ -67,7 +67,7 @@ static void dvline(int y1, int y2, int x, enum Color color)
 
 void dline(int x1, int y1, int x2, int y2, enum Color color)
 {
-	adjustRectangle(&x1, &y1, &x2, &y2);
+	if(adjustRectangle(&x1, &y1, &x2, &y2)) return;
 
 	// Possible optimizations.
 	if(y1 == y2)

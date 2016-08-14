@@ -262,6 +262,7 @@ void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
 	// Allocating data. There will be one operator for each line.
 	height = font->data_height;
 	if(x > 127 || y > 63 || y <= -height) return;
+	if(y + height > 64) height = 64 - y;
 
 	operators = alloca(height * sizeof(uint32_t));
 	for(i = 0; i < height; i++) operators[i] = 0;

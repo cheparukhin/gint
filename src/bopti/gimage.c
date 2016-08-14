@@ -8,7 +8,7 @@
 */
 void gimage(int x, int y, struct Image *img)
 {
-	if(img->magic != 0xb7) return;
+	if(!img || img->magic != 0xb7) return;
 
 	struct Structure s;
 	struct Command command;

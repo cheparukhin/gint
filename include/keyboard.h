@@ -192,7 +192,7 @@ int getkey_opt(enum GetkeyOpt options, int max_cycles);
 
 	Listens the keyboard for simultaneous key hits. This functions fills
 	array `keys` with `count` keycodes, adding KEY_NONE at the end if
-	more than `count` keys are pressed.
+	less than `count` keys are pressed.
 	If `max_cycles` is non-zero and nothing happens after `max_cycles`
 	cycles, this function returns an array of KEY_NONE.
 

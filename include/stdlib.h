@@ -101,8 +101,16 @@ void free(void *ptr);
 //---
 
 /*
-	int rand(void)
+	rand()
+	Returns a pseudo-random number.
 */
+int rand(void);
+
+/*
+	srand()
+	Changes the seed used by rand().
+*/
+void srand(unsigned int seed);
 
 //---
 //	Integer arithmetic.
