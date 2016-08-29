@@ -1,0 +1,284 @@
+#include "gintdemo.h"
+#include <stddef.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <internals/timer.h>
+#include <timer.h>
+#include <display.h>
+#include <keyboard.h>
+#include <clock.h>
+#include <mpu.h>
+#include <rtc.h>
+
+static void draw(int new_tab);
+static struct ClockConfig conf;
+
+//---
+//	Timer-RTC comparison.
+//	The precision of the timer is measured by comparing it to the RTC.
+//---
+
+static volatile int elapsed_timer = -1;
+static volatile int elapsed_rtc = -1;
+
+static void timing_rtc(void)
+{
+	elapsed_rtc++;
+}
+
+static void timing_timer(void)
+{
+	elapsed_timer++;
+}
+
+static void timing_start(void)
+{
+	timer_start(TIMER_USER, clock_setting(16, Clock_Hz), TIMER_Po_4,
+		timing_timer, 0);
+	rtc_setCallback(timing_rtc, RTCFreq_16Hz);
+
+	elapsed_timer = 0;
+	elapsed_rtc = 0;
+}
+
+
+
+//---
+//	Drawing.
+//---
+
+/*
+	small_text()
+	Renders small text using a minimalist bitmap-based font.
+*/
+static void small_text(int x, int y, const char *text, int alignment)
+{
+	extern Image res_clock_chars_start;
+	Image *chars = &res_clock_chars_start;
+	const char *table = "0123456789kMHz*/";
+
+	if(alignment) x -= 2 * strlen(text) - 1, y -= 2;
+	int c;
+
+	while(*text)
+	{
+		const char *ptr = strchr(table, *text++);
+		if(!ptr) continue;
+		c = ptr - table;
+
+		dimage_part(x, y, chars, c << 2, 0, 3, 5);
+		x += 4;
+	}
+}
+
+/*
+	getFreq()
+	Prints the given frequency in a string on the form:
+
+		332kHz
+		<-><->
+		 3  3
+
+	There are 1, 2 or 3 characters for the value, and 2 or 3
+	characters for the unit. The string is compacted.
+*/
+void getFreq(char *str, int freq)
+{
+	if(freq < 1000)
+	{
+		sprintf(str, "%dHz", freq);
+		return;
+	}
+	if(freq < 1000000)
+	{
+		sprintf(str, "%dkHz", (freq + 500) / 1000);
+		return;
+	}
+	sprintf(str, "%dMHz", (freq + 500000) / 1000000);
+}
+
+/*
+	dislay_freq()
+	Displays a frequency value a unit, in an simple form.
+*/
+static void display_freq(int x, int y, int freq)
+{
+	int ratio, letter, dot, i;
+	char buffer[10];
+
+	if(freq <= 0)
+	{
+		dtext(x, y, "Unknown");
+		return;
+	}
+	if(freq < 10000)
+	{
+		dprint(x, y, "%5d", freq);
+		small_text(x + 31, y + 2, "Hz", 0);
+		return;
+	}
+
+	if(freq < 10000000) ratio = 1, letter = 'k';
+	else ratio = 1000, letter = 'M';
+
+	dot = 1 + (freq >= 10000 * ratio) + (freq >= 100000 * ratio);
+	freq += (ratio * (1 + 9 * (dot >= 2) + 90 * (dot >= 3))) / 2;
+	snprintf(buffer, 6, "%d", freq);
+
+	for(i = 4; i > dot; i--) buffer[i] = buffer[i - 1];
+	buffer[dot] = '.';
+
+	dprint(x, y, buffer);
+	sprintf(buffer, "%cHz", letter);
+	small_text(x + 31, y + 2, buffer, 0);
+}
+
+/*
+	draw()
+	Draws the test interface.
+*/
+static void draw(int tab)
+{
+	extern Image res_opt_timer_start;
+	extern Image res_clock_7705_start;
+	extern Image res_clock_7305_start;
+
+	char buffer[16];
+
+	dclear();
+	dimage(0, 56, &res_opt_timer_start);
+
+	if(!tab)
+	{
+		locate(1, 1, "Clock frequency");
+		dtext(7, 20, "B\x1e");
+		display_freq(24, 20, conf.Bphi_f);
+		dtext(7, 28, "I\x1e");
+		display_freq(24, 28, conf.Iphi_f);
+		dtext(7, 36, "P\x1e");
+		display_freq(24, 36, conf.Pphi_f);
+
+		if(isSH3())
+		{
+			dimage(64, 0, &res_clock_7705_start);
+
+			getFreq(buffer, conf.CKIO_f);
+			small_text(84, 16, buffer, 1);	
+
+			sprintf(buffer, "*%d", conf.PLL1);
+			small_text(84, 34, buffer, 1);
+
+			if(conf.Iphi_div1 == 1)
+				dline(85, 43, 99, 43, Color_Black);
+			else
+			{
+				sprintf(buffer, "/%d", conf.Iphi_div1);
+				small_text(89, 41, buffer, 0);
+			}
+			if(conf.Pphi_div1 == 1)
+				dline(85, 50, 99, 50, Color_Black);
+			else
+			{
+				sprintf(buffer, "/%d", conf.Pphi_div1);
+				small_text(89, 48, buffer, 0);
+			}
+		}
+		else
+		{
+			dimage(64, 0, &res_clock_7305_start);
+
+			getFreq(buffer, conf.RTCCLK_f);
+			small_text(84, 14, buffer, 1);
+	
+			sprintf(buffer, "*%d", conf.FLL);
+			small_text(84, 25, buffer, 1);
+
+			sprintf(buffer, "*%d", conf.PLL);
+			small_text(84, 36, buffer, 1);
+
+			sprintf(buffer, "/%d", conf.Bphi_div1);
+			small_text(89, 43, buffer, 0);
+			sprintf(buffer, "/%d", conf.Iphi_div1);
+			small_text(89, 50, buffer, 0);
+			sprintf(buffer, "/%d", conf.Pphi_div1);
+			small_text(89, 57, buffer, 0);
+		}
+	}
+	else
+	{
+		locate(1, 1, "Timer/RTC comparison");
+
+		locate(2, 3, "Timer");
+		if(elapsed_timer >= 0) print(12, 3, "%04x", elapsed_timer);
+		else locate(12, 3, "...");
+
+		locate(2, 4, "RTC");
+		if(elapsed_rtc >= 0) print(12, 4, "%04x", elapsed_rtc);
+		else locate(12, 4, "...");
+
+		// We define the accuracy of the timer as the square of the
+		// ratio between the two counters.
+		locate(2, 5, "Accuracy");
+		if(elapsed_rtc > 0 && elapsed_timer > 0)
+		{
+			int ratio;
+			if(elapsed_timer <= elapsed_rtc)
+				ratio = (10000 * elapsed_timer) / elapsed_rtc;
+			else
+				ratio = (10000 * elapsed_rtc) / elapsed_timer;
+			ratio = (ratio * ratio) / 10000;
+
+			print(12, 5, "%d.%02d %%", ratio / 100, ratio % 100);
+		}
+		else locate(12, 5, "...");
+	}
+
+	dupdate();
+}
+
+
+
+//---
+//	Timer/clock test.
+//---
+
+/*
+	test_timer()
+	Clock timer and timer precision.
+*/
+void test_timer(void)
+{
+	int tab = 0;
+
+	clock_measure();
+	clock_measure_end();
+
+	conf = clock_config();
+
+	elapsed_timer	= -1;
+	elapsed_rtc	= -1;
+	rtc_setCallback(timing_start, RTCFreq_16Hz);
+
+	text_configure(NULL, Color_Black);
+
+	while(1)
+	{
+		draw(tab);
+
+		switch(getkey_opt(Getkey_NoOption, 1))
+		{
+		case KEY_EXIT:
+			timer_stop(TIMER_USER);
+			rtc_setCallback(NULL, RTCFreq_1Hz);
+			return;
+
+		case KEY_F1:
+			tab = 0;
+			break;
+		case KEY_F2:
+			tab = 1;
+			break;
+		}
+	}
+}

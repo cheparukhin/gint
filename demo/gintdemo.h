@@ -76,10 +76,10 @@ void test_tales(void);
 void test_rtc(void);
 
 /*
-	test_printf()
-	Some text formatting.
+	test_timer()
+	Clock timer and timer precision.
 */
-void test_printf(void);
+void test_timer(void);
 
 
 

@@ -1,5 +1,7 @@
 #include <internals/mmu.h>
 
+#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+
 /*
 	mmu_pseudoTLBInit()
 	We need the system to fill the TLB for us, so that it knows what
@@ -23,3 +25,5 @@ void mmu_pseudoTLBInit(void)
 		address += 0x1000;
 	}
 }
+
+#pragma GCC diagnostic pop

@@ -1,44 +1,27 @@
+Bugs to fix:
+-  Left-vram overflow when rendering text
+-  A few key hits ignored after leaving the application (could not reproduce)
+-  Lost keyboard control at startup (could not reproduce)
+-  Back-light issues
 
-                                 --------------
-                              Lots of things to do
-                                 --------------
+Simple improvements:
+-  bopti:	Monochrome bitmaps blending modes
+-  bopti:	Partial transparency
+-  clock:	Compute clock frequencies
+-  demo:	Try 284x124 at (-60, -28) (all disadvantages)
+-  display:	Rectangle-based drawing functions
+-  tales:	Test all font encodings
+-  time:	Compute CLOCKS_PER_SEC
+-  timer:	Add duration and frequency settings
+-  core:	Add VBR handlers debugging information (if possible)
+-  core:	Implement all callbacks and a complete user API
 
-  @    known bugs
-  +    simple improvements
-  -    important milestones
-  ~    needs investigation
+Modules to implement:
+-  Serial communication
+-  Sound playback and synthesizing
 
-
-@  possibility of vram left-overflow with text
-@  garbage displayed as year in the clock, possibly during edition (could not
-   reproduce)
-@  a few key hits ignored after leaving the application
-
-+  rect functions
-+  bitmap blending modes
-+  minimize use of 7705.h and 7305.h; use local structures instead
-+  partial transparency
-+  gint vs. ML with 248x124 at (-60, -28)
-+  call exit handlers
-+  compute frequencies and CLOCKS_PER_SEC
-+  test all font encodings
-
--  improve exception handler debugging information (if possible)
--  callbacks and complete user API
-
-~  packed bit fields
-~  exhaustive save for setjmp()
-~  registers that need to be saved when configuring gint
-~  possible bug when -O2'ing __attribute__((interrupt_handler))
-
-
-
-Some notes
-----------
-
-Test cases for bitmap drawing:
-- 32-alignment
-- monochrome / gray
-- small / large
-- clipping
-# blending modes
+Things to investigate:
+-  Packed bit fields alignment
+-  Registers that may need to be saved within setjmp()
+-  Registers that may need to be saved and restored by gint
+-  Possible bug when optimizing __attribute__((interrupt_handler))

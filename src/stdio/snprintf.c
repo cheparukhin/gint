@@ -12,7 +12,8 @@ int snprintf(char *str, size_t size, const char *format, ...)
 	va_start(args, format);
 
 	int x = __printf(size, format, args);
-	strncpy(str, __stdio_buffer, size);
+	memcpy(str, __stdio_buffer, x + 1);
+		
 
 	va_end(args);
 	return x;

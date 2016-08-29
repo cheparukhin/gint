@@ -1,6 +1,7 @@
 #include <keyboard.h>
 #include <timer.h>
 #include <mpu.h>
+#include <clock.h>
 
 #include <internals/keyboard.h>
 
@@ -42,7 +43,8 @@ void keyboard_interrupt(void)
 */
 void keyboard_init(void)
 {
-	timer_start(TIMER_KEYBOARD, 1700, TIMER_Po_256, keyboard_interrupt, 0);
+	int delay = clock_setting(16, Clock_Hz);
+	timer_start(TIMER_KEYBOARD, delay, TIMER_Po_4, keyboard_interrupt, 0);
 }
 
 /*

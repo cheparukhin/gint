@@ -152,6 +152,6 @@ void gray_init(void)
 	vrams[2] = (const void *)internal_vrams[1];
 	vrams[3] = (const void *)internal_vrams[2];
 
-	delays[0] = isSH3() ? 985 : 994;
-	delays[1] = 1609;
+	delays[0] = 912;
+	delays[1] = 1343;
 }

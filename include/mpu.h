@@ -2,11 +2,20 @@
 //
 //	gint core module: mpu
 //
-//	Determines which kind of MPU is running the program. This module only
-//	provides the following test:
+//	Determines which kind of MPU is running the program. This module
+//	provides macro tests isSH3(), isSH4(), and the identifier of the MPU,
+//	which is stored in a global variable MPU_CURRENT.
 //
-//	if(isSH3()) { ... }
-//	else { ... }
+//	If you need to do MPU-dependant jobs, prefer the following alternative:
+//
+//		if(isSH3())
+//		{
+//			...
+//		}
+//		else
+//		{
+//			...
+//		}
 //
 //---
 

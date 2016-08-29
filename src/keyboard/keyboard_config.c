@@ -1,5 +1,7 @@
 #include <internals/keyboard.h>
 #include <keyboard.h>
+#include <clock.h>
+#include <timer.h>
 
 /*
 	keyboard_setFrequency()
@@ -7,6 +9,9 @@
 */
 void keyboard_setFrequency(int frequency)
 {
+	int setting = clock_setting(frequency, Clock_Hz);
+	if(setting <= 0) return;
+	timer_reload(TIMER_KEYBOARD, setting);
 }
 
 /*

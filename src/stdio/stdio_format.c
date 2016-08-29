@@ -401,8 +401,7 @@ int __printf(size_t size, const char *string, va_list args)
 	struct Format format;
 
 	// Avoiding overflow by adjusting the size argument.
-	if(!size || size > __stdio_buffer_size)
-		size = __stdio_buffer_size;
+	if(!size || size > __stdio_buffer_size) size = __stdio_buffer_size;
 
 	// Initializing character() variables.
 	written	= 0;

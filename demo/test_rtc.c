@@ -179,7 +179,7 @@ static void set(void)
 
 				if(n == 7)
 				{
-					int month = k + 4 * slide - 1;
+					int month = k + 4 * slide - 2;
 					set_region(&time, n, month);
 					n++;
 					slide = 0;

@@ -178,7 +178,6 @@ void test_bopti(void)
 			dupdate();
 		}
 
-		leave = 1;
 		do
 		{
 			leave = 1;

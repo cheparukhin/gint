@@ -12,7 +12,7 @@ int sprintf(char *str, const char *format, ...)
 	va_start(args, format);
 
 	int x = __printf(0, format, args);
-	strncpy(str, __stdio_buffer, __stdio_buffer_size);
+	memcpy(str, __stdio_buffer, x + 1);
 
 	va_end(args);
 	return x;

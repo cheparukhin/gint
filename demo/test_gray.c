@@ -11,25 +11,30 @@
 static void draw(int delay1, int delay2, int selected)
 {
 	extern Image res_opt_gray_start;
-	int *vl = gray_lightVRAM();
-	int *vd = gray_darkVRAM();
+	unsigned int *vl = gray_lightVRAM();
+	unsigned int *vd = gray_darkVRAM();
 
 	gclear();
+	locate(1, 1, "Gray engine");
 
-	for(int i = 0; i < 63; i++)
+	for(int i = 0; i < 36; i++)
 	{
-		int o = (i << 2) + 2;
-		vl[o] = vl[o + 1] = -((i & 31) < 16);
-		vd[o] = vd[o + 1] = -(i < 32);
+		int o = ((i + 12) << 2) + 2;
+		unsigned light	= -((i % 24) < 12);
+		unsigned dark	= -(i < 24);
+		vl[o]		= light >> 8;
+		vl[o + 1]	= light << 8;
+		vd[o]		= dark >> 8;
+		vd[o + 1]	= dark << 8;
 	}
 
-	locate(3, 2, "light");
-	print(3, 3, "%d", delay1);
+	locate(3, 3, "light");
+	print(4, 4, "%d", delay1);
 
 	locate(3, 5, "dark");
-	print(3, 6, "%d", delay2);
+	print(4, 6, "%d", delay2);
 
-	locate(2, selected ? 6 : 3, "\x02");
+	locate(3, selected ? 6 : 4, "\x02");
 
 	gimage(0, 56, &res_opt_gray_start);
 	gupdate();
@@ -64,10 +69,14 @@ void test_gray(void)
 			selected = !selected;
 			break;
 		case KEY_F2:
-			delays[0] = isSH3() ? 985 : 994;
-			delays[1] = 1609;
+			delays[0] = 912;
+			delays[1] = 1343;
 			break;
 		case KEY_F3:
+			delays[0] = 993;
+			delays[1] = 1609;
+			break;
+		case KEY_F4:
 			delays[0] = 860;
 			delays[1] = 1298;
 			break;

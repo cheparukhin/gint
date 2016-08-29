@@ -12,7 +12,7 @@
 #---
 
 # Modules
-modules-gint	= core keyboard mmu mpu rtc screen timer \
+modules-gint	= core clock keyboard mmu mpu rtc screen timer \
 		  bopti display gray tales
 modules-libc	= setjmp string stdio stdlib time
 
@@ -173,7 +173,7 @@ mrproper: clean
 distclean: mrproper
 
 install:
-	CasioUsbUploader -f $(target-g1a) -w -l 1
+	p7 send -f $(target-g1a)
 
 
 .PHONY: all clean mrproper distclean

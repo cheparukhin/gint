@@ -65,11 +65,11 @@ void gray_getDelays(int *light, int *dark);
 
 	values		stability	stripes		colors
 	---------------------------------------------------------
-	860, 1298	excellent	worst static	good
-	912, 1343	bad		none		very good
-	993, 1609	medium		light fast	good       (default)
+	 860, 1298	excellent	worst static	good
+	 912, 1343	bad		none		very good  (default)
+	 993, 1609	medium		light fast	good
+	1325, 1607	bad		light fast	excellent
 	---------------------------------------------------------
-
 */
 void gray_setDelays(int light, int dark);
 

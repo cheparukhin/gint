@@ -3,6 +3,7 @@
 #include <setjmp.h>
 
 #include <gint.h>
+#include <clock.h>
 #include <internals/mmu.h>
 
 void	__Hmem_SetMMU(unsigned int, unsigned int, int);
@@ -57,8 +58,14 @@ int start(void)
 
 	mmu_pseudoTLBInit();
 
-	// Initializing everything.
+	// Initializing gint.
 	gint_init();
+
+	// Measure clock frequencies.
+	clock_measure();
+	clock_measure_end();
+
+	// Calling global constructors.
 	init();
 
 

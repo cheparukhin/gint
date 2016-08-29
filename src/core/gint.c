@@ -113,7 +113,7 @@ void gint_quit(void)
 #define print(str, x, y) dtext(6 * (x) - 5, 8 * (y) - 7, str)
 #define hexdigit(n) ((n) + '0' + 39 * ((n) > 9))
 
-void hex(unsigned int x, int digits, char *str)
+static void hex(unsigned int x, int digits, char *str)
 {
 	str[0] = '0';
 	str[1] = 'x';
@@ -125,6 +125,13 @@ void hex(unsigned int x, int digits, char *str)
 		x >>= 4;
 		digits--;
 	}
+}
+
+static void reverse(void)
+{
+	int *vram = display_getCurrentVRAM();
+	int i;
+	for(i = 0; i < 36; i++) vram[i] = ~vram[i];
 }
 
 /*
@@ -144,7 +151,7 @@ void gint_exc(void)
 
 	dclear();
 	print("Exception raised!", 3, 1);
-	dreverse_area(0, 0, 127, 8);
+	reverse();
 	print(gint_strerror(0), 2, 3);
 
 	print("expevt", 2, 4);
@@ -181,7 +188,7 @@ void gint_tlb(void)
 
 	dclear();
 	print("TLB error!", 6, 1);
-	dreverse_area(0, 0, 127, 8);
+	reverse();
 	print(gint_strerror(1), 2, 3);
 
 	print("expevt", 2, 4);

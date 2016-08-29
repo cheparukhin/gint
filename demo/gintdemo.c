@@ -305,7 +305,7 @@ void main_menu(int *category, int *app)
 		"Image rendering",
 		"Text rendering",
 		"Real-time clock",
-		"Text formatting",
+		"Clocks and timers",
 		NULL
 	};
 	const char *list_perfs[] = {
@@ -511,7 +511,7 @@ int main(void)
 			test_rtc();
 			break;
 		case 0x0106:
-//			test_printf();
+			test_timer();
 			break;
 
 		case 0x0201:

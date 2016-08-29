@@ -9,7 +9,7 @@
 int vsprintf(char *str, const char *format, va_list args)
 {
 	int x = __printf(0, format, args);
-	strncpy(str, __stdio_buffer, __stdio_buffer_size);
+	memcpy(str, __stdio_buffer, x + 1);
 
 	return x;
 }

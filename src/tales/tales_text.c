@@ -1,9 +1,6 @@
 #include <internals/tales.h>
 #include <tales.h>
 
-#include <display.h>
-#include <gray.h>
-
 /*
 	dtext()
 	Prints the given string, without any analysis.

@@ -3,12 +3,9 @@
 	output. Note how symbols romdata, bbss, ebss, bdata and edata are used
 	in the initialization routine (crt0.c) to initialize the application.
 
-	Two ram areas are specified. It happens, if I'm not wrong, that the
-	"real ram" is accessed directly while the "common" ram is accessed
-	through the mmu. The interrupt handler resides in "real ram" because it
-	couldn't execute well in ram. While SH7335 and SH7355 had no problems,
-	executing the interrupt handler in the common ram on SH7305-based new
-	models caused trouble to the OS, apparently overwriting ram data.
+	Two ram areas are specified. The "real ram" is accessed direcly while
+	the other area is virtualized. It is not possible to execute code in
+	virtualized ram.
 */
 
 OUTPUT_ARCH(sh3)

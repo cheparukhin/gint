@@ -7,7 +7,6 @@
 
 	.global	___GLibAddinAplExecutionCheck
 	.global	_malloc
-	.global	_calloc
 	.global	_free
 
 
