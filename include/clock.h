@@ -7,6 +7,9 @@
 //
 //---
 
+#ifndef	_CLOCK_H
+#define	_CLOCK_H
+
 //---
 //	Some type declarations.
 //---
@@ -121,3 +124,5 @@ void clock_measure(void);
 	Waits until the measurements are finished. This may be immediate.
 */
 void clock_measure_end(void);
+
+#endif	// _CLOCK_H

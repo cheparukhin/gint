@@ -17,6 +17,10 @@ volatile int interrupt_flag = 0;
 int repeat_first = 10, repeat_next = 2;
 int last_key = KEY_NONE, last_repeats = 0, last_events = 0;
 
+// RTC callback id.
+unsigned cb_id;
+
+
 
 //---
 //	Interrupt management.
@@ -43,8 +47,17 @@ void keyboard_interrupt(void)
 */
 void keyboard_init(void)
 {
-	int delay = clock_setting(16, Clock_Hz);
-	timer_start(TIMER_KEYBOARD, delay, TIMER_Po_4, keyboard_interrupt, 0);
+	cb_id = rtc_cb_add(RTCFreq_16Hz, keyboard_interrupt, 0);
+}
+
+/*
+	keyboard_setFrequency()
+	Sets the keyboard frequency.
+*/
+void keyboard_setFrequency(enum KeyboardFrequency frequency)
+{
+	if(frequency < 1 || frequency > 7) return;
+	rtc_cb_edit(cb_id, frequency, keyboard_interrupt);
 }
 
 /*
@@ -53,5 +66,5 @@ void keyboard_init(void)
 */
 void keyboard_quit(void)
 {
-	timer_stop(TIMER_KEYBOARD);
+	rtc_cb_end(cb_id);
 }

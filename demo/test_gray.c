@@ -10,7 +10,7 @@
 
 static void draw(int delay1, int delay2, int selected)
 {
-	extern Image res_opt_gray_start;
+	extern Image res_opt_gray;
 	unsigned int *vl = gray_lightVRAM();
 	unsigned int *vd = gray_darkVRAM();
 
@@ -36,7 +36,7 @@ static void draw(int delay1, int delay2, int selected)
 
 	locate(3, selected ? 6 : 4, "\x02");
 
-	gimage(0, 56, &res_opt_gray_start);
+	gimage(0, 56, &res_opt_gray);
 	gupdate();
 }
 

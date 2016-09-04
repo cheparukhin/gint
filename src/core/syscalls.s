@@ -31,6 +31,12 @@ _free:
 	nop
 1:	.long	0xacc
 
+_realloc:
+	mov.l	syscall_table, r2
+	mov.l	1f, r0
+	jmp	@r2
+	nop
+1:	.long	0xe6d
 
 
 	.align	4

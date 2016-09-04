@@ -2,12 +2,11 @@ Bugs to fix:
 -  Left-vram overflow when rendering text
 -  A few key hits ignored after leaving the application (could not reproduce)
 -  Lost keyboard control at startup (could not reproduce)
--  Back-light issues
+-  Back-light issues (0xa400012c on SH3, 0xa4050138 on SH4)
 
 Simple improvements:
 -  bopti:	Monochrome bitmaps blending modes
 -  bopti:	Partial transparency
--  clock:	Compute clock frequencies
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  display:	Rectangle-based drawing functions
 -  tales:	Test all font encodings
@@ -19,6 +18,7 @@ Simple improvements:
 Modules to implement:
 -  Serial communication
 -  Sound playback and synthesizing
+-  Handle errors within errno
 
 Things to investigate:
 -  Packed bit fields alignment

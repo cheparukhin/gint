@@ -62,22 +62,39 @@ enum RTCFrequency
 	RTCFreq_16Hz	= 3,
 	RTCFreq_64Hz	= 2,
 	RTCFreq_256Hz	= 1,
+	RTCFreq_None	= 0,
 };
 
 /*
-	rtc_setCallback()
-	Sets the callback function for the real-time clock interrupt. If
-	frequency is non-zero, the clock frequency is set to the given value.
-	Set the callback to NULL to deactivate an existing callback.
+	rtc_cb_add()
+	Registers a new callback for the RTC. Returns the callback id on
+	success (positive integer), or one of the following error codes:
+	  -1	Array is full
+	  -2	Invalid parameter
+	The number of repeats may be set to 0, in which case the callback is
+	called indefinitely unless the user calls rtc_cb_end().
 */
-void rtc_setCallback(void (*callback)(void), enum RTCFrequency frequency);
+int rtc_cb_add(enum RTCFrequency freq, void (*function)(void), int repeats);
 
 /*
-	rtc_getCallback()
-	Returns the callback function. If frequency is non-NULL, it is set to
-	the current frequency value.
+	rtc_cb_end()
+	Removes the callback with the given id (as returned by rtc_cb_add())
+	from the callback array.
 */
-void (*rtc_getCallback(enum RTCFrequency *frequency))(void);
+void rtc_cb_end(int id);
+
+/*
+	rtc_cb_edit()
+	Changes information related to a callback. This function returns 0 on
+	success, or one of the following error codes:
+	  -1	Callback does not exist
+	  -2	Invalid parameters
+	This function never removes a callback. Call rtc_cb_end() for this. One
+	can set the function to NULL or the frequency to RTCFreq_None to
+	temporarily disable the callback.
+*/
+int rtc_cb_edit(int id, enum RTCFrequency new_freq,
+	void (*new_function)(void));
 
 
 
@@ -95,17 +112,10 @@ void rtc_interrupt_7705(void)		__attribute__((section(".gint.int")));
 void rtc_interrupt_7305(void)		__attribute__((section(".gint.int")));
 
 /*
-	rtc_setFrequency()
-	Sets the RTC interrupt frequency and enables interrupts.
+	rtc_cb_interrupt()
+	Handles an RTC interrupt. Calls the RTC callbacks if necessary, and
+	updates the repeat counts.
 */
-void rtc_setFrequency_7705(enum RTCFrequency frequency);
-void rtc_setFrequency_7305(enum RTCFrequency frequency);
-
-/*
-	rtc_getFrequency()
-	Returns the RTC interrupt frequency.
-*/
-enum RTCFrequency rtc_getFrequency_7705(void);
-enum RTCFrequency rtc_getFrequency_7305(void);
+void rtc_cb_interrupt(void);
 
 #endif	// _RTC_H

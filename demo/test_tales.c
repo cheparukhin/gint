@@ -12,13 +12,13 @@
 
 static Font *select(Font *current)
 {
-	extern Font res_font_modern_start;
+	extern Font res_font_modern;
 	struct {
 		Font *font;
 		const char *name;
 	} fonts[] = {
-		{ NULL,				"gint default"	},
-		{ &res_font_modern_start,	"Modern"	},
+		{ NULL,			"gint default"	},
+		{ &res_font_modern,	"Modern"	},
 	};
 	int font_number = 2;
 
@@ -82,7 +82,7 @@ void test_tales(void)
 {
 	enum Color colors[] = { Color_Black, Color_Dark, Color_Light,
 		Color_White, Color_Invert };
-	extern Image res_opt_tales_start;
+	extern Image res_opt_tales;
 	Font *font = NULL;
 
 	int black_bg = 0;
@@ -116,7 +116,7 @@ void test_tales(void)
 			gtext(2, 2 + i * height, str);
 		}
 
-		gimage(0, 56, &res_opt_tales_start);
+		gimage(0, 56, &res_opt_tales);
 
 		x = 45 + 8 * color;
 		gline(x, 57, x + 5, 57, Color_Black);

@@ -7,9 +7,9 @@
 */
 void text_configure(struct Font *next_font, enum Color next_color)
 {
-	extern Font gint_font_system_start;
+	extern Font gint_font_system;
 	if(next_font) font = next_font;
-	else font = &gint_font_system_start;
+	else font = &gint_font_system;
 
 	color = next_color;
 }

@@ -53,28 +53,28 @@ static void getxy(Image *img, int *x, int *y)
 
 static Image *select(Image *current)
 {
-	extern Image res_bopti_thumbs_start;
+	extern Image res_bopti_thumbs;
 	extern Image
-		res_items_start,
-		res_sprites_start,
-		res_swords_start,
-		res_zelda_start,
-		res_isometric_start;
+		res_items,
+		res_sprites,
+		res_swords,
+		res_zelda,
+		res_isometric;
 
 	struct {
 		Image *img;
 		const char *name;
 		const char *info;
 	} images[] = {
-		{ &res_items_start,	"Items",	"Gray"		},
-		{ &res_sprites_start,	"Sprites",	"Gray"		},
-		{ &res_swords_start,	"Swords",	"Gray Alpha"	},
-		{ &res_zelda_start,	"Zelda",	"Mono"		},
-		{ &res_isometric_start, "Isometric",	"Mono Alpha"	},
+		{ &res_items,		"Items",	"Gray"		},
+		{ &res_sprites,		"Sprites",	"Gray"		},
+		{ &res_swords,		"Swords",	"Gray Alpha"	},
+		{ &res_zelda,		"Zelda",	"Mono"		},
+		{ &res_isometric,	"Isometric",	"Mono Alpha"	},
 		{ NULL,			NULL,		NULL		}
 	};
 
-	Image *thumbs = &res_bopti_thumbs_start;
+	Image *thumbs = &res_bopti_thumbs;
 	int items = 0;
 	static int row = 0;
 	int leave = 1, i;
@@ -134,7 +134,7 @@ static Image *select(Image *current)
 
 void test_bopti(void)
 {
-	extern Image res_opt_bitmap_start;
+	extern Image res_opt_bitmap;
 	Image *img = NULL;
 
 	int leave = 1;
@@ -152,7 +152,7 @@ void test_bopti(void)
 			if(img) gimage(x, y, img);
 
 			gclear_area(0, 55, 127, 63);
-			gimage(0, 56, &res_opt_bitmap_start);
+			gimage(0, 56, &res_opt_bitmap);
 			gupdate();
 		}
 		else if(img)
@@ -164,7 +164,7 @@ void test_bopti(void)
 			if(img) dimage(x, y, img);
 
 			dclear_area(0, 55, 127, 63);
-			dimage(0, 56, &res_opt_bitmap_start);
+			dimage(0, 56, &res_opt_bitmap);
 			dupdate();
 		}
 		else
@@ -174,7 +174,7 @@ void test_bopti(void)
 			dclear();
 			locate(3, 3, "No image selected");
 
-			dimage(0, 56, &res_opt_bitmap_start);
+			dimage(0, 56, &res_opt_bitmap);
 			dupdate();
 		}
 

@@ -121,6 +121,7 @@ void sleep_us(int us_delay)
 // Indicates whether the measurements are finished.
 static volatile int clock_measure_done = 0;
 // Once again SH7705 and SH7305 need different methods...
+static int cb_id_7705 = -1;
 static void clock_measure_7705();
 static void clock_compute_7305();
 
@@ -136,9 +137,8 @@ void clock_measure(void)
 	{
 		// We prepare the timer manually, without starting it, so that
 		// we only have to push the running bit to start it when the
-		// measurements begin. This might look of little effect but the
-		// timer configuration time (lost from the measurement) would
-		// make the precision no more than 97-98%.
+		// measurements begin. This might look of little effect but it
+		// makes the precision jump from ~97% to more than 99%.
 		volatile struct mod_tmu *tmu;
 		timer_get(TIMER_USER, &tmu, NULL);
 
@@ -153,7 +153,7 @@ void clock_measure(void)
 		timers[TIMER_USER].callback	= NULL;
 		timers[TIMER_USER].repeats	= 0;
 
-		rtc_setCallback(clock_measure_7705, RTCFreq_256Hz);
+		cb_id_7705 = rtc_cb_add(RTCFreq_256Hz, clock_measure_7705, 0);
 	}
 
 	// On SH7305, assuming clock mode 3, we can compute the clock
@@ -261,7 +261,7 @@ static void clock_measure_7705_finalize(int elapsed)
 static void clock_measure_7705_callback(void)
 {
 	timer_stop(TIMER_USER);
-	rtc_setCallback(NULL, RTCFreq_1Hz);
+	rtc_cb_end(cb_id_7705);
 
 	volatile struct mod_tmu *tmu;
 	timer_get(TIMER_USER, &tmu, NULL);
@@ -284,5 +284,5 @@ static void clock_measure_7705(void)
 	timer_get(TIMER_USER, NULL, &tstr);
 
 	*tstr |= (1 << TIMER_USER);
-	rtc_setCallback(clock_measure_7705_callback, RTCFreq_256Hz);
+	rtc_cb_edit(cb_id_7705, RTCFreq_256Hz, clock_measure_7705_callback);
 }

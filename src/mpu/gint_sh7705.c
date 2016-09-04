@@ -9,6 +9,7 @@
 //---
 
 #include <internals/gint.h>
+#include <internals/rtc.h>
 #include <gint.h>
 #include <timer.h>
 #include <7705.h>
@@ -165,18 +166,22 @@ static void gint_priority_unlock_7705(void)
 
 void gint_setup_7705(void)
 {
+	volatile struct mod_rtc *RTC = RTC_SH7705;
+
 	gint_priority_lock_7705();
 
 	// Saving the RTC configuration.
-	rcr2 = RTC.RCR2.BYTE;
+	rcr2 = RTC->RCR2.BYTE;
 	// Disabling RTC interrupts by default.
-	RTC.RCR2.BYTE = 0x09;
+	RTC->RCR2.BYTE = 0x09;
 }
 
 void gint_stop_7705(void)
 {
+	volatile struct mod_rtc *RTC = RTC_SH7705;
+
 	gint_priority_unlock_7705();
 
 	// Restoring the RTC configuration.
-	RTC.RCR2.BYTE = rcr2;
+	RTC->RCR2.BYTE = rcr2;
 }

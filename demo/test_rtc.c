@@ -18,7 +18,7 @@
 
 static void draw(struct RTCTime time)
 {
-	extern Image res_rtc_segments_start;
+	extern Image res_rtc_segments;
 
 	const char *days[7] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -38,7 +38,7 @@ static void draw(struct RTCTime time)
 	digits[5] = time.seconds % 10;
 
 	// Drawing digits.
-	for(i = 0; i < 6; i++) dimage_part(x[i], 8, &res_rtc_segments_start,
+	for(i = 0; i < 6; i++) dimage_part(x[i], 8, &res_rtc_segments,
 		12 * digits[i], 0, 11, 19);
 	// Drawing ':' between pairs of digits.
 	for(i = 0; i < 16; i++) dpixel(47 + 32 * (i >= 8) + (i & 1),
@@ -52,13 +52,13 @@ static void draw(struct RTCTime time)
 
 static void callback(void)
 {
-	extern Image res_opt_rtc_start;
+	extern Image res_opt_rtc;
 	struct RTCTime time = rtc_getTime();
 	time.year += 1900;
 
 	dclear();
 	draw(time);
-	dimage_part(0, 56, &res_opt_rtc_start, 0, 0, 19, 8);
+	dimage_part(0, 56, &res_opt_rtc, 0, 0, 19, 8);
 	dupdate();
 }
 
@@ -116,8 +116,8 @@ static void set_region(struct RTCTime *time, int region, int value)
 
 static void set(void)
 {
-	extern Image res_opt_rtc_start;
-	Image *opt = &res_opt_rtc_start;
+	extern Image res_opt_rtc;
+	Image *opt = &res_opt_rtc;
 
 	struct {
 		int x, y;
@@ -239,9 +239,9 @@ static void set(void)
 
 void test_rtc(void)
 {
-	int key;
+	int key, cb_id;
 
-	rtc_setCallback(callback, RTCFreq_1Hz);
+	cb_id = rtc_cb_add(RTCFreq_1Hz, callback, 0);
 	callback();
 
 	while(1)
@@ -250,13 +250,13 @@ void test_rtc(void)
 
 		if(key == KEY_EXIT) break;
 		if(key == KEY_F1)
-		{
-			rtc_setCallback(NULL, RTCFreq_1Hz);
+		{	
+			rtc_cb_edit(cb_id, RTCFreq_None, NULL);
 			set();
 			callback();
-			rtc_setCallback(callback, RTCFreq_1Hz);
+			rtc_cb_edit(cb_id, RTCFreq_1Hz, callback);
 		}
 	}
 
-	rtc_setCallback(NULL, RTCFreq_1Hz);
+	rtc_cb_end(cb_id);
 }

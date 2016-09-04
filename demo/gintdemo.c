@@ -288,7 +288,7 @@ void main_menu(int *category, int *app)
 	//	Quite a few things to declare...
 	//---
 
-	extern Image res_opt_menu_start;
+	extern Image res_opt_menu;
 
 	const char *mpu, *mpu_names[] = {
 		"Unknown",
@@ -374,7 +374,7 @@ void main_menu(int *category, int *app)
 			print(1, 1, "Tab %d", tab);
 			break;
 		}
-		dimage(0, 56, &res_opt_menu_start);
+		dimage(0, 56, &res_opt_menu);
 
 		if(list)
 		{

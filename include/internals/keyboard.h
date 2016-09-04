@@ -11,6 +11,9 @@ extern volatile int interrupt_flag;
 extern int repeat_first, repeat_next;
 extern int last_key, last_repeats, last_events;
 
+// RTC callback id.
+extern unsigned cb_id;
+
 /*
 	sleep()
 	Puts the CPU into sleep until an interrupt request is accepted.
@@ -26,7 +29,9 @@ int getPressedKey(volatile unsigned char *keyboard_state);
 /*
 	getPressedKeys()
 	Find 'count' pressed keys in the keyboard state and fills the 'keys'
-	array. Returns the number of actually-pressed keys found.
+	array. Returns the number of keys found.
+	WARNING: keyboard artifacts make this function read as pressed keys
+	that aren't (typically, LEFT + DOWN + SHIFT => ALPHA).
 */
 int getPressedKeys(volatile unsigned char *keyboard_state, int *keys,
 	int count);

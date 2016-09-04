@@ -21,6 +21,7 @@ static struct ClockConfig conf;
 
 static volatile int elapsed_timer = -1;
 static volatile int elapsed_rtc = -1;
+static int cb_id = -1;
 
 static void timing_rtc(void)
 {
@@ -36,7 +37,7 @@ static void timing_start(void)
 {
 	timer_start(TIMER_USER, clock_setting(16, Clock_Hz), TIMER_Po_4,
 		timing_timer, 0);
-	rtc_setCallback(timing_rtc, RTCFreq_16Hz);
+	rtc_cb_edit(cb_id, RTCFreq_16Hz, timing_rtc);
 
 	elapsed_timer = 0;
 	elapsed_rtc = 0;
@@ -54,8 +55,8 @@ static void timing_start(void)
 */
 static void small_text(int x, int y, const char *text, int alignment)
 {
-	extern Image res_clock_chars_start;
-	Image *chars = &res_clock_chars_start;
+	extern Image res_clock_chars;
+	Image *chars = &res_clock_chars;
 	const char *table = "0123456789kMHz*/";
 
 	if(alignment) x -= 2 * strlen(text) - 1, y -= 2;
@@ -75,27 +76,15 @@ static void small_text(int x, int y, const char *text, int alignment)
 /*
 	getFreq()
 	Prints the given frequency in a string on the form:
-
 		332kHz
-		<-><->
-		 3  3
-
 	There are 1, 2 or 3 characters for the value, and 2 or 3
 	characters for the unit. The string is compacted.
 */
 void getFreq(char *str, int freq)
 {
-	if(freq < 1000)
-	{
-		sprintf(str, "%dHz", freq);
-		return;
-	}
-	if(freq < 1000000)
-	{
-		sprintf(str, "%dkHz", (freq + 500) / 1000);
-		return;
-	}
-	sprintf(str, "%dMHz", (freq + 500000) / 1000000);
+	if(freq < 1000) sprintf(str, "%dHz", freq);
+	else if(freq < 1000000) sprintf(str, "%dkHz", (freq + 500) / 1000);
+	else sprintf(str, "%dMHz", (freq + 500000) / 1000000);
 }
 
 /*
@@ -140,14 +129,14 @@ static void display_freq(int x, int y, int freq)
 */
 static void draw(int tab)
 {
-	extern Image res_opt_timer_start;
-	extern Image res_clock_7705_start;
-	extern Image res_clock_7305_start;
+	extern Image res_opt_timer;
+	extern Image res_clock_7705;
+	extern Image res_clock_7305;
 
 	char buffer[16];
 
 	dclear();
-	dimage(0, 56, &res_opt_timer_start);
+	dimage(0, 56, &res_opt_timer);
 
 	if(!tab)
 	{
@@ -161,7 +150,7 @@ static void draw(int tab)
 
 		if(isSH3())
 		{
-			dimage(64, 0, &res_clock_7705_start);
+			dimage(64, 0, &res_clock_7705);
 
 			getFreq(buffer, conf.CKIO_f);
 			small_text(84, 16, buffer, 1);	
@@ -186,7 +175,7 @@ static void draw(int tab)
 		}
 		else
 		{
-			dimage(64, 0, &res_clock_7305_start);
+			dimage(64, 0, &res_clock_7305);
 
 			getFreq(buffer, conf.RTCCLK_f);
 			small_text(84, 14, buffer, 1);
@@ -207,27 +196,26 @@ static void draw(int tab)
 	}
 	else
 	{
+		int timer = elapsed_timer, rtc = elapsed_rtc; // just in case
+
 		locate(1, 1, "Timer/RTC comparison");
 
 		locate(2, 3, "Timer");
-		if(elapsed_timer >= 0) print(12, 3, "%04x", elapsed_timer);
+		if(timer >= 0) print(12, 3, "%04x", timer);
 		else locate(12, 3, "...");
 
 		locate(2, 4, "RTC");
-		if(elapsed_rtc >= 0) print(12, 4, "%04x", elapsed_rtc);
+		if(rtc >= 0) print(12, 4, "%04x", rtc);
 		else locate(12, 4, "...");
 
-		// We define the accuracy of the timer as the square of the
-		// ratio between the two counters.
+		// We define the accuracy of the timer as the ratio between the
+		// two counters.
 		locate(2, 5, "Accuracy");
-		if(elapsed_rtc > 0 && elapsed_timer > 0)
+		if(rtc > 0 && timer > 0)
 		{
 			int ratio;
-			if(elapsed_timer <= elapsed_rtc)
-				ratio = (10000 * elapsed_timer) / elapsed_rtc;
-			else
-				ratio = (10000 * elapsed_rtc) / elapsed_timer;
-			ratio = (ratio * ratio) / 10000;
+			if(timer <= rtc) ratio = (10000 * timer) / rtc;
+			else ratio = (10000 * rtc) / timer;
 
 			print(12, 5, "%d.%02d %%", ratio / 100, ratio % 100);
 		}
@@ -258,7 +246,7 @@ void test_timer(void)
 
 	elapsed_timer	= -1;
 	elapsed_rtc	= -1;
-	rtc_setCallback(timing_start, RTCFreq_16Hz);
+	cb_id = rtc_cb_add(RTCFreq_16Hz, timing_start, 0);
 
 	text_configure(NULL, Color_Black);
 
@@ -270,7 +258,7 @@ void test_timer(void)
 		{
 		case KEY_EXIT:
 			timer_stop(TIMER_USER);
-			rtc_setCallback(NULL, RTCFreq_1Hz);
+			rtc_cb_end(cb_id);
 			return;
 
 		case KEY_F1:

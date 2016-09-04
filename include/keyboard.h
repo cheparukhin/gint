@@ -13,6 +13,8 @@
 #ifndef	_KEYBOARD_H
 #define	_KEYBOARD_H	1
 
+#include <rtc.h>
+
 //---
 //	Keycodes and related.
 //---
@@ -89,6 +91,21 @@
 #define	KEY_NONE	0x00
 #define	KEY_NOEVENT	0xff
 
+/*
+	enum KeyboardFrequency
+	Possible values for the keyboard frequency.
+*/
+enum KeyboardFrequency
+{
+	KeyboardFreq_500mHz	= RTCFreq_500mHz,
+	KeyboardFreq_1Hz	= RTCFreq_1Hz,
+	KeyboardFreq_2Hz	= RTCFreq_2Hz,
+	KeyboardFreq_4Hz	= RTCFreq_4Hz,
+	KeyboardFreq_16Hz	= RTCFreq_16Hz,
+	KeyboardFreq_64Hz	= RTCFreq_64Hz,
+	KeyboardFreq_256Hz	= RTCFreq_256Hz,
+};
+
 
 
 //---
@@ -97,15 +114,12 @@
 
 /*
 	keyboard_setFrequency()
-	Sets the keyboard frequency. The default frequency is 32 Hz. The unit
-	for the argument is Hz. Very few applications will need to change this
-	setting.
-	The actual frequency is guaranteed to be greater than the argument.
-	Be aware that you will miss key hits at low frequencies. At higher
-	frequencies, you will lose important execution power.
+	Sets the keyboard frequency. The default frequency is 16 Hz. Very few
+	applications will need to change this setting.
+	At low frequencies, you will miss key hits. At high frequencies, you
+	may lose execution power.
 */
-// Currently not implemented.
-// void keyboard_setFrequency(int frequency);
+void keyboard_setFrequency(enum KeyboardFrequency frequency);
 
 /*
 	keyboard_setRepeatRate()

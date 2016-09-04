@@ -1,6 +1,27 @@
 #ifndef	_INTERNALS_RTC_H
 #define	_INTERNALS_RTC_H	1
 
+#include <rtc.h>
+#include <stddef.h>
+
+#define	RTC_CB_ARRAY_SIZE	5
+
+/*
+	struct rtc_cb
+	An RTC callback.
+*/
+struct rtc_cb
+{
+	enum RTCFrequency freq;
+	int id;
+
+	void (*callback)(void);
+	int repeats;
+};
+
+// The callback array.
+struct rtc_cb cb_array[RTC_CB_ARRAY_SIZE];
+
 /*
 	struct mod_rtc
 	This structure describes the arrangement of RTC register in the memory.

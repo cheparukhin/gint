@@ -10,6 +10,8 @@
 #ifndef	_TIMER_H
 #define	_TIMER_H	1
 
+#include <clock.h>
+
 //---
 //	Constants.
 //---
