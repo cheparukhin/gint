@@ -1,0 +1,78 @@
+#! /bin/bash
+
+declare -A conf
+conf[ATEXIT_MAX]=16
+conf[RTC_CB_ARRAY_SIZE]=5
+conf[EVENTS_QUEUE_SIZE]=64
+conf[GINT_NO_SYSCALLS]=
+fail=false
+output="gcc.cfg"
+
+help()
+{
+	cat << EOF
+Configuration script for the gint library.
+
+Options that affect the behavior of the library:
+  --no-syscalls  [default: false]
+        Never use syscalls. Expect some trouble with the malloc() function...
+	Do not trigger this option unless you know what you are doing.
+
+Options that customize size limits:
+  --atexit-max=<integer>  [default: 16]
+        Number of exit handlers that can be registered by atexit().
+  --rtc-callbacks=<integer>  [default: 5]
+        Number of RTC callbacks that can be registered.
+  --events-queue-size=<integer>  [default: 64]
+        Number of events simultaneously stored in the event queue.
+EOF
+
+	exit 0
+}
+
+for arg; do case "$arg" in
+	-h | --help) help;;
+	--no-syscalls) conf[GINT_NO_SYSCALLS]=true;;
+
+	--atexit-max=*)
+		size=${arg#*=}
+		if [[ $size == +([0-9]) ]]; then
+			conf[ATEXIT_MAX]=$size
+		else echo "error: --atexit-max expects an integer value"
+			fail=true; fi;;
+	--rtc-callbacks=*)
+		size=${arg#*=}
+		if [[ $size == +([0-9]) ]]; then
+			conf[RTC_CB_ARRAY_SIZE]=$size
+		else echo "error: --rtc-callbacks expects an integer value"
+			fail=true; fi;;
+	--events-queue-size=*)
+		size=${arg#*=}
+		if [[ $size == +([0-9]) ]]; then
+			conf[EVENTS_QUEUE_SIZE]=$size
+		else echo "error: --events-queue-size expects an integer value"
+			fail=true; fi;;
+
+	--atexit-max | --rtc-callbacks | --events-queue-size)
+		echo "error: syntax for $arg is $arg=<integer-value>";;
+
+	*)
+		echo "error: unrecognized argument '$arg'"; fail=true;;
+esac; done
+
+output_config()
+{
+	echo "-D ATEXIT_MAX=${conf[ATEXIT_MAX]}"
+	echo "-D RTC_CB_ARRAY_SIZE=${conf[RTC_CB_ARRAY_SIZE]}"
+	echo "-D EVENTS_QUEUE_SIZE=${conf[EVENTS_QUEUE_SIZE]}"
+	if [ "${conf[GINT_NO_SYSCALLS]}" != "" ]; then
+		echo "-D GINT_NO_SYSCALLS"
+	fi
+}
+
+if $fail; then
+	echo "Configuration has not been modified."
+else
+	output_config > $output
+	echo "Configuration details have been output to file $output."
+fi

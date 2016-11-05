@@ -55,6 +55,9 @@ void gint_int_7305(void)
 	case IC_TMU0_TUNI2:
 		timer_interrupt(TIMER_TMU2);
 		break;
+
+	default:
+		gint_callDefaultHandler(code);
 	}
 }
 

@@ -15,3 +15,6 @@ LIBC
 libc.a
 libgint.a
 gintdemo.g1a
+
+# Configuration files
+gcc.cfg

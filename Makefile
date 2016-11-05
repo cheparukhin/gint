@@ -13,7 +13,7 @@
 
 # Modules
 modules-gint	= core clock keyboard mmu mpu rtc screen timer \
-		  bopti display gray tales
+		  bopti display gray tales events
 modules-libc	= setjmp string stdio stdlib time
 
 # Targets
@@ -22,15 +22,15 @@ target-lib	= libgint.a
 target-std	= libc.a
 
 # Tools
-cc	= sh3eb-elf-gcc
-as	= sh3eb-elf-as
-ar	= sh3eb-elf-ar
-ob	= sh3eb-elf-objcopy
-wr	= g1a-wrapper
+cc		= sh3eb-elf-gcc
+as		= sh3eb-elf-as
+ar		= sh3eb-elf-ar
+ob		= sh3eb-elf-objcopy
+wr		= g1a-wrapper
 
 # Flags
 cflags		= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
--W -Wall -Wextra -pedantic
+		  -W -Wall -Wextra -pedantic @gcc.cfg
 
 # Demo application (could be done better)
 demo-src	= $(notdir $(wildcard demo/*.[cs]))
@@ -47,7 +47,8 @@ demo-libs	= -L. -lgint -lc -lgcc
 obj-lib-spec	= build/display_font_system.bmp.o
 obj-std-spec	=
 
-
+# Configuration files
+config		= gcc.cfg
 
 #---
 #	Automatic variables.
@@ -60,6 +61,10 @@ define n
 # This is a newline character.
 
 endef
+
+ifeq ("$(wildcard $(config))","")
+$(error "Configuration files are missing. Did you ./configure?")
+endif
 
 # Module-scope variables.
 $(foreach mod, $(modules), $(eval \
@@ -82,21 +87,28 @@ hdr-dep = $(wildcard include/*.h include/internals/*.h)
 #	Rule templates.
 #---
 
+#ifndef VERBOSE
+#$(note "default full log")
+#VERBOSE = 
+#endif
+
 # C source file template:
 #   $1  module name
 #   $2  filename
 #   $3  dependencies
 define rule-c-source
-build/$1_$2.o: src/$1/$2 $3
-	$(cc) -c $$< -o $$@ $(cflags) -I src/$1
+build/$1_$2.o: src/$1/$2 $3 $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $$<\n')
+	$(if $(VERBOSE),,@) $(cc) -c $$< -o $$@ $(cflags) -I src/$1
 endef
 
 # asm source file template:
 #   $1  module name
 #   $2  filename
 define rule-asm-source
-build/$1_$2.o: src/$1/$2
-	$(as)  -c $$< -o $$@
+build/$1_$2.o: src/$1/$2 $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m as $$<\n')
+	$(if $(VERBOSE),,@) $(as)  -c $$< -o $$@
 endef
 
 
@@ -107,25 +119,36 @@ endef
 
 # Generic rules
 
-all: build $(target-std) $(target-lib) $(target-g1a)
-	@echo "[ \033[32;1mOK\033[0m ] All done!"
+all: $(config) build $(target-std) $(target-lib) $(target-g1a)
+	@ printf '\e[32;1mmsg \u00bb\e[0m All done!\n'
 
 build:
-	mkdir -p $@
+	@ mkdir -p $@
 
-$(target-std): $(obj-std)
-	$(ar) rcs $@ $^
-	@echo "[ \033[32;1mOK\033[0m ] libc: `stat -c %s $@` bytes"
+$(target-std): $(config) $(obj-std)
+	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
+	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-std)
+	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libc ('
+	@ printf $$(stat -c %s $@)
+	@ printf ' bytes)\n\n'
 
-$(target-lib): $(target-std) $(obj-lib)
-	$(ar) rcs $@ $(obj-lib)
-	@echo "[ \033[32;1mOK\033[0m ] libgint: `stat -c %s $@` bytes"
+$(target-lib): $(config) $(target-std) $(obj-lib)
+	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
+	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-lib)
+	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libgint ('
+	@ printf $$(stat -c %s $@)
+	@ printf ' bytes)\n\n'
 
-$(target-g1a): $(target-std) $(target-lib) $(demo-obj)
-	$(cc) -o $(demo-elf) $(cflags) -T $(demo-ld) $(demo-obj) $(demo-libs)
-	$(ob) -R .comment -R .bss -O binary $(demo-elf) $(demo-bin)
-	$(wr) $(demo-bin) -o $@ -i $(demo-icon)
-	@echo "[ \033[32;1mOK\033[0m ] demo app: `stat -c %s $@` bytes"
+$(target-g1a): $(config) $(target-std) $(target-lib) $(demo-obj)
+	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m ld -o $(demo-elf)\n')
+	$(if $(VERBOSE),,@) $(cc) -o $(demo-elf) $(cflags) -T $(demo-ld) $(demo-obj) $(demo-libs)
+	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m objcopy -o $(demo-bin)\n')
+	$(if $(VERBOSE),,@) $(ob) -R .comment -R .bss -O binary $(demo-elf) $(demo-bin)
+	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m g1a-wrapper -o $@\n')
+	$(if $(VERBOSE),,@) $(wr) $(demo-bin) -o $@ -i $(demo-icon)
+	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built demo application ('
+	@ printf $$(stat -c %s $@)
+	@ printf ' bytes)\n\n'
 
 # Automated rules
 
@@ -139,23 +162,28 @@ $(foreach mod,$(modules), \
 # Specific rules
 
 # This one should not be optimized. It makes __attribute__((interrupt_handler))
-# buggy... maybe. Anyway there's a bug in this file.
-build/core_gint.c.o: src/core/gint.c $(mod-core-dep)
-	$(cc) -c $< -o $@ $(cflags) -I src/core -O0
+# buggy... maybe. Anyway there's some bug in this file that I can't fix now.
+build/core_gint.c.o: src/core/gint.c $(mod-core-dep) $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
+	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(cflags) -I src/core -O0
 
 build/display_font_system.bmp.o: src/display/font_system.bmp
-	fxconv $< -o $@ --font -n gint_font_system
+	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
+	$(if $(VERBOSE),,@) fxconv $< -o $@ --font -n gint_font_system
 
 # Demo application
 
-build/demo_%.c.o: demo/%.c $(hdr-dep) $(demo-dep)
-	$(cc) -c $< -o $@ $(cflags)
+build/demo_%.c.o: demo/%.c $(hdr-dep) $(demo-dep) $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
+	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(cflags)
 
 build/demo_font_%.bmp.o: demo/resources/font_%.bmp
-	fxconv $< -o $@ --font -n $(patsubst demo/resources/%.bmp,res_%,$<)
+	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
+	$(if $(VERBOSE),,@) fxconv $< -o $@ --font -n $(patsubst demo/resources/%.bmp,res_%,$<)
 
 build/demo_%.bmp.o: demo/resources/%.bmp
-	fxconv $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
+	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
+	$(if $(VERBOSE),,@) fxconv $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
 
 
 
@@ -169,6 +197,7 @@ clean:
 mrproper: clean
 	@ rm -f $(target-g1a) $(target-lib) $(target-std)
 	@ rm -rf build
+	@ rm -f $(config)
 
 distclean: mrproper
 

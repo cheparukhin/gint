@@ -1,9 +1,9 @@
+#include <internals/keyboard.h>
 #include <keyboard.h>
 #include <timer.h>
 #include <mpu.h>
 #include <clock.h>
-
-#include <internals/keyboard.h>
+#include <events.h>
 
 //---
 //	Keyboard variables.
@@ -26,6 +26,24 @@ unsigned cb_id;
 //	Interrupt management.
 //---
 
+static void push_press(int keycode)
+{
+	struct Event event = {
+		.type	= ET_KeyPress,
+		.key	= keycode,
+	};
+	event_push(event);
+}
+
+static void push_release(int keycode)
+{
+	struct Event event = {
+		.type	= ET_KeyRel,
+		.key	= keycode,
+	};
+	event_push(event);
+}
+
 /*
 	keyboard_interrupt()
 	Callback for keyboard update. Allows keyboard analysis functions to
@@ -33,10 +51,42 @@ unsigned cb_id;
 */
 void keyboard_interrupt(void)
 {
-	if(isSH3())
-		keyboard_updateState_7705(keyboard_state);
-	else
-		keyboard_updateState_7305(keyboard_state);
+	unsigned char state[10] = { 0 };
+
+	isSH3()	? keyboard_updateState_7705(state)
+		: keyboard_updateState_7305(state)
+	;
+
+	// Try to minimize number of operations in common cases... this handles
+	// AC/ON.
+	if(keyboard_state[0] ^ state[0])
+	{
+		unsigned char pressed	= ~keyboard_state[0] &  state[0];
+		unsigned char released	=  keyboard_state[0] & ~state[0];
+
+		if(pressed & 1)  push_press(KEY_AC_ON);
+		if(released & 1) push_release(KEY_AC_ON);
+	}
+	keyboard_state[0] = state[0];
+
+	for(int row = 1; row <= 9; row++)
+	{
+		unsigned char pressed	= ~keyboard_state[row] &  state[row];
+		unsigned char released	=  keyboard_state[row] & ~state[row];
+		keyboard_state[row] = state[row];
+
+		// Fasten this a bit.
+		if(!pressed && !released) continue;
+
+		for(int column = 0; column < 8; column++)
+		{
+			if(pressed & 1)  push_press  ((column << 4) | row);
+			if(released & 1) push_release((column << 4) | row);
+
+			pressed >>= 1;
+			released >>= 1;
+		}
+	}
 
 	interrupt_flag = 1;
 }

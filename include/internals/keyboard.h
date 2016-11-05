@@ -1,5 +1,5 @@
 #ifndef	_INTERNALS_KEYBOARD_H
-#define	_INTERNALS_KEYBOARD_H	1
+#define	_INTERNALS_KEYBOARD_H
 
 #include <keyboard.h>
 

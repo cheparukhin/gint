@@ -131,7 +131,5 @@ static int krow(int row)
 */
 void keyboard_updateState_7705(volatile unsigned char *keyboard_state)
 {
-	int i;
-
-	for(i = 0; i < 10; i++) keyboard_state[i] = krow(i);
+	for(int i = 0; i < 10; i++) keyboard_state[i] = krow(i);
 }

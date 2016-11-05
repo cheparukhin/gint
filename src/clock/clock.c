@@ -189,9 +189,9 @@ static void clock_compute_7305(void)
 	volatile unsigned int *FLLFRQ	= (void *)0xa4150050;
 
 	// Surely the documentation of SH7724 does not meet the specification
-	// if SH7305 for the PLL setting, because the register accepts other
-	// values than the ones specified by SH7724. The formula given by
-	// Sentaro21 (thanks again!) yields good results though.
+	// of SH7305 for the PLL setting, because the register accepts other
+	// values than the ones specified for SH7724. The relation given by
+	// Sentaro21 (thanks again!) yields good results.
 	int pll = (*FRQCRA >> 24) & 0x3f;	// Raw setting
 	pll = pll + 1;				// Resulting multiplier
 	conf.PLL = pll;

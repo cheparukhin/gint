@@ -22,7 +22,9 @@
 #define	EXIT_FAILURE	0
 
 // Number of atexit() registrations guaranteed.
+#ifndef	ATEXIT_MAX
 #define	ATEXIT_MAX	16
+#endif
 
 // Maximum value returned by rand().
 #define	RAND_MAX	INT_MAX

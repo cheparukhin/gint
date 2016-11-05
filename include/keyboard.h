@@ -147,13 +147,10 @@ enum GetkeyOpt
 {
 	Getkey_NoOption		= 0x00,
 
-	// Return KEY_NONE when a key is released.
-	Getkey_ReleaseEvent	= 0x01,
-
 	// Consider [SHIFT] and [ALPHA] as modifiers instead of returning
 	// KEY_SHIFT and KEY_ALPHA.
-	Getkey_ShiftModifier	= 0x02,
-	Getkey_AlphaModifier	= 0x04,
+	Getkey_ShiftModifier	= 0x01,
+	Getkey_AlphaModifier	= 0x02,
 
 	// Key repetition. Notice that modifiers will never be repeated.
 	Getkey_RepeatArrowKeys	= 0x10,
@@ -219,7 +216,7 @@ int getkey_opt(enum GetkeyOpt options, int max_cycles);
 	The results are guaranteed to be exact if two keys or less are pressed.
 	With three keys or more, column effects (on SH4) and rectangle effects
 	(on both platforms) mess up the results by making this function think
-	that some keys that are actually unpressed, are pressed.
+	that some keys, which are actually unpressed, are pressed.
 
 	This function is designed to make combinations of one or two arrow keys
 	with another key as viable as possible. On SH4, this works pretty well
@@ -257,7 +254,7 @@ int keyid(int key);
 
 /*
 	keychar()
-	Returns the ASCII character associated with a character key ; 0 for
+	Returns the ASCII character associated with a character key; 0 for
 	other keys.
 */
 int keychar(int key);

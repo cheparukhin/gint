@@ -6,9 +6,7 @@
 #include <clock.h>
 #include <internals/mmu.h>
 
-void	__Hmem_SetMMU(unsigned int, unsigned int, int);
-void	__GLibAddinAplExecutionCheck(int, int, int);
-int	main(void);
+int main(void);
 
 static void init(void);
 static void fini(void);
@@ -53,8 +51,6 @@ int start(void)
 	while(bss < &ebss) *bss++ = 0;
 	// Copying the .data section.
 	while(data < &edata) *data++ = *src++;
-
-	__GLibAddinAplExecutionCheck(0, 1, 1);
 
 	mmu_pseudoTLBInit();
 

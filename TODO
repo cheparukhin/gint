@@ -25,3 +25,9 @@ Things to investigate:
 -  Registers that may need to be saved within setjmp()
 -  Registers that may need to be saved and restored by gint
 -  Possible bug when optimizing __attribute__((interrupt_handler))
+
+Configuration:
+-  ATEXIT_MAX (16)
+-  RTC_CB_ARRAY_SIZE (5)
+-  EVENTS_QUEUE_SIZE (64)
+-  GINT_NO_SYSCALLS (undefined)

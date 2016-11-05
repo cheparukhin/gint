@@ -1,10 +1,12 @@
 #ifndef	_INTERNALS_RTC_H
-#define	_INTERNALS_RTC_H	1
+#define	_INTERNALS_RTC_H
 
 #include <rtc.h>
 #include <stddef.h>
 
+#ifndef	RTC_CB_ARRAY_SIZE
 #define	RTC_CB_ARRAY_SIZE	5
+#endif
 
 /*
 	struct rtc_cb

@@ -3,35 +3,31 @@
 
 	All the system calls used by the library. Somehow "the less, the
 	better".
+	We have finally gotten rid of every obscure system-related syscalls!
+	Looks like an important step towards being completely free-standing :)
 */
 
-	.global	___GLibAddinAplExecutionCheck
-	.global	_malloc
-	.global	_free
+	.global	___malloc
+	.global	___free
+	.global	___realloc
 
 
 
-___GLibAddinAplExecutionCheck:
-	mov.l	syscall_table, r2
-	mov	#0x13, r0
-	jmp	@r2
-	nop
-
-_malloc:
+___malloc:
 	mov.l	syscall_table, r2
 	mov.l	1f, r0
 	jmp	@r2
 	nop
 1:	.long	0xacd
 
-_free:
+___free:
 	mov.l	syscall_table, r2
 	mov.l	1f, r0
 	jmp	@r2
 	nop
 1:	.long	0xacc
 
-_realloc:
+___realloc:
 	mov.l	syscall_table, r2
 	mov.l	1f, r0
 	jmp	@r2

@@ -1,5 +1,6 @@
 #include <internals/keyboard.h>
 #include <keyboard.h>
+#include <events.h>
 
 /*
 	getkey()
@@ -18,96 +19,113 @@ int getkey(void)
 	);
 }
 
-
-
 /*
 	getkey_opt()
-	Enhances getkey() with most general functionalities.
+	Enhances getkey() with more general functionalities.
 	If max_cycles is non-zero and positive, getkey_opt() will return
 	KEY_NOEVENT if no event occurs during max_cycle analysis.
 */
-int getkey_opt(enum GetkeyOpt options, int max_cycles)
+void getkey_opt_wait(int *cycles)
 {
-	int key;
-	enum KeyType type;
-	int modifier = 0, last_modifier = KEY_NONE;
-	int r;
+	while(!interrupt_flag) sleep();
+	interrupt_flag = 0;
 
-	if(!max_cycles) max_cycles = -1;
+	if(*cycles > 0) (*cycles)--;
+}
+int getkey_opt(enum GetkeyOpt options, int cycles)
+{
+	struct Event event;
+	int modifier = 0;
+	static int event_ref = 0;
 
-	while(max_cycles != 0)
+	if(cycles <= 0) cycles = -1;
+	while(cycles != 0)
 	{
-		while(!interrupt_flag) sleep();
-		interrupt_flag = 0;
-		if(max_cycles > 0) max_cycles--;
-
-		// Getting key and adding modifiers.
-		key = getPressedKey(keyboard_state);
-
-		// Handling "no_key" event;
-		if(key == KEY_NONE)
+		event = pollevent();
+		switch(event.type)
 		{
-			// Condition for returning.
-			r = (last_key != KEY_NONE &&
-				options & Getkey_ReleaseEvent);
+		case ET_None:
+			if(last_key == KEY_NONE)
+			{
+				getkey_opt_wait(&cycles);	
+				continue;
+			}
 
-			last_key = KEY_NONE;
-			last_modifier = KEY_NONE;
-			last_repeats = 0;
-			last_events = 0;
+			// Handling repetitions.
+			enum KeyType type = keytype(last_key);
+			if(!(options & (type << 4))) break;
 
-			if(r) return KEY_NONE;
-		}
+			if(event_ref <= 0)
+			{
+				getkey_opt_wait(&cycles);
+				event_ref++;
+				continue;
+			}
 
-		// Handling "new key" events.
-		else if(key != last_key)
-		{
+			last_events++;
+			event_ref--;
+
+			if(last_events >= (last_repeats ? repeat_next :
+				repeat_first))
+			{
+				last_repeats++;
+				last_events = 0;
+				return last_key;
+			}
+			break;
+
+		case ET_KeyPress:
+			;
+			int key = event.key;
 			if(options & Getkey_ShiftModifier && key == KEY_SHIFT)
 			{
-				if(last_modifier != KEY_SHIFT)
-					modifier ^= MOD_SHIFT;
-				last_modifier = KEY_SHIFT;
-
+				modifier ^= MOD_SHIFT;
 				continue;
 			}
 			if(options & Getkey_AlphaModifier && key == KEY_ALPHA)
 			{
-				if(last_modifier != KEY_ALPHA)
-					modifier ^= MOD_ALPHA;
-				last_modifier = KEY_ALPHA;
-
+				modifier ^= MOD_ALPHA;
 				continue;
 			}
 
-			last_key = key;
-			last_repeats = 0;
-			last_events = 0;
-
+			last_key	= key;
+			last_repeats	= 0;
+			last_events	= 0;
+			event_ref	= 0;
 			return key | modifier;
+
+		case ET_KeyRel:
+			if(event.key != last_key) break;
+			last_key	= KEY_NONE;
+			last_repeats	= 0;
+			last_events	= 0;
+			event_ref	= 0;
+			break;
+
+		default:
+			break;
 		}
+	}
+
+	last_key	= KEY_NONE;
+	last_repeats	= 0;
+	last_events	= 0;
+	event_ref	= 0;
+	return KEY_NONE;
+}
+
+/*
+int getkey_opt(enum GetkeyOpt options, int max_cycles)
+{
+	while(max_cycles != 0)
+	{
+		// Handling "new key" events.
 
 		// Handling key repetitions.
-		else
-		{
-			type = keytype(key);
 
-			// Checking whether this key type is repeated.
-			if(options & (type << 4))
-			{
-				last_events++;
-				r = last_repeats ? repeat_next : repeat_first;
-
-				if(last_events >= r)
-				{
-					last_repeats++;
-					last_events = 0;
-
-					return key;
-				}
-			}
-		}
 	}
 
 	// When no key was pressed during the given delay...
 	return KEY_NOEVENT;
 }
+*/

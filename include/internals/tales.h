@@ -1,12 +1,3 @@
-//---
-//
-//	gint drawing module: tales
-//
-//	Text displaying. Does some good optimization, though requires dynamic
-//	allocation.
-//
-//---
-
 #ifndef	_INTERNALS_TALES_H
 #define	_INTERNALS_TALES_H	1
 

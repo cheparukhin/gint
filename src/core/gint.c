@@ -16,6 +16,8 @@ static unsigned int
 	new_vbr,
 	sys_vbr;
 
+static void (*default_handler)(int event_code) = NULL;
+
 
 
 //---
@@ -62,6 +64,21 @@ static void gint_stop(void)
 inline unsigned int gint_systemVBR(void)
 {
 	return sys_vbr;
+}
+
+/*
+	gint_setDefaultHandler()
+	In case gint receives an interrupt it doesn't recognize, it can fall
+	back to a user-provided interrupt handler. Set it to NULL to disable
+	this feature.
+	Be aware that the event code passed to the default handler will either
+	be INTEVT2 (SH7705) or INTEVT (SH7305), but its value for each
+	interrupt case is completely platform-dependent. Remember to handle
+	both platforms for increased portability, if possible.
+*/
+void gint_setDefaultHandler(void (*new_handler)(int event_code))
+{
+	default_handler = new_handler;
 }
 
 /*
@@ -218,6 +235,21 @@ void gint_int(void)
 		gint_int_7705();
 	else
 		gint_int_7305();
+}
+
+
+
+//---
+//	Internal API.
+//---
+
+/*
+	gint_callDefaultHandler()
+	Calls the user-provided default interrupt handler.
+*/
+void gint_callDefaultHandler(int event_code)
+{
+	if(default_handler) default_handler(event_code);
 }
 
 /*
