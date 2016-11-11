@@ -119,11 +119,14 @@ endef
 
 # Generic rules
 
-all: $(config) build $(target-std) $(target-lib) $(target-g1a)
+all: $(config) $(target-std) $(target-lib) $(target-g1a)
 	@ printf '\e[32;1mmsg \u00bb\e[0m All done!\n'
 
 build:
-	@ mkdir -p $@
+	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
+	$(if $(VERBOSE),,@) mkdir -p $@
+
+$(obj-std) $(obj-lib) $(demo-obj): | build
 
 $(target-std): $(config) $(obj-std)
 	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
@@ -192,11 +195,10 @@ build/demo_%.bmp.o: demo/resources/%.bmp
 #---
 
 clean:
-	@ rm -rf build/*
+	@ rm -rf build
 
 mrproper: clean
 	@ rm -f $(target-g1a) $(target-lib) $(target-std)
-	@ rm -rf build
 	@ rm -f $(config)
 
 distclean: mrproper
@@ -205,4 +207,4 @@ install:
 	p7 send -f $(target-g1a)
 
 
-.PHONY: all clean mrproper distclean
+.PHONY: all clean mrproper distclean install help

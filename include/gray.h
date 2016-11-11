@@ -37,13 +37,13 @@ void gray_stop(void);
 
 /*
 	gray_lightVRAM()
-	Returns the module's gray vram address.
+	Returns the module's light gray vram address.
 */
 void *gray_lightVRAM(void);
 
 /*
-	gray_lightVRAM()
-	Returns the module's dark vram address.
+	gray_darkVRAM()
+	Returns the module's dark gray vram address.
 */
 void *gray_darkVRAM(void);
 
