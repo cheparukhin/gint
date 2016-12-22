@@ -46,17 +46,32 @@
 	Configures and starts a timer. The timer argument expects a timer name.
 	You can use TIMER_USER anytime. You may also use TIMER_GRAY if you're
 	not running the gray engine.
-	The delay is in clock counts unit. The possible values for the
-	prescaler are dividers of the peripheral clock frequency Po:
+	Unit names are defined in the clock.h header and must be one of the
+	following:
+	- Clock_us	(microseconds)
+	- Clock_ms	(milliseconds)
+	- Clock_s	(seconds)
+	- Clock_Hz	(hertz)
+	- Clock_kHz	(kilohertz)
+	- Clock_MHz	(megahertz)
+	The number of repeats may to set to 0. In this case, the timer will not
+	stop until timer_stop() is explicitly called.
+*/
+void timer_start(int timer, int delay_or_frequency, enum ClockUnit unit,
+	void (*callback)(void), int repeats);
+
+/*
+	timer_start2()
+	Basically the same as timer_start(), but uses a clock-count delay and a
+	prescaler. The possible values for the prescaler are dividers of the
+	peripheral clock frequency Po:
 	- TIMER_Po_4
 	- TIMER_Po_16
 	- TIMER_Po_64
 	- TIMER_Po_256
 	- TIMER_TCLK
-	The number of repeats may to set to 0. In this case, the timer will not
-	stop until timer_stop() is explicitly called.
 */
-void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
+void timer_start2(int timer, int delay, int prescaler, void (*callback)(void),
 	int repeats);
 
 /*
@@ -68,10 +83,17 @@ void timer_stop(int timer);
 
 /*
 	timer_reload()
-	Reloads the given timer with the given constant. Starts the timer if
-	it was stopped. The new delay uses the same unit as in timer_start().
+	Reloads the given timer with the supplied constant. Starts the timer if
+	it was stopped.
 */
-void timer_reload(int timer, int new_delay);
+void timer_reload(int timer, int new_delay_or_frequency, enum ClockUnit unit);
+
+/*
+	timer_reload2()
+	Same as timer_reload(), but again uses the native clock count. The
+	prescaler may not be changed.
+*/
+void timer_reload2(int timer, int new_delay);
 
 
 

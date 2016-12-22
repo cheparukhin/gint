@@ -177,7 +177,7 @@ void debug(void)
 	dtext("ML...", 2, 2);
 	dupdate();
 
-	timer_start(TIMER_USER, 0x0fffffff, TIMER_Po_4, NULL, 0);
+	timer_start2(TIMER_USER, 0x0fffffff, TIMER_Po_4, NULL, 0);
 	for(i = 0; i < 1000; i++) ML_bmp_or_cl(screen, 1, 1, 128, 64);
 	time1 = timer->TCNT;
 	timer_stop(TIMER_USER);
@@ -187,7 +187,7 @@ void debug(void)
 	dtext("gint...", 2, 2);
 	dupdate();
 
-	timer_start(TIMER_USER, 0x0fffffff, TIMER_Po_4, NULL, 0);
+	timer_start2(TIMER_USER, 0x0fffffff, TIMER_Po_4, NULL, 0);
 	for(i = 0; i < 1000; i++) dimage(&res_screen_start, 1, 1);
 	time2 = timer->TCNT;
 	timer_stop(TIMER_USER);

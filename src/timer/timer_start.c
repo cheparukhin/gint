@@ -2,10 +2,10 @@
 #include <timer.h>
 
 /*
-	timer_start()
-	Configures and starts a timer.
+	timer_start2()
+	Configures and starts a time using a clock count and a prescaler.
 */
-void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
+void timer_start2(int timer, int delay, int prescaler, void (*callback)(void),
 	int repeats)
 {
 	volatile struct mod_tmu *tmu;
@@ -32,4 +32,16 @@ void timer_start(int timer, int delay, int prescaler, void (*callback)(void),
 
 	// Starting the timer.
 	*tstr |= byte;
+}
+
+/*
+	timer_start()
+	Configures and starts a timer using a delay, or a frequency, and the
+	associated unit.
+*/
+void timer_start(int timer, int delay, enum ClockUnit unit,
+	void (*callback)(void), int repeats)
+{
+	timer_start2(timer, clock_setting(delay, unit), TIMER_Po_4, callback,
+		repeats);
 }

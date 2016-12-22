@@ -10,7 +10,6 @@ Simple improvements:
 -  display:	Rectangle-based drawing functions
 -  tales:	Test all font encodings
 -  time:	Compute CLOCKS_PER_SEC
--  timer:	Add duration and frequency settings
 -  core:	Add VBR handlers debugging information (if possible)
 -  core:	Implement all callbacks and a complete user API
 -  project:	Enhance Makefile install_lib rules

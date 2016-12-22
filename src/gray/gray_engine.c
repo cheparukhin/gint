@@ -36,7 +36,7 @@ void gray_start(void)
 {
 	if(runs) return;
 
-	timer_start(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt, 0);
+	timer_start2(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt, 0);
 	current &= 1;
 	runs = 1;
 }
@@ -136,7 +136,7 @@ inline void gupdate(void)
 */
 void gray_interrupt(void)
 {
-	timer_reload(TIMER_GRAY, delays[(~current) & 1]);
+	timer_reload2(TIMER_GRAY, delays[(~current) & 1]);
 	screen_display(vrams[current]);
 	current ^= 1;
 }

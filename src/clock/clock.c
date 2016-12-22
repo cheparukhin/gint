@@ -106,8 +106,7 @@ static void sleep_us_callback(void)
 void sleep_us(int us_delay)
 {
 	sleep_us_done = 0;
-	timer_start(TIMER_USER, clock_setting(us_delay, Clock_us), TIMER_Po_4,
-		sleep_us_callback, 1);
+	timer_start(TIMER_USER, us_delay, Clock_us, sleep_us_callback, 1);
 	do sleep();
 	while(!sleep_us_done);
 }
@@ -122,8 +121,8 @@ void sleep_us(int us_delay)
 static volatile int clock_measure_done = 0;
 // Once again SH7705 and SH7305 need different methods...
 static int cb_id_7705 = -1;
-static void clock_measure_7705();
-static void clock_compute_7305();
+static void clock_measure_7705(void);
+static void clock_compute_7305(void);
 
 /*
 	clock_measure()
