@@ -56,8 +56,8 @@ static void kdelay(void)
 
 /*
 	krow()
-	Reads a keyboard row. Works like krow() for SH7705. See gint_7705.c for
-	more details.
+	Reads a keyboard row. Works like krow() for SH7705; see source file
+	keyboard_7705.c for more details.
 */
 static int krow(int row)
 {
@@ -75,7 +75,7 @@ static int krow(int row)
 
 	unsigned short smask;
 	unsigned char cmask;
-	int result		= 0;
+	int result = 0;
 
 	if(row < 0 || row > 9) return 0;
 
@@ -83,9 +83,9 @@ static int krow(int row)
 	*detector	= 0xaaaa;
 	*key_register	= 0xff;
 	*injector1	= (*injector1 & 0xf000) | 0x0555;
-	*injector2	= (*injector2 & 0xf000) | 0x0555;
+	*injector2	= (*injector2 & 0xff00) | 0x0055;
 	*data1		|= 0x3f;
-	*data2		|= 0x3f;
+	*data2		|= 0x0f;
 	kdelay();
 
 	if(row < 6)
@@ -94,11 +94,11 @@ static int krow(int row)
 		cmask = ~(1 << row);
 
 		*injector1 = ((*injector1 & 0xf000) | 0x0aaa) ^ smask;
-		*injector2 =  (*injector2 & 0xf000) | 0x0aaa;
+		*injector2 =  (*injector2 & 0xff00) | 0x00aa;
 		kdelay();
 
-		*data1 = (*data1 & 0xc0) | cmask;
-		*data2 |= 0x3f;
+		*data1 = (*data1 & 0xc0) | (cmask & 0x3f);
+		*data2 |= 0x0f;
 		kdelay();
 	}
 	else
@@ -107,11 +107,11 @@ static int krow(int row)
 		cmask = ~(1 << (row - 6));
 
 		*injector1 =  (*injector1 & 0xf000) | 0x0aaa;
-		*injector2 = ((*injector2 & 0xf000) | 0x0aaa) ^ smask;
+		*injector2 = ((*injector2 & 0xff00) | 0x00aa) ^ smask;
 		kdelay();
 
 		*data1 |= 0x3f;
-		*data2 = (*data2 & 0xc0) | cmask;
+		*data2 = (*data2 & 0xf0) | (cmask & 0x0f);
 		kdelay();
 	}
 
@@ -121,13 +121,13 @@ static int krow(int row)
 
 	// Re-initializing the port configuration and data.
 	*injector1 = (*injector1 & 0xf000) | 0x0aaa;
-	*injector2 = (*injector2 & 0xf000) | 0x0aaa;
+	*injector2 = (*injector2 & 0xff00) | 0x00aa;
 	kdelay();
 	*injector1 = (*injector1 & 0xf000) | 0x0555;
-	*injector2 = (*injector2 & 0xf000) | 0x0555;
+	*injector2 = (*injector2 & 0xff00) | 0x0055;
 	kdelay();
 	*data1 &= 0xc0;
-	*data2 &= 0xc0;
+	*data2 &= 0xf0;
 
 	return result;
 }

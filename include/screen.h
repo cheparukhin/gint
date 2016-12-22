@@ -20,4 +20,10 @@
 */
 void screen_display(const void *vram);
 
+/*
+	screen_setBacklight()
+	On compatible models, turns on or turns off the backlight.
+*/
+void screen_setBacklight(int on);
+
 #endif

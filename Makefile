@@ -50,6 +50,12 @@ obj-std-spec	=
 # Configuration files
 config		= gcc.cfg
 
+ifndef folder
+folder		= /usr/share/fxsdk
+endif
+
+
+
 #---
 #	Automatic variables.
 #---
@@ -206,5 +212,12 @@ distclean: mrproper
 install:
 	p7 send -f $(target-g1a)
 
+install_lib: $(target-std) $(target-lib)
+	mkdir -p $(folder)
+	install -m 644 $^ $(folder)
+	install -m 644 -T demo/gintdemo.ld $(folder)/linker.ld
+	mkdir -p $(folder)/gint
+	install -m 644 include/*.h $(folder)/gint
+	@ printf '\e[32;1mmsg \u00bb\e[0m All installed!\n'
 
-.PHONY: all clean mrproper distclean install help
+.PHONY: all clean mrproper distclean install install_lib help

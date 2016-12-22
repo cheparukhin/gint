@@ -2,7 +2,6 @@ Bugs to fix:
 -  Left-vram overflow when rendering text
 -  A few key hits ignored after leaving the application (could not reproduce)
 -  Lost keyboard control at startup (could not reproduce)
--  Back-light issues (0xa400012c on SH3, 0xa4050138 on SH4)
 
 Simple improvements:
 -  bopti:	Monochrome bitmaps blending modes
@@ -14,6 +13,7 @@ Simple improvements:
 -  timer:	Add duration and frequency settings
 -  core:	Add VBR handlers debugging information (if possible)
 -  core:	Implement all callbacks and a complete user API
+-  project:	Enhance Makefile install_lib rules
 
 Modules to implement:
 -  Serial communication
