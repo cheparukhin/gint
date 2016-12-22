@@ -35,8 +35,8 @@ static void timing_timer(void)
 
 static void timing_start(void)
 {
-	timer_start(TIMER_USER, 16, Clock_Hz, timing_timer, 0);
-	rtc_cb_edit(cb_id, RTCFreq_16Hz, timing_rtc);
+	timer_start(TIMER_USER, 64, Clock_Hz, timing_timer, 0);
+	rtc_cb_edit(cb_id, RTCFreq_64Hz, timing_rtc);
 
 	elapsed_timer = 0;
 	elapsed_rtc = 0;
@@ -177,20 +177,20 @@ static void draw(int tab)
 			dimage(64, 0, &res_clock_7305);
 
 			getFreq(buffer, conf.RTCCLK_f);
-			small_text(84, 14, buffer, 1);
+			small_text(82, 13, buffer, 1);
 	
 			sprintf(buffer, "*%d", conf.FLL);
-			small_text(84, 25, buffer, 1);
+			small_text(82, 23, buffer, 1);
 
 			sprintf(buffer, "*%d", conf.PLL);
-			small_text(84, 36, buffer, 1);
+			small_text(82, 33, buffer, 1);
 
 			sprintf(buffer, "/%d", conf.Bphi_div1);
-			small_text(89, 43, buffer, 0);
+			small_text(87, 40, buffer, 0);
 			sprintf(buffer, "/%d", conf.Iphi_div1);
-			small_text(89, 50, buffer, 0);
+			small_text(87, 47, buffer, 0);
 			sprintf(buffer, "/%d", conf.Pphi_div1);
-			small_text(89, 57, buffer, 0);
+			small_text(87, 54, buffer, 0);
 		}
 	}
 	else
@@ -216,7 +216,7 @@ static void draw(int tab)
 			if(timer <= rtc) ratio = (10000 * timer) / rtc;
 			else ratio = (10000 * rtc) / timer;
 
-			print(12, 5, "%d.%02d %%", ratio / 100, ratio % 100);
+			print(12, 5, "%d.%02d%%", ratio / 100, ratio % 100);
 		}
 		else locate(12, 5, "...");
 	}
@@ -238,14 +238,11 @@ void test_timer(void)
 {
 	int tab = 0;
 
-	clock_measure();
-	clock_measure_end();
-
 	conf = clock_config();
 
 	elapsed_timer	= -1;
 	elapsed_rtc	= -1;
-	cb_id = rtc_cb_add(RTCFreq_16Hz, timing_start, 0);
+	cb_id = rtc_cb_add(RTCFreq_64Hz, timing_start, 0);
 
 	text_configure(NULL, Color_Black);
 

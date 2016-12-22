@@ -253,7 +253,7 @@ void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
 		// When operators are full, updating the video ram and
 		// preparing the operators for another row.
 
-		(*op)(operators, height, x, y);
+		if(x >= 0) (*op)(operators, height, x, y);
 		x += 32;
 		if(x > 96) break;
 

@@ -50,8 +50,11 @@ obj-std-spec	=
 # Configuration files
 config		= gcc.cfg
 
+# Target folder
+folder		:= $(shell fxsdk --folder)
 ifndef folder
-folder		= /usr/share/fxsdk
+$(error "Could not get the fxSDK storage folder. Did you install fxSDK \
+properly?")
 endif
 
 

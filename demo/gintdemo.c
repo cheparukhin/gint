@@ -403,20 +403,24 @@ void main_menu(int *category, int *app)
 			switch(getkey())
 			{
 			case KEY_F1:
+				if(!tab) break;
 				tab	= 0;
 				index	= 0;
 				break;
 			case KEY_F2:
+				if(tab == 1) break;
 				tab	= 1;
 				index	= 0;
 				scroll	= 0;
 				break;
 			case KEY_F3:
+				if(tab == 2) break;
 				tab	= 2;
 				index	= 0;
 				scroll	= 0;
 				break;
 			case KEY_F4:
+				if(tab == 3) break;
 				tab	= 3;
 				index	= 0;
 				scroll	= 0;
