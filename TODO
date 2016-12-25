@@ -3,19 +3,21 @@ Bugs to fix:
 -  Lost keyboard control at startup                      (could not reproduce)
 
 Simple improvements:
--  bopti:	Monochrome bitmaps blending modes
--  bopti:	Partial transparency
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  display:	Rectangle-based drawing functions
 -  tales:	Test all font encodings
 -  time:	Compute CLOCKS_PER_SEC
 -  core:	Add VBR handlers debugging information (if possible)
+Larger improvements:
+-  errno:       Introduce errno and use it more or less everywhere
+-  bopti:	Monochrome bitmaps blending modes
+-  bopti:	Handle partial transparency
 -  core:	Implement all callbacks and a complete user API
-
-Modules to implement:
--  Serial communication
--  Sound playback and synthesizing
--  Handle errors within errno
+Other whole modules:
+-  Serial communication through 3-pin
+-  USB communication
+-  Sound playback and synthesizing (if possible)
+-  Overclock (relaunch clocks when overclocking)
 
 Things to investigate:
 -  Packed bit fields alignment

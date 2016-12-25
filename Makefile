@@ -71,10 +71,6 @@ define n
 
 endef
 
-ifeq ("$(wildcard $(config))","")
-$(error "Configuration files are missing. Did you ./configure?")
-endif
-
 # Module-scope variables.
 $(foreach mod, $(modules), $(eval \
 	mod-$(mod)-c	= $(notdir $(wildcard src/$(mod)/*.c))		$n\
@@ -130,6 +126,9 @@ endef
 
 all: $(config) $(target-std) $(target-lib) $(target-g1a)
 	@ printf '\e[32;1mmsg \u00bb\e[0m All done!\n'
+
+$(config):
+	$(error "Configuration files are missing. Did you ./configure?")
 
 build:
 	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
@@ -212,10 +211,7 @@ mrproper: clean
 
 distclean: mrproper
 
-install:
-	p7 send -f $(target-g1a)
-
-install_lib: $(target-std) $(target-lib)
+install: $(target-std) $(target-lib)
 	mkdir -p $(folder)
 	install -m 644 $^ $(folder)
 	install -m 644 -T demo/gintdemo.ld $(folder)/linker.ld
@@ -223,4 +219,7 @@ install_lib: $(target-std) $(target-lib)
 	install -m 644 include/*.h $(folder)/gint
 	@ printf '\e[32;1mmsg \u00bb\e[0m All installed!\n'
 
-.PHONY: all clean mrproper distclean install install_lib help
+install_demo:
+	p7 send -f $(target-g1a)
+
+.PHONY: all clean mrproper distclean install install_demo help
