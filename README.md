@@ -19,13 +19,14 @@ access to the low-level MPU features, among which:
   office applications and event-driven decisions for games
 * Hardware timers running at over 10 MHz, allowing microsecond-level control
 * Unlimited mappings of callbacks to Real-Time Clock events (requires build)
-* Access to processor register for debugging information, determination of
+* Access to processor registers for debugging information, determination of
   processor speed (overclock is on the TODO list), backlight management...
 
 The library also offers powerful higher-level features:
 * A gray engine that works by rapidly swapping monochrome images
-* Blazingly fast drawing functions when working with the fxSDK
-* C Standard functions such as the `printf()` family.
+* Blazingly fast drawing functions when working with the fxSDK (10 times faster
+  image rendering that MonochromeLib)
+* C Standard functions such as the `printf()` family
 
 
 Interrupt handler

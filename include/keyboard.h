@@ -162,24 +162,6 @@ enum GetkeyOpt
 };
 
 /*
-	keylast()
-	Returns the matrix code of the last pressed key. If repeat_count is
-	non-NULL, it is set to the number of repetitions.
-*/
-int keylast(int *repeat_count);
-
-/*
-	keystate()
-	Returns the address of the keyboard state array. The keyboard state
-	consists in 10 bytes, in which every key is represented as a bit.
-	The returned address is the original buffer address. You should avoid
-	editing the array. It wouldn't influence the behavior of the keyboard
-	functions, but the buffer data is very volatile. Therefore, data
-	written to the buffer could be replaced anytime.
-*/
-volatile unsigned char *keystate(void);
-
-/*
 	getkey()
 	Blocking function with auto-repeat and SHIFT modifying functionalities.
 	Reproduces the behavior of the system's GetKey(). Returns the matrix
@@ -190,10 +172,10 @@ int getkey(void);
 /*
 	getkey_opt()
 	Enhances getkey() with most general functionalities. An OR-combination
-	of options may be given as second argument.
+	of options may be given as first argument.
 	If max_cycles is non-zero and positive, getkey_opt() will return
-	KEY_NOEVENT if no event occurs during max_cycle analysis.
-	As getkey(), returns the pressed key matrix code, possibly with
+	KEY_NOEVENT if no event occurs during max_cycle analyzes.
+	Like getkey(), returns the pressed key matrix code, possibly with
 	modifiers depending on the options.
 */
 int getkey_opt(enum GetkeyOpt options, int max_cycles);
@@ -230,6 +212,24 @@ int getkey_opt(enum GetkeyOpt options, int max_cycles);
 	ideal multi-key analyzer.
 */
 void multigetkey(int *keys, int count, int max_cycles);
+
+/*
+	keylast()
+	Returns the matrix code of the last pressed key. If repeat_count is
+	non-NULL, it is set to the number of repetitions.
+*/
+int keylast(int *repeat_count);
+
+/*
+	keystate()
+	Returns the address of the keyboard state array. The keyboard state
+	consists in 10 bytes, in which every key is represented as a bit.
+	The returned address is the original buffer address. You should avoid
+	editing the array. It wouldn't influence the behavior of the keyboard
+	functions, but the buffer data is very volatile. Therefore, data
+	written to the buffer could be replaced anytime.
+*/
+volatile unsigned char *keystate(void);
 
 
 

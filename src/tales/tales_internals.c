@@ -55,12 +55,12 @@ int getCharacterIndex(int c)
 		break;
 	case FontFormat_Letters:
 		if(!isalpha(c)) return -1;
-		index = c - 'A' - ('a' - 'z') * (c >= 'a');
+		index = c - 'A' - ('a' - 'Z') * (c >= 'a');
 		break;
 	case FontFormat_Common:
 		if(!isalnum(c)) return -1;
 		index = c - '0' - ('A' - '9') * (c >= 'A') -
-			('a' - 'z') * (c >= 'a');
+			('a' - 'Z') * (c >= 'a');
 		break;
 	case FontFormat_Unknown:
 	default:
