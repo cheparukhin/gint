@@ -26,4 +26,10 @@ void screen_display(const void *vram);
 */
 void screen_setBacklight(int on);
 
+/*
+	screen_toggleBacklight()
+	Changes the backlight state, regardless of its current state.
+*/
+void screen_toggleBacklight(void);
+
 #endif

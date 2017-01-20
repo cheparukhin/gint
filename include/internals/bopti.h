@@ -59,7 +59,7 @@ struct Structure
 	int width, height;
 	int layer_size;
 
-	const unsigned char *data;
+	const uint8_t *data;
 	int columns;
 	int end_size, end_bytes;
 };

@@ -20,3 +20,21 @@ void screen_setBacklight(int on)
 		else	*PNDR &= ~0x10;
 	}
 }
+
+/*
+	screen_toggleBacklight()
+	Changes the backlight state, regardless of its current state.
+*/
+void screen_toggleBacklight(void)
+{
+	if(isSH3())
+	{
+		volatile unsigned char *PGDR = (void *)0xa400012c;
+		*PGDR ^= 0x80;
+	}
+	else
+	{
+		volatile unsigned char *PNDR = (void *)0xa4050138;
+		*PNDR ^= 0x10;
+	}
+}

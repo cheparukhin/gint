@@ -290,7 +290,7 @@ void getStructure(struct Image *img, struct Structure *s)
 	{
 		s->width	= (img->data[0] << 8) | img->data[1];
 		s->height	= (img->data[2] << 8) | img->data[3];
-		s->data		= img->data + 4;
+		s->data		= (uint8_t *)img->data + 4;
 
 		column_count = (s->width + 31) >> 5;
 		end = 0;
@@ -300,7 +300,7 @@ void getStructure(struct Image *img, struct Structure *s)
 	{
 		s->width	= img->width;
 		s->height	= img->height;
-		s->data		= img->data;
+		s->data		= (uint8_t *)img->data;
 
 		column_count = img->width >> 5;
 		end = img->width & 31;
@@ -320,7 +320,7 @@ void getStructure(struct Image *img, struct Structure *s)
 
 	// The layer size must be rounded to a multiple of 4.
 	layer = s->height * ((column_count << 2) + end_bytes);
-	if(layer & 3) layer += 4 - (layer & 3);
+	layer = (layer + 3) & ~3;
 
 	s->columns	= column_count;
 	s->end_bytes	= end_bytes;

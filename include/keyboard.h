@@ -152,6 +152,9 @@ enum GetkeyOpt
 	Getkey_ShiftModifier	= 0x01,
 	Getkey_AlphaModifier	= 0x02,
 
+	// Allow changing the backlight status on [SHIFT] + [OPTN].
+	Getkey_ManageBacklight	= 0x04,
+
 	// Key repetition. Notice that modifiers will never be repeated.
 	Getkey_RepeatArrowKeys	= 0x10,
 	Getkey_RepeatCharKeys	= 0x20,

@@ -30,7 +30,7 @@ struct Rect intersect(struct Rect r1, struct Rect r2)
 void gimage_part(int x, int y, struct Image *img, int left, int top,
 	int width, int height)
 {
-	if(!img || img->magic != 0xb7) return;
+	if(!img || img->magic != 0x01) return;
 
 	struct Structure s;
 	struct Command command;

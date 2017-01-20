@@ -9,6 +9,8 @@
 #ifndef	_DISPLAY_H
 #define	_DISPLAY_H	1
 
+#include <stdint.h>
+
 
 //---
 //	Heading declarations.
@@ -36,15 +38,15 @@ enum Color
 */
 struct Image
 {
-	unsigned char magic;
-	unsigned char format;
+	uint8_t magic;
+	uint8_t format;
 
-	unsigned char width;
-	unsigned char height;
+	uint8_t width;
+	uint8_t height;
 
-	const unsigned char __attribute__((aligned(4))) data[];
+	const uint32_t data[];
 
-} __attribute__((aligned(4)));
+} __attribute__((packed, aligned(4)));
 // Useful shorthand for user code.
 typedef struct Image Image;
 

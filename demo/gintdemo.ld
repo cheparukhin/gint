@@ -43,7 +43,9 @@ SECTIONS
 
 	.rodata : {
 		*(.rodata.fxconv);
+		*(.rodata.paradox);
 		*(.rodata)
+		. = ALIGN(4);
 		*(.rodata.*)
 
 		_romdata = ALIGN(4) ;

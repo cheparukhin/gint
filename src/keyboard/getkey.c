@@ -1,6 +1,7 @@
 #include <internals/keyboard.h>
 #include <keyboard.h>
 #include <events.h>
+#include <screen.h>
 
 /*
 	getkey()
@@ -10,11 +11,10 @@
 int getkey(void)
 {
 	return getkey_opt(
-		Getkey_ShiftModifier |
-		Getkey_AlphaModifier |
-
+		Getkey_ShiftModifier	|
+		Getkey_AlphaModifier	|
+		Getkey_ManageBacklight	|
 		Getkey_RepeatArrowKeys,
-
 		0
 	);
 }
@@ -77,6 +77,13 @@ int getkey_opt(enum GetkeyOpt options, int cycles)
 		case ET_KeyPress:
 			;
 			int key = event.key;
+			if(options & Getkey_ManageBacklight && key == KEY_OPTN
+				&& modifier & MOD_SHIFT)
+			{
+				screen_toggleBacklight();
+				modifier &= ~MOD_SHIFT;
+				continue;
+			}
 			if(options & Getkey_ShiftModifier && key == KEY_SHIFT)
 			{
 				modifier ^= MOD_SHIFT;

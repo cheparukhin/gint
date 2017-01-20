@@ -25,7 +25,7 @@
 
 static void getwh(Image *img, int *width, int *height)
 {
-	const unsigned char *data;
+	const uint8_t *data;
 
 	if(!img)
 	{
@@ -37,7 +37,7 @@ static void getwh(Image *img, int *width, int *height)
 	*height	= img->height;
 	if(*width && *height) return;
 
-	data = img->data;
+	data = (uint8_t *)img->data;
 	*width	= (data[0] << 8) | data[1];
 	*height	= (data[2] << 8) | data[3];
 }

@@ -1,6 +1,9 @@
 Bugs to fix:
 -  A few key hits ignored after leaving the application  (could not reproduce)
 -  Lost keyboard control at startup                      (could not reproduce)
+-  Influence of keyboard on some timers and RTC (maybe interrupt priority)
+-  Alignment of ALL .data / .rodata files is required to ensure converted data
+   is properly aligned
 
 Simple improvements:
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
@@ -8,6 +11,7 @@ Simple improvements:
 -  time:	Compute CLOCKS_PER_SEC
 -  core:	Add VBR handlers debugging information (if possible)
 -  events:	Introduce KeyRepeat events
+-  library:	Implement C99's inttypes.h for Cake's UpdateExe
 Larger improvements:
 -  errno:       Introduce errno and use it more or less everywhere
 -  bopti:	Monochrome bitmaps blending modes
