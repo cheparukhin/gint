@@ -5,7 +5,7 @@
 #
 #---
 
-
+include Makefile.cfg
 
 #---
 #	Project variables.
@@ -48,7 +48,10 @@ obj-lib-spec	= build/display_font_system.bmp.o
 obj-std-spec	=
 
 # Configuration files
-config		= gcc.cfg
+config	= gcc.cfg
+ifeq ($(wildcard $(config)),)
+$(error "Configuration files are missing. Did you ./configure ?")
+endif
 
 # Target folder
 folder		:= $(shell fxsdk --folder)
@@ -127,16 +130,13 @@ endef
 all: $(config) $(target-std) $(target-lib) $(target-g1a)
 	@ printf '\e[32;1mmsg \u00bb\e[0m All done!\n'
 
-$(config):
-	$(error "Configuration files are missing. Did you ./configure?")
-
 build:
 	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
 	$(if $(VERBOSE),,@) mkdir -p $@
 
 $(obj-std) $(obj-lib) $(demo-obj): | build
 
-$(target-std): $(config) $(obj-std)
+$(target-std): $(obj-std)
 	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
 	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-std)
 	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libc ('
@@ -217,6 +217,9 @@ install: $(target-std) $(target-lib)
 	install -m 644 -T demo/gintdemo.ld $(folder)/linker.ld
 	mkdir -p $(folder)/gint
 	install -m 644 include/*.h $(folder)/gint
+ifdef config_ext
+	install -m 644 include/extended/*.h $(folder)/gint
+endif
 	@ printf '\e[32;1mmsg \u00bb\e[0m All installed!\n'
 
 install_demo:

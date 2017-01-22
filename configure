@@ -5,8 +5,16 @@ conf[ATEXIT_MAX]=16
 conf[RTC_CB_ARRAY_SIZE]=5
 conf[EVENTS_QUEUE_SIZE]=64
 conf[GINT_NO_SYSCALLS]=
+conf[GINT_EXTENDED_LIBC]=
 fail=false
-output="gcc.cfg"
+output_gcc="gcc.cfg"
+output_make="Makefile.cfg"
+
+error="\e[31;1merror:\e[0m"
+Cr="$(tput setaf 1)$(tput bold)"
+Cg="$(tput setaf 2)$(tput bold)"
+Cp="$(tput setaf 5)$(tput setaf 62)$(tput bold)"
+C0="$(tput setaf 0)$(tput sgr 0)"
 
 help()
 {
@@ -14,16 +22,19 @@ help()
 Configuration script for the gint library.
 
 Options that affect the behavior of the library:
-  --no-syscalls  [default: false]
+  $Cr--no-syscalls$C0  [default:$Cp false$C0]
         Never use syscalls. Expect some trouble with the malloc() function...
-	Do not trigger this option unless you know what you are doing.
+        Do not enable this option unless you know what you are doing.
+  $Cr--extended-libc$C0  [default:$Cp false$C0]
+	Enable specific C99 headers/features that are normally not required by
+        calculator programs. May allow porting programs from other platforms.
 
 Options that customize size limits:
-  --atexit-max=<integer>  [default: 16]
+  $Cr--atexit-max=$C0$Cg<integer>$C0  [default:$Cp 16$C0]
         Number of exit handlers that can be registered by atexit().
-  --rtc-callbacks=<integer>  [default: 5]
+  $Cr--rtc-callbacks=$C0$Cg<integer>$C0  [default:$Cp 5$C0]
         Number of RTC callbacks that can be registered.
-  --events-queue-size=<integer>  [default: 64]
+  $Cr--events-queue-size=$C0$Cg<integer>$C0  [default:$Cp 64$C0]
         Number of events simultaneously stored in the event queue.
 EOF
 
@@ -33,34 +44,36 @@ EOF
 for arg; do case "$arg" in
 	-h | --help) help;;
 	--no-syscalls) conf[GINT_NO_SYSCALLS]=true;;
+	--extended-libc) conf[GINT_EXTENDED_LIBC]=true;;
 
 	--atexit-max=*)
 		size=${arg#*=}
 		if [[ $size == +([0-9]) ]]; then
 			conf[ATEXIT_MAX]=$size
-		else echo "error: --atexit-max expects an integer value"
+		else echo -e "$error --atexit-max expects an integer value"
 			fail=true; fi;;
 	--rtc-callbacks=*)
 		size=${arg#*=}
 		if [[ $size == +([0-9]) ]]; then
 			conf[RTC_CB_ARRAY_SIZE]=$size
-		else echo "error: --rtc-callbacks expects an integer value"
+		else echo -e "$error --rtc-callbacks expects an integer value"
 			fail=true; fi;;
 	--events-queue-size=*)
 		size=${arg#*=}
 		if [[ $size == +([0-9]) ]]; then
 			conf[EVENTS_QUEUE_SIZE]=$size
-		else echo "error: --events-queue-size expects an integer value"
+		else echo -e "$error --events-queue-size expects an integer"\
+			"value"
 			fail=true; fi;;
 
 	--atexit-max | --rtc-callbacks | --events-queue-size)
-		echo "error: syntax for $arg is $arg=<integer-value>";;
+		echo -e "$error syntax for $arg is $arg=<integer-value>";;
 
 	*)
-		echo "error: unrecognized argument '$arg'"; fail=true;;
+		echo -e "$error unrecognized argument '$arg'"; fail=true;;
 esac; done
 
-output_config()
+output_config_gcc()
 {
 	echo "-D ATEXIT_MAX=${conf[ATEXIT_MAX]}"
 	echo "-D RTC_CB_ARRAY_SIZE=${conf[RTC_CB_ARRAY_SIZE]}"
@@ -68,11 +81,20 @@ output_config()
 	if [ "${conf[GINT_NO_SYSCALLS]}" != "" ]; then
 		echo "-D GINT_NO_SYSCALLS"
 	fi
+	if [ "${conf[GINT_EXTENDED_LIBC]}" != "" ]; then
+		echo "-D GINT_EXTENDED_LIBC"
+	fi
+}
+
+output_config_make()
+{
+	[ "${conf[GINT_EXTENDED_LIBC]}" != "" ] && echo "config_ext=true"
 }
 
 if $fail; then
 	echo "Configuration has not been modified."
 else
-	output_config > $output
-	echo "Configuration details have been output to file $output."
+	output_config_gcc > $output_gcc
+	output_config_make > $output_make
+	echo "Configuration saved in $output_gcc and $output_make."
 fi
