@@ -2,7 +2,7 @@
 #include <stdint.h>
 
 /*
-	memcpy()
+	memcpy()	O(n)
 	Copies a memory area. A smart copy is performed if possible.
 */
 void *memcpy(void *d, const void *s, size_t n)

@@ -18,3 +18,5 @@ gintdemo.g1a
 
 # Configuration files
 gcc.cfg
+Makefile.cfg
+

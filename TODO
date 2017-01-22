@@ -12,6 +12,8 @@ Simple improvements:
 -  core:	Add VBR handlers debugging information (if possible)
 -  events:	Introduce KeyRepeat events
 -  library:	Implement C99's inttypes.h for Cake's UpdateExe
+-  string:	Use cmp/str to implement memchr() (assembler examples)
+-  string:	Do some tests for memcmp()
 Larger improvements:
 -  errno:       Introduce errno and use it more or less everywhere
 -  bopti:	Monochrome bitmaps blending modes
