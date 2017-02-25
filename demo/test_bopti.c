@@ -95,10 +95,14 @@ static Image *select(Image *current)
 				8 * i, 7, 7);
 			if(i == row)
 			{
+				print(2, 2 + i + 1, "%08x", (unsigned int)
+					images[i].img);
+/*
 				int width, height;
 				getwh(images[i].img, &width, &height);
 				print(2, 2 + i + 1, "%d\x04%d", width, height);
 				locate(10, 2 + i + 1, images[i].info);
+*/
 			}
 		}
 

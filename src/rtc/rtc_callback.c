@@ -129,7 +129,8 @@ void rtc_cb_interrupt(void)
 	// Adding to elapsed256 the number of 256-Hz ticks that correspond to
 	// the current interrupt frequency, and rounding the result to a 
 	// multiple of this tick number.
-	elapsed256 = (elapsed256 + scales[rtc_freq]) & ~(scales[rtc_freq] - 1);
+	elapsed256 += scales[rtc_freq - 1];
+	elapsed256 &= ~(scales[rtc_freq - 1] - 1);
 
 	for(n = 0; n < RTC_CB_ARRAY_SIZE; n++)
 	{
@@ -139,7 +140,7 @@ void rtc_cb_interrupt(void)
 		// Only execute callback when the number of elapsed 256-Hz
 		// ticks reach a multiple that correspond to the callback
 		// frequency.
-		if(elapsed256 & (scales[cb->freq] - 1)) continue;
+		if(elapsed256 & (scales[cb->freq - 1] - 1)) continue;
 
 		if(cb->callback) (*cb->callback)();
 		if(cb->repeats)

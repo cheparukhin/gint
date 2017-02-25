@@ -2,6 +2,7 @@
 #define	_INTERNALS_KEYBOARD_H
 
 #include <keyboard.h>
+#include <clock.h>
 
 // Keyboard variables.
 extern volatile unsigned char keyboard_state[10];
@@ -13,12 +14,6 @@ extern int last_key, last_repeats, last_events;
 
 // RTC callback id.
 extern unsigned cb_id;
-
-/*
-	sleep()
-	Puts the CPU into sleep until an interrupt request is accepted.
-*/
-void sleep(void);
 
 /*
 	getPressedKey()

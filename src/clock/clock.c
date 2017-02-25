@@ -5,38 +5,12 @@
 #include <stddef.h>
 #include <mpu.h>
 
-static struct ClockConfig conf = {
+static clock_config_t conf = {
 	.FLL = -1, .PLL = -1,
 	.Bphi_div1 = -1, .Iphi_div1 = -1, .Pphi_div1 = -1,
 	.CKIO_f = -1,
 	.Bphi_f = -1, .Iphi_f = -1, .Pphi_f = -1
 };
-
-/*
-	clock_frequency()
-	Returns the approximate frequency, in Hz, of the given clock. The
-	measurements need to have been done. Returns a negative number on
-	error.
-*/
-int clock_frequency(enum Clock clock)
-{
-	switch(clock)
-	{
-	case Clock_CKIO:
-		return conf.CKIO_f;
-	case Clock_RTCCLK:
-		return conf.RTCCLK_f;
-	case Clock_Bphi:
-		return conf.Bphi_f;
-	case Clock_Iphi:
-		return conf.Iphi_f;
-	case Clock_Pphi:
-		return conf.Pphi_f;
-
-	default:
-		return -2;
-	}
-}
 
 /*
 	clock_setting()
@@ -74,7 +48,7 @@ int clock_setting(int duration, enum ClockUnit unit)
 	clock_config()
 	Returns a copy of the clock configuration.
 */
-struct ClockConfig clock_config(void)
+clock_config_t clock_config(void)
 {
 	return conf;
 }
@@ -91,24 +65,28 @@ void sleep(void)
 }
 
 /*
-	sleep_us()
-	Sleeps for the given number of us using the user timer. The result will
-	always be slightly less than required.
+	sleep_ms(), sleep_us()
+	Sleeps for the given number of milliseconds / microseconds using the
+	TIMER_USER timer. The actual sleep time will always be slightly less
+	than requested.
 */
 
-static volatile int sleep_us_done = 0;
-
-static void sleep_us_callback(void)
+static volatile int sleep_done = 0;
+static void sleep_callback(void)
 {
-	sleep_us_done = 1;
+	sleep_done = 1;
 }
 
+void sleep_ms(int ms_delay)
+{
+	sleep_us(1000 * ms_delay);
+}
 void sleep_us(int us_delay)
 {
-	sleep_us_done = 0;
-	timer_start(TIMER_USER, us_delay, Clock_us, sleep_us_callback, 1);
+	sleep_done = 0;
+	timer_start(TIMER_USER, us_delay, Clock_us, sleep_callback, 1);
 	do sleep();
-	while(!sleep_us_done);
+	while(!sleep_done);
 }
 
 
@@ -126,7 +104,12 @@ static void clock_compute_7305(void);
 
 /*
 	clock_measure()
-	Measures or computes the clock frequencies.
+	Begins the frequency measurements. The measurements will end
+	automatically. While doing measurements, do not use the RTC interrupt
+	or the user timer.
+	Call clock_measure_end() to wait until the measurements are finished.
+	It is possible to execute code during the measurements, so that less
+	time is spent.
 */
 void clock_measure(void)
 {

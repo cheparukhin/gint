@@ -10,6 +10,7 @@
 #define	_DISPLAY_H	1
 
 #include <stdint.h>
+#include <stddef.h>
 
 
 //---

@@ -1,21 +1,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <setjmp.h>
+#include <stdint.h>
 
-#include <gint.h>
-#include <clock.h>
+#include <internals/gint.h>
 #include <internals/mmu.h>
+#include <internals/clock.h>
+#include <clock.h>
+#include <gint.h>
 
 int main(void);
 
 static void init(void);
 static void fini(void);
 
-// Symbols imported from the linker script.
-extern unsigned int
-	romdata,
-	bbss, ebss,
-	bdata, edata;
+// Symbols provided by the linker script.
+extern uint32_t
+	etext, btext,		// Location of .text section
+	bdata, edata,		// Location of .data section
+	bbss, ebss,		// Location of .bss section
+	bgint, egint,		// Location of interrut handler and gint data
+	gint_vbr,		// VBR address
+	romdata;		// ROM address of .data section contents
 
 // This variable should be overwritten before being returned, so the default
 // value doesn't matter much.
@@ -34,54 +40,132 @@ int atexit_index = 0;
 	main(). Also prepares the execution environment by initializing all the
 	modules.
 */
-
-int start(void)
-	__attribute__((
-		section(".pretext.entry")
-	));
-
-int start(void)
+__attribute__((section(".pretext.entry"))) int start(void)
 {
-	// Linker symbols.
-	unsigned int *bss = &bbss;
-	unsigned int *data = &bdata, *src = &romdata;
-	int x;
+	#ifdef	GINT_DIAGNOSTICS
+
+	// Ok, so fill as much information as possible so that in case anything
+	// goes wrong we can try to analyze what's been going on.
+	volatile gint_diagnostics_t *dg = gint_diagnostics();
+
+	// All that follows is "safe" information that can be saved immediately
+	// because it will never change anyway.
+	// Basic environment description.
+	dg->magic	= GINT_DIAGNOSTICS_MAGIC;
+	dg->counter	= dg->counter + 1;
+	dg->mpu		= mpu_unknown;
+	dg->version	= GINT_VERSION;
+	dg->stage	= stage_startup;
+
+	// Exception records: what kind of exceptions / TLB faults / interrupts
+	// occured last to get some trace in case of crash.
+	dg->excepts	= 0;
+	for(size_t i = 0; i < sizeof dg->except_vect; i++)
+		dg->except_vect[i] = 0;
+	dg->spc		= 0x00000000;
+	dg->ssr		= 0x00000000;
+	dg->expevt	= 0x00000000;
+	dg->tea		= 0x00000000;
+
+	// Memory map: provides information about alignement and the relative
+	// size and position of each section, as well as read-only / read-write
+	// types of addresses.
+	dg->section_text.address	= (uint32_t)&btext;
+	dg->section_text.length		= (uint32_t)&etext - (uint32_t)&btext;
+	dg->section_data.address	= (uint32_t)&bdata;
+	dg->section_data.length		= (uint32_t)&edata - (uint32_t)&bdata;
+	dg->section_bss.address		= (uint32_t)&bbss;
+	dg->section_bss.length		= (uint32_t)&ebss  - (uint32_t)&bbss;
+	dg->romdata	= (uint32_t)&romdata;
+
+	// Basic information about the running library.
+	dg->vbr_address			= (uint32_t)&gint_vbr;
+	dg->section_gint.address	= (uint32_t)&bgint;
+	dg->section_gint.length		= (uint32_t)&egint - (uint32_t)&bgint;
+	#endif
 
 	// Clearing the .bss section.
+	uint32_t *bss = &bbss;
 	while(bss < &ebss) *bss++ = 0;
+
 	// Copying the .data section.
+	uint32_t *data = &bdata, *src = &romdata;
 	while(data < &edata) *data++ = *src++;
 
+	#ifdef	GINT_DIAGNOSTICS
+	dg->stage	= stage_sections;
+	#endif
+
+	// Trying to get the system to fill the TLB without editing it
+	// directly, so that it does not go on rampage when finding out.
 	mmu_pseudoTLBInit();
+
+	#ifdef	GINT_DIAGNOSTICS
+	// At this point it would be wise to include a copy of the TLB, but
+	// it's already a huge array. Maybe later...
+	/* TODO Debug TLB? */
+	dg->stage	= stage_mmu;
+	#endif
 
 	// Initializing gint.
 	gint_init();
 
-	// Measure clock frequencies.
+	#ifdef	GINT_DIAGNOSTICS
+	dg->mpu		= MPU_CURRENT;
+	dg->stage	= stage_gint;
+	#endif
+
+	// Measuring clock frequencies.
 	clock_measure();
 	clock_measure_end();
+
+	#ifdef	GINT_DIAGNOSTICS
+	clock_config_t clock = clock_config();
+	dg->Bphi_f	= clock.Bphi_f / 1000000;
+	dg->Iphi_f	= clock.Iphi_f / 1000000;
+	dg->Pphi_f	= clock.Pphi_f / 1000000;
+	dg->stage	= stage_clock;
+	#endif
 
 	// Calling global constructors.
 	init();
 
+	#ifdef	GINT_DIAGNOSTICS
+	dg->stage	= stage_ctors;
+	dg->stage	= stage_running;
+	#endif
+
 
 
 	// Saving the execution state there.
-	x = setjmp(env);
+	int x = setjmp(env);
 	// If the program has just started, executing main(). Otherwise, the
 	// exit code has already been set by abort() or similar.
 	if(!x) exit_code = main();
 
 
+	#ifdef	GINT_DIAGNOSTICS
+	dg->stage	= stage_leaving;
+	#endif
 
-	// Remember to flush and close opened streams.
+	/* TODO Flush and close opened streams. */
 
 	// Calling exit handlers.
 	while(atexit_index > 0) (*atexit_handlers[--atexit_index])();
 
-	// Un-initializing everything.
+	// Calling the destructors.
 	fini();
+
+	#ifdef	GINT_DIAGNOSTICS
+	dg->stage	= stage_dtors;
+	#endif
+
+	// Un-initializing gint.
 	gint_quit();
+
+	#ifdef	GINT_DIAGNOSTICS
+	dg->stage	= stage_terminated;
+	#endif
 
 	return exit_code;
 }
@@ -166,3 +250,12 @@ int atexit(void (*function)(void))
 	return 0;
 }
 
+void crt0_system_menu(void)
+{
+	fini();
+	gint_quit();
+	__system_menu();
+	mmu_pseudoTLBInit();
+	gint_init();
+	init();
+}

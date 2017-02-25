@@ -138,23 +138,4 @@ void gimage(int x, int y, struct Image *image);
 void gimage_part(int x, int y, struct Image *image, int left, int top,
 	int width, int height);
 
-
-
-//---
-//	Internal API.
-//	Referenced here for documentation purposes only. Do not call.
-//--
-
-/*
-	gray_interrupt()
-	Answers a timer interrupt. Swaps the two buffers.
-*/
-void gray_interrupt(void)	__attribute__((section(".gint.int")));
-
-/*
-	gray_init()
-	Initializes the gray engine.
-*/
-void gray_init(void)		__attribute__((constructor));
-
 #endif	// _GRAY_H

@@ -9,12 +9,13 @@ build/**
 *.o
 
 # Some notes.
-LIBC
+notes/**
 
 # Output files
 libc.a
 libgint.a
 gintdemo.g1a
+gintdbg.g1a
 
 # Configuration files
 gcc.cfg

@@ -5,27 +5,27 @@
 	address needs to be done in assembler.
 */
 
-	.global	_gint_getVBR
-	.global	_gint_setVBR
+	.global	_gint_getvbr
+	.global	_gint_setvbr
 
 
 
 /*
-	gint_getVBR()
+	gint_getvbr()
 	Returns the current vbr address.
 */
-_gint_getVBR:
+_gint_getvbr:
 	rts
 	stc	vbr, r0
 
 
 
 /*
-	gint_setVBR()
+	gint_setvbr()
 
 	This is quite the hard part when modifying the vbr. We need to set
 	immediately the interrupt priorities of our own handler, or restore
-	the ones used by the system ; otherwise we may receive interrupts
+	the ones used by the system; otherwise we may receive interrupts
 	requests that the new handler doesn't handle, which will cause the
 	whole program to freeze.
 
@@ -33,7 +33,7 @@ _gint_getVBR:
 	having disabled all the interrupts in the status register. That's why
 	this function takes as parameter the priority management function.
 */
-_gint_setVBR:
+_gint_setvbr:
 	sts.l	pr, @-r15
 
 	/* Blocking all interrupts. */

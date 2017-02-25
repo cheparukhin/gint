@@ -8,7 +8,7 @@
 
 #include <mpu.h>
 
-enum MPU MPU_CURRENT;
+mpu_t MPU_CURRENT;
 
 /*
 	getMPU()
@@ -26,7 +26,7 @@ enum MPU MPU_CURRENT;
 	Additionally, the CPU core ID register (CPIDR) at 0xff000048 returns 1
 	on SH7305.
 */
-enum MPU getMPU(void)
+mpu_t getMPU(void)
 {
 	// Processor version register.
 	volatile unsigned int *pvr = (unsigned int *)0xff000030;
@@ -46,26 +46,26 @@ enum MPU getMPU(void)
 	*plcr = saved_plcr;
 
 	// Checking whether we are working with an SH7337 or an SH7355.
-	if(tested_plcr == 0x00ff) return MPU_SH7337;
-	if(tested_plcr == 0x0fff) return MPU_SH7355;
+	if(tested_plcr == 0x00ff) return mpu_sh7337;
+	if(tested_plcr == 0x0fff) return mpu_sh7355;
 
 	// Looking for SH-4-based MPUs by testing the version registers. This
 	// needs to have the three upper bytes of the processor version
 	// register match 0x10300b :
-	if((*pvr & 0xffffff00) != 0x10300b00) return MPU_Unknown;
+	if((*pvr & 0xffffff00) != 0x10300b00) return mpu_unknown;
 
 	// Now that we have an SH-4-based MPU, checking whether it is SH7305 or
 	// SH7724.
 	switch(*prr & 0xfffffff0)
 	{
 	case 0x00002c00:
-		return MPU_SH7305;
+		return mpu_sh7305;
 	case 0x00002200:
-		return MPU_SH7724;
+		return mpu_sh7724;
 	}
 
 	// By default, the MPU is unknown.
-	return MPU_Unknown;
+	return mpu_unknown;
 }
 
 
@@ -74,7 +74,7 @@ enum MPU getMPU(void)
 	mpu_init()
 	Determines the MPU type and stores the result into MPU_CURRENT.
 */
-void mpu_init(void)
+__attribute__((constructor)) void mpu_init(void)
 {
 	MPU_CURRENT = getMPU();
 }

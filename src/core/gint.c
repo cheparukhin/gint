@@ -8,278 +8,182 @@
 //---
 
 #include <internals/gint.h>
+#include <internals/interrupt_maps.h>
+#include <internals/exceptions.h>
+#include <internals/interrupts.h>
 #include <gint.h>
 #include <mpu.h>
-#include <stddef.h>
 
-static unsigned int
-	new_vbr,
-	sys_vbr;
-
-static void (*default_handler)(int event_code) = NULL;
-
-
-
-//---
-//	Local functions.
-//---
-
-/*
-	gint_setup()
-	Configures interrupt priorities and some parameters to allow gint to
-	take control of the interrupt flow.
-*/
-static void gint_setup(void)
-{
-	if(isSH3())
-		gint_setup_7705();
-	else
-		gint_setup_7305();
-}
-
-/*
-	gint_stop()
-	Un-configures the interrupt flow to give back the interrupt control to
-	the system.
-*/
-static void gint_stop(void)
-{
-	if(isSH3())
-		gint_stop_7705();
-	else
-		gint_stop_7305();
-}
+// Referencing the interrupt handlers to force ld to link them in (there should
+// be a better way of achieving this, but I can't seem to find it).
+__attribute__((used)) static void (*_exc)(void) = &gint_exc;
+__attribute__((used)) static void (*_tlb)(void) = &gint_tlb;
+__attribute__((used)) static void (*_int)(void) = &gint_int;
 
 
 
 //---
-//	Public API.
+//	Exception and interrupt handlers
 //---
 
-/*
-	gint_systemVBR()
-	Returns the vbr address used by the system (saved when execution
-	starts).
-*/
-inline unsigned int gint_systemVBR(void)
-{
-	return sys_vbr;
-}
+gint_interrupt_handler_t gint_handlers[] = {
+
+	//---
+	//	Resets and non-events
+	//---
+
+	{ NULL, NULL, 0, { 0x00, 0x00, 0x00 } },
+
+	//---
+	//	General exceptions
+	//---
+
+	// Address error.
+	{ NULL, exch_address_error, 0,
+		{  arg_pc,	arg_tea,	arg_subtype	} },
+	// TLB protection violation.
+	{ NULL, exch_tlb_protection_violation, 0,
+		{  arg_pc,	arg_tea,	arg_subtype	} },
+	// TLB Invalid (SH7705 only).
+	{ NULL, exch_tlb_invalid, 0,
+		{  arg_pc,	arg_tea,	arg_subtype	} },
+	// Illegal instruction.
+	{ NULL, exch_illegal_instruction, 0,
+		{  arg_pc,	arg_opcode,	0x00		} },
+	// Illegal opcode.
+	{ NULL, exch_illegal_slot, 0,
+		{  arg_pc,	arg_opcode,	0x00		} },
+	// User break.
+	{ NULL, exch_user_break, 0,
+		{  0x00,	0x00,		0x00		} },
+	// Initial page write.
+	{ NULL, exch_initial_page_write, 0,
+		{  0x00,	0x00,		0x00		} },
+	// Unconditional trap.
+	{ NULL, exch_trap, 0,
+		{  arg_pc,	arg_trap,	0x00		} },
+	// DMA address error.
+	{ NULL, exch_dma_address, 0,
+		{  0x00,	0x00,		0x00		} },
+
+	//---
+	//	TLB misses
+	//---
+
+	{ NULL, exch_tlb_miss,
+		0, {  arg_pc,	arg_tea,	arg_subtype	} },
+
+	//---
+	//	Interrupt requests
+	//---
+
+	// Non-Maskable Interrupt.
+	{ NULL, NULL, 0,
+		{  0x00,	0x00,		0x00		} },
+	// Timer underflow.
+	{ NULL, inth_timer_underflow, 12,
+		{  arg_subtype,	0x00,		0x00		} },
+	// Timer channel 2 input capture (SH7705 only)
+	{ NULL, NULL, 0,
+		{  arg_timer_capt, 0x00,	0x00		} },
+	// Real-time clock alarm interrupt.
+	{ NULL, NULL, 0,
+		{  0x00,	0x00,		0x00		} },
+	// Real-time clock periodic interrupt.
+	{ NULL, inth_rtc_periodic, 10,
+		{  0x00,	 0x00,		0x00		} },
+	// Real-time clock carry interrupt.
+	{ NULL, NULL, 0,
+		{  0x00,	0x00,		0x00		} },
+};
 
 /*
-	gint_setDefaultHandler()
-	In case gint receives an interrupt it doesn't recognize, it can fall
-	back to a user-provided interrupt handler. Set it to NULL to disable
-	this feature.
-	Be aware that the event code passed to the default handler will either
-	be INTEVT2 (SH7705) or INTEVT (SH7305), but its value for each
-	interrupt case is completely platform-dependent. Remember to handle
-	both platforms for increased portability, if possible.
+	gint_invoke()
+	Invokes an interrupt or exception handler, given its type and subtype.
 */
-void gint_setDefaultHandler(void (*new_handler)(int event_code))
+void gint_invoke(uint8_t type, uint8_t subtype)
 {
-	default_handler = new_handler;
-}
+	if(type >= exc_type_max || !gint_handlers[type].function) return;
 
-/*
-	gint_init()
-	Initializes gint. Loads the interrupt handler into the memory and sets
-	the new vbr address.
-*/
-void gint_init(void)
-{
-	// Linker script symbols -- gint.
-	extern unsigned int
-		gint_vbr,
-		gint_data,
-		bgint, egint;
+	volatile uint32_t *tea, *tra, *tcpr_2;
+	uint32_t args[3];
+	uint16_t *pc;
 
-	unsigned int *ptr = &bgint;
-	unsigned int *src = &gint_data;
+	// Getting some initial information to work with.
+	__asm__("stc spc, %0" : "=rm"(pc));
+	tea = gint_reg(register_tea);
+	tra = gint_reg(register_tra);
+	tcpr_2 = (void *)0xfffffeb8;
 
-	// This initialization routine is usually called before any
-	// constructor. We want to ensure that the MPU type is detected, but
-	// mpu_init() hasn't been called yet.
-	mpu_init();
-
-	// Loading the interrupt handler into the memory.
-	while(ptr < &egint) *ptr++ = *src++;
-
-	sys_vbr = gint_getVBR();
-	new_vbr = (unsigned int)&gint_vbr;
-
-	gint_setVBR(new_vbr, gint_setup);
-}
-
-/*
-	gint_quit()
-	Stops gint. Restores the system's configuration and vbr address.
-*/
-void gint_quit(void)
-{
-	gint_setVBR(sys_vbr, gint_stop);
-}
-
-
-
-//---
-//	VBR space.
-//---
-
-#include <display.h>
-#define print(str, x, y) dtext(6 * (x) - 5, 8 * (y) - 7, str)
-#define hexdigit(n) ((n) + '0' + 39 * ((n) > 9))
-
-static void hex(unsigned int x, int digits, char *str)
-{
-	str[0] = '0';
-	str[1] = 'x';
-	str[digits + 2] = 0;
-
-	while(digits)
+	// Building up the argument list.
+	for(int i = 0; i < 3; i++) switch(gint_handlers[type].args[i])
 	{
-		str[digits + 1] = hexdigit(x & 0xf);
-		x >>= 4;
-		digits--;
+	case arg_none:		args[i] = 0;		break;
+	case arg_subtype:	args[i] = subtype;	break;
+	case arg_pc:		args[i] = (uint32_t)pc;	break;
+	case arg_opcode:	args[i] = *pc;		break;
+	case arg_tea:		args[i] = *tea;		break;
+	case arg_trap:		args[i] = *tra >> 2;	break;
+	case arg_timer_capt:	args[i] = *tcpr_2;	break;
 	}
-}
 
-static void reverse(void)
-{
-	int *vram = display_getCurrentVRAM();
-	int i;
-	for(i = 0; i < 36; i++) vram[i] = ~vram[i];
-}
-
-/*
-	gint_exc()
-	Handles exceptions.
-*/
-void gint_exc(void)
-{
-	volatile unsigned int *expevt	= gint_reg(Register_EXPEVT);
-	volatile unsigned int *tea	= gint_reg(Register_TEA);
-	unsigned int spc;
-	char str[11];
-
-	text_configure(NULL, Color_Black);
-
-	__asm__("\tstc spc, %0" : "=r"(spc));
-
-	dclear();
-	print("Exception raised!", 3, 1);
-	reverse();
-	print(gint_strerror(0), 2, 3);
-
-	print("expevt", 2, 4);
-	hex(*expevt, 3, str);
-	print(str, 16, 4);
-
-	print("pc", 2, 5);
-	hex(spc, 8, str);
-	print(str, 11, 5);
-
-	print("tea", 2, 6);
-	hex(*tea, 8, str);
-	print(str, 11, 6);
-
-	print("Please reset.", 2, 7);
-	dupdate();
-	while(1);
+	// Calling the function with the required amount of arguments.
+	if(gint_handlers[type].args[2])
+	{
+		void (*handler)(uint32_t, uint32_t, uint32_t);
+		handler = gint_handlers[type].function;
+		(*handler)(args[0], args[1], args[2]);
+	}
+	else if(gint_handlers[type].args[1])
+	{
+		void (*handler)(uint32_t, uint32_t);
+		handler = gint_handlers[type].function;
+		(*handler)(args[0], args[1]);
+	}
+	else if(gint_handlers[type].args[0])
+	{
+		void (*handler)(uint32_t);
+		handler = gint_handlers[type].function;
+		(*handler)(args[0]);
+	}
+	else (*(void (*)(void))gint_handlers[type].function)();
 }
 
 /*
-	gint_tlb()
-	Handles TLB misses.
+	gint_install()
+	Installs an exception or interrupt handler for one of gint's recognized
+	interrupts.
 */
-void gint_tlb(void)
+void gint_install(gint_interrupt_type_t type, void *function)
 {
-	volatile unsigned int *expevt	= gint_reg(Register_EXPEVT);
-	volatile unsigned int *tea	= gint_reg(Register_TEA);
-	unsigned int spc;
-	char str[11];
-
-	text_configure(NULL, Color_Black);
-
-	__asm__("\tstc spc, %0" : "=r"(spc));
-
-	dclear();
-	print("TLB error!", 6, 1);
-	reverse();
-	print(gint_strerror(1), 2, 3);
-
-	print("expevt", 2, 4);
-	hex(*expevt, 3, str);
-	print(str, 16, 4);
-
-	print("pc", 2, 5);
-	hex(spc, 8, str);
-	print(str, 11, 5);
-
-	print("tea", 2, 6);
-	hex(*tea, 8, str);
-	print(str, 11, 6);
-
-	print("Please reset.", 2, 7);
-	dupdate();
-	while(1);
+	if((unsigned)type >= exc_type_max) return;
+	gint_handlers[type].function = function;
 }
 
 /*
-	gint_int()
-	Handles interrupts.
+	gint_uninstall()
+	Uninstalls the exception or interrupt handler that was used for the
+	given interrupt, falling back to gint's default handler.
 */
-void gint_int(void)
+void gint_uninstall(gint_interrupt_type_t type)
 {
-	if(isSH3())
-		gint_int_7705();
-	else
-		gint_int_7305();
+	if((unsigned)type >= exc_type_max) return;
+	gint_handlers[type].function = gint_handlers[type].default_function;
 }
 
 
 
 //---
-//	Internal API.
+//	Register access
 //---
-
-/*
-	gint_callDefaultHandler()
-	Calls the user-provided default interrupt handler.
-*/
-void gint_callDefaultHandler(int event_code)
-{
-	if(default_handler) default_handler(event_code);
-}
 
 /*
 	gint_reg()
 	Returns the address of a common register. All common registers exist
 	on both platforms but they may hold different values for the same
-	information (f.i. EXPEVT may not return the same value for a given
-	exception on both 7705 and 7305).
+	information.
 */
-inline volatile void *gint_reg(enum Register reg)
+volatile void *gint_reg(gint_register_t reg)
 {
-	if(isSH3())
-		return gint_reg_7705(reg);
-	else
-		return gint_reg_7305(reg);
-}
-
-/*
-	gint_strerror()
-	Returns a string that describe the error set in EXPEVT. This string is
-	not platform-dependent.
-	Some exception codes represent different errors when invoked inside the
-	general exception handler and the TLB error handler. Parameter 'is_tlb'
-	should be set to zero for general exception meanings, and anything non-
-	zero for TLB error meanings.
-*/
-const char *gint_strerror(int is_tlb)
-{
-	if(isSH3())
-		return gint_strerror_7705(is_tlb);
-	else
-		return gint_strerror_7305();
+	return isSH3() ? gint_reg_7705(reg) : gint_reg_7305(reg);
 }

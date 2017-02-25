@@ -15,52 +15,6 @@
 #include <7705.h>
 #include <rtc.h>
 
-#include <stddef.h>
-
-//---
-//	Interrupt codes.
-//---
-
-#define	IC_RTC_PRI	0x4a0
-#define	IC_PINT07	0x700
-#define	IC_TMU0_TUNI0	0x400
-#define	IC_TMU1_TUNI1	0x420
-#define	IC_TMU2_TUNI2	0x440
-
-
-
-//---
-//	Exception handling.
-//---
-
-void gint_int_7705(void)
-{
-	volatile unsigned int *intevt2 = (unsigned int *)0xa4000000;
-	unsigned int code = *intevt2;
-
-	switch(code)
-	{
-	case IC_RTC_PRI:
-		rtc_interrupt();
-		break;
-
-	case IC_TMU0_TUNI0:
-		timer_interrupt(TIMER_TMU0);
-		break;
-
-	case IC_TMU1_TUNI1:
-		timer_interrupt(TIMER_TMU1);
-		break;
-
-	case IC_TMU2_TUNI2:
-		timer_interrupt(TIMER_TMU2);
-		break;
-
-	default:
-		gint_callDefaultHandler(code);
-	}
-}
-
 /*
 	gint_reg()
 	Returns the address of a common register. All common registers exist
@@ -68,50 +22,17 @@ void gint_int_7705(void)
 	information (f.i. EXPEVT may not return the same value for a given
 	exception on both 7705 and 7305).
 */
-volatile void *gint_reg_7705(enum Register reg)
+volatile void *gint_reg_7705(gint_register_t reg)
 {
-	volatile unsigned int *expevt	= (unsigned int *)0xffffffd4;
-	volatile unsigned int *mmucr	= (unsigned int *)0xfffffff4;
-	volatile unsigned int *tea	= (unsigned int *)0xfffffffc;
-
 	switch(reg)
 	{
-	case Register_EXPEVT:	return expevt;
-	case Register_MMUCR:	return mmucr;
-	case Register_TEA:	return tea;
+	case register_intevt:	return (void *)0xa4000000;
+	case register_tra:	return (void *)0xffffffd0;
+	case register_expevt:	return (void *)0xffffffd4;
+	case register_mmucr:	return (void *)0xfffffff4;
+	case register_tea:	return (void *)0xfffffffc;
 	default:		return NULL;
 	}
-}
-
-/*
-	gint_strerror()
-	Returns a string that describe the error set in EXPEVT. This string is
-	not platform-dependent.
-	Some exception codes represent different errors when invoked inside the
-	general exception handler and the TLB error handler. Parameter 'is_tlb'
-	should be set to zero for general exception meanings, and anything non-
-	zero for TLB error meanings.
-*/
-const char *gint_strerror_7705(int is_tlb)
-{
-	volatile unsigned int *expevt = gint_reg_7705(Register_EXPEVT);
-
-	switch(*expevt)
-	{
-	case 0x1e0: return gint_str[3];
-	case 0x0e0: return gint_str[4];
-	case 0x040: return gint_str[is_tlb ? 10 : 11];
-	case 0x0a0: return gint_str[12];
-	case 0x180: return gint_str[6];
-	case 0x1a0: return gint_str[7];
-	case 0x100: return gint_str[5];
-	case 0x060: return gint_str[is_tlb ? 13 : 19];
-	case 0x0c0: return gint_str[16];
-	case 0x080: return gint_str[20];
-	case 0x160: return gint_str[21];
-	case 0x5c0: return gint_str[22];
-	}
-	return gint_str[0];
 }
 
 
@@ -148,10 +69,10 @@ static void gint_priority_lock_7705(void)
 	INTX.IPRH.WORD = 0x0000;
 
 	// Allowing RTC, which handles keyboard.
-	INTC.IPRA.BIT._RTC	= GINT_INTP_RTC;
-	INTC.IPRA.BIT._TMU0	= GINT_INTP_KEY;
-	INTC.IPRA.BIT._TMU1	= GINT_INTP_GRAY;
-	INTC.IPRA.BIT._TMU2	= GINT_INTP_TIMER;
+	INTC.IPRA.BIT._RTC	= 10;
+	INTC.IPRA.BIT._TMU0	= 12;
+	INTC.IPRA.BIT._TMU1	= 12;
+	INTC.IPRA.BIT._TMU2	= 12;
 }
 
 static void gint_priority_unlock_7705(void)

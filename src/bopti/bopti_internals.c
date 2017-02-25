@@ -81,7 +81,7 @@ void bopti_grid_a32(const uint32_t *layer, int column_count, int height,
 	{
 		for(row = c->top; row < c->bottom; row++)
 		{
-			(*c->op)(vram_offset, layer[row], c);
+		 	(c->op)(vram_offset, layer[row], c);
 			vram_offset += 4;
 		}
 
@@ -108,8 +108,8 @@ void bopti_grid(const uint32_t *layer, int column_count, int height,
 	int vram_column_offset = (c->y << 2) + (c->x >> 5) + (c->x < 0);
 	int vram_offset = vram_column_offset;
 
-	int shift1 = 32 - (c->x & 31);
 	int shift2 = (c->x & 31);
+	int shift1 = 32 - shift2;
 
 	// Initializing two pointers. They will read two adjacent columns at
 	// the same time (p2 is column ahead of p1). Since the columns are
@@ -138,7 +138,8 @@ void bopti_grid(const uint32_t *layer, int column_count, int height,
 			l2 = (right_column < column_count) ? p2[line] : (0);
 
 			operator = (l1 << shift1) | (l2 >> shift2);
-			(*c->op)(vram_offset, operator, c);
+		 	(c->op)(vram_offset, operator, c);
+
 			vram_offset += 4;
 		}
 
@@ -199,7 +200,8 @@ void bopti_end_nover(const unsigned char *end, int size, struct Command *c)
 		operator = (*get)(&end);
 		operator <<= shift;
 
-		(*c->op)(vram_offset, operator, c);
+		 (c->op)(vram_offset, operator, c);
+
 		vram_offset += 4;
 	}
 }
@@ -225,10 +227,12 @@ void bopti_end(const unsigned char *end, int size, struct Command *c)
 		row_data = (*get)(&end);
 
 		operator = row_data >> shift1;
-		(*c->op)(vram_offset, operator, c);
+		 (c->op)(vram_offset, operator, c);
+
 
 		operator = row_data << shift2;
-		(*c->op)(vram_offset + 1, operator, c);
+		 (c->op)(vram_offset + 1, operator, c);
+
 
 		vram_offset += 4;
 	}
@@ -288,8 +292,8 @@ void getStructure(struct Image *img, struct Structure *s)
 	// Large images.
 	if(!img->width && !img->height)
 	{
-		s->width	= (img->data[0] << 8) | img->data[1];
-		s->height	= (img->data[2] << 8) | img->data[3];
+		s->width	= img->data[0] >> 16;
+		s->height	= img->data[0] & 0xffff;
 		s->data		= (uint8_t *)img->data + 4;
 
 		column_count = (s->width + 31) >> 5;

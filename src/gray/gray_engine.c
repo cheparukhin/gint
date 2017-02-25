@@ -24,6 +24,38 @@ static int runs = 0;
 
 
 //---
+//	Interrupt control and initialization.
+//---
+
+/*
+	gray_interrupt()
+	Answers a timer interrupt. Swaps the buffers.
+*/
+void gray_interrupt(void)
+{
+	timer_reload2(TIMER_GRAY, delays[(~current) & 1]);
+	screen_display(vrams[current]);
+	current ^= 1;
+}
+
+/*
+	gray_init()
+	Initializes the gray engine.
+*/
+__attribute__((constructor)) void gray_init(void)
+{
+	vrams[0] = (const void *)display_getLocalVRAM();
+	vrams[1] = (const void *)internal_vrams[0];
+	vrams[2] = (const void *)internal_vrams[1];
+	vrams[3] = (const void *)internal_vrams[2];
+
+	delays[0] = 912;
+	delays[1] = 1343;
+}
+
+
+
+//---
 //	Engine control.
 //---
 
@@ -122,36 +154,4 @@ void gray_getDelays(int *light, int *dark)
 inline void gupdate(void)
 {
 	current ^= 2;
-}
-
-
-
-//---
-//	Interrupt control and initialization.
-//---
-
-/*
-	gray_interrupt()
-	Answers a timer interrupt. Swaps the buffers.
-*/
-void gray_interrupt(void)
-{
-	timer_reload2(TIMER_GRAY, delays[(~current) & 1]);
-	screen_display(vrams[current]);
-	current ^= 1;
-}
-
-/*
-	gray_init()
-	Initializes the gray engine.
-*/
-void gray_init(void)
-{
-	vrams[0] = (const void *)display_getLocalVRAM();
-	vrams[1] = (const void *)internal_vrams[0];
-	vrams[2] = (const void *)internal_vrams[1];
-	vrams[3] = (const void *)internal_vrams[2];
-
-	delays[0] = 912;
-	delays[1] = 1343;
 }

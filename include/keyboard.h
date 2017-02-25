@@ -280,16 +280,14 @@ enum KeyType keytype(int key);
 	Notifies the keyboard module that an interrupt request has been issued,
 	and updates the keyboard state.
 */
-void keyboard_interrupt(void)		__attribute__((section(".gint.int")));
+void keyboard_interrupt(void);
 
 /*
 	keyboard_updateState()
 	Updates the keyboard state.
 */
-void keyboard_updateState_7705(volatile unsigned char *state)
-					__attribute__((section(".gint.int")));
-void keyboard_updateState_7305(volatile unsigned char *state)
-					__attribute__((section(".gint.int")));
+void keyboard_updateState_7705(volatile unsigned char *state);
+void keyboard_updateState_7305(volatile unsigned char *state);
 
 /*
 	keyboard_init()

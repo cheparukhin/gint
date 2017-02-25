@@ -3,10 +3,13 @@
 #include <gray.h>
 
 /*
-	gimage()
-	Displays a gray image in the video ram.
+	gimage_part()
+	Draws a portion of a gray image, defined by its bounding rectangle.
+	Point (left, top) is included, but (left + width, top + height) is
+	excluded.
 */
-void gimage(int x, int y, struct Image *img)
+void gimage_part(int x, int y, struct Image *img, int left, int top,
+	int width, int height)
 {
 	if(!img || img->magic != 0x01) return;
 
@@ -16,18 +19,28 @@ void gimage(int x, int y, struct Image *img)
 	int format = img->format, i = 0;
 
 	getStructure(img, &s);
+	if(width < 0) width = s.width;
+	if(height < 0) height = s.height;
 
 	//---
-	//	Adjusting image parameters.
+	//	Adjusting the bounding rectangle.
 	//---
 
-	if(x + s.width <= 0 || x > 127 || y + s.height <= 0 || y > 63) return;
+	// This is what happens when the bounding rectangle overflows from the
+	// image...
+	if(left < 0) left = 0;
+	if(top < 0) top = 0;
+	if(left + width > s.width) width = s.width - left;
+	if(top + height > s.height) height = s.height - top;
 
-	command.top	= (y < 0) ? (-y) : (0);
-	command.bottom	= (y + s.height > 64) ? (64 - y) : (s.height);
-	command.left	= ((x < 0) ? (-x) : (0)) >> 5;
-	actual_width	= (x + s.width > 128) ? (128 - x) : (s.width);
-	command.right	= ((actual_width + 31) >> 5) - 1;
+	if(x + left + width <= 0 || x > 127 || y + top + height <= 0 || y > 63)
+		return;
+
+	command.top	= (y < 0) ? (top - y) : top;
+	command.bottom	= top + ((y + height > 64) ? (64 - y) : height);
+	command.left	= ((x < 0) ? (left - x) : left) >> 5;
+	actual_width	= (x + width > 128) ? (128 - x) : width;
+	command.right	= ((left + actual_width + 31) >> 5) - 1;
 
 	command.op	= bopti_op_gray;
 
@@ -39,12 +52,10 @@ void gimage(int x, int y, struct Image *img)
 
 	while(format)
 	{
-		// Drawing every layer, in order of formats.
 		if(format & 1)
 		{
-			// These members are modified by bopti()!
-			command.x = x;
-			command.y = y;
+			command.x = x - left;
+			command.y = y - top;
 			command.channel = (1 << i);
 
 			bopti(s.data, &s, &command);
@@ -54,4 +65,13 @@ void gimage(int x, int y, struct Image *img)
 		format >>= 1;
 		i++;
 	}
+}
+
+/*
+	gimage()
+	Displays a gray image in the video ram.
+*/
+void gimage(int x, int y, struct Image *img)
+{
+	gimage_part(x, y, img, 0, 0, -1, -1);
 }
