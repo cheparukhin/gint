@@ -56,8 +56,7 @@ debug-cflags	= -m3 -mb -nostdlib -ffreestanding -I debug/include -I \
 		  include -std=c11 -Os -Wall -Wextra
 
 # Specific objects
-obj-lib-spec	= build/display_font_system.bmp.o \
-		  build/display_font_terminal.bmp.o
+obj-lib-spec	= build/display_font_system.bmp.o
 obj-std-spec	=
 
 # Configuration files
