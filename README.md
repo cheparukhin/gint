@@ -68,6 +68,7 @@ the storage folder of the fxSDK:
 When explicitly running target `all`, the following additional files will be
 generated in the working directory:
 * `gintdemo.g1a`, a test application
+* `gintdbg.g1a`, a non-gint application used for debugging in case gint crashes
 
 The usual `clean`, `mrproper`, and `distclean` rules will clean the directory.
 There are configuration options, which can be obtained using
