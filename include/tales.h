@@ -12,6 +12,7 @@
 
 #include <display.h>
 #include <stdint.h>
+#include <stddef.h>
 
 //---
 //	Types and constants.

@@ -11,17 +11,29 @@
 #define	_CLOCK_H
 
 //---
-//	Some type declarations.
+//	Sleep functions.
 //---
 
-enum Clock
-{
-	Clock_CKIO 	= 0,	// SH7705
-	Clock_RTCCLK	= 1,	// SH7305
-	Clock_Bphi	= 2,
-	Clock_Iphi	= 3,
-	Clock_Pphi	= 4,
-};
+/*
+	sleep()
+	Puts the processor to sleep until an interrupt request is issued.
+*/
+void sleep(void);
+
+/*
+	sleep_ms(), sleep_us()
+	Sleeps for the given number of milliseconds / microseconds using the
+	TIMER_USER timer. The actual sleep time will always be slightly less
+	than requested.
+*/
+void sleep_ms(int ms_delay);
+void sleep_us(int us_delay);
+
+
+
+//---
+//	Clock management.
+//---
 
 enum ClockUnit
 {
@@ -34,7 +46,7 @@ enum ClockUnit
 	Clock_MHz	= 12,
 };
 
-struct ClockConfig
+typedef struct
 {
 	union
 	{
@@ -60,69 +72,23 @@ struct ClockConfig
 	int Bphi_f;
 	int Iphi_f;
 	int Pphi_f;
-};
 
-//---
-//	Public API.
-//---
-
-/*
-	clock_frequency()
-	Returns the approximate frequency, in Hz, of the given clock. The
-	measurements need to have been done. Returns a negative number on
-	error.
-*/
-int clock_frequency(enum Clock clock);
+} clock_config_t;
 
 /*
 	clock_setting()
 	Returns the P_phi / 4 timer setting that will last for the given time.
 	Several units can be used. Be aware that the result is approximate, and
 	very high frequencies or very short delays will yield important errors.
+	Normally you need not use this function when setting up timers because
+	timer_start() handles this conversion for you.
 */
 int clock_setting(int duration, enum ClockUnit unit);
 
 /*
 	clock_config()
-	Returns a copy of the clock configuration.
+	Returns a copy of what the library knows about the clocks.
 */
-struct ClockConfig clock_config(void);
-
-/*
-	sleep()
-	Sleeps until an interrupt is accepted.
-*/
-void sleep(void);
-
-/*
-	sleep_us()
-	Sleeps for the given number of us using the user timer. The result will
-	always be slightly less than required.
-*/
-void sleep_us(int us_delay);
-
-
-
-//---
-//	Internal API.
-//	Referenced for documentation purposes only. Do not use.
-//---
-
-/*
-	clock_measure()
-	Begins the frequency measurements. The measurements will end
-	automatically. While doing measurements, do not use the RTC interrupt
-	or the user timer.
-	Call clock_measure_end() to wait until the measurements are finished.
-	It is possible to execute code during the measurements, so that less
-	time is spent.
-*/
-void clock_measure(void);
-
-/*
-	clock_measure_end()
-	Waits until the measurements are finished. This may be immediate.
-*/
-void clock_measure_end(void);
+clock_config_t clock_config(void);
 
 #endif	// _CLOCK_H

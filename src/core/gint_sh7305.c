@@ -15,52 +15,6 @@
 #include <7305.h>
 #include <rtc.h>
 
-#include <stddef.h>
-
-//---
-//	Interrupt codes.
-//---
-
-#define	IC_RTC_PRI	0xaa0
-#define	IC_KEYSC	0xbe0
-#define	IC_TMU0_TUNI0	0x400
-#define	IC_TMU0_TUNI1	0x420
-#define	IC_TMU0_TUNI2	0x440
-
-
-
-//---
-//	Exception handling.
-//---
-
-void gint_int_7305(void)
-{
-	volatile unsigned int *intevt  = (unsigned int *)0xff000028;
-	unsigned int code = *intevt;
-
-	switch(code)
-	{
-	case IC_RTC_PRI:
-		rtc_interrupt();
-		break;
-
-	case IC_TMU0_TUNI0:
-		timer_interrupt(TIMER_TMU0);
-		break;
-
-	case IC_TMU0_TUNI1:
-		timer_interrupt(TIMER_TMU1);
-		break;
-
-	case IC_TMU0_TUNI2:
-		timer_interrupt(TIMER_TMU2);
-		break;
-
-	default:
-		gint_callDefaultHandler(code);
-	}
-}
-
 /*
 	gint_reg()
 	Returns the address of a common register. All common registers exist
@@ -68,45 +22,17 @@ void gint_int_7305(void)
 	information (f.i. EXPEVT may not return the same value for a given
 	exception on both 7705 and 7305).
 */
-volatile void *gint_reg_7305(enum Register reg)
+volatile void *gint_reg_7305(gint_register_t reg)
 {
-	volatile unsigned int *expevt	= (unsigned int *)0xff000024;
-	volatile unsigned int *tea	= (unsigned int *)0xff00000c;
-	volatile unsigned int *mmucr	= (unsigned int *)0xff000010;
-
 	switch(reg)
 	{
-	case Register_EXPEVT:	return expevt;
-	case Register_TEA:	return tea;
-	case Register_MMUCR:	return mmucr;
+	case register_tea:	return (void *)0xff00000c;
+	case register_mmucr:	return (void *)0xff000010;
+	case register_tra:	return (void *)0xff000020;
+	case register_expevt:	return (void *)0xff000024;
+	case register_intevt:	return (void *)0xff000028;
 	default:		return NULL;
 	}
-}
-
-/*
-	gint_strerror()
-	Returns a string that describe the error set in EXPEVT. This string is
-	not platform-dependent.
-*/
-const char *gint_strerror_7305(void)
-{
-	volatile unsigned int *expevt = gint_reg_7305(Register_EXPEVT);
-
-	switch(*expevt)
-	{
-	case 0x1e0: return gint_str[3];
-	case 0x0e0: return gint_str[8];
-	case 0x040: return gint_str[14];
-	case 0x0a0: return gint_str[17];
-	case 0x180: return gint_str[6];
-	case 0x1a0: return gint_str[7];
-	case 0x100: return gint_str[9];
-	case 0x060: return gint_str[15];
-	case 0x0c0: return gint_str[18];
-	case 0x080: return gint_str[20];
-	case 0x160: return gint_str[21];
-	}
-	return gint_str[0];
 }
 
 
@@ -164,10 +90,10 @@ static void gint_priority_lock_7305(void)
 	// Allowing RTC. Keyboard analysis is done regularly using a RTC
 	// because SH7305's special KEYSC interface does not allow us to clear
 	// the keyboard interrupt flags.
-	INTX.IPRK._RTC		= GINT_INTP_RTC;
-	INTX.IPRA.TMU0_0	= GINT_INTP_KEY;
-	INTX.IPRA.TMU0_1	= GINT_INTP_GRAY;
-	INTX.IPRA.TMU0_2	= GINT_INTP_TIMER;
+	INTX.IPRK._RTC		= 10;
+	INTX.IPRA.TMU0_0	= 12;
+	INTX.IPRA.TMU0_1	= 12;
+	INTX.IPRA.TMU0_2	= 12;
 }
 
 static void gint_priority_unlock_7305(void)

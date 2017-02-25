@@ -9,30 +9,28 @@ Simple improvements:
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  display:	Rectangle-based drawing functions
 -  time:	Compute CLOCKS_PER_SEC
--  core:	Add VBR handlers debugging information (if possible)
 -  events:	Introduce KeyRepeat events
--  library:	Implement C99's inttypes.h for Cake's UpdateExe
 -  string:	Use cmp/str to implement memchr() (assembler examples)
 -  string:	Do some tests for memcmp()
+-  core:        Register more interrupts (and understand their parameters)
+-  rtc:         Take care of carry when reading time
 Larger improvements:
 -  errno:       Introduce errno and use it more or less everywhere
 -  bopti:	Monochrome bitmaps blending modes
 -  bopti:	Handle partial transparency
 -  core:	Implement all callbacks and a complete user API
-Other whole modules:
--  Serial communication through 3-pin
--  USB communication
--  Sound playback and synthesizing (if possible)
--  Overclock (relaunch clocks when overclocking)
+*  core:        Better save registers
+*  core:        Allow return to menu
+-  serial:      Implement a driver
+-  usb:         Implement a driver
+-  esper:       Cleaner playback, synthetizing
+-  clock:       Handle overclocking (relaunch clocks when overclocking)
 
 Things to investigate:
 -  Packed bit fields alignment
 -  Registers that may need to be saved within setjmp()
 -  Registers that may need to be saved and restored by gint
--  Possible bug when optimizing __attribute__((interrupt_handler))
-
-Configuration:
--  ATEXIT_MAX (16)
--  RTC_CB_ARRAY_SIZE (5)
--  EVENTS_QUEUE_SIZE (64)
--  GINT_NO_SYSCALLS (undefined)
+-  Optimizing core/gint.c leads to raising of an illegal slot exception when
+   running the interrupt handler, although it ends on rte; lds.l @r15+, mach,
+   which is totally not an illegal slot.
+-  Check version registers on SH7705

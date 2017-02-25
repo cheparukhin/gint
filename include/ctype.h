@@ -62,7 +62,7 @@ __attribute__((always_inline)) static inline int isxdigit(int c) {
 }
 
 __attribute__((always_inline)) static inline int isascii(int c) {
-	return (c >= 0 && c <= 0x7f);
+	return ((unsigned)c <= 0x7f);
 }
 
 __attribute__((always_inline)) static inline int isblank(int c) {

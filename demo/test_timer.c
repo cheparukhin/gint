@@ -12,7 +12,7 @@
 #include <rtc.h>
 
 static void draw(int new_tab);
-static struct ClockConfig conf;
+static clock_config_t conf;
 
 //---
 //	Timer-RTC comparison.

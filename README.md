@@ -59,13 +59,14 @@ The classical way to build gint is to enter a terminal and use the usual:
 	$ make
 	# make install
 
-This will build and install the following components in the storage folder of
-the fxSDK:
+This will build the `all-lib` target and install the following components in
+the storage folder of the fxSDK:
 * `libgint.a`, the gint library
 * `libc.a`, the partial standard library
 * The libgint headers for development
 
-The following additional files will be generated in the working directory:
+When explicitly running target `all`, the following additional files will be
+generated in the working directory:
 * `gintdemo.g1a`, a test application
 
 The usual `clean`, `mrproper`, and `distclean` rules will clean the directory.
@@ -79,8 +80,8 @@ allocation...).
 Source organization
 -------------------
 
-gint is made of *modules*. Each module may have any of the following
-components:
+gint is made of *modules*. Each module has one or more of the following
+component files:
 * A header file in `/include`
 * An internal header file in `/include/internals`
 * Single-function source files in `/src/module`: to avoid linking against the
@@ -91,4 +92,4 @@ components:
   often begin with `module_`.
 * Other files in `/src/module`: the `display` module contains a font.
 
-The demo application is in the `demo` directory.
+The demo application is in the `demo` folder.

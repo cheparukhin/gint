@@ -132,8 +132,7 @@ void operate_mono(OPERATE_ARGS)
 	Returns the number of bits available after the operation. If it's
 	negative, call operate() and update() again.
 */
-int update(uint32_t *operators, int height, int available,
-	uint32_t *glyph)
+int update(uint32_t *operators, int height, int available, uint32_t *glyph)
 {
 	// Glyph width.
 	int width = glyph[0] >> 24;

@@ -341,7 +341,6 @@ void main_menu(int *category, int *app)
 		//---
 
 		dclear();
-		dupdate();
 
 		switch(tab)
 		{
@@ -390,6 +389,7 @@ void main_menu(int *category, int *app)
 			dreverse_area(0, 8 * (index - scroll) + 8, 127,
 				8 * (index - scroll) + 15);
 		}
+
 		dupdate();
 
 		//---
@@ -402,6 +402,9 @@ void main_menu(int *category, int *app)
 
 			switch(getkey())
 			{
+//			case KEY_7:
+//				crt0_system_menu();
+//				break;
 			case KEY_F1:
 				if(!tab) break;
 				tab	= 0;
@@ -499,37 +502,30 @@ int main(void)
 
 		switch((category << 8) | app)
 		{
-		case 0x0101:
-			test_keyboard();
-			break;
-		case 0x0102:
-			test_gray();
-			break;
-		case 0x0103:
-			test_bopti();
-			break;
-		case 0x0104:
-			test_tales();
-			break;
-		case 0x0105:
-			test_rtc();
-			break;
-		case 0x0106:
-			test_timer();
-			break;
+		case 0x0101: test_keyboard();			break;
+		case 0x0102: test_gray();			break;
+		case 0x0103: test_bopti();			break;
+		case 0x0104: test_tales();			break;
+		case 0x0105: test_rtc();			break;
+		case 0x0106: test_timer();			break;
 
-		case 0x0201:
-//			perf_bopti();
-			break;
-		case 0x0202:
-//			perf_tales();
-			break;
+		case 0x0201: /* perf_bopti(); */		break;
+		case 0x0202: /* perf_tales(); */		break;
 
-		case 0x0301:
-//			if(isSH3()) debug_tlb();
-			break;
+		case 0x0301: /* if(isSH3()) debug_tlb(); */	break;
 		}
 	}
 
 	return 0;
 }
+
+/*
+void crash(void)
+{
+	__asm__(
+		"mov	#0, r0		\n\t"
+		"ldc	r0, vbr		\n\t"
+		"trapa	#1		"
+	);
+}
+*/

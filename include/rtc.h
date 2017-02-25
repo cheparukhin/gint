@@ -107,9 +107,9 @@ int rtc_cb_edit(int id, enum RTCFrequency new_freq,
 	rtc_interrupt()
 	Handles an RTC interrupt by calling the callback.
 */
-void rtc_interrupt(void)		__attribute__((section(".gint.int")));
-void rtc_interrupt_7705(void)		__attribute__((section(".gint.int")));
-void rtc_interrupt_7305(void)		__attribute__((section(".gint.int")));
+void rtc_interrupt(void);
+void rtc_interrupt_7705(void);
+void rtc_interrupt_7305(void);
 
 /*
 	rtc_cb_interrupt()

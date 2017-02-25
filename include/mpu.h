@@ -4,15 +4,22 @@
 //
 //	Determines which kind of MPU is running the program. This module
 //	provides macro tests isSH3(), isSH4(), and the identifier of the MPU,
-//	which is stored in a global variable MPU_CURRENT.
+//	which is stored in a global variable MPU_CURRENT and determined at
+//	startup.
 //
-//	If you need to do MPU-dependant jobs, prefer the following alternative:
+//	If you need to do MPU-dependant jobs, use isSH3() or (possibly) isSH4()
+//	instead of testing the value of MPU_CURRENT because these macros take
+//	care of assuming unknown MPUs are SH4, which is the more reasonable
+//	option.
+//
+//	In a general way, it is advised to always use the following
+//	alternative (which gint does):
 //
 //		if(isSH3())
 //		{
 //			...
 //		}
-//		else
+//		else 
 //		{
 //			...
 //		}
@@ -23,29 +30,30 @@
 #define	_MPU_H	1
 
 /*
-	enum MPU
+	mpu_t
 	This type holds information about the calculator's MPU.
 */
-enum MPU
+typedef enum
 {
-	MPU_Unknown = 0,
+	mpu_unknown = 0,
 	// fx-9860G SH3.
-	MPU_SH7337 = 1,
+	mpu_sh7337 = 1,
 	// fx-9860G II SH3.
-	MPU_SH7355 = 2,
+	mpu_sh7355 = 2,
 	// fx-9860G II SH4.
-	MPU_SH7305 = 3,
-	// Just for reference.
-	MPU_SH7724 = 4
-};
+	mpu_sh7305 = 3,
+	// Just for reference (no calculator uses it).
+	mpu_sh7724 = 4,
+
+} mpu_t;
 
 // Global MPU variable, accessible for direct tests. Initialized at the
 // beginning of execution.
-extern enum MPU MPU_CURRENT;
+extern mpu_t MPU_CURRENT;
 
 // Quick SH3 test. It is safer to assume that an unknown model is SH4 because
 // SH3-based models are not produced anymore.
-#define isSH3() (MPU_CURRENT == MPU_SH7337 || MPU_CURRENT == MPU_SH7355)
+#define isSH3() (MPU_CURRENT == mpu_sh7337 || MPU_CURRENT == mpu_sh7355)
 #define isSH4() !isSH3()
 
 
@@ -58,19 +66,6 @@ extern enum MPU MPU_CURRENT;
 	getMPU()
 	Determines the MPU type and returns it. MPU_CURRENT is not updated.
 */
-enum MPU getMPU(void);
-
-
-
-//---
-//	Internal API.
-//	Referenced here for documentation purposes only. Do not call.
-//---
-
-/*
-	mpu_init()
-	Determines the MPU type and stores the result into MPU_CURRENT.
-*/
-void mpu_init(void)	__attribute__((constructor));
+mpu_t getMPU(void);
 
 #endif // _MPU_H

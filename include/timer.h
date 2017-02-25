@@ -106,6 +106,6 @@ void timer_reload2(int timer, int new_delay);
 	timer_interrupt()
 	Handles the interrupt for the given timer.
 */
-void timer_interrupt(int timer)		__attribute__((section(".gint.int")));
+void timer_interrupt(int timer);
 
 #endif // _TIMER_H

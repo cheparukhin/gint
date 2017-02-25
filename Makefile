@@ -1,25 +1,25 @@
 #! /usr/bin/make -f
-#---
 #
-#	gint project Makefile.
+#	gint project Makefile
 #
 #---
 
 include Makefile.cfg
 
 #---
-#	Project variables.
+#	Project variables
 #---
 
 # Modules
-modules-gint	= core clock keyboard mmu mpu rtc screen timer \
-		  bopti display gray tales events
-modules-libc	= setjmp string stdio stdlib time
+modules-gint	= bopti clock core display events gray keyboard mmu rtc \
+		  screen tales timer
+modules-libc	= setjmp stdio stdlib string time
 
 # Targets
-target-g1a	= gintdemo.g1a
 target-lib	= libgint.a
 target-std	= libc.a
+target-g1a	= gintdemo.g1a
+target-dbg	= gintdbg.g1a
 
 # Tools
 cc		= sh3eb-elf-gcc
@@ -28,27 +28,40 @@ ar		= sh3eb-elf-ar
 ob		= sh3eb-elf-objcopy
 wr		= g1a-wrapper
 
-# Flags
-cflags		= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
-		  -W -Wall -Wextra -pedantic @gcc.cfg
+# Flags for gint
+lib-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
+		  -Wall -Wextra @gcc.cfg
 
 # Demo application (could be done better)
 demo-src	= $(notdir $(wildcard demo/*.[cs]))
 demo-dep	= $(wildcard demo/*.h)
-demo-ld		= demo/gintdemo.ld
 demo-icon	= demo/icon.bmp
 demo-res	= $(notdir $(wildcard demo/resources/*))
 demo-obj	= $(patsubst %,build/demo_%.o,$(demo-src) $(demo-res))
 demo-elf	= build/gintdemo.elf
 demo-bin	= build/gintdemo.bin
-demo-libs	= -L. -lgint -lc -lgcc
+demo-ldflags	= $(demo-cflags) -T demo/gintdemo.ld -L. -lgint -lc -lgcc
+demo-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
+		  -Wall -Wextra
+
+# Debugger application (displays past diagnostics without running gint)
+debug-src	= $(notdir $(wildcard debug/*.[cs]))
+debug-dep	= $(wildcard debug/*.h)
+debug-icon	= debug/icon.bmp
+debug-obj	= $(debug-src:%=build/debug_%.o)
+debug-elf	= build/gintdbg.elf
+debug-bin	= build/gintdbg.bin
+debug-ldflags	= $(debug-cflags) -T debug/addin.ld -L debug -lfx -lgcc
+debug-cflags	= -m3 -mb -nostdlib -ffreestanding -I debug/include -I \
+		  include -std=c11 -Os -Wall -Wextra
 
 # Specific objects
-obj-lib-spec	= build/display_font_system.bmp.o
+obj-lib-spec	= build/display_font_system.bmp.o \
+		  build/display_font_terminal.bmp.o
 obj-std-spec	=
 
 # Configuration files
-config	= gcc.cfg
+config		= gcc.cfg
 ifeq ($(wildcard $(config)),)
 $(error "Configuration files are missing. Did you ./configure ?")
 endif
@@ -63,7 +76,7 @@ endif
 
 
 #---
-#	Automatic variables.
+#	Automatic variables
 #---
 
 # Modules are subfolders of src/.
@@ -86,7 +99,7 @@ $(foreach mod, $(modules), $(eval \
 obj-std = $(foreach mod,$(modules-libc),$(mod-$(mod)-obj)) $(obj-std-spec)
 obj-lib	= $(foreach mod,$(modules-gint),$(mod-$(mod)-obj)) $(obj-lib-spec)
 
-# Dependencies
+# Dependencies.
 hdr-dep = $(wildcard include/*.h include/internals/*.h)
 
 
@@ -95,11 +108,6 @@ hdr-dep = $(wildcard include/*.h include/internals/*.h)
 #	Rule templates.
 #---
 
-#ifndef VERBOSE
-#$(note "default full log")
-#VERBOSE = 
-#endif
-
 # C source file template:
 #   $1  module name
 #   $2  filename
@@ -107,10 +115,10 @@ hdr-dep = $(wildcard include/*.h include/internals/*.h)
 define rule-c-source
 build/$1_$2.o: src/$1/$2 $3 $(config)
 	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $$<\n')
-	$(if $(VERBOSE),,@) $(cc) -c $$< -o $$@ $(cflags) -I src/$1
+	$(if $(VERBOSE),,@) $(cc) -c $$< -o $$@ $(lib-cflags)
 endef
 
-# asm source file template:
+# Asm source file template:
 #   $1  module name
 #   $2  filename
 define rule-asm-source
@@ -127,8 +135,9 @@ endef
 
 # Generic rules
 
-all: $(config) $(target-std) $(target-lib) $(target-g1a)
-	@ printf '\e[32;1mmsg \u00bb\e[0m All done!\n'
+all-lib: $(config) $(target-std) $(target-lib)
+
+all: $(config) $(target-std) $(target-lib) $(target-g1a) $(target-dbg)
 
 build:
 	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
@@ -152,12 +161,23 @@ $(target-lib): $(config) $(target-std) $(obj-lib)
 
 $(target-g1a): $(config) $(target-std) $(target-lib) $(demo-obj)
 	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m ld -o $(demo-elf)\n')
-	$(if $(VERBOSE),,@) $(cc) -o $(demo-elf) $(cflags) -T $(demo-ld) $(demo-obj) $(demo-libs)
+	$(if $(VERBOSE),,@) $(cc) -o $(demo-elf) $(demo-obj) $(demo-ldflags)
 	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m objcopy -o $(demo-bin)\n')
 	$(if $(VERBOSE),,@) $(ob) -R .comment -R .bss -O binary $(demo-elf) $(demo-bin)
 	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m g1a-wrapper -o $@\n')
 	$(if $(VERBOSE),,@) $(wr) $(demo-bin) -o $@ -i $(demo-icon)
 	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built demo application ('
+	@ printf $$(stat -c %s $@)
+	@ printf ' bytes)\n\n'
+
+$(target-dbg): $(config) $(debug-obj)
+	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m ld -o $(debug-elf)\n')
+	$(if $(VERBOSE),,@) $(cc) -o $(debug-elf) $(debug-obj) $(debug-ldflags)
+	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m objcopy -o $(debug-bin)\n')
+	$(if $(VERBOSE),,@) $(ob) -R .comment -R .bss -O binary $(debug-elf) $(debug-bin)
+	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m g1a-wrapper -o $@\n')
+	$(if $(VERBOSE),,@) $(wr) $(debug-bin) -o $@ -i $(debug-icon)
+	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built debug application ('
 	@ printf $$(stat -c %s $@)
 	@ printf ' bytes)\n\n'
 
@@ -172,21 +192,19 @@ $(foreach mod,$(modules), \
 
 # Specific rules
 
-# This one should not be optimized. It makes __attribute__((interrupt_handler))
-# buggy... maybe. Anyway there's some bug in this file that I can't fix now.
-build/core_gint.c.o: src/core/gint.c $(mod-core-dep) $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
-	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(cflags) -I src/core -O0
+# Optimizing this one makes the interrupt handler raise illegal slot exception
+# on rte; lds.l @r15+, mach. This is totally weird but I haven't understood
+# why for now.
 
-build/display_font_system.bmp.o: src/display/font_system.bmp
+build/display_font_%.bmp.o: src/display/font_%.bmp
 	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
-	$(if $(VERBOSE),,@) fxconv $< -o $@ --font -n gint_font_system
+	$(if $(VERBOSE),,@) fxconv $< -o $@ --font -n $(<:src/display/font_%.bmp=gint_font_%)
 
 # Demo application
 
 build/demo_%.c.o: demo/%.c $(hdr-dep) $(demo-dep) $(config)
 	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
-	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(cflags)
+	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(demo-cflags)
 
 build/demo_font_%.bmp.o: demo/resources/font_%.bmp
 	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
@@ -196,10 +214,20 @@ build/demo_%.bmp.o: demo/resources/%.bmp
 	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
 	$(if $(VERBOSE),,@) fxconv $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
 
+# Debug application
+
+build/debug_%.s.o: debug/%.s $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m as $<\n')
+	$(if $(VERBOSE),,@) $(as) -c $< -o $@
+
+build/debug_%.c.o: debug/%.c $(hdr-dep) $(debug-dep) $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
+	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(debug-cflags)
+
 
 
 #---
-#	Cleaning and others.
+#	Cleaning and install
 #---
 
 clean:
@@ -222,7 +250,11 @@ ifdef config_ext
 endif
 	@ printf '\e[32;1mmsg \u00bb\e[0m All installed!\n'
 
-install_demo:
+install-demo:
 	p7 send -f $(target-g1a)
+install-debug:
+	p7 send -f $(target-dbg)
 
-.PHONY: all clean mrproper distclean install install_demo help
+.PHONY: all-lib all help
+.PHONY: clean mrproper distclean
+.PHONY: install install-demo install-debug

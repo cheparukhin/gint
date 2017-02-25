@@ -26,6 +26,8 @@ SECTIONS
 	*/
 
 	.text : {
+		_btext = . ;
+
 		/* Initialization code. */
 		*(.pretext.entry)
 		*(.pretext)
@@ -39,6 +41,8 @@ SECTIONS
 
 		*(.text)
 		*(.text.*)
+
+		_etext = . ;
 	} > rom
 
 	.rodata : {
@@ -77,6 +81,7 @@ SECTIONS
 		*(.eh_frame)
 		*(.jcr)
 
+		. = ALIGN(4);
 		_gint_data = _romdata + SIZEOF(.data) + SIZEOF(.cc) ;
 	} > ram
 
@@ -94,17 +99,14 @@ SECTIONS
 
 		/* Exception handler. */
 		. = _gint_vbr + 0x100 ;
-		*(.gint.exc.entry)
 		*(.gint.exc)
 
 		/* TLB miss handler. */
 		. = _gint_vbr + 0x400 ;
-		*(.gint.tlb.entry)
 		*(.gint.tlb)
 
 		/* Interrupt handler. */
 		. = _gint_vbr + 0x600 ;
-		*(.gint.int.entry)
 		*(.gint.int)
 
 		_egint = . ;
