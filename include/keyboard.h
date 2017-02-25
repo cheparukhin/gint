@@ -13,6 +13,7 @@
 #ifndef	_KEYBOARD_H
 #define	_KEYBOARD_H	1
 
+#include <stdint.h>
 #include <rtc.h>
 
 //---
@@ -232,7 +233,7 @@ int keylast(int *repeat_count);
 	functions, but the buffer data is very volatile. Therefore, data
 	written to the buffer could be replaced anytime.
 */
-volatile unsigned char *keystate(void);
+volatile uint8_t *keystate(void);
 
 
 
@@ -267,38 +268,5 @@ int keychar(int key);
 	Returns a key's type. Ignores modifiers.
 */
 enum KeyType keytype(int key);
-
-
-
-//---
-//	Internal API.
-//	Reference here for documentation purposes only. Do not call.
-//---
-
-/*
-	keyboard_interrupt()
-	Notifies the keyboard module that an interrupt request has been issued,
-	and updates the keyboard state.
-*/
-void keyboard_interrupt(void);
-
-/*
-	keyboard_updateState()
-	Updates the keyboard state.
-*/
-void keyboard_updateState_7705(volatile unsigned char *state);
-void keyboard_updateState_7305(volatile unsigned char *state);
-
-/*
-	keyboard_init()
-	Starts the keyboard timer.
-*/
-void keyboard_init(void)		__attribute__((constructor));
-
-/*
-	keyboard_quit()
-	Stops the keyboard timer.
-*/
-void keyboard_quit(void)		__attribute__((destructor));
 
 #endif	// _KEYBOARD_H

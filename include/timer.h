@@ -48,17 +48,22 @@
 	not running the gray engine.
 	Unit names are defined in the clock.h header and must be one of the
 	following:
-	- Clock_us	(microseconds)
-	- Clock_ms	(milliseconds)
-	- Clock_s	(seconds)
-	- Clock_Hz	(hertz)
-	- Clock_kHz	(kilohertz)
-	- Clock_MHz	(megahertz)
+	  - Clock_us	(microseconds)
+	  - Clock_ms	(milliseconds)
+	  - Clock_s	(seconds)
+	  - Clock_Hz	(hertz)
+	  - Clock_kHz	(kilohertz)
+	  - Clock_MHz	(megahertz)
 	The number of repeats may to set to 0. In this case, the timer will not
 	stop until timer_stop() is explicitly called.
+	The callback is expected to be a function of the following type:
+	  - void callback(void)        if data == NULL
+	  - void callback(void *data)  if data is non-NULL
+	In the latter case, the data pointer will be passed as argument to the
+	callback function.
 */
 void timer_start(int timer, int delay_or_frequency, enum ClockUnit unit,
-	void (*callback)(void), int repeats);
+	void *callback, void *data, int repeats);
 
 /*
 	timer_start2()
@@ -71,8 +76,8 @@ void timer_start(int timer, int delay_or_frequency, enum ClockUnit unit,
 	- TIMER_Po_256
 	- TIMER_TCLK
 */
-void timer_start2(int timer, int delay, int prescaler, void (*callback)(void),
-	int repeats);
+void timer_start2(int timer, int delay, int prescaler, void *callback,
+	void *data, int repeats);
 
 /*
 	timer_stop()

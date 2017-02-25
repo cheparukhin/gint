@@ -9,15 +9,11 @@
 #ifndef	_EVENTS_H
 #define	_EVENTS_H
 
-//---
-//	Type definitions.
-//---
-
 /*
-	enum EventType
+	event_type_t
 	Something user programs will surely use most often.
 */
-enum EventType
+typedef enum
 {
 	EventType_None		= 0,
 	ET_None			= EventType_None,
@@ -28,27 +24,32 @@ enum EventType
 	EventType_KeyPressed	= 2,
 	ET_KeyPress		= EventType_KeyPressed,
 
-	EventType_KeyReleased	= 3,
+	EventType_KeyRepeated	= 3,
+	ET_KeyRepeat		= EventType_KeyRepeated,
+
+	EventType_KeyReleased	= 4,
 	ET_KeyRel		= EventType_KeyReleased,
-};
+
+} event_type_t;
 
 /*
-	struct Event
+	event_t
 	Wake up, something's going on. The union member that holds information
 	about the event is implicitly defined by the type attribute.
 */
-struct Event
+typedef struct
 {
-	enum EventType type;
+	event_type_t type;
 
 	union
 	{
 		// For ET_User.
 		void *data;
-		// For ET_KeyPress and ET_KeyRel.
+		// For ET_KeyPress, ET_KeyRepeat and ET_KeyRel.
 		int key;
 	};
-};
+
+} event_t;
 
 
 
@@ -64,21 +65,21 @@ struct Event
 	allowed.
 	Returns non-zero on error.
 */
-int event_push(struct Event event);
+int event_push(event_t event);
 
 /*
-	getevent()
+	waitevent()
 	Returns the next event. If no one is available, waits for something to
 	happen. This function uses low-level sleep and should be preferred to
 	active waiting using loops.
 */
-struct Event getevent(void);
+event_t waitevent(void);
 
 /*
 	pollevent()
 	Returns the next event. If no one is available, returns an event whose
 	type is ET_None. This function always returns immediately.
 */
-struct Event pollevent(void);
+event_t pollevent(void);
 
 #endif	// _EVENTS_H

@@ -1,5 +1,6 @@
 #include <keyboard.h>
 #include <internals/keyboard.h>
+#include <events.h>
 
 /*
 	multigetkey()
@@ -12,23 +13,28 @@
 	Setting count = 3 is generally safe.
 	The function returns after 'max_cycles' if no key is pressed.
 */
-void multigetkey(int *keys, int count, int max_cycles)
+static void multigetkey_wait(int *cycles)
 {
-	int number;
+	while(!interrupt_flag) sleep();
+	interrupt_flag = 0;
 
-	if(!max_cycles) max_cycles = -1;
+	if(*cycles > 0) (*cycles)--;
+}
+void multigetkey(int *keys, int count, int cycles)
+{
+	event_t event;
+	int number = 0;
 
-	while(max_cycles != 0)
+	if(count <= 0) return;
+	if(cycles <= 0) cycles = -1;
+
+	while(cycles != 0)
 	{
-		while(!interrupt_flag) sleep();
-		interrupt_flag = 0;
-		if(max_cycles > 0) max_cycles--;
-
 		number = getPressedKeys(keyboard_state, keys, count);
 
-		// We need to update the last key data, in case multigetkey()
-		// returns a single key, and getkey() is called a short time
-		// after. Otherwise getkey() could re-send an event for this
+		// We want to update the last key data when multigetkey()
+		// returns a single key, because getkey() could be called a
+		// short time after we return, and send a new event for this
 		// key.
 		if(number == 1)
 		{
@@ -37,10 +43,12 @@ void multigetkey(int *keys, int count, int max_cycles)
 			last_events = 0;
 		}
 
-		if(number) return;
+		if(number) break;
+		multigetkey_wait(&cycles);
 	}
 
-	// When no key was pressed during the given delay... (no need to fill
-	// the array, it has already been done by getPressedKeys()).
+	do event = pollevent();
+	while(event.type != ET_None);
+
 	return;
 }

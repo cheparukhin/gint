@@ -25,7 +25,7 @@ int getkey(void)
 	If max_cycles is non-zero and positive, getkey_opt() will return
 	KEY_NOEVENT if no event occurs during max_cycle analysis.
 */
-void getkey_opt_wait(int *cycles)
+static void getkey_opt_wait(int *cycles)
 {
 	while(!interrupt_flag) sleep();
 	interrupt_flag = 0;
@@ -34,7 +34,7 @@ void getkey_opt_wait(int *cycles)
 }
 int getkey_opt(enum GetkeyOpt options, int cycles)
 {
-	struct Event event;
+	event_t event;
 	int modifier = 0;
 	static int event_ref = 0;
 
@@ -120,19 +120,3 @@ int getkey_opt(enum GetkeyOpt options, int cycles)
 	event_ref	= 0;
 	return KEY_NONE;
 }
-
-/*
-int getkey_opt(enum GetkeyOpt options, int max_cycles)
-{
-	while(max_cycles != 0)
-	{
-		// Handling "new key" events.
-
-		// Handling key repetitions.
-
-	}
-
-	// When no key was pressed during the given delay...
-	return KEY_NOEVENT;
-}
-*/

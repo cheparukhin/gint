@@ -136,7 +136,7 @@ static int krow(int row)
 	keyboard_updateState()
 	Updates the keyboard state.
 */
-void keyboard_updateState_7305(volatile unsigned char *keyboard_state)
+void keyboard_updateState_7305(volatile uint8_t *keyboard_state)
 {
 	for(int i = 0; i < 10; i++) keyboard_state[i] = krow(i);
 }

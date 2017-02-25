@@ -300,7 +300,7 @@ void main_menu(int *category, int *app)
 	};
 
 	const char *list_tests[] = {
-		"Keyboard",
+		"Keyboard and events",
 		"Gray engine",
 		"Image rendering",
 		"Text rendering",
@@ -495,6 +495,8 @@ int main(void)
 {
 	int category, app;
 
+	sleep_ms(2000);
+
 	while(1)
 	{
 		main_menu(&category, &app);
@@ -502,7 +504,7 @@ int main(void)
 
 		switch((category << 8) | app)
 		{
-		case 0x0101: test_keyboard();			break;
+		case 0x0101: test_keyboard_events();		break;
 		case 0x0102: test_gray();			break;
 		case 0x0103: test_bopti();			break;
 		case 0x0104: test_tales();			break;

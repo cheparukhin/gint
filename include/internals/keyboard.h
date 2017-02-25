@@ -5,7 +5,7 @@
 #include <clock.h>
 
 // Keyboard variables.
-extern volatile unsigned char keyboard_state[10];
+extern volatile uint8_t keyboard_state[10];
 extern volatile int interrupt_flag;
 
 // Key statistics.
@@ -19,7 +19,7 @@ extern unsigned cb_id;
 	getPressedKey()
 	Finds a pressed key in the keyboard state and returns it.
 */
-int getPressedKey(volatile unsigned char *keyboard_state);
+int getPressedKey(volatile uint8_t *keyboard_state);
 
 /*
 	getPressedKeys()
@@ -28,7 +28,13 @@ int getPressedKey(volatile unsigned char *keyboard_state);
 	WARNING: keyboard artifacts make this function read as pressed keys
 	that aren't (typically, LEFT + DOWN + SHIFT => ALPHA).
 */
-int getPressedKeys(volatile unsigned char *keyboard_state, int *keys,
-	int count);
+int getPressedKeys(volatile uint8_t *keyboard_state, int *keys, int count);
+
+/*
+	keyboard_updateState()
+	Updates the keyboard state.
+*/
+void keyboard_updateState_7705(volatile uint8_t *state);
+void keyboard_updateState_7305(volatile uint8_t *state);
 
 #endif	// _INTERNALS_KEYBOARD_H

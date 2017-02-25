@@ -12,7 +12,7 @@
 	like any other queue. Trying to add an event when the queue is full
 	fails, and the operation is ignored.
 */
-extern volatile struct Event event_queue[];
+extern volatile event_t event_queue[];
 extern volatile int queue_start;
 extern volatile int queue_size;
 

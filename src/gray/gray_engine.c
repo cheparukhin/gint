@@ -68,7 +68,8 @@ void gray_start(void)
 {
 	if(runs) return;
 
-	timer_start2(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt, 0);
+	timer_start2(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt,
+		NULL, 0);
 	current &= 1;
 	runs = 1;
 }

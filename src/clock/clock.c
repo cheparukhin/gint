@@ -4,6 +4,7 @@
 #include <rtc.h>
 #include <stddef.h>
 #include <mpu.h>
+#include <stdint.h>
 
 static clock_config_t conf = {
 	.FLL = -1, .PLL = -1,
@@ -21,27 +22,36 @@ static clock_config_t conf = {
 int clock_setting(int duration, enum ClockUnit unit)
 {
 	if(conf.Pphi_f <= 0) return -1;
-	int f = conf.Pphi_f >> 2;
+	uint64_t f = conf.Pphi_f >> 2;
+	uint64_t result;
 
 	switch(unit)
 	{
 	case Clock_us:
-		return (duration * f) / 1000000;
+		result = (duration * f) / 1000000;
+		break;
 	case Clock_ms:
-		return (duration * f) / 1000;
+		result = (duration * f) / 1000;
+		break;
 	case Clock_s:
-		return (duration * f);
+		result = (duration * f);
+		break;
 
 	case Clock_Hz:
-		return f / duration;
+		result = f / duration;
+		break;
 	case Clock_kHz:
-		return f / (duration * 1000);
+		result = f / (duration * 1000);
+		break;
 	case Clock_MHz:
-		return f / (duration * 1000000);
+		result = f / (duration * 1000000);
+		break;
 
 	default:
 		return -1;
 	}
+
+	return (result > 0xffffffff) ? (0xffffffff) : (result);
 }
 
 /*
@@ -60,7 +70,7 @@ clock_config_t clock_config(void)
 void sleep(void)
 {
 	__asm__(
-		"sleep\n\t"
+		"sleep"
 	);
 }
 
@@ -71,10 +81,9 @@ void sleep(void)
 	than requested.
 */
 
-static volatile int sleep_done = 0;
-static void sleep_callback(void)
+static void sleep_callback(void *flag)
 {
-	sleep_done = 1;
+	*((int *)flag) = 1;
 }
 
 void sleep_ms(int ms_delay)
@@ -83,8 +92,10 @@ void sleep_ms(int ms_delay)
 }
 void sleep_us(int us_delay)
 {
-	sleep_done = 0;
-	timer_start(TIMER_USER, us_delay, Clock_us, sleep_callback, 1);
+	volatile int sleep_done = 0;
+	timer_start(TIMER_USER, us_delay, Clock_us, sleep_callback,
+		(void *)&sleep_done, 1);
+
 	do sleep();
 	while(!sleep_done);
 }
@@ -133,6 +144,7 @@ void clock_measure(void)
 		tmu->TCR.CKEG	= 0;
 
 		timers[TIMER_USER].callback	= NULL;
+		timers[TIMER_USER].data		= NULL;
 		timers[TIMER_USER].repeats	= 0;
 
 		cb_id_7705 = rtc_cb_add(RTCFreq_256Hz, clock_measure_7705, 0);

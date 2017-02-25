@@ -7,9 +7,9 @@
 	Returns the next event. If no one is available, returns an event whose
 	type is ET_None. This function always returns immediately.
 */
-struct Event pollevent(void)
+event_t pollevent(void)
 {
-	struct Event event = {
+	event_t event = {
 		.type	= ET_None
 	};
 	if(queue_size <= 0) return event;
@@ -24,14 +24,14 @@ struct Event pollevent(void)
 }
 
 /*
-	getevent()
+	waitevent()
 	Returns the next event. If no one is available, waits for something to
 	happen. This function uses low-level sleep and should be preferred to
 	active waiting using loops.
 */
-struct Event getevent(void)
+event_t waitevent(void)
 {
-	struct Event event;
+	event_t event;
 
 	while((event = pollevent()).type == ET_None) sleep();
 	return event;

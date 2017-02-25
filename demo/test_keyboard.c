@@ -2,13 +2,9 @@
 #include <display.h>
 #include <keyboard.h>
 #include <stdlib.h>
+#include <events.h>
 
-/*
-	test_keyboard()
-	Displays a real-time multigetkey() and the keyboard state.
-*/
-
-static void draw(volatile unsigned char *state)
+static void draw_keyboard(volatile uint8_t *state)
 {
 	int i, j, k, l;
 	int x, y;
@@ -22,12 +18,16 @@ static void draw(volatile unsigned char *state)
 		if(i == 4 && j == 5) continue;
 
 		x = 5 * j + 1;
-		y = 61 - 5 * i;
+		y = 59 - 5 * i;
+
+		// Space for the horizontal line.
+		y += 3 * (i < 7);
+
 		// Moving the [AC/ON] key.
-		if(!i) x = 5 * (5) + 1, y = 61 - 5 * (4);
+		if(!i) x = 5 * (5) + 1, y = 61 - 5 * (4) + 1;
 
 		// Drawing a filled shape when the key is pressed.
-		if(state[i] & (128 >> j))
+		if(state[i] & (0x80 >> j))
 		{
 			for(k = -2; k <= 2; k++) for(l = -2; l <= 2; l++)
 				if(abs(k) + abs(l) <= 2)
@@ -40,9 +40,55 @@ static void draw(volatile unsigned char *state)
 				if(k || l) dpixel(x + k, y + l, Color_Black);
 		}
 	}
+
+	// Binding the arrow keys together for a more visual thing.
+	dpixel(28, 19, Color_Black); dpixel(29, 19, Color_Black);
+	dpixel(28, 24, Color_Black); dpixel(29, 24, Color_Black);
+	dpixel(26, 21, Color_Black); dpixel(26, 22, Color_Black);
+	dpixel(31, 21, Color_Black); dpixel(31, 22, Color_Black);
+
+	// An horizontal line to separate parts of the keyboard.
+	dline(5, 28, 32, 28, Color_Black);
 }
 
-void test_keyboard(void)
+typedef struct {
+	event_type_t type;
+	int key;
+	int repeats;
+
+} enhanced_event_t;
+
+static void push_history(enhanced_event_t *history, int size, event_t event)
+{
+	#define	event_eq(x, y) ((x).type == (y).type && (x).key == (y).key)
+
+	// Determining where the history ends.
+	int length = 0;
+	while(length < size && history[length].type != ET_None) length++;
+
+	// Checking if the previous event is being repeated.
+	if(length > 0 && event_eq(history[length - 1], event))
+	{
+		history[length - 1].repeats++;
+		return;
+	}
+
+	// Making up some space if required.
+	if(length == size)
+	{
+		for(int i = 0; i < size - 1; i++) history[i] = history[i + 1];
+		length = size - 1;
+	}
+
+	// Adding a new entry to the history.
+	history[length].type	= event.type;
+	history[length].key	= event.key;
+	history[length].repeats	= 1;
+
+	#undef	event_eq
+}
+
+static void draw_events(enhanced_event_t *history, int size)
 {
 	const char *key_names[] = {
 		"F1",       "F2",            "F3",   "F4",   "F5",    "F6",
@@ -55,28 +101,41 @@ void test_keyboard(void)
 		"1",        "2",             "3",    "+",    "-",     NULL,
 		"0",        ".",             "\x08", "(-)",  "EXE",   NULL
 	};
+	const char *event_names[] = {
+		"None ", "User ", "Press", "Rept.", "Rel. "
+	};
 
-	volatile unsigned char *state = keystate();
-	int keys[4] = { 0 };
-	int i;
+	for(int i = 0; i < size && history[i].type != ET_None; i++)
+	{
+		print(8, 3 + i, "%s %s", event_names[history[i].type],
+			key_names[keyid(history[i].key)]);
+		if(history[i].repeats > 1)
+			print(19, 3 + i, "%d", history[i].repeats);
+	}
+}
+
+/*
+	test_keyboard_events()
+	Real-time keyboard management with events.
+*/
+void test_keyboard_events(void)
+{
+	enhanced_event_t history[5];
+	int history_size = 5;
+	event_t event;
+
+	for(int i = 0; i < history_size; i++) history[i].type = ET_None;
 
 	while(1)
 	{
 		dclear();
-		locate(1, 1, "Keyboard driver");
-		locate(8, 3, "Pressed keys:");
-		draw(state);
-
-		if(keys[0] == KEY_NONE) locate(9, 4, ":None");
-		else for(i = 0; i < 4 && keys[i] != KEY_NONE; i++)
-		{
-			locate( 9, i + 4, ":");
-			locate(10, i + 4, key_names[keyid(keys[i])]);
-		}
-
+		locate(1, 1, "Keyboard and events");
+		draw_keyboard(keystate());
+		draw_events(history, history_size);
 		dupdate();
 
-		multigetkey(keys, 4, 1);
-		if(keys[0] == KEY_EXIT && keys[1] == KEY_NONE) break;
+		event = waitevent();
+		if(event.type == ET_KeyPress && event.key == KEY_EXIT) break;
+		push_history(history, history_size, event);
 	}
 }
