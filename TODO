@@ -9,22 +9,21 @@ Simple improvements:
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  display:	Rectangle-based drawing functions
 -  time:	Compute CLOCKS_PER_SEC
--  events:	Introduce KeyRepeat events
 -  string:	Use cmp/str to implement memchr() (assembler examples)
 -  string:	Do some tests for memcmp()
--  core:        Register more interrupts (and understand their parameters)
--  rtc:         Take care of carry when reading time
+-  core:	Register more interrupts (and understand their parameters)
+-  rtc:		Take care of carry when reading time
 Larger improvements:
--  errno:       Introduce errno and use it more or less everywhere
+-  errno:	Introduce errno and use it more or less everywhere
 -  bopti:	Monochrome bitmaps blending modes
 -  bopti:	Handle partial transparency
 -  core:	Implement all callbacks and a complete user API
-*  core:        Better save registers
-*  core:        Allow return to menu
--  serial:      Implement a driver
--  usb:         Implement a driver
--  esper:       Cleaner playback, synthetizing
--  clock:       Handle overclocking (relaunch clocks when overclocking)
+*  core:	Better save registers
+*  core:	Allow return to menu
+-  serial:	Implement a driver
+-  usb:		Implement a driver
+-  esper:	Cleaner playback, synthetizing
+-  clock:	Handle overclocking (relaunch clocks when overclocking)
 
 Things to investigate:
 -  Packed bit fields alignment

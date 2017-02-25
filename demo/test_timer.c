@@ -35,7 +35,7 @@ static void timing_timer(void)
 
 static void timing_start(void)
 {
-	timer_start(TIMER_USER, 64, Clock_Hz, timing_timer, 0);
+	timer_start(TIMER_USER, 64, Clock_Hz, timing_timer, NULL, 0);
 	rtc_cb_edit(cb_id, RTCFreq_64Hz, timing_rtc);
 
 	elapsed_timer = 0;

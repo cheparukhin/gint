@@ -7,7 +7,8 @@
 */
 struct Timer
 {
-	void (*callback)(void);
+	void *callback;
+	void *data;
 	int repeats;
 };
 

@@ -19,7 +19,7 @@ int keylast(int *repeat_count)
 	Returns the address of the keyboard state array. The returned address
 	is the handler's buffer, therefore it contains volatile data.
 */
-volatile unsigned char *keystate(void)
+volatile uint8_t *keystate(void)
 {
 	return keyboard_state;
 }

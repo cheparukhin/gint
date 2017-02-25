@@ -46,10 +46,10 @@ void print(int x, int y, const char *format, ...);
 //---
 
 /*
-	test_keyboard()
-	Displays a real-time multigetkey() and the keyboard state.
+	test_keyboard_events()
+	Real-time keyboard management with events.
 */
-void test_keyboard(void);
+void test_keyboard_events(void);
 
 /*
 	test_gray()

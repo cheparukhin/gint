@@ -5,8 +5,7 @@
 	Find 'count' pressed keys in the keyboard state and fills the 'keys'
 	array. Returns the number of actually-pressed keys found.
 */
-int getPressedKeys(volatile unsigned char *keyboard_state, int *keys,
-	int count)
+int getPressedKeys(volatile uint8_t *keyboard_state, int *keys, int count)
 {
 	int row = 1, column;
 	int found = 0, actually_pressed;

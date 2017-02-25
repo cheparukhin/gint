@@ -4,7 +4,7 @@
 	getPressedKey()
 	Finds a pressed key in the keyboard state and returns it.
 */
-int getPressedKey(volatile unsigned char *keyboard_state)
+int getPressedKey(volatile uint8_t *keyboard_state)
 {
 	int row = 1, column = 0;
 	int state;
