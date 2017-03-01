@@ -19,7 +19,7 @@ static int delays[2];
 
 static int runs = 0;
 
-#define	GRAY_PRESCALER	TIMER_Po_64
+static timer_t *gray_timer = NULL;
 
 
 
@@ -33,7 +33,8 @@ static int runs = 0;
 */
 void gray_interrupt(void)
 {
-	timer_reload2(TIMER_GRAY, delays[(~current) & 1]);
+	htimer_reload(timer_gray, delays[(~current) & 1]);
+
 	screen_display(vrams[current]);
 	current ^= 1;
 }
@@ -68,8 +69,10 @@ void gray_start(void)
 {
 	if(runs) return;
 
-	timer_start2(TIMER_GRAY, delays[0], GRAY_PRESCALER, gray_interrupt,
-		NULL, 0);
+	gray_timer = htimer_setup(timer_gray, delays[0], timer_Po_64, 0);
+	timer_attach(gray_timer, gray_interrupt, NULL);
+	timer_start(gray_timer);
+
 	current &= 1;
 	runs = 1;
 }
@@ -81,9 +84,7 @@ void gray_start(void)
 */
 void gray_stop(void)
 {
-	if(!runs) return;
-
-	timer_stop(TIMER_GRAY);
+	timer_stop(gray_timer);
 	runs = 0;
 
 	display_useVRAM(display_getLocalVRAM());

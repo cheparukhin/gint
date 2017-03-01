@@ -8,6 +8,7 @@
 #include <internals/clock.h>
 #include <clock.h>
 #include <gint.h>
+#include <internals/modules.h>
 
 int main(void);
 
@@ -58,7 +59,7 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->stage	= stage_startup;
 
 	// Exception records: what kind of exceptions / TLB faults / interrupts
-	// occured last to get some trace in case of crash.
+	// occurred last to get some trace in case of crash.
 	dg->excepts	= 0;
 	for(size_t i = 0; i < sizeof dg->except_vect; i++)
 		dg->except_vect[i] = 0;
@@ -67,7 +68,7 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->expevt	= 0x00000000;
 	dg->tea		= 0x00000000;
 
-	// Memory map: provides information about alignement and the relative
+	// Memory map: provides information about alignment and the relative
 	// size and position of each section, as well as read-only / read-write
 	// types of addresses.
 	dg->section_text.address	= (uint32_t)&btext;
@@ -107,7 +108,10 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->stage	= stage_mmu;
 	#endif
 
-	// Initializing gint.
+	// Detecting the MPU type, initializing the register module addresses,
+	// and initializing gint.
+	mpu_init();
+	mod_init();
 	gint_init();
 
 	#ifdef	GINT_DIAGNOSTICS
