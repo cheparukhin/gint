@@ -9,26 +9,31 @@
 #ifndef	_EVENTS_H
 #define	_EVENTS_H
 
+#include <timer.h>
+
 /*
 	event_type_t
 	Something user programs will surely use most often.
 */
 typedef enum
 {
-	EventType_None		= 0,
-	ET_None			= EventType_None,
+	EventType_None			= 0,
+	ET_None				= EventType_None,
 
-	EventType_User		= 1,
-	ET_User			= EventType_User,
+	EventType_User			= 1,
+	ET_User				= EventType_User,
 
-	EventType_KeyPressed	= 2,
-	ET_KeyPress		= EventType_KeyPressed,
+	EventType_KeyPressed		= 2,
+	ET_KeyPress			= EventType_KeyPressed,
 
-	EventType_KeyRepeated	= 3,
-	ET_KeyRepeat		= EventType_KeyRepeated,
+	EventType_KeyRepeated		= 3,
+	ET_KeyRepeat			= EventType_KeyRepeated,
 
-	EventType_KeyReleased	= 4,
-	ET_KeyRel		= EventType_KeyReleased,
+	EventType_KeyReleased		= 4,
+	ET_KeyRel			= EventType_KeyReleased,
+
+	EventType_TimerUnderflow	= 5,
+	ET_Timer			= EventType_TimerUnderflow,
 
 } event_type_t;
 
@@ -47,6 +52,8 @@ typedef struct
 		void *data;
 		// For ET_KeyPress, ET_KeyRepeat and ET_KeyRel.
 		int key;
+		// For ET_Timer.
+		timer_t *timer;
 	};
 
 } event_t;

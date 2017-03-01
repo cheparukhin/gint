@@ -99,7 +99,7 @@ obj-std = $(foreach mod,$(modules-libc),$(mod-$(mod)-obj)) $(obj-std-spec)
 obj-lib	= $(foreach mod,$(modules-gint),$(mod-$(mod)-obj)) $(obj-lib-spec)
 
 # Dependencies.
-hdr-dep = $(wildcard include/*.h include/internals/*.h)
+hdr-dep = $(wildcard include/*.h include/*/*.h)
 
 
 
@@ -249,9 +249,9 @@ ifdef config_ext
 endif
 	@ printf '\e[32;1mmsg \u00bb\e[0m All installed!\n'
 
-install-demo:
+install-demo: all
 	p7 send -f $(target-g1a)
-install-debug:
+install-debug: all
 	p7 send -f $(target-dbg)
 
 .PHONY: all-lib all help

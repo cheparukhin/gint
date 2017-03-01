@@ -14,7 +14,7 @@
 */
 struct rtc_cb
 {
-	enum RTCFrequency freq;
+	rtc_frequency_t freq;
 	int id;
 
 	void (*callback)(void);
@@ -23,6 +23,19 @@ struct rtc_cb
 
 // The callback array.
 struct rtc_cb cb_array[RTC_CB_ARRAY_SIZE];
+
+/*
+	rtc_perodic_interrupt()
+	Handles periodic interrupts and calls the callbacks.
+*/
+void rtc_periodic_interrupt(void);
+
+/*
+	rtc_cb_interrupt()
+	Calls the RTC callbacks if necessary, and updates the repeat counts.
+	Should only be called when RTC periodic interrupts occur.
+*/
+void rtc_cb_interrupt(void);
 
 /*
 	struct mod_rtc

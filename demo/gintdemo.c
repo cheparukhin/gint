@@ -521,7 +521,6 @@ int main(void)
 	return 0;
 }
 
-/*
 void crash(void)
 {
 	__asm__(
@@ -530,4 +529,3 @@ void crash(void)
 		"trapa	#1		"
 	);
 }
-*/

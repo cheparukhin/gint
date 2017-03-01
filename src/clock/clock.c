@@ -1,6 +1,6 @@
 #include <clock.h>
 #include <timer.h>
-#include <internals/timer.h>
+#include <modules/timer.h>
 #include <rtc.h>
 #include <stddef.h>
 #include <mpu.h>
@@ -19,9 +19,9 @@ static clock_config_t conf = {
 	Several units can be used. Be aware that the result is approximate, and
 	very high frequencies or very short delays will yield important errors.
 */
-int clock_setting(int duration, enum ClockUnit unit)
+uint32_t clock_setting(int duration, enum ClockUnit unit)
 {
-	if(conf.Pphi_f <= 0) return -1;
+	if(conf.Pphi_f <= 0) return 0xffffffff;
 	uint64_t f = conf.Pphi_f >> 2;
 	uint64_t result;
 
@@ -74,30 +74,42 @@ void sleep(void)
 	);
 }
 
-/*
-	sleep_ms(), sleep_us()
-	Sleeps for the given number of milliseconds / microseconds using the
-	TIMER_USER timer. The actual sleep time will always be slightly less
-	than requested.
-*/
-
-static void sleep_callback(void *flag)
+static void sleep_callback(void *arg)
 {
-	*((int *)flag) = 1;
+	int *flag = arg;
+	*flag = 1;
 }
 
+/*
+	sleep_ms()
+	Sleeps for the given number of milliseconds using a virtual timer.
+*/
 void sleep_ms(int ms_delay)
 {
-	sleep_us(1000 * ms_delay);
+	volatile int sleep_done = 0;
+
+	timer_t *timer = timer_create(ms_delay, 1);
+	timer_attach(timer, sleep_callback, (void *)&sleep_done);
+	timer_start(timer);
+
+	while(!sleep_done) sleep();
 }
+
+/*
+	sleep_us()
+	Sleeps for the given number of microseconds using the hardware timer
+	timer_user.
+*/
 void sleep_us(int us_delay)
 {
 	volatile int sleep_done = 0;
-	timer_start(TIMER_USER, us_delay, Clock_us, sleep_callback,
-		(void *)&sleep_done, 1);
+	const uint32_t constant = clock_setting(us_delay, Clock_us);
 
-	do sleep();
-	while(!sleep_done);
+	timer_t *timer = htimer_setup(timer_user, constant, timer_Po_4, 1);
+	timer_attach(timer, sleep_callback, (void *)&sleep_done);
+	timer_start(timer);
+
+	while(!sleep_done) sleep();
 }
 
 
@@ -109,6 +121,7 @@ void sleep_us(int us_delay)
 // Indicates whether the measurements are finished.
 static volatile int clock_measure_done = 0;
 // Once again SH7705 and SH7305 need different methods...
+static timer_t *htimer_7705 = NULL;
 static int cb_id_7705 = -1;
 static void clock_measure_7705(void);
 static void clock_compute_7305(void);
@@ -128,25 +141,8 @@ void clock_measure(void)
 	// P_phi using a timer/RTC combination, and we deduce CKIO.
 	if(isSH3())
 	{
-		// We prepare the timer manually, without starting it, so that
-		// we only have to push the running bit to start it when the
-		// measurements begin. This might look of little effect but it
-		// makes the precision jump from ~97% to more than 99%.
-		volatile struct mod_tmu *tmu;
-		timer_get(TIMER_USER, &tmu, NULL);
-
-		tmu->TCOR	= 0xffffffff;
-		tmu->TCNT	= tmu->TCOR;
-		tmu->TCR.TPSC	= TIMER_Po_4;
-
-		tmu->TCR.UNF	= 0;
-		tmu->TCR.UNIE	= 1;
-		tmu->TCR.CKEG	= 0;
-
-		timers[TIMER_USER].callback	= NULL;
-		timers[TIMER_USER].data		= NULL;
-		timers[TIMER_USER].repeats	= 0;
-
+		htimer_7705 = htimer_setup(timer_user, 0xffffffff, timer_Po_4,
+			1);
 		cb_id_7705 = rtc_cb_add(RTCFreq_256Hz, clock_measure_7705, 0);
 	}
 
@@ -226,7 +222,7 @@ static void clock_compute_7305(void)
 	Given the number of P_phi / 4 timer ticks elapsed between two RTC
 	256 Hz interrupts, determines the clock configuration.
 */
-static void clock_measure_7705_finalize(int elapsed)
+static void clock_measure_7705_finalize(uint32_t elapsed)
 {
 	volatile unsigned int *FRQCR	= (void *)0xffffff80;
 
@@ -254,13 +250,10 @@ static void clock_measure_7705_finalize(int elapsed)
 */
 static void clock_measure_7705_callback(void)
 {
-	timer_stop(TIMER_USER);
+	timer_stop(htimer_7705);
 	rtc_cb_end(cb_id_7705);
 
-	volatile struct mod_tmu *tmu;
-	timer_get(TIMER_USER, &tmu, NULL);
-	int elapsed = 0xffffffff - tmu->TCNT;
-
+	uint32_t elapsed = 0xffffffff - TMU.timers[timer_user]->TCNT;
 	clock_measure_7705_finalize(elapsed);
 	clock_measure_done = 1;
 }
@@ -274,9 +267,6 @@ static void clock_measure_7705_callback(void)
 */
 static void clock_measure_7705(void)
 {
-	volatile unsigned char *tstr;
-	timer_get(TIMER_USER, NULL, &tstr);
-
-	*tstr |= (1 << TIMER_USER);
+	timer_start(htimer_7705);
 	rtc_cb_edit(cb_id_7705, RTCFreq_256Hz, clock_measure_7705_callback);
 }

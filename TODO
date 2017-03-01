@@ -12,7 +12,8 @@ Simple improvements:
 -  string:	Use cmp/str to implement memchr() (assembler examples)
 -  string:	Do some tests for memcmp()
 -  core:	Register more interrupts (and understand their parameters)
--  rtc:		Take care of carry when reading time
+-  project:	Clean headers that have some internal definitions
+-  project:	Check size of all library structures
 Larger improvements:
 -  errno:	Introduce errno and use it more or less everywhere
 -  bopti:	Monochrome bitmaps blending modes
@@ -24,6 +25,7 @@ Larger improvements:
 -  usb:		Implement a driver
 -  esper:	Cleaner playback, synthetizing
 -  clock:	Handle overclocking (relaunch clocks when overclocking)
+-  project:	Unify this hellish mess of register access!
 
 Things to investigate:
 -  Packed bit fields alignment

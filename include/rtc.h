@@ -9,38 +9,41 @@
 #ifndef	_RTC_H
 #define	_RTC_H	1
 
+#include <stdint.h>
+
 //---
 //	Time access.
 //---
 
 /*
-	struct RTCTime
+	rtc_time_t
 	Defines a point in time.
 */
-struct RTCTime
+typedef struct
 {
-	int seconds;		// Seconds in range 0-59
-	int minutes;		// Minutes in range 0-59
-	int hours;		// Hours in range 0-23
-	int month_day;		// Day of month in range 1-31
-	int month;		// Month in range 0-11
-	int year;		// Years (full value)
-	int week_day;		// Day of week in range 0(Sunday)-6(Saturday).
-};
+	uint8_t seconds;	// Seconds in range 0-59
+	uint8_t minutes;	// Minutes in range 0-59
+	uint8_t hours;		// Hours in range 0-23
+	uint8_t month_day;	// Day of month in range 1-31
+	uint8_t month;		// Month in range 0-11
+	uint8_t week_day;	// Day of week in range 0(Sunday)-6(Saturday).
+	uint16_t year;		// Years (around 2000)
+
+} rtc_time_t;
 
 /*
 	rtc_getTime()
 	Reads the current time from the RTC. There is no guarantee that the
 	week day is correct (use the time API for that).
 */
-struct RTCTime rtc_getTime(void);
+rtc_time_t rtc_getTime(void);
 
 /*
 	rtc_setTime()
 	Sets the time in the RTC registers. The week day is set to 0 if greater
 	than 6. Other fields are not checked.
 */
-void rtc_setTime(struct RTCTime time);
+void rtc_setTime(rtc_time_t time);
 
 
 
@@ -49,11 +52,11 @@ void rtc_setTime(struct RTCTime time);
 //---
 
 /*
-	enum RTCFrequency
+	rtc_frequency_t
 	Describes the possible frequencies available for the real-time clock
 	interrupt.
 */
-enum RTCFrequency
+typedef enum
 {
 	RTCFreq_500mHz	= 7,
 	RTCFreq_1Hz	= 6,
@@ -63,7 +66,8 @@ enum RTCFrequency
 	RTCFreq_64Hz	= 2,
 	RTCFreq_256Hz	= 1,
 	RTCFreq_None	= 0,
-};
+
+} rtc_frequency_t;
 
 /*
 	rtc_cb_add()
@@ -74,7 +78,7 @@ enum RTCFrequency
 	The number of repeats may be set to 0, in which case the callback is
 	called indefinitely unless the user calls rtc_cb_end().
 */
-int rtc_cb_add(enum RTCFrequency freq, void (*function)(void), int repeats);
+int rtc_cb_add(rtc_frequency_t freq, void (*function)(void), int repeats);
 
 /*
 	rtc_cb_end()
@@ -93,29 +97,6 @@ void rtc_cb_end(int id);
 	can set the function to NULL or the frequency to RTCFreq_None to
 	temporarily disable the callback.
 */
-int rtc_cb_edit(int id, enum RTCFrequency new_freq,
-	void (*new_function)(void));
-
-
-
-//---
-//	Internal API.
-//	Referenced here for documentation purposes only. Do not call.
-//---
-
-/*
-	rtc_interrupt()
-	Handles an RTC interrupt by calling the callback.
-*/
-void rtc_interrupt(void);
-void rtc_interrupt_7705(void);
-void rtc_interrupt_7305(void);
-
-/*
-	rtc_cb_interrupt()
-	Handles an RTC interrupt. Calls the RTC callbacks if necessary, and
-	updates the repeat counts.
-*/
-void rtc_cb_interrupt(void);
+int rtc_cb_edit(int id, rtc_frequency_t new_freq, void (*new_function)(void));
 
 #endif	// _RTC_H

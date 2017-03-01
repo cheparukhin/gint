@@ -12,7 +12,7 @@
 */
 time_t time(time_t *timeptr)
 {
-	struct RTCTime rtc = rtc_getTime();
+	rtc_time_t rtc = rtc_getTime();
 	struct tm tm;
 	time_t calendar;
 

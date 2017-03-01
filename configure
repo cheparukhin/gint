@@ -13,7 +13,7 @@ conf[GINT_EXTENDED_LIBC]=
 
 # Size limits
 conf[ATEXIT_MAX]=16
-conf[RTC_CB_ARRAY_SIZE]=5
+conf[TIMER_SLOTS]=16
 conf[EVENTS_QUEUE_SIZE]=64
 
 # Output files
@@ -50,8 +50,8 @@ Options that affect the behavior of the library:
 Options that customize size limits:
   $Cr--atexit-max$C0=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
     Number of exit handlers that can be registered by atexit().
-  $Cr--rtc-callbacks$C0=$Cy<integer>$Cg [default:$Cp 5$Cg]$C0
-    Number of RTC callbacks that can be registered.
+  $Cr--timer-slots$C0=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
+    Number of virtual timers that may be registered at the same time.
   $Cr--events-queue-size$C0=$Cy<integer>$Cg [default:$Cp 64$Cg]$C0
     Number of events simultaneously stored in the event queue.
 EOF
@@ -76,11 +76,11 @@ for arg; do case "$arg" in
 			conf[ATEXIT_MAX]=$size
 		else echo -e "$error --atexit-max expects an integer value"
 			fail=true; fi;;
-	--rtc-callbacks=*)
+	--timer-slots=*)
 		size=${arg#*=}
 		if [[ $size == +([0-9]) ]]; then
-			conf[RTC_CB_ARRAY_SIZE]=$size
-		else echo -e "$error --rtc-callbacks expects an integer value"
+			conf[TIMER_SLOTS]=$size
+		else echo -e "$error --timer-slots expects an integer value"
 			fail=true; fi;;
 	--events-queue-size=*)
 		size=${arg#*=}
@@ -90,7 +90,7 @@ for arg; do case "$arg" in
 			"value"
 			fail=true; fi;;
 
-	--atexit-max | --rtc-callbacks | --events-queue-size)
+	--atexit-max | --timer-slots | --events-queue-size)
 		echo -e "$error syntax for $arg is $arg=<integer-value>";;
 
 	*)
@@ -108,7 +108,7 @@ output_config_gcc()
 	[ "${conf[GINT_EXTENDED_LIBC]}" != "" ] && echo "-D GINT_EXTENDED_LIBC"
 
 	echo "-D ATEXIT_MAX=${conf[ATEXIT_MAX]}"
-	echo "-D RTC_CB_ARRAY_SIZE=${conf[RTC_CB_ARRAY_SIZE]}"
+	echo "-D TIMER_SLOTS=${conf[TIMER_SLOTS]}"
 	echo "-D EVENTS_QUEUE_SIZE=${conf[EVENTS_QUEUE_SIZE]}"
 }
 

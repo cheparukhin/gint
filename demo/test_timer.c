@@ -22,6 +22,7 @@ static clock_config_t conf;
 static volatile int elapsed_timer = -1;
 static volatile int elapsed_rtc = -1;
 static int cb_id = -1;
+static timer_t *htimer = NULL;
 
 static void timing_rtc(void)
 {
@@ -35,7 +36,11 @@ static void timing_timer(void)
 
 static void timing_start(void)
 {
-	timer_start(TIMER_USER, 64, Clock_Hz, timing_timer, NULL, 0);
+	uint32_t delay = clock_setting(64, Clock_Hz);
+	htimer = htimer_setup(timer_user, delay, timer_Po_4, 0);
+	timer_attach(htimer, timing_timer, NULL);
+	timer_start(htimer);
+
 	rtc_cb_edit(cb_id, RTCFreq_64Hz, timing_rtc);
 
 	elapsed_timer = 0;
@@ -253,8 +258,8 @@ void test_timer(void)
 		switch(getkey_opt(Getkey_NoOption, 1))
 		{
 		case KEY_EXIT:
-			timer_stop(TIMER_USER);
 			rtc_cb_end(cb_id);
+			timer_stop(htimer);
 			return;
 
 		case KEY_F1:

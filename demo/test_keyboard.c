@@ -102,7 +102,7 @@ static void draw_events(enhanced_event_t *history, int size)
 		"0",        ".",             "\x08", "(-)",  "EXE",   NULL
 	};
 	const char *event_names[] = {
-		"None ", "User ", "Press", "Rept.", "Rel. "
+		"None ", "User ", "Press", "Rept.", "Rel. ", "Timer"
 	};
 
 	for(int i = 0; i < size && history[i].type != ET_None; i++)

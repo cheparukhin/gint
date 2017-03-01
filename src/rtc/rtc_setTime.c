@@ -22,15 +22,22 @@ static int bcd16(int integer)
 	Sets the time in the RTC registers. The week day is set to 0 if greater
 	than 6. Other fields are not checked.
 */
-void rtc_setTime(struct RTCTime time)
+void rtc_setTime(rtc_time_t time)
 {
 	volatile struct mod_rtc *rtc = isSH3() ? RTC_SH7705 : RTC_SH7305;
+	int wday = (time.week_day < 7) ? (time.week_day) : (0);
 
-	rtc->RSECCNT.BYTE	= bcd8(time.seconds);
-	rtc->RMINCNT.BYTE	= bcd8(time.minutes);
-	rtc->RHRCNT.BYTE	= bcd8(time.hours);
-	rtc->RDAYCNT.BYTE	= bcd8(time.month_day);
-	rtc->RMONCNT.BYTE	= bcd8(time.month);
-	rtc->RYRCNT.WORD	= bcd16(time.year);
-	rtc->RWKCNT		= time.week_day < 7 ? time.week_day : 0;
+	do
+	{
+		rtc->RCR1.CF = 0;
+
+		rtc->RSECCNT.BYTE	= bcd8(time.seconds);
+		rtc->RMINCNT.BYTE	= bcd8(time.minutes);
+		rtc->RHRCNT.BYTE	= bcd8(time.hours);
+		rtc->RDAYCNT.BYTE	= bcd8(time.month_day);
+		rtc->RMONCNT.BYTE	= bcd8(time.month);
+		rtc->RYRCNT.WORD	= bcd16(time.year);
+		rtc->RWKCNT		= wday;
+	}
+	while(rtc->RCR1.CF != 0);
 }

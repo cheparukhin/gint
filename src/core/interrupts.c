@@ -1,6 +1,6 @@
 #include <internals/interrupts.h>
-#include <timer.h>
-#include <rtc.h>
+#include <internals/timer.h>
+#include <internals/rtc.h>
 
 /*
 	inth_timer_underflow()
@@ -17,5 +17,5 @@ void inth_timer_underflow(uint32_t channel)
 */
 void inth_rtc_periodic(void)
 {
-	rtc_interrupt();
+	rtc_periodic_interrupt();
 }

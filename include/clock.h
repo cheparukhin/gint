@@ -10,6 +10,8 @@
 #ifndef	_CLOCK_H
 #define	_CLOCK_H
 
+#include <stdint.h>
+
 //---
 //	Sleep functions.
 //---
@@ -21,12 +23,16 @@
 void sleep(void);
 
 /*
-	sleep_ms(), sleep_us()
-	Sleeps for the given number of milliseconds / microseconds using the
-	TIMER_USER timer. The actual sleep time will always be slightly less
-	than requested.
+	sleep_ms()
+	Sleeps for the given number of milliseconds using a virtual timer.
 */
 void sleep_ms(int ms_delay);
+
+/*
+	sleep_us()
+	Sleeps for the given number of microseconds using the hardware timer
+	timer_user.
+*/
 void sleep_us(int us_delay);
 
 
@@ -83,7 +89,7 @@ typedef struct
 	Normally you need not use this function when setting up timers because
 	timer_start() handles this conversion for you.
 */
-int clock_setting(int duration, enum ClockUnit unit);
+uint32_t clock_setting(int duration, enum ClockUnit unit);
 
 /*
 	clock_config()

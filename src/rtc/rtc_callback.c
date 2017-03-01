@@ -7,7 +7,7 @@ struct rtc_cb cb_array[RTC_CB_ARRAY_SIZE] = { 0 };
 // Callback identifier (unique).
 static int unique_id = 1;
 // Current RTC interrupt frequency.
-static enum RTCFrequency rtc_freq = RTCFreq_None;
+static rtc_frequency_t rtc_freq = RTCFreq_None;
 // 256-Hz tick count. This counter is stopped when no callback is registered.
 static unsigned elapsed256 = 0;
 
@@ -21,7 +21,7 @@ static unsigned elapsed256 = 0;
 */
 static void rtc_cb_update(void)
 {
-	enum RTCFrequency max = RTCFreq_None;
+	rtc_frequency_t max = RTCFreq_None;
 	int n;
 
 	for(n = 0; n < RTC_CB_ARRAY_SIZE; n++) if(cb_array[n].id)
@@ -46,7 +46,7 @@ static void rtc_cb_update(void)
 	The number of repeats may be set to 0, in which case the callback is
 	called indefinitely unless the user calls rtc_cb_end().
 */
-int rtc_cb_add(enum RTCFrequency freq, void (*function)(void), int repeats)
+int rtc_cb_add(rtc_frequency_t freq, void (*function)(void), int repeats)
 {
 	int n = 0;
 	if(freq == RTCFreq_None || !function || repeats < 0) return -2;
@@ -92,7 +92,7 @@ void rtc_cb_end(int id)
 	  -2	Invalid parameters
 	This function never removes a callback. Call rtc_cb_end() for this.
 */
-int rtc_cb_edit(int id, enum RTCFrequency new_freq,
+int rtc_cb_edit(int id, rtc_frequency_t new_freq,
 	void (*new_function)(void))
 {
 	if(new_freq < 0 || new_freq > 7) return -2;

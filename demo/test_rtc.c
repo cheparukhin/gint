@@ -16,7 +16,7 @@
 #include <internals/rtc.h>
 #include <mpu.h>
 
-static void draw(struct RTCTime time)
+static void draw(rtc_time_t time)
 {
 	extern Image res_rtc_segments;
 
@@ -53,8 +53,7 @@ static void draw(struct RTCTime time)
 static void callback(void)
 {
 	extern Image res_opt_rtc;
-	struct RTCTime time = rtc_getTime();
-	time.year += 1900;
+	rtc_time_t time = rtc_getTime();
 
 	dclear();
 	draw(time);
@@ -62,7 +61,7 @@ static void callback(void)
 	dupdate();
 }
 
-static void set_region(struct RTCTime *time, int region, int value)
+static void set_region(rtc_time_t *time, int region, int value)
 {
 	switch(region)
 	{
@@ -129,11 +128,9 @@ static void set(void)
 		{ 72, 39,  7,  9 }, {  84, 39,  7,  9 }, { 90, 39,  7,  9 },
 		{ 96, 39,  7,  9 }, { 102, 39,  7,  9 },
 	};
-	struct RTCTime time = rtc_getTime();
+	rtc_time_t time = rtc_getTime();
 	int region_count = 14;
 	int n = 0, slide = 0, key, leave;
-
-	time.year += 1900;
 
 	while(1)
 	{
@@ -157,11 +154,9 @@ static void set(void)
 
 			else if(key == KEY_F1 || key == KEY_EXE)
 			{
-				n++;
 				slide = 0;
-				if(n == region_count)
+				if(++n == region_count)
 				{
-					time.year -= 1900;
 					rtc_setTime(time);
 					return;
 				}
@@ -187,7 +182,7 @@ static void set(void)
 
 				else if(n == 6 && (slide != 1 || k != 5))
 				{
-					int day = k + 4 * slide - 1;
+					int day = (k + 4 * slide - 1) % 7;
 					set_region(&time, n, day);
 					n++;
 					slide = 0;
@@ -221,7 +216,6 @@ static void set(void)
 					n++;
 					if(n == region_count)
 					{
-						time.year -= 1900;
 						rtc_setTime(time);
 						return;
 					}
