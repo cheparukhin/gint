@@ -2,8 +2,10 @@
 //
 //	gint core module: interrupt handler
 //
-//	Central point of the library. Controls the interrupt handler and
-//	defines a few functions to configure callbacks for some interrupts.
+//	This module is the core of the gint library. It controls the interrupt
+//	handler, allows the user to customize interrupt management, provides
+//	peripheral register access and some information about the runtime
+//	environment.
 //
 //---
 

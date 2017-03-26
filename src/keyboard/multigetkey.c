@@ -40,7 +40,7 @@ void multigetkey(int *keys, int count, int cycles)
 		{
 			last_key = keys[0];
 			last_repeats = 0;
-			last_events = 0;
+			last_time = 0;
 		}
 
 		if(number) break;
@@ -48,7 +48,7 @@ void multigetkey(int *keys, int count, int cycles)
 	}
 
 	do event = pollevent();
-	while(event.type != ET_None);
+	while(event.type != event_none);
 
 	return;
 }

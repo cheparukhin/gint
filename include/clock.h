@@ -2,8 +2,14 @@
 //
 //	gint core module: clock
 //
-//	Measures the frequency of the MPU clocks. This module assumes that the
-//	clock mode is 3 on SH7305 (as does FTune).
+//	This module interfaces with the MPU clocks and is used to measure the
+//	clock frequencies at the beginning of execution. At this stage, it
+//	assumes that clock mode 3 is used on SH7305 (as does FTune), because
+//	there doesn't seem to be a way of getting this information.
+//
+//	It also provides some sleep and time conversion functions, and access
+//	to how the clocks are configured. In the future, it would be the module
+//	that supports overclock.
 //
 //---
 
@@ -18,7 +24,12 @@
 
 /*
 	sleep()
-	Puts the processor to sleep until an interrupt request is issued.
+	Puts the processor to sleep until an interrupt request is accepted.
+	This function should be called every time the program because idle
+	because it doesn't have anything to do -- between two game frames or
+	while waiting for a keyboard event.
+	This function is called by getkey_opt(), getkey(), waitevent(), this
+	module's sleep functions among others.
 */
 void sleep(void);
 
@@ -41,17 +52,29 @@ void sleep_us(int us_delay);
 //	Clock management.
 //---
 
-enum ClockUnit
+/*
+	clock_unit_t
+	Enumerated type used by the time conversion functions. It indicates the
+	type (delay or frequency) of a parameter.
+*/
+typedef enum
 {
-	Clock_us	= 0,
-	Clock_ms	= 1,
-	Clock_s		= 2,
+	clock_us	= 0,
+	clock_ms	= 1,
+	clock_s		= 2,
 
-	Clock_Hz	= 10,
-	Clock_kHz	= 11,
-	Clock_MHz	= 12,
-};
+	clock_Hz	= 10,
+	clock_kHz	= 11,
+	clock_MHz	= 12,
 
+} clock_unit_t;
+
+/*
+	clock_config_t
+	A copy of the Clock Pulse Generator (CPG) configuration. Be sure to
+	check which MPU the program is running on (using <mpu.h>) to access the
+	right fields.
+*/
 typedef struct
 {
 	union
@@ -75,9 +98,9 @@ typedef struct
 		int RTCCLK_f;	// SH7305
 	};
 
-	int Bphi_f;
-	int Iphi_f;
-	int Pphi_f;
+	int Bphi_f;		// Bus clock frequency
+	int Iphi_f;		// Processor clock frequency
+	int Pphi_f;		// Peripheral clock frequency
 
 } clock_config_t;
 
@@ -86,10 +109,8 @@ typedef struct
 	Returns the P_phi / 4 timer setting that will last for the given time.
 	Several units can be used. Be aware that the result is approximate, and
 	very high frequencies or very short delays will yield important errors.
-	Normally you need not use this function when setting up timers because
-	timer_start() handles this conversion for you.
 */
-uint32_t clock_setting(int duration, enum ClockUnit unit);
+uint32_t clock_setting(int duration, clock_unit_t unit);
 
 /*
 	clock_config()

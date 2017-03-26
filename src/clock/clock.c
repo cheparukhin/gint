@@ -19,7 +19,7 @@ static clock_config_t conf = {
 	Several units can be used. Be aware that the result is approximate, and
 	very high frequencies or very short delays will yield important errors.
 */
-uint32_t clock_setting(int duration, enum ClockUnit unit)
+uint32_t clock_setting(int duration, clock_unit_t unit)
 {
 	if(conf.Pphi_f <= 0) return 0xffffffff;
 	uint64_t f = conf.Pphi_f >> 2;
@@ -27,23 +27,23 @@ uint32_t clock_setting(int duration, enum ClockUnit unit)
 
 	switch(unit)
 	{
-	case Clock_us:
+	case clock_us:
 		result = (duration * f) / 1000000;
 		break;
-	case Clock_ms:
+	case clock_ms:
 		result = (duration * f) / 1000;
 		break;
-	case Clock_s:
+	case clock_s:
 		result = (duration * f);
 		break;
 
-	case Clock_Hz:
+	case clock_Hz:
 		result = f / duration;
 		break;
-	case Clock_kHz:
+	case clock_kHz:
 		result = f / (duration * 1000);
 		break;
-	case Clock_MHz:
+	case clock_MHz:
 		result = f / (duration * 1000000);
 		break;
 
@@ -103,7 +103,7 @@ void sleep_ms(int ms_delay)
 void sleep_us(int us_delay)
 {
 	volatile int sleep_done = 0;
-	const uint32_t constant = clock_setting(us_delay, Clock_us);
+	const uint32_t constant = clock_setting(us_delay, clock_us);
 
 	timer_t *timer = htimer_setup(timer_user, constant, timer_Po_4, 1);
 	timer_attach(timer, sleep_callback, (void *)&sleep_done);

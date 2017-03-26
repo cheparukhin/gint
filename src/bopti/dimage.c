@@ -7,8 +7,8 @@
 	Point (left, top) is included, but (left + width, top + height) is
 	excluded.
 */
-void dimage_part(int x, int y, struct Image *img, int left, int top,
-	int width, int height)
+void dimage_part(int x, int y, image_t *img, int left, int top, int width,
+	int height)
 {
 	if(!img || img->magic != 0x01) return;
 
@@ -70,7 +70,7 @@ void dimage_part(int x, int y, struct Image *img, int left, int top,
 	dimage()
 	Displays a monochrome image in the video ram.
 */
-void dimage(int x, int y, struct Image *img)
+void dimage(int x, int y, image_t *img)
 {
 	dimage_part(x, y, img, 0, 0, -1, -1);
 }

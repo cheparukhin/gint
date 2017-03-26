@@ -6,9 +6,28 @@
 */
 void gclear(void)
 {
-	int *v1 = gray_lightVRAM();
-	int *v2 = gray_darkVRAM();
-	int i;
+	uint32_t *lbase = gray_lightVRAM();
+	uint32_t *v1 = lbase + 256;
+	uint32_t *v2 = gray_darkVRAM() + 256;
 
-	for(i = 0; i < 256; i++) v1[i] = v2[i] = 0;
+	while(v1 > lbase)
+	{
+		*--v1 = 0;
+		*--v1 = 0;
+		*--v1 = 0;
+		*--v1 = 0;
+		*--v1 = 0;
+		*--v1 = 0;
+		*--v1 = 0;
+		*--v1 = 0;
+
+		*--v2 = 0;
+		*--v2 = 0;
+		*--v2 = 0;
+		*--v2 = 0;
+		*--v2 = 0;
+		*--v2 = 0;
+		*--v2 = 0;
+		*--v2 = 0;
+	}
 }

@@ -4,44 +4,56 @@
 	gpixel()
 	Puts a pixel in the vram.
 */
-void gpixel(int x, int y, enum Color color)
+void gpixel(size_t x, size_t y, color_t operator)
 {
-	if((unsigned int)x > 127 || (unsigned int)y > 63) return;
+	if(x > 127 || y > 63) return;
 
-	int offset = (y << 2) + (x >> 5);
-	int mask = 0x80000000 >> (x & 31);
+	uint32_t *light	= gray_lightVRAM() + (y << 2) + (x >> 5);
+	uint32_t *dark	= gray_darkVRAM()  + (y << 2) + (x >> 5);
+	uint32_t mask	= 0x80000000 >> (x & 31);
 
-	int *v1 = gray_lightVRAM();
-	int *v2 = gray_lightVRAM();
-
-	switch(color)
+	switch(operator)
 	{
-	case Color_White:
-		v1[offset] &= ~mask;
-		v2[offset] &= ~mask;
+	case color_white:
+		*light &= ~mask;
+		*dark  &= ~mask;
 		break;
-
-	case Color_Light:
-		v1[offset] |= mask;
-		v2[offset] &= ~mask;
+	case color_light:
+		*light |= mask;
+		*dark  &= ~mask;
 		break;
-
-	case Color_Dark:
-		v1[offset] &= ~mask;
-		v2[offset] |= mask;
+	case color_dark:
+		*light &= ~mask;
+		*dark  |= mask;
 		break;
-
-	case Color_Black:
-		v1[offset] |= mask;
-		v2[offset] |= mask;
+	case color_black:
+		*light |= mask;
+		*dark  |= mask;
 		break;
+	case color_none:
+		return;
 
-	case Color_Invert:
-		v1[offset] ^= mask;
-		v2[offset] ^= mask;
+	case color_invert:
+		*light ^= mask;
+		*dark  ^= mask;
 		break;
-
-	default:
+	case color_lighten:;
+		uint32_t old_light_1 = *light;
+		*light &= *dark | ~mask;
+		*dark  = (old_light_1 | ~mask) & (mask ^ *dark);
+		break;
+	case color_lighten2:
+		*dark  &= *light | ~mask;
+		*light &= ~mask;
+		break;
+	case color_darken:;
+		uint32_t old_light_2 = *light;
+		*light |= *dark & mask;
+		*dark  = (old_light_2 & mask) | (mask ^ *dark);
+		break;
+	case color_darken2:
+		*dark  |= *light | mask;
+		*light |= mask;
 		break;
 	}
 }

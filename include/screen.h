@@ -12,7 +12,7 @@
 //---
 
 #ifndef	_SCREEN_H
-#define	_SCREEN_H	1
+#define	_SCREEN_H
 
 /*
 	screen_display()

@@ -1,5 +1,5 @@
 #ifndef	_INTERNALS_TALES_H
-#define	_INTERNALS_TALES_H	1
+#define	_INTERNALS_TALES_H
 
 #include <tales.h>
 #include <stdint.h>
@@ -7,13 +7,14 @@
 #define	OPERATE_ARGS	uint32_t *operators, int height, int x, int y
 
 extern struct Font *font;
-extern enum Color color;
+extern color_t operator;
 
 /*
 	tales_init()
 	Configures tales with the default font (which is part of gint).
 */
-void tales_init(void)				__attribute__((constructor));
+__attribute__((constructor))
+void tales_init(void);
 
 /*
 	getCharacterIndex()

@@ -10,9 +10,9 @@
 
 static void draw(int delay1, int delay2, int selected)
 {
-	extern Image res_opt_gray;
-	unsigned int *vl = gray_lightVRAM();
-	unsigned int *vd = gray_darkVRAM();
+	extern image_t res_opt_gray;
+	uint32_t *vl = gray_lightVRAM();
+	uint32_t *vd = gray_darkVRAM();
 
 	gclear();
 	locate(1, 1, "Gray engine");
@@ -58,7 +58,7 @@ void test_gray(void)
 		}
 		changed = 0;
 
-		key = getkey_opt(Getkey_RepeatArrowKeys, 1);
+		key = getkey_opt(getkey_repeat_arrow_keys, 25);
 		if(key == KEY_EXIT) break;
 
 		changed = 1;

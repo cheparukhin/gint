@@ -2,6 +2,7 @@
 #define	_INTERNALS_KEYBOARD_H
 
 #include <keyboard.h>
+#include <timer.h>
 #include <clock.h>
 
 // Keyboard variables.
@@ -10,10 +11,10 @@ extern volatile int interrupt_flag;
 
 // Key statistics.
 extern int repeat_first, repeat_next;
-extern int last_key, last_repeats, last_events;
+extern int last_key, last_repeats, last_time;
 
-// RTC callback id.
-extern unsigned cb_id;
+// Virtual timer object.
+extern timer_t *vtimer;
 
 /*
 	getPressedKey()

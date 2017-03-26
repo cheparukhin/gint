@@ -23,7 +23,7 @@
 	--------------------------------------------------------- 
 */
 
-static void getwh(Image *img, int *width, int *height)
+static void getwh(image_t *img, int *width, int *height)
 {
 	const uint8_t *data;
 
@@ -42,7 +42,7 @@ static void getwh(Image *img, int *width, int *height)
 	*height	= (data[2] << 8) | data[3];
 }
 
-static void getxy(Image *img, int *x, int *y)
+static void getxy(image_t *img, int *x, int *y)
 {
 	int width, height;
 
@@ -51,10 +51,10 @@ static void getxy(Image *img, int *x, int *y)
 	*y = 28 - (height >> 1);
 }
 
-static Image *select(Image *current)
+static image_t *select(image_t *current)
 {
-	extern Image res_bopti_thumbs;
-	extern Image
+	extern image_t res_bopti_thumbs;
+	extern image_t
 		res_items,
 		res_sprites,
 		res_swords,
@@ -62,7 +62,7 @@ static Image *select(Image *current)
 		res_isometric;
 
 	struct {
-		Image *img;
+		image_t *img;
 		const char *name;
 		const char *info;
 	} images[] = {
@@ -74,7 +74,7 @@ static Image *select(Image *current)
 		{ NULL,			NULL,		NULL		}
 	};
 
-	Image *thumbs = &res_bopti_thumbs;
+	image_t *thumbs = &res_bopti_thumbs;
 	int items = 0;
 	static int row = 0;
 	int leave = 1, i;
@@ -106,7 +106,7 @@ static Image *select(Image *current)
 			}
 		}
 
-		greverse_area(0, 8 * row + 8, 128, 8 * row + 23);
+		grect(0, 8 * row + 8, 128, 8 * row + 23, color_invert);
 		gupdate();
 
 		do
@@ -138,8 +138,8 @@ static Image *select(Image *current)
 
 void test_bopti(void)
 {
-	extern Image res_opt_bitmap;
-	Image *img = NULL;
+	extern image_t res_opt_bitmap;
+	image_t *img = NULL;
 
 	int leave = 1;
 	int black_bg = 0;
@@ -152,10 +152,10 @@ void test_bopti(void)
 			gray_start();
 			gclear();
 
-			if(black_bg) greverse_area(0, 0, 127, 63);
+			if(black_bg) grect(0, 0, 127, 63, color_invert);
 			if(img) gimage(x, y, img);
 
-			gclear_area(0, 55, 127, 63);
+			grect(0, 55, 127, 63, color_white);
 			gimage(0, 56, &res_opt_bitmap);
 			gupdate();
 		}
@@ -164,10 +164,10 @@ void test_bopti(void)
 			gray_stop();
 			dclear();
 
-			if(black_bg) dreverse_area(0, 0, 127, 63);
+			if(black_bg) drect(0, 0, 127, 63, color_invert);
 			if(img) dimage(x, y, img);
 
-			dclear_area(0, 55, 127, 63);
+			drect(0, 55, 127, 63, color_white);
 			dimage(0, 56, &res_opt_bitmap);
 			dupdate();
 		}

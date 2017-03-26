@@ -14,7 +14,7 @@ volatile int queue_size = 0;
 int event_push(event_t event)
 {
 	if(queue_size >= EVENTS_QUEUE_SIZE) return 1;
-	if(event.type == ET_None) return 2;
+	if(event.type == event_none) return 2;
 
 	int index = queue_start + queue_size;
 	if(index >= EVENTS_QUEUE_SIZE) index -= EVENTS_QUEUE_SIZE;

@@ -10,7 +10,7 @@
 event_t pollevent(void)
 {
 	event_t event = {
-		.type	= ET_None
+		.type	= event_none,
 	};
 	if(queue_size <= 0) return event;
 
@@ -33,6 +33,6 @@ event_t waitevent(void)
 {
 	event_t event;
 
-	while((event = pollevent()).type == ET_None) sleep();
+	while((event = pollevent()).type == event_none) sleep();
 	return event;
 }

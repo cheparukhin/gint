@@ -39,6 +39,24 @@ timer_t *timer_create(int ms_delay, int repeats)
 }
 
 /*
+	timer_reload()
+	Changes a virtual timer's delay. The timer is not stopped nor started:
+	it keeps running or waiting. Events that were waiting to be handled are
+	dropped and the number of repeats left is not changed. The timer
+	restarts counting from 0 regardless of how much time had elapsed since
+	it last fired.
+*/
+void timer_reload(timer_t *timer, int new_ms_delay)
+{
+	if(!timer->virtual) return;
+
+	timer->ms_delay		= new_ms_delay;
+	timer->ms_elapsed	= 0;
+
+	vtimer_updateAll();
+}
+
+/*
 	timer_destroy()
 	Destroys a virtual timer. This virtual timer pointer becomes invalid
 	and should not be used anymore.
@@ -136,7 +154,7 @@ static void vtimer_update(int new_delay)
 		timer_stop(timer);
 		return;
 	}
-	uint32_t new_constant = clock_setting(new_delay, Clock_ms);
+	uint32_t new_constant = clock_setting(new_delay, clock_ms);
 
 	// The transition needs to be as smooth as possible. We have probably
 	// spent a lot of time calculating this new GCD delay so we want to
@@ -176,7 +194,7 @@ static void vtimer_update(int new_delay)
 
 /*
 	gcd()
-	Well, the Euclidean algorithm. That's a O(ln(a)) & O(ln(b)) FWIW.
+	Well, the Euclidean algorithm. That's O(ln(max(a, b))) FWIW.
 */
 static int gcd(int a, int b)
 {

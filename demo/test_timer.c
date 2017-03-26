@@ -36,7 +36,7 @@ static void timing_timer(void)
 
 static void timing_start(void)
 {
-	uint32_t delay = clock_setting(64, Clock_Hz);
+	uint32_t delay = clock_setting(64, clock_Hz);
 	htimer = htimer_setup(timer_user, delay, timer_Po_4, 0);
 	timer_attach(htimer, timing_timer, NULL);
 	timer_start(htimer);
@@ -59,8 +59,8 @@ static void timing_start(void)
 */
 static void small_text(int x, int y, const char *text, int alignment)
 {
-	extern Image res_clock_chars;
-	Image *chars = &res_clock_chars;
+	extern image_t res_clock_chars;
+	image_t *chars = &res_clock_chars;
 	const char *table = "0123456789kMHz*/";
 
 	if(alignment) x -= 2 * strlen(text) - 1, y -= 2;
@@ -133,9 +133,9 @@ static void display_freq(int x, int y, int freq)
 */
 static void draw(int tab)
 {
-	extern Image res_opt_timer;
-	extern Image res_clock_7705;
-	extern Image res_clock_7305;
+	extern image_t res_opt_timer;
+	extern image_t res_clock_7705;
+	extern image_t res_clock_7305;
 
 	char buffer[16];
 
@@ -163,14 +163,14 @@ static void draw(int tab)
 			small_text(84, 34, buffer, 1);
 
 			if(conf.Iphi_div1 == 1)
-				dline(85, 43, 99, 43, Color_Black);
+				dline(85, 43, 99, 43, color_black);
 			else
 			{
 				sprintf(buffer, "/%d", conf.Iphi_div1);
 				small_text(89, 41, buffer, 0);
 			}
 			if(conf.Pphi_div1 == 1)
-				dline(85, 50, 99, 50, Color_Black);
+				dline(85, 50, 99, 50, color_black);
 			else
 			{
 				sprintf(buffer, "/%d", conf.Pphi_div1);
@@ -249,13 +249,13 @@ void test_timer(void)
 	elapsed_rtc	= -1;
 	cb_id = rtc_cb_add(RTCFreq_64Hz, timing_start, 0);
 
-	text_configure(NULL, Color_Black);
+	text_configure(NULL, color_black);
 
 	while(1)
 	{
 		draw(tab);
 
-		switch(getkey_opt(Getkey_NoOption, 1))
+		switch(getkey_opt(getkey_none, 25))
 		{
 		case KEY_EXIT:
 			rtc_cb_end(cb_id);

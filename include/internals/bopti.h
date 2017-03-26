@@ -15,7 +15,7 @@
 //---
 
 #ifndef	_INTERNALS_BOPTI_H
-#define	_INTERNALS_BOPTI_H	1
+#define	_INTERNALS_BOPTI_H
 
 #include <stdint.h>
 #include <display.h>
@@ -86,7 +86,7 @@ struct Command
 // The video ram addresses are set by the public functions and used internally
 // by the module.
 // Monochrome video ram, light and dark buffers (in this order).
-extern int *bopti_vram, *bopti_v1, *bopti_v2;
+extern uint32_t *bopti_vram, *bopti_v1, *bopti_v2;
 
 
 
@@ -155,6 +155,6 @@ void bopti(const unsigned char *layer, struct Structure *s, struct Command *c);
 	getStructure()
 	Determines the image size and data pointer.
 */
-void getStructure(struct Image *img, struct Structure *structure);
+void getStructure(image_t *img, struct Structure *structure);
 
 #endif	// _INTERNALS_BOPTI_H

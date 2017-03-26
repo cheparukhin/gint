@@ -7,9 +7,13 @@
 //---
 
 #ifndef	_GRAY_H
-#define	_GRAY_H	1
+#define	_GRAY_H
 
+#include <stdint.h>
 #include <display.h>
+
+// This module provides bitmap rendering.
+#include <bopti.h>
 
 //---
 //	Engine control.
@@ -39,13 +43,13 @@ void gray_stop(void);
 	gray_lightVRAM()
 	Returns the module's light gray vram address.
 */
-void *gray_lightVRAM(void);
+uint32_t *gray_lightVRAM(void);
 
 /*
 	gray_darkVRAM()
 	Returns the module's dark gray vram address.
 */
-void *gray_darkVRAM(void);
+uint32_t *gray_darkVRAM(void);
 
 /*
 	gray_getDelays()
@@ -81,29 +85,26 @@ void gray_setDelays(int light, int dark);
 
 /*
 	gupdate()
-	Swaps the vram buffer sets.
+	Swaps the vram buffer sets. You need to call this function each time
+	you finish drawing something in the video ram. Unlike the monochrome
+	function dupdate(), gupdate() only does a quick operation indicating
+	that drawing and exposed buffers have been swapped, but nothing on the
+	screen will change until the gray timer fires.
 */
 void gupdate(void);
 
 /*
 	gclear()
-	Clears the video ram.
+	Clears the gray video ram, making all pixels white.
 */
 void gclear(void);
 
 /*
-	gclear_area()
-	Clears an area of the video ram. End points (x1, y1) and (x2, y2) are
-	included.
+	grect()
+	Draws a rectangle in the gray video ram; this function accepts all
+	values of the color_t type, including gray operators.
 */
-void gclear_area(int x1, int y1, int x2, int y2);
-
-/*
-	greverse_area()
-	Reverses an area of the vram. End points (x1, y1) and (x2, y2) are
-	included.
-*/
-void greverse_area(int x1, int y1, int x2, int y2);
+void grect(int x1, int y1, int x2, int y2, color_t operator);
 
 
 
@@ -113,29 +114,18 @@ void greverse_area(int x1, int y1, int x2, int y2);
 
 /*
 	gpixel()
-	Puts a pixel in the vram.
+	Puts a pixel in the vram. This function accepts all values of the
+	color_t type, including gray operators.
 */
-void gpixel(int x, int y, enum Color color);
+void gpixel(size_t x, size_t y, color_t operator);
 
 /*
 	gline()
-	Draws a line in the vram. Automatically optimizes special cases.
+	Draws a line in the vram while automatically optimizing special cases.
+	This function supports all plain colors from the color_t type, but not
+	the gray operators. If you need them for horizontal or vertical lines,
+	you may want to use grect() as a replacement.
 */
-void gline(int x1, int y1, int x2, int y2, enum Color color);
-
-/*
-	gimage()
-	Displays a gray image in the vram.
-*/
-void gimage(int x, int y, struct Image *image);
-
-/*
-	gimage_part()
-	Draws a portion of a gray image, defined by its bounding rectangle.
-	Point (left, top) is included, but (left + width, top + height) is
-	excluded.
-*/
-void gimage_part(int x, int y, struct Image *image, int left, int top,
-	int width, int height);
+void gline(int x1, int y1, int x2, int y2, color_t operator);
 
 #endif	// _GRAY_H

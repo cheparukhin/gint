@@ -23,8 +23,8 @@ Larger improvements:
 *  core:	Allow return to menu
 -  serial:	Implement a driver
 -  usb:		Implement a driver
--  esper:	Cleaner playback, synthetizing
--  clock:	Handle overclocking (relaunch clocks when overclocking)
+-  esper:	Cleaner playback, synthesizing
+-  clock:	Handle overclock (relaunch clocks when overclocking)
 -  project:	Unify this hellish mess of register access!
 
 Things to investigate:

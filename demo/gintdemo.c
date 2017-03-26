@@ -288,7 +288,7 @@ void main_menu(int *category, int *app)
 	//	Quite a few things to declare...
 	//---
 
-	extern Image res_opt_menu;
+	extern image_t res_opt_menu;
 
 	const char *mpu, *mpu_names[] = {
 		"Unknown",
@@ -332,7 +332,7 @@ void main_menu(int *category, int *app)
 	int i;
 
 	mpu = mpu_names[MPU_CURRENT < 5 ? MPU_CURRENT : 5];
-	text_configure(NULL, Color_Black);
+	text_configure(NULL, color_black);
 
 	while(1)
 	{
@@ -386,8 +386,8 @@ void main_menu(int *category, int *app)
 			if(scroll > 0) locate(20, 2, "\x0d");
 			if(scroll + 6 < list_len) locate(20, 7, "\x0e");
 
-			dreverse_area(0, 8 * (index - scroll) + 8, 127,
-				8 * (index - scroll) + 15);
+			drect(0, 8 * (index - scroll) + 8, 127,
+				8 * (index - scroll) + 15, color_invert);
 		}
 
 		dupdate();
@@ -494,8 +494,6 @@ void main_menu(int *category, int *app)
 int main(void)
 {
 	int category, app;
-
-	sleep_ms(2000);
 
 	while(1)
 	{

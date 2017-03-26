@@ -1,38 +1,41 @@
 #include <internals/display.h>
 #include <display.h>
 
-#define sgn(x)	((x) < 0 ? -1 : 1)
-#define	abs(x)	((x) < 0 ? -(x) : (x))
-#define	rnd(x)	((int)((x) + 0.5))
-
 /*
-	dline()
-	Draws a line on the screen. Automatically optimizes horizontal and
-	vertical lines.
+	dhline()
+	Optimized procedure for drawing an horizontal line. Uses a rectangle
+	mask.
 */
-
-static void dhline(int x1, int x2, int y, enum Color color)
+static void dhline(size_t x1, size_t x2, int y, color_t operator)
 {
 	uint32_t masks[4];
-	int offset = y << 2;
-	int i;
+	uint32_t *video = vram + (y << 2) + 4;
 
 	// Swapping x1 and x2 if needed.
 	if(x1 > x2) x1 ^= x2, x2 ^= x1, x1 ^= x2;
 	getMasks(x1, x2, masks);
 
-	switch(color)
+	switch(operator)
 	{
-	case Color_White:
-		for(i = 0; i < 4; i++) vram[offset + i] &= ~masks[i];
+	case color_white:
+		*--video &= ~masks[3];
+		*--video &= ~masks[2];
+		*--video &= ~masks[1];
+		*--video &= ~masks[0];
 		break;
 
-	case Color_Black:
-		for(i = 0; i < 4; i++) vram[offset + i] |= masks[i];
+	case color_black:
+		*--video |= masks[3];
+		*--video |= masks[2];
+		*--video |= masks[1];
+		*--video |= masks[0];
 		break;
 
-	case Color_Invert:
-		for(i = 0; i < 4; i++) vram[offset + i] ^= masks[i];
+	case color_invert:
+		*--video ^= masks[3];
+		*--video ^= masks[2];
+		*--video ^= masks[1];
+		*--video ^= masks[0];
 		break;
 
 	default:
@@ -40,24 +43,30 @@ static void dhline(int x1, int x2, int y, enum Color color)
 	}
 }
 
-static void dvline(int y1, int y2, int x, enum Color color)
+/*
+	dvline()
+	Optimized procedure for drawing a vertical line. This one is far less
+	powerful than dhline() because the video ram is essentially line-
+	oriented. It also uses a mask.
+*/
+static void dvline(int y1, int y2, int x, color_t operator)
 {
-	int offset = (y1 << 2) + (x >> 5);
-	int end = (y2 << 2) + (x >> 5);
-	int mask = 0x80000000 >> (x & 31);
+	uint32_t *base	= vram + (y1 << 2) + (x >> 5);
+	uint32_t *video	= vram + (y2 << 2) + (x >> 5) + 4;
+	uint32_t mask	= 0x80000000 >> (x & 31);
 
-	switch(color)
+	switch(operator)
 	{
-	case Color_White:
-		while(offset <= end) vram[offset] &= ~mask, offset += 4;
+	case color_white:
+		while(video > base) video -= 4, *video &= ~mask;
 		break;
 
-	case Color_Black:
-		while(offset <= end) vram[offset] |= mask, offset += 4;
+	case color_black:
+		while(video > base) video -= 4, *video |= mask;
 		break;
 
-	case Color_Invert:
-		while(offset <= end) vram[offset] ^= mask, offset += 4;
+	case color_invert:
+		while(video > base) video -= 4, *video ^= mask;
 		break;
 
 	default:
@@ -65,19 +74,28 @@ static void dvline(int y1, int y2, int x, enum Color color)
 	}
 }
 
-void dline(int x1, int y1, int x2, int y2, enum Color color)
+#define sgn(x)	((x) < 0 ? -1 : 1)
+#define	abs(x)	((x) < 0 ? -(x) : (x))
+
+/*
+	dline()
+	Line drawing algorithm more or less directly taken for MonochromeLib.
+	Thanks PierrotLL for this. Relies on dhline() and dvline() for specific
+	cases.
+*/
+void dline(int x1, int y1, int x2, int y2, color_t operator)
 {
 	if(adjustRectangle(&x1, &y1, &x2, &y2)) return;
 
 	// Possible optimizations.
 	if(y1 == y2)
 	{
-		dhline(x1, x2, y1, color);
+		dhline(x1, x2, y1, operator);
 		return;
 	}
 	if(x1 == x2)
 	{
-		dvline(y1, y2, x1, color);
+		dvline(y1, y2, x1, operator);
 		return;
 	}
 
@@ -87,7 +105,7 @@ void dline(int x1, int y1, int x2, int y2, enum Color color)
 
 	dx = abs(dx), dy = abs(dy);
 
-	dpixel(x1, y1, color);
+	dpixel(x1, y1, operator);
 
 	if(dx >= dy)
 	{
@@ -97,7 +115,7 @@ void dline(int x1, int y1, int x2, int y2, enum Color color)
 			x += sx;
 			cumul += dy;
 			if(cumul > dx) cumul -= dx, y += sy;
-			dpixel(x, y, color);
+			dpixel(x, y, operator);
 		}
 	}
 	else
@@ -108,9 +126,9 @@ void dline(int x1, int y1, int x2, int y2, enum Color color)
 			y += sy;
 			cumul += dx;
 			if(cumul > dy) cumul -= dy, x += sx;
-			dpixel(x, y, color);
+			dpixel(x, y, operator);
 		}
 	}
 
-	dpixel(x2, y2, color);
+	dpixel(x2, y2, operator);
 }

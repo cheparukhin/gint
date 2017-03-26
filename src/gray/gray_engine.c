@@ -11,8 +11,8 @@
 #include <timer.h>
 #include <mpu.h>
 
-static int internal_vrams[3][256];
-static const void *vrams[4];
+static uint32_t internal_vrams[3][256];
+static uint32_t *vrams[4];
 
 static int current = 0;
 static int delays[2];
@@ -45,10 +45,10 @@ void gray_interrupt(void)
 */
 __attribute__((constructor)) void gray_init(void)
 {
-	vrams[0] = (const void *)display_getLocalVRAM();
-	vrams[1] = (const void *)internal_vrams[0];
-	vrams[2] = (const void *)internal_vrams[1];
-	vrams[3] = (const void *)internal_vrams[2];
+	vrams[0] = display_getLocalVRAM();
+	vrams[1] = internal_vrams[0];
+	vrams[2] = internal_vrams[1];
+	vrams[3] = internal_vrams[2];
 
 	delays[0] = 912;
 	delays[1] = 1343;
@@ -119,18 +119,18 @@ inline int gray_runs(void)
 	gray_lightVRAM()
 	Returns the module's gray vram address.
 */
-void *gray_lightVRAM(void)
+uint32_t *gray_lightVRAM(void)
 {
-	return (void *)vrams[~current & 2];
+	return vrams[~current & 2];
 }
 
 /*
 	gray_lightVRAM()
 	Returns the module's dark vram address.
 */
-void *gray_darkVRAM(void)
+uint32_t *gray_darkVRAM(void)
 {
-	return (void *)vrams[(~current & 2) | 1];
+	return vrams[(~current & 2) | 1];
 }
 
 /*

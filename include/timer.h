@@ -8,7 +8,7 @@
 //---
 
 #ifndef	_TIMER_H
-#define	_TIMER_H	1
+#define	_TIMER_H
 
 #include <clock.h>
 #include <stdint.h>
@@ -48,6 +48,16 @@ typedef struct timer_t timer_t;
 	automatically instead.
 */
 timer_t *timer_create(int delay_ms, int repeats);
+
+/*
+	timer_reload()
+	Changes a virtual timer's delay. The timer is not stopped nor started:
+	it keeps running or waiting. Events that were waiting to be handled are
+	dropped and the number of repeats left is not changed. The timer
+	restarts counting from 0 regardless of how much time had elapsed since
+	it last fired.
+*/
+void timer_reload(timer_t *timer, int new_ms_delay);
 
 /*
 	timer_destroy()

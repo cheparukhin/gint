@@ -27,7 +27,7 @@ static Font *select(Font *current)
 
 	while(1)
 	{
-		text_configure(NULL, Color_Black);
+		text_configure(NULL, color_black);
 
 		dclear();
 		locate(1, 1, "Select a font:");
@@ -39,18 +39,18 @@ static Font *select(Font *current)
 				int height = fonts[i].font->line_height;
 				int y = (i + 2) * 8 - 8 + ((7 - height) >> 1);
 
-				text_configure(fonts[i].font, Color_Black);
+				text_configure(fonts[i].font, color_black);
 				dtext(7, y, fonts[i].name);
 			}
 			else
 			{
-				text_configure(NULL, Color_Black);
+				text_configure(NULL, color_black);
 				locate(2, i + 2, fonts[i].name);
 			}
 
 		}
 
-		dreverse_area(0, 8 * row + 8, 128, 8 * row + 15);
+		drect(0, 8 * row + 8, 128, 8 * row + 15, color_invert);
 		dupdate();
 
 		do
@@ -80,9 +80,9 @@ static Font *select(Font *current)
 
 void test_tales(void)
 {
-	enum Color colors[] = { Color_Black, Color_Dark, Color_Light,
-		Color_White, Color_Invert };
-	extern Image res_opt_tales;
+	color_t colors[] = { color_black, color_dark, color_light, color_white,
+		color_invert };
+	extern image_t res_opt_tales;
 	Font *font = NULL;
 
 	int black_bg = 0;
@@ -94,7 +94,7 @@ void test_tales(void)
 	while(1)
 	{
 		gclear();
-		if(black_bg) greverse_area(0, 0, 127, 54);
+		if(black_bg) grect(0, 0, 127, 54, color_invert);
 
 		if(font)
 		{
@@ -119,10 +119,10 @@ void test_tales(void)
 		gimage(0, 56, &res_opt_tales);
 
 		x = 45 + 8 * color;
-		gline(x, 57, x + 5, 57, Color_Black);
-		gline(x, 57, x, 62, Color_Black);
-		gline(x + 5, 57, x + 5, 62, Color_Black);
-		gline(x, 62, x + 5, 62, Color_Black);
+		gline(x, 57, x + 5, 57, color_black);
+		gline(x, 57, x, 62, color_black);
+		gline(x + 5, 57, x + 5, 62, color_black);
+		gline(x, 62, x + 5, 62, color_black);
 
 		gupdate();
 
@@ -146,7 +146,7 @@ void test_tales(void)
 
 			case KEY_EXIT:
 				gray_stop();
-				text_configure(NULL, Color_Black);
+				text_configure(NULL, color_black);
 				return;
 			default:
 				leave = 0;

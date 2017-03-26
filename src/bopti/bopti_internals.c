@@ -1,7 +1,7 @@
 #include <internals/bopti.h>
 
 // Monochrome video ram, light and dark buffers (in this order).
-int *bopti_vram, *bopti_v1, *bopti_v2;
+uint32_t *bopti_vram, *bopti_v1, *bopti_v2;
 
 /*
 	bopti_op()
@@ -285,7 +285,7 @@ void bopti(const unsigned char *layer, struct Structure *s, struct Command *c)
 	getStructure()
 	Determines the image size and data pointer.
 */
-void getStructure(struct Image *img, struct Structure *s)
+void getStructure(image_t *img, struct Structure *s)
 {
 	int column_count, end, end_bytes, layer;
 

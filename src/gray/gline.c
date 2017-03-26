@@ -3,22 +3,23 @@
 
 /*
 	gline()
-	Draws a line in the vram. Automatically optimizes special cases.
+	Draws a line in the vram. Automatically optimizes special cases. This
+	function does not support the light operators.
 */
-void gline(int x1, int y1, int x2, int y2, enum Color color)
+void gline(int x1, int y1, int x2, int y2, color_t operator)
 {
-	enum Color c1, c2;
+	color_t op1, op2;
 
-	if(color == Color_None) return;
-	else if(color == Color_Invert) c1 = c2 = Color_Invert;
+	if(operator == color_invert) op1 = op2 = color_invert;
+	else if(operator >= color_none) return;
 	else
 	{
-		c1 = 3 * (color & 1);
-		c2 = 3 * (color >> 1);
+		op1 = 3 * (operator & 1);
+		op2 = 3 * (operator >> 1);
 	}
 
 	display_useVRAM(gray_lightVRAM());
-	dline(x1, y1, x2, y2, c1);
+	dline(x1, y1, x2, y2, op1);
 	display_useVRAM(gray_darkVRAM());
-	dline(x1, y1, x2, y2, c2);
+	dline(x1, y1, x2, y2, op2);
 }
