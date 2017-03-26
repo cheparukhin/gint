@@ -6,18 +6,18 @@
 	and x2 (both included). The four masks are stored in the third argument
 	(seen as an array).
 */
-void getMasks(int x1, int x2, uint32_t *masks)
+void getMasks(size_t x1, size_t x2, uint32_t *masks)
 {
-	// Indexes of the first and last longs that are non-blank.
-	int l1 = x1 >> 5;
-	int l2 = x2 >> 5;
-	int i = 0;
+	// Indexes of the first and last longs that are not empty.
+	size_t l1 = x1 >> 5;
+	size_t l2 = x2 >> 5;
+	size_t i = 0;
 
 	// Setting the base masks. Those are the final values, except for the
-	// longs with indexes l1 and l2, that still need to be adjusted.
-	while(i < l1)  masks[i++] = 0x00000000;
-	while(i <= l2) masks[i++] = 0xffffffff;
-	while(i < 4)   masks[i++] = 0x00000000;
+	// longs between indexes l1 and l2, that still need to be adjusted.
+	while(i < l1)	masks[i++] = 0x00000000;
+	while(i <= l2)	masks[i++] = 0xffffffff;
+	while(i < 4)	masks[i++] = 0x00000000;
 
 	// Removing the long number information in x1 and x2 (that is, the
 	// multiples of 32) to keep only the interesting information -- the

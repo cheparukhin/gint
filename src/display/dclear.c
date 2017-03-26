@@ -3,10 +3,30 @@
 
 /*
 	dclear()
-	Clears the whole vram.
+	Clears the whole vram, making all pixels white.
 */
 void dclear(void)
 {
-	int i;
-	for(i = 0; i < 256; i++) vram[i] = 0;
+	// I tend to use pre-decrement more than post-increment.
+	uint32_t *index = vram + 256;
+
+	while(index > vram)
+	{
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+		*--index = 0;
+	}
 }

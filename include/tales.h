@@ -8,7 +8,7 @@
 //---
 
 #ifndef	_TALES_H
-#define	_TALES_H	1
+#define	_TALES_H
 
 #include <display.h>
 #include <stdint.h>
@@ -95,7 +95,7 @@ typedef struct Font Font;
 	Sets the font and color to use for subsequent text operations. Pass
 	font = NULL to use the default font.
 */
-void text_configure(struct Font *font, enum Color color);
+void text_configure(struct Font *font, color_t operator);
 
 /*
 	dtext()

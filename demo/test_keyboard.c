@@ -31,24 +31,24 @@ static void draw_keyboard(volatile uint8_t *state)
 		{
 			for(k = -2; k <= 2; k++) for(l = -2; l <= 2; l++)
 				if(abs(k) + abs(l) <= 2)
-					dpixel(x + k, y + l, Color_Black);
+					dpixel(x + k, y + l, color_black);
 		}
 		// Drawing a square border otherwise.
 		else
 		{
 			for(k = -1; k <= 1; k++) for(l = -1; l <= 1; l++)
-				if(k || l) dpixel(x + k, y + l, Color_Black);
+				if(k || l) dpixel(x + k, y + l, color_black);
 		}
 	}
 
 	// Binding the arrow keys together for a more visual thing.
-	dpixel(28, 19, Color_Black); dpixel(29, 19, Color_Black);
-	dpixel(28, 24, Color_Black); dpixel(29, 24, Color_Black);
-	dpixel(26, 21, Color_Black); dpixel(26, 22, Color_Black);
-	dpixel(31, 21, Color_Black); dpixel(31, 22, Color_Black);
+	dpixel(28, 19, color_black); dpixel(29, 19, color_black);
+	dpixel(28, 24, color_black); dpixel(29, 24, color_black);
+	dpixel(26, 21, color_black); dpixel(26, 22, color_black);
+	dpixel(31, 21, color_black); dpixel(31, 22, color_black);
 
 	// An horizontal line to separate parts of the keyboard.
-	dline(5, 28, 32, 28, Color_Black);
+	dline(5, 28, 32, 28, color_black);
 }
 
 typedef struct {
@@ -64,7 +64,7 @@ static void push_history(enhanced_event_t *history, int size, event_t event)
 
 	// Determining where the history ends.
 	int length = 0;
-	while(length < size && history[length].type != ET_None) length++;
+	while(length < size && history[length].type != event_none) length++;
 
 	// Checking if the previous event is being repeated.
 	if(length > 0 && event_eq(history[length - 1], event))
@@ -105,10 +105,10 @@ static void draw_events(enhanced_event_t *history, int size)
 		"None ", "User ", "Press", "Rept.", "Rel. ", "Timer"
 	};
 
-	for(int i = 0; i < size && history[i].type != ET_None; i++)
+	for(int i = 0; i < size && history[i].type != event_none; i++)
 	{
 		print(8, 3 + i, "%s %s", event_names[history[i].type],
-			key_names[keyid(history[i].key)]);
+			key_names[key_id(history[i].key)]);
 		if(history[i].repeats > 1)
 			print(19, 3 + i, "%d", history[i].repeats);
 	}
@@ -124,18 +124,19 @@ void test_keyboard_events(void)
 	int history_size = 5;
 	event_t event;
 
-	for(int i = 0; i < history_size; i++) history[i].type = ET_None;
+	for(int i = 0; i < history_size; i++) history[i].type = event_none;
 
 	while(1)
 	{
 		dclear();
 		locate(1, 1, "Keyboard and events");
-		draw_keyboard(keystate());
+		draw_keyboard(keyboard_stateBuffer());
 		draw_events(history, history_size);
 		dupdate();
 
 		event = waitevent();
-		if(event.type == ET_KeyPress && event.key == KEY_EXIT) break;
+		if(event.type == event_key_press && event.key == KEY_EXIT)
+			break;
 		push_history(history, history_size, event);
 	}
 }

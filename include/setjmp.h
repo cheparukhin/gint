@@ -8,7 +8,7 @@
 //---
 
 #ifndef	_SETJMP_H
-#define	_SETJMP_H	1
+#define	_SETJMP_H
 
 // There are 16 CPU registers that *must* be saved to ensure a basically
 // safe jump.

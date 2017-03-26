@@ -5,7 +5,7 @@
 #include <gray.h>
 
 struct Font *font;
-enum Color color;
+color_t operator;
 
 /*
 	tales_init()
@@ -13,7 +13,7 @@ enum Color color;
 */
 void tales_init(void)
 {
-	text_configure(NULL, Color_Black);
+	text_configure(NULL, color_black);
 }
 
 /*
@@ -93,31 +93,36 @@ int getCharacterIndex(int c)
 */
 void operate_mono(OPERATE_ARGS)
 {
-	int *vram = display_getCurrentVRAM();
-	int vram_offset = (x >> 5) + (y << 2);
-	uint32_t op;
-	int i;
+	uint32_t *vram	= display_getCurrentVRAM();
+	uint32_t *video	= vram + (x >> 5) + (y << 2);
 
-	for(i = 0; i < height; i++)
+	switch(operator)
 	{
-		op = operators[i];
-
-		switch(color)
+	case color_white:
+		for(int i = 0; i < height; i++)
 		{
-		case Color_White:
-			vram[vram_offset] &= ~op;
-			break;
-		case Color_Black:
-			vram[vram_offset] |= op;
-			break;
-		case Color_Invert:
-			vram[vram_offset] ^= op;
-			break;
-		default:
-			break;
+			*video &= ~operators[i];
+			video += 4;
 		}
+		break;
 
-		vram_offset += 4;
+	case color_black:
+		for(int i = 0; i < height; i++)
+		{
+			*video |= operators[i];
+			video += 4;
+		}
+		break;
+
+	case color_invert:
+		for(int i = 0; i < height; i++)
+		{
+			*video ^= operators[i];
+			video += 4;
+		}
+		break;
+
+	default: return;
 	}
 }
 

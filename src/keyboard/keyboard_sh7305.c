@@ -10,6 +10,7 @@
 //
 //---
 
+#include <stdint.h>
 #include <keyboard.h>
 #include <7305.h>
 
@@ -61,20 +62,20 @@ static void kdelay(void)
 */
 static int krow(int row)
 {
-	volatile unsigned short *injector1 = (unsigned short *)0xa4050116;
-	volatile unsigned char *data1 = (unsigned char *)0xa4050136;
+	volatile uint16_t *injector1	= (void *)0xa4050116;
+	volatile uint8_t  *data1	= (void *)0xa4050136;
 
-	volatile unsigned short *injector2 = (unsigned short *)0xa4050118;
-	volatile unsigned char *data2 = (unsigned char *)0xa4050138;
+	volatile uint16_t *injector2	= (void *)0xa4050118;
+	volatile uint8_t  *data2	= (void *)0xa4050138;
 
-	volatile unsigned short *detector = (unsigned short *)0xa405014c;
-	volatile unsigned char *keys = (unsigned char *)0xa405016c;
+	volatile uint16_t *detector	= (void *)0xa405014c;
+	volatile uint8_t  *keys		= (void *)0xa405016c;
 
-	volatile unsigned char *key_register = (unsigned char *)0xa40501c6;
-//	volatile unsigned short *hizcrb = (unsigned short *)0xa405015a;
+	volatile uint8_t  *key_register	= (void *)0xa40501c6;
+//	volatile uint16_t *hizcrb	= (void *)0xa405015a;
 
-	unsigned short smask;
-	unsigned char cmask;
+	uint16_t smask;
+	uint8_t cmask;
 	int result = 0;
 
 	if(row < 0 || row > 9) return 0;

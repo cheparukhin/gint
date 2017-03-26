@@ -1,5 +1,5 @@
 #ifndef	_INTERNALS_TIME_H
-#define	_INTERNALS_TIME_H	1
+#define	_INTERNALS_TIME_H
 
 /*
 	isLeap()

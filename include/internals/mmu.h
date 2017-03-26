@@ -8,8 +8,8 @@
 //
 //---
 
-#ifndef	_MMU_H
-#define	_MMU_H	1
+#ifndef	_INTERNALS_MMU_H
+#define	_INTERNALS_MMU_H
 
 /*
 	mmu_pseudoTLBInit()

@@ -27,7 +27,7 @@
 //---
 
 #ifndef	_MPU_H
-#define	_MPU_H	1
+#define	_MPU_H
 
 /*
 	mpu_t

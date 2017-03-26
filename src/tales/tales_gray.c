@@ -4,42 +4,61 @@
 
 void operate_gray(OPERATE_ARGS)
 {
-	int *vl = gray_lightVRAM();
-	int *vd = gray_darkVRAM();
-	int vram_offset = (x >> 5) + (y << 2);
-	uint32_t op;
-	int i;
+	size_t vram_offset = (x >> 5) + (y << 2);
+	uint32_t *light = gray_lightVRAM() + vram_offset;
+	uint32_t *dark  = gray_darkVRAM()  + vram_offset;
+	uint32_t op, old_light;
 
-	for(i = 0; i < height; i++)
+	for(int i = 0; i < height; i++)
 	{
 		op = operators[i];
 
-		switch(color)
+		switch(operator)
 		{
-		case Color_White:
-			vl[vram_offset] &= ~op;
-			vd[vram_offset] &= ~op;
+		case color_white:
+			*light &= ~op;
+			*dark  &= ~op;
 			break;
-		case Color_Light:
-			vl[vram_offset] |= op;
-			vd[vram_offset] &= ~op;
+		case color_light:
+			*light |= op;
+			*dark  &= ~op;
 			break;
-		case Color_Dark:
-			vl[vram_offset] &= ~op;
-			vd[vram_offset] |= op;
+		case color_dark:
+			*light &= ~op;
+			*dark  |= op;
 			break;
-		case Color_Black:
-			vl[vram_offset] |= op;
-			vd[vram_offset] |= op;
+		case color_black:
+			*light |= op;
+			*dark  |= op;
 			break;
-		case Color_Invert:
-			vl[vram_offset] ^= op;
-			vd[vram_offset] ^= op;
+		case color_none:
+			return;
+
+		case color_invert:
+			*light ^= op;
+			*dark  ^= op;
 			break;
-		default:
+		case color_lighten:
+			old_light = *light;
+			*light &= *dark | ~op;
+			*dark   = (old_light | ~op) & (op ^ *dark);
+			break;
+		case color_lighten2:
+			*dark  &= *light | ~op;
+			*light &= ~op;
+			break;
+		case color_darken:
+			old_light = *light;
+			*light |= *dark & op;
+			*dark   = (old_light & op) | (op ^ *dark);
+			break;
+		case color_darken2:
+			*dark  |= *light | op;
+			*light |= op;
 			break;
 		}
 
-		vram_offset += 4;
+		light += 4;
+		dark += 4;
 	}
 }

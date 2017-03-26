@@ -1,11 +1,11 @@
 #ifndef _INTERNALS_GINT_H
-#define	_INTERNALS_GINT_H	1
+#define	_INTERNALS_GINT_H
 
 #include <stdint.h>
 #include <gint.h>
 
 //---
-//	Interrupt handlers
+//	Interrupt handlers.
 //---
 
 // General exception handler.
@@ -18,7 +18,7 @@ void gint_int(void);
 
 
 //---
-//	Assembler-level VBR management
+//	Assembler-level VBR management.
 //---
 
 /*
@@ -37,7 +37,7 @@ void gint_setvbr(uint32_t vbr, void (*setup)(void));
 
 
 //---
-//	Initialization and termination routines
+//	Initialization and termination routines.
 //---
 
 /*
@@ -58,8 +58,8 @@ void gint_quit(void);
 	Saves many registers into a buffer to ensure that the system is not
 	upset by gint's configuration when the application ends.
 */
-//void gint_save_7705(gint_save_buffer_t *buffer);
-//void gint_save_7305(gint_save_buffer_t *buffer);
+// void gint_save_7705(gint_save_buffer_t *buffer);
+// void gint_save_7305(gint_save_buffer_t *buffer);
 
 /*
 	gint_setup()
@@ -74,8 +74,8 @@ void gint_setup_7305(void);
 	Restores the parameters saved in a save buffer to give back the
 	interrupt control to the system.
 */
-//void gint_restore_7705(gint_save_buffer_t *buffer);
-//void gint_restore_7305(gint_save_buffer_t *buffer);
+// void gint_restore_7705(gint_save_buffer_t *buffer);
+// void gint_restore_7305(gint_save_buffer_t *buffer);
 
 /*
 	gint_reg()

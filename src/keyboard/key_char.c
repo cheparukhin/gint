@@ -1,11 +1,12 @@
 #include <keyboard.h>
 
 /*
-	keychar()
-	Returns the ASCII character associated with a key, or 0 for control
-	keys.
+	key_char()
+	Returns the ASCII character associated with a character key, and 0 for
+	other keys. This function expects a matrix code and not a key_id()
+	code, and heeds for the ALPHA modifier.
 */
-int keychar(int key)
+int key_char(int matrix_key)
 {
 	char flat[] = {
 		0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
@@ -30,7 +31,6 @@ int keychar(int key)
 		'Z', ' ', '"', 0x0, 0x0, 0x0
 	};
 
-	int id = keyid(key);
-
-	return (key & MOD_ALPHA) ? alpha[id] : flat[id];
+	int id = key_id(matrix_key);
+	return (matrix_key & MOD_ALPHA) ? alpha[id] : flat[id];
 }

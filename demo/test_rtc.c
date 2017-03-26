@@ -18,7 +18,7 @@
 
 static void draw(rtc_time_t time)
 {
-	extern Image res_rtc_segments;
+	extern image_t res_rtc_segments;
 
 	const char *days[7] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
@@ -42,7 +42,7 @@ static void draw(rtc_time_t time)
 		12 * digits[i], 0, 11, 19);
 	// Drawing ':' between pairs of digits.
 	for(i = 0; i < 16; i++) dpixel(47 + 32 * (i >= 8) + (i & 1),
-		14 + 5 * !!(i & 4) + !!(i & 2), Color_Black);
+		14 + 5 * !!(i & 4) + !!(i & 2), color_black);
 
 	// This should print time.year + 1900 but for the sake of this demo we
 	// have tweaked the field so that it already contains time.year + 1900.
@@ -52,7 +52,7 @@ static void draw(rtc_time_t time)
 
 static void callback(void)
 {
-	extern Image res_opt_rtc;
+	extern image_t res_opt_rtc;
 	rtc_time_t time = rtc_getTime();
 
 	dclear();
@@ -115,8 +115,8 @@ static void set_region(rtc_time_t *time, int region, int value)
 
 static void set(void)
 {
-	extern Image res_opt_rtc;
-	Image *opt = &res_opt_rtc;
+	extern image_t res_opt_rtc;
+	image_t *opt = &res_opt_rtc;
 
 	struct {
 		int x, y;
@@ -136,8 +136,8 @@ static void set(void)
 	{
 		dclear();
 		draw(time);
-		dreverse_area(regions[n].x, regions[n].y, regions[n].x
-			+ regions[n].w - 1, regions[n].y + regions[n].h - 1);
+		drect(regions[n].x, regions[n].y, regions[n].x + regions[n].w
+			- 1, regions[n].y + regions[n].h - 1, color_invert);
 
 		if(n == 6) dimage_part(0, 56, opt, 0, 9 * (1 + slide), 128, 8);
 		if(n == 7) dimage_part(0, 56, opt, 0, 9 * (3 + slide), 128, 8);
@@ -191,9 +191,9 @@ static void set(void)
 				else leave = 0;
 			}
 
-			else if(isdigit(keychar(key))) // Numbers
+			else if(isdigit(key_char(key))) // Numbers
 			{
-				int val = keychar(key) - '0';
+				int val = key_char(key) - '0';
 				int ok = 1;
 
 				if(n == 0) ok = (val <= 2);

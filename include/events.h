@@ -2,7 +2,17 @@
 //
 //	gint core module: events
 //
-//	Finally some user-friendly API.
+//	Finally some user-friendly API. This module is in charge of managing
+//	the event queue. The waitevent() function should be particularly useful
+//	in program main loops to record key presses and releases in real-time
+//	games.
+//
+//	Other functions such as the getkey() of the keyboard module provide
+//	more advanced features such as SHIFT and ALPHA modifiers, backlight
+//	control for instance; these functions rely on this module and they
+//	ignore all events that they do not handle. If you want to catch several
+//	types of events (eg. keyboard and serial communication), then you need
+//	to use directly this module.
 //
 //---
 
@@ -17,30 +27,24 @@
 */
 typedef enum
 {
-	EventType_None			= 0,
-	ET_None				= EventType_None,
+	// Specific events.
+	event_none		= 0,
+	event_user		= 1,
 
-	EventType_User			= 1,
-	ET_User				= EventType_User,
+	// Keyboard events.
+	event_key_press		= 2,
+	event_key_repeat	= 3,
+	event_key_release	= 4,
 
-	EventType_KeyPressed		= 2,
-	ET_KeyPress			= EventType_KeyPressed,
-
-	EventType_KeyRepeated		= 3,
-	ET_KeyRepeat			= EventType_KeyRepeated,
-
-	EventType_KeyReleased		= 4,
-	ET_KeyRel			= EventType_KeyReleased,
-
-	EventType_TimerUnderflow	= 5,
-	ET_Timer			= EventType_TimerUnderflow,
+	// Other events.
+	event_timer_underflow	= 5,
 
 } event_type_t;
 
 /*
 	event_t
 	Wake up, something's going on. The union member that holds information
-	about the event is implicitly defined by the type attribute.
+	about the event is specified by the type attribute.
 */
 typedef struct
 {
@@ -48,11 +52,11 @@ typedef struct
 
 	union
 	{
-		// For ET_User.
+		// For event_user.
 		void *data;
-		// For ET_KeyPress, ET_KeyRepeat and ET_KeyRel.
+		// For event_key_press, event_key_repeat and event_key_release.
 		int key;
-		// For ET_Timer.
+		// For event_timer_underflow.
 		timer_t *timer;
 	};
 

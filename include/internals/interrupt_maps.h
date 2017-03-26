@@ -5,7 +5,7 @@
 #include <internals/gint.h>
 
 //---
-//	Interrupt handlers
+//	Interrupt handlers.
 //---
 
 /*
@@ -60,7 +60,7 @@ extern gint_interrupt_handler_t gint_handlers[];
 
 
 //---
-//	Interrupt maps
+//	Interrupt maps.
 //---
 
 /*

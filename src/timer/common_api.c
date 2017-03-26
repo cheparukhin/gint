@@ -94,7 +94,7 @@ void timer_callback_event(timer_t *timer)
 	else
 	{
 		event_t event = {
-			.type	= ET_Timer,
+			.type	= event_timer_underflow,
 			.timer	= timer
 		};
 		event_push(event);

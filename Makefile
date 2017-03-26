@@ -13,7 +13,7 @@ include Makefile.cfg
 # Modules
 modules-gint	= bopti clock core display events gray keyboard mmu rtc \
 		  screen tales timer
-modules-libc	= setjmp stdio stdlib string time
+modules-libc	= ctype setjmp stdio stdlib string time
 
 # Targets
 target-lib	= libgint.a
