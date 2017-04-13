@@ -12,12 +12,12 @@ void dimage_part(int x, int y, image_t *img, int left, int top, int width,
 {
 	if(!img || img->magic != 0x01) return;
 
-	struct Structure s;
-	struct Command command;
+	structure_t s;
+	command_t command;
 	int actual_width;
 	int format = img->format, i = 0;
 
-	if(format != Format_Mono && format != Format_MonoAlpha) return;
+	if(format != format_mono && format != format_mono_alpha) return;
 	getStructure(img, &s);
 	if(width < 0) width = s.width;
 	if(height < 0) height = s.height;

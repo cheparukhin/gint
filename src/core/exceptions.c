@@ -33,8 +33,8 @@ static void show_error(const char *name, uint32_t *access_mode, uint32_t *tea,
 {
 	uint32_t *vram = display_getCurrentVRAM();
 	uint32_t spc, ssr;
-	__asm__("stc spc, %0" : "=rm"(spc));
-	__asm__("stc ssr, %0" : "=rm"(ssr));
+	__asm__("stc spc, %0" : "=r"(spc));
+	__asm__("stc ssr, %0" : "=r"(ssr));
 
 	dclear();
 	text_configure(NULL, color_black);

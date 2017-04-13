@@ -1,13 +1,14 @@
 #include <internals/rtc.h>
+#include <modules/rtc.h>
 #include <rtc.h>
 #include <mpu.h>
 
 // Array holding callback informations.
-struct rtc_cb cb_array[RTC_CB_ARRAY_SIZE] = { 0 };
+rtc_callback_t cb_array[RTC_CB_ARRAY_SIZE] = { 0 };
 // Callback identifier (unique).
 static int unique_id = 1;
 // Current RTC interrupt frequency.
-static rtc_frequency_t rtc_freq = RTCFreq_None;
+static rtc_frequency_t rtc_freq = rtc_freq_none;
 // 256-Hz tick count. This counter is stopped when no callback is registered.
 static unsigned elapsed256 = 0;
 
@@ -21,7 +22,7 @@ static unsigned elapsed256 = 0;
 */
 static void rtc_cb_update(void)
 {
-	rtc_frequency_t max = RTCFreq_None;
+	rtc_frequency_t max = rtc_freq_none;
 	int n;
 
 	for(n = 0; n < RTC_CB_ARRAY_SIZE; n++) if(cb_array[n].id)
@@ -33,8 +34,7 @@ static void rtc_cb_update(void)
 	if(rtc_freq == max) return;
 	rtc_freq = max;
 
-	volatile struct mod_rtc *RTC = isSH3() ? RTC_SH7705 : RTC_SH7305;
-	RTC->RCR2.BYTE = (rtc_freq << 4) | 0x09;
+	RTC.RCR2->byte = (rtc_freq << 4) | 0x09;
 }
 
 /*
@@ -49,7 +49,7 @@ static void rtc_cb_update(void)
 int rtc_cb_add(rtc_frequency_t freq, void (*function)(void), int repeats)
 {
 	int n = 0;
-	if(freq == RTCFreq_None || !function || repeats < 0) return -2;
+	if(freq == rtc_freq_none || !function || repeats < 0) return -2;
 
 	while(n < RTC_CB_ARRAY_SIZE && cb_array[n].id) n++;
 	if(n >= RTC_CB_ARRAY_SIZE) return -1;
@@ -77,7 +77,7 @@ void rtc_cb_end(int id)
 	if(n >= RTC_CB_ARRAY_SIZE) return;
 
 	cb_array[n].id		= 0;
-	cb_array[n].freq	= RTCFreq_None;
+	cb_array[n].freq	= rtc_freq_none;
 	cb_array[n].callback	= NULL;
 	cb_array[n].repeats	= 0;
 
@@ -134,7 +134,7 @@ void rtc_cb_interrupt(void)
 
 	for(n = 0; n < RTC_CB_ARRAY_SIZE; n++)
 	{
-		struct rtc_cb *cb = &cb_array[n];
+		rtc_callback_t *cb = &cb_array[n];
 		if(!cb->id || !cb->freq) continue;
 
 		// Only execute callback when the number of elapsed 256-Hz

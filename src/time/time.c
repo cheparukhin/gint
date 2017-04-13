@@ -12,10 +12,11 @@
 */
 time_t time(time_t *timeptr)
 {
-	rtc_time_t rtc = rtc_getTime();
+	rtc_time_t rtc;
 	struct tm tm;
 	time_t calendar;
 
+	rtc_getTime(&rtc);
 	tm.tm_sec	= rtc.seconds;
 	tm.tm_min	= rtc.minutes;
 	tm.tm_hour	= rtc.hours;

@@ -15,9 +15,6 @@
 #include <stdint.h>
 #include <stddef.h>
 
-#define	GINT_VERSION		0x000100a3
-#define	GINT_VERSION_STR	"00.01"
-
 //---
 //	System info provided by the library
 //---

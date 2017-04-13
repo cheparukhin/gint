@@ -41,7 +41,7 @@ static void timing_start(void)
 	timer_attach(htimer, timing_timer, NULL);
 	timer_start(htimer);
 
-	rtc_cb_edit(cb_id, RTCFreq_64Hz, timing_rtc);
+	rtc_cb_edit(cb_id, rtc_freq_64Hz, timing_rtc);
 
 	elapsed_timer = 0;
 	elapsed_rtc = 0;
@@ -247,7 +247,7 @@ void test_timer(void)
 
 	elapsed_timer	= -1;
 	elapsed_rtc	= -1;
-	cb_id = rtc_cb_add(RTCFreq_64Hz, timing_start, 0);
+	cb_id = rtc_cb_add(rtc_freq_64Hz, timing_start, 0);
 
 	text_configure(NULL, color_black);
 

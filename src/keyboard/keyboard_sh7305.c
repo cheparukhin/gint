@@ -30,6 +30,8 @@
 	many keys on the same column are pressed, other keys of the same column
 	may be triggered.
 
+	(The following values do not apply to the latest tests, even if the
+	trend remains the same.)
 	- Less	Bad key detection.
 	- 8	Very few column effects. Most often, three keys may be pressed
 		simultaneously. However, [UP] has latencies and is globally not
@@ -49,7 +51,8 @@ static void kdelay(void)
 
 	__asm__
 	(
-		"nop\n\t"
+		r4(r4("nop\n\t"))
+		r4(r4("nop\n\t"))
 	);
 
 	#undef	r4

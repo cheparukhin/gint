@@ -1,9 +1,11 @@
 #include <internals/gint.h>
 #include <internals/interrupt_maps.h>
+#include <internals/modules.h>
 #include <gint.h>
 #include <mpu.h>
 
 gint_info_t gint;
+static environment_t env;
 
 //---
 //	Initialization routines
@@ -16,10 +18,17 @@ gint_info_t gint;
 */
 static void setup(void)
 {
-	isSH3() ? gint_setup_7705() : gint_setup_7305();
+	isSH3()	? gint_lock_and_setup_7705()
+		: gint_lock_and_setup_7305();
 }
 void gint_init(void)
 {
+	// Detecting the MPU type. I don't like const-casting but this is still
+	// better than allowing the user to change the variable by mistake.
+	*((mpu_t *)&MPU_CURRENT) = getMPU();
+	// Loading the register addresses of the current platform.
+	mod_init();
+
 	// Linker script symbols -- gint.
 	extern uint32_t
 		gint_vbr,
@@ -31,6 +40,9 @@ void gint_init(void)
 
 	// Loading the interrupt handler into the memory.
 	while(ptr < &egint) *ptr++ = *src++;
+
+	isSH3()	? gint_save_7705(&env.env_7705)
+		: gint_save_7305(&env.env_7305);
 
 	// Installing gint's default exception/interrupt handlers.
 	for(int i = 0; i < exc_type_max; i++)
@@ -59,7 +71,8 @@ void gint_init(void)
 */
 static void stop(void)
 {
-	isSH3() ? gint_stop_7705() : gint_stop_7305();
+	isSH3()	? gint_restore_and_unlock_7705(&env.env_7705)
+		: gint_restore_and_unlock_7305(&env.env_7305);
 }
 void gint_quit(void)
 {

@@ -1,12 +1,3 @@
-//---
-//
-//	gint core module: interrupt handler
-//
-//	Central point of the library. Controls the interrupt handler and
-//	defines a few functions to configure callbacks for some interrupts.
-//
-//---
-
 #include <internals/gint.h>
 #include <internals/interrupt_maps.h>
 #include <internals/exceptions.h>
@@ -110,10 +101,10 @@ void gint_invoke(uint8_t type, uint8_t subtype)
 	uint16_t *pc;
 
 	// Getting some initial information to work with.
-	__asm__("stc spc, %0" : "=rm"(pc));
+	__asm__("stc spc, %0" : "=r"(pc));
 	tea = gint_reg(register_tea);
 	tra = gint_reg(register_tra);
-	tcpr_2 = (void *)0xfffffeb8;
+	tcpr_2 = (void *)0xfffffeb8;	/* SH7705 only */
 
 	// Building up the argument list.
 	for(int i = 0; i < 3; i++) switch(gint_handlers[type].args[i])

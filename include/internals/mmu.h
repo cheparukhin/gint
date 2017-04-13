@@ -3,8 +3,8 @@
 //	gint core module: mmu
 //
 //	A wise application should avoid tampering with the system's
-//	configuration of the MMU and the TLB. This module implicitly calls the
-//	system but does nothing by itself.
+//	configuration of the MMU and the TLB. This module implicitly forces the
+//	system to load the required pages but does not interact with the TLB.
 //
 //---
 

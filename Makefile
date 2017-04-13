@@ -104,7 +104,7 @@ hdr-dep = $(wildcard include/*.h include/*/*.h)
 
 
 #---
-#	Rule templates.
+#	Rule templates
 #---
 
 # C source file template:
@@ -129,7 +129,29 @@ endef
 
 
 #---
-#	Building.
+#	Version management
+#---
+
+# Retrieve version information.
+version_string	:= $(shell cat version | sed 's/[-.]/ /g')
+version_type	:= $(word 1,$(version_string))
+version_major	:= $(word 2,$(version_string))
+version_minor	:= $(word 3,$(version_string))
+version_build	:= $(word 4,$(version_string))
+
+# Bump build number and make up the new version integer.
+version_build	:= $(shell echo $$(($(version_build) + 1)))
+version_letter	:= $(shell echo -n $(version_type) | sed -r 's/^(.).*/\1/')
+version_symbol	:= $(shell printf '0x%02x%01x%01x%04x' "'$(version_letter)'" \
+		$(version_major) $(version_minor) $(version_build))
+
+# Tell the linker to define the version symbol.
+ldflags += -Wl,--defsym,GINT_VERSION=$(version_symbol)
+
+
+
+#---
+#	Building
 #---
 
 # Generic rules
@@ -142,16 +164,20 @@ build:
 	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
 	$(if $(VERBOSE),,@) mkdir -p $@
 
+version: $(obj-std) $(obj-lib)
+	@ echo '$(version_type)-$(version_major).$(version_minor)-$(version_build)' > $@
+
+
 $(obj-std) $(obj-lib) $(demo-obj): | build
 
-$(target-std): $(obj-std)
+$(target-std): $(obj-std) version
 	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
 	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-std)
 	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libc ('
 	@ printf $$(stat -c %s $@)
 	@ printf ' bytes)\n\n'
 
-$(target-lib): $(config) $(target-std) $(obj-lib)
+$(target-lib): $(config) $(target-std) $(obj-lib) version
 	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
 	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-lib)
 	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libgint ('

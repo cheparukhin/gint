@@ -49,7 +49,7 @@ typedef enum
 
 // Global MPU variable, accessible for direct tests. Initialized at the
 // beginning of execution.
-extern mpu_t MPU_CURRENT;
+extern const mpu_t MPU_CURRENT;
 
 // Quick SH3 test. It is safer to assume that an unknown model is SH4 because
 // SH3-based models are not produced anymore.

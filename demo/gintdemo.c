@@ -345,8 +345,8 @@ void main_menu(int *category, int *app)
 		switch(tab)
 		{
 		case 0:
-			locate(1, 1, "Demo application");
-			print(2, 3, "gint version: %5s", GINT_VERSION_STR);
+			print(1, 1, "Demo application");
+//			print(2, 3, "gint version: %5s", GINT_VERSION_STR);
 			print(2, 4, "handler size: %5d", gint_size);
 			print(2, 5, "mpu type:   %7s", mpu);
 			print(2, 6, "romdata:   %08x", &romdata);

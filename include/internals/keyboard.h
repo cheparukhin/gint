@@ -5,11 +5,12 @@
 #include <timer.h>
 #include <clock.h>
 
-// Keyboard variables.
+// Current keyboard state and keyboard interrupt flag.
 extern volatile uint8_t keyboard_state[10];
 extern volatile int interrupt_flag;
 
-// Key statistics.
+// Delays (milliseconds) before repetitions, last key pressed, how many times
+// it has been repeated already, time elapsed since last repetition (ms).
 extern int repeat_first, repeat_next;
 extern int last_key, last_repeats, last_time;
 

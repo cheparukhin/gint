@@ -1,37 +1,37 @@
 Bugs to fix:
 -  A few key hits ignored after leaving the application  (could not reproduce)
 -  Lost keyboard control at startup                      (could not reproduce)
--  Influence of keyboard on some timers and RTC (maybe interrupt priority)
 -  Alignment of ALL .data / .rodata files is required to ensure converted data
    is properly aligned
+-  Reported video ram overflow when rendering text at borderline positions 
 
-Simple improvements:
--  demo:	Try 284x124 at (-60, -28) (all disadvantages)
--  display:	Rectangle-based drawing functions
--  time:	Compute CLOCKS_PER_SEC
--  string:	Use cmp/str to implement memchr() (assembler examples)
--  string:	Do some tests for memcmp()
--  core:	Register more interrupts (and understand their parameters)
--  project:	Clean headers that have some internal definitions
--  project:	Check size of all library structures
-Larger improvements:
--  errno:	Introduce errno and use it more or less everywhere
--  bopti:	Monochrome bitmaps blending modes
--  bopti:	Handle partial transparency
--  core:	Implement all callbacks and a complete user API
-*  core:	Better save registers
+Things to do before 1.0:
+-  bopti:	Test partial transparency
 *  core:	Allow return to menu
--  serial:	Implement a driver
--  usb:		Implement a driver
--  esper:	Cleaner playback, synthesizing
--  clock:	Handle overclock (relaunch clocks when overclocking)
+-  demo:	Try 284x124 at (-60, -28) (all disadvantages)
+-  display:	Implement rectangle-based drawing functions
+-  project:	Add a real build-based version system
+-  project:	Check size of *all* library structures
+-  project:	Clean headers that have some internal definitions
 -  project:	Unify this hellish mess of register access!
+-  time:	Compute CLOCKS_PER_SEC
+
+Things to do later:
+-  bopti:	Implement blending modes for monochrome bitmaps
+-  clock:	Handle overclock (relaunch clocks when overclocking)
+-  core:	Register more interrupts (and understand their parameters)
+-  core:	Remove redundant code linked to environment saves
+-  core:	Review interrupt system (again) - this one is too slow
+-  errno:	Introduce errno and use it more or less everywhere
+-  esper:	Cleaner playback, synthesizing
+-  serial:	Implement a driver
+-  string:	Use cmp/str to implement memchr() (assembler examples)
+-  string:	Do some tests for memcmp() and memcpy()
+-  usb:		Implement a driver
 
 Things to investigate:
 -  Packed bit fields alignment
 -  Registers that may need to be saved within setjmp()
--  Registers that may need to be saved and restored by gint
 -  Optimizing core/gint.c leads to raising of an illegal slot exception when
    running the interrupt handler, although it ends on rte; lds.l @r15+, mach,
    which is totally not an illegal slot.
--  Check version registers on SH7705

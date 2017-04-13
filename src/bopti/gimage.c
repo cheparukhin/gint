@@ -13,8 +13,8 @@ void gimage_part(int x, int y, image_t *img, int left, int top, int width,
 {
 	if(!img || img->magic != 0x01) return;
 
-	struct Structure s;
-	struct Command command;
+	structure_t s;
+	command_t command;
 	int actual_width;
 	int format = img->format, i = 0;
 
