@@ -49,7 +49,7 @@ _gint_setvbr:
 	jsr	@r5
 	nop
 
-	/* Activating interrupts again. */
+	/* Enabling interrupts again. */
 	mov.l	sr_block, r0
 	not	r0, r0
 	stc	sr, r3

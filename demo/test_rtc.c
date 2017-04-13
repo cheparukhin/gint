@@ -14,9 +14,10 @@
 */
 
 #include <internals/rtc.h>
+#include <modules/rtc.h>
 #include <mpu.h>
 
-static void draw(rtc_time_t time)
+static void draw(rtc_time_t *time)
 {
 	extern image_t res_rtc_segments;
 
@@ -30,12 +31,12 @@ static void draw(rtc_time_t time)
 	int digits[6];
 	int i;
 
-	digits[0] = time.hours / 10;
-	digits[1] = time.hours % 10;
-	digits[2] = time.minutes / 10;
-	digits[3] = time.minutes % 10;
-	digits[4] = time.seconds / 10;
-	digits[5] = time.seconds % 10;
+	digits[0] = time->hours / 10;
+	digits[1] = time->hours % 10;
+	digits[2] = time->minutes / 10;
+	digits[3] = time->minutes % 10;
+	digits[4] = time->seconds / 10;
+	digits[5] = time->seconds % 10;
 
 	// Drawing digits.
 	for(i = 0; i < 6; i++) dimage_part(x[i], 8, &res_rtc_segments,
@@ -46,17 +47,18 @@ static void draw(rtc_time_t time)
 
 	// This should print time.year + 1900 but for the sake of this demo we
 	// have tweaked the field so that it already contains time.year + 1900.
-	print(4, 6, "%s %s %02d %4d", days[time.week_day],
-		months[time.month], time.month_day, time.year);
+	print(4, 6, "%s %s %02d %4d", days[time->week_day],
+		months[time->month], time->month_day, time->year);
 }
 
 static void callback(void)
 {
 	extern image_t res_opt_rtc;
-	rtc_time_t time = rtc_getTime();
+	rtc_time_t time;
+	rtc_getTime(&time);
 
 	dclear();
-	draw(time);
+	draw(&time);
 	dimage_part(0, 56, &res_opt_rtc, 0, 0, 19, 8);
 	dupdate();
 }
@@ -128,14 +130,16 @@ static void set(void)
 		{ 72, 39,  7,  9 }, {  84, 39,  7,  9 }, { 90, 39,  7,  9 },
 		{ 96, 39,  7,  9 }, { 102, 39,  7,  9 },
 	};
-	rtc_time_t time = rtc_getTime();
+	rtc_time_t time;
 	int region_count = 14;
 	int n = 0, slide = 0, key, leave;
+
+	rtc_getTime(&time);
 
 	while(1)
 	{
 		dclear();
-		draw(time);
+		draw(&time);
 		drect(regions[n].x, regions[n].y, regions[n].x + regions[n].w
 			- 1, regions[n].y + regions[n].h - 1, color_invert);
 
@@ -157,7 +161,7 @@ static void set(void)
 				slide = 0;
 				if(++n == region_count)
 				{
-					rtc_setTime(time);
+					rtc_setTime(&time);
 					return;
 				}
 			}
@@ -216,7 +220,7 @@ static void set(void)
 					n++;
 					if(n == region_count)
 					{
-						rtc_setTime(time);
+						rtc_setTime(&time);
 						return;
 					}
 					slide = 0;
@@ -235,7 +239,7 @@ void test_rtc(void)
 {
 	int key, cb_id;
 
-	cb_id = rtc_cb_add(RTCFreq_1Hz, callback, 0);
+	cb_id = rtc_cb_add(rtc_freq_1Hz, callback, 0);
 	callback();
 
 	while(1)
@@ -245,10 +249,10 @@ void test_rtc(void)
 		if(key == KEY_EXIT) break;
 		if(key == KEY_F1)
 		{	
-			rtc_cb_edit(cb_id, RTCFreq_None, NULL);
+			rtc_cb_edit(cb_id, rtc_freq_none, NULL);
 			set();
 			callback();
-			rtc_cb_edit(cb_id, RTCFreq_1Hz, callback);
+			rtc_cb_edit(cb_id, rtc_freq_1Hz, callback);
 		}
 	}
 

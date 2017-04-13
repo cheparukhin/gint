@@ -143,7 +143,7 @@ void clock_measure(void)
 	{
 		htimer_7705 = htimer_setup(timer_user, 0xffffffff, timer_Po_4,
 			1);
-		cb_id_7705 = rtc_cb_add(RTCFreq_256Hz, clock_measure_7705, 0);
+		cb_id_7705 = rtc_cb_add(rtc_freq_256Hz, clock_measure_7705, 0);
 	}
 
 	// On SH7305, assuming clock mode 3, we can compute the clock
@@ -268,5 +268,5 @@ static void clock_measure_7705_callback(void)
 static void clock_measure_7705(void)
 {
 	timer_start(htimer_7705);
-	rtc_cb_edit(cb_id_7705, RTCFreq_256Hz, clock_measure_7705_callback);
+	rtc_cb_edit(cb_id_7705, rtc_freq_256Hz, clock_measure_7705_callback);
 }

@@ -95,14 +95,10 @@ static image_t *select(image_t *current)
 				8 * i, 7, 7);
 			if(i == row)
 			{
-				print(2, 2 + i + 1, "%08x", (unsigned int)
-					images[i].img);
-/*
 				int width, height;
 				getwh(images[i].img, &width, &height);
 				print(2, 2 + i + 1, "%d\x04%d", width, height);
 				locate(10, 2 + i + 1, images[i].info);
-*/
 			}
 		}
 
@@ -147,7 +143,7 @@ void test_bopti(void)
 
 	while(1)
 	{
-		if(img && (img->format & Channel_Light))
+		if(img && (img->format & channel_light))
 		{
 			gray_start();
 			gclear();

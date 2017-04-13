@@ -12,17 +12,17 @@ uint32_t *bopti_vram, *bopti_v1, *bopti_v2;
 	module display for more information on rectangle masks).
 	Which operation is performed is determined by the channel setting.
 */
-void bopti_op_mono(int offset, uint32_t operator, struct Command *c)
+void bopti_op_mono(int offset, uint32_t operator, command_t *c)
 {
 	operator &= c->masks[offset & 3];
 
 	switch(c->channel)
 	{
-	case Channel_FullAlpha:
+	case channel_full_alpha:
 		bopti_vram[offset] &= ~operator;
 		break;
 
-	case Channel_Mono:
+	case channel_mono:
 		bopti_vram[offset] |= operator;
 		break;
 
@@ -30,31 +30,31 @@ void bopti_op_mono(int offset, uint32_t operator, struct Command *c)
 		break;
 	}
 }
-void bopti_op_gray(int offset, uint32_t operator, struct Command *c)
+void bopti_op_gray(int offset, uint32_t operator, command_t *c)
 {
 	operator &= c->masks[offset & 3];
 
 	switch(c->channel)
 	{
-	case Channel_FullAlpha:
+	case channel_full_alpha:
 		bopti_v1[offset] &= ~operator;
 		bopti_v2[offset] &= ~operator;
 		break;
 
-	case Channel_LightAlpha:
-	case Channel_DarkAlpha:
+	case channel_light_alpha:
+	case channel_dark_alpha:
 		break;
 
-	case Channel_Mono:
+	case channel_mono:
 		bopti_v1[offset] |= operator;
 		bopti_v2[offset] |= operator;
 		break;
 
-	case Channel_Light:
+	case channel_light:
 		bopti_v1[offset] |= operator;
 		break;
 
-	case Channel_Dark:
+	case channel_dark:
 		bopti_v2[offset] |= operator;
 		break;
 	}
@@ -71,7 +71,7 @@ void bopti_op_gray(int offset, uint32_t operator, struct Command *c)
 	of 32, which is undefined behavior.
 */
 void bopti_grid_a32(const uint32_t *layer, int column_count, int height,
-	struct Command *c)
+	command_t *c)
 {
 	int vram_column_offset = (c->y << 2) + (c->x >> 5);
 	int vram_offset = vram_column_offset;
@@ -91,7 +91,7 @@ void bopti_grid_a32(const uint32_t *layer, int column_count, int height,
 	}
 }
 void bopti_grid(const uint32_t *layer, int column_count, int height,
-	struct Command *c)
+	command_t *c)
 {
 	if(!column_count) return;
 	if(!(c->x & 31))
@@ -177,9 +177,9 @@ uint32_t bopti_end_get2(const unsigned char **data)
 
 	Draws the end of a layer, which can be considered as a whole layer
 	whose with is lower than 32. (Actually is it lower or equal to 16;
-	otherwise it would have been a column and the end would be empty).
+	otherwise it would have been a column and the end would be empty.)
 */
-void bopti_end_nover(const unsigned char *end, int size, struct Command *c)
+void bopti_end_nover(const unsigned char *end, int size, command_t *c)
 {
 	uint32_t (*get)(const unsigned char **data) =
 		(size == 2) ? bopti_end_get2 : bopti_end_get1;
@@ -199,19 +199,17 @@ void bopti_end_nover(const unsigned char *end, int size, struct Command *c)
 	{
 		operator = (*get)(&end);
 		operator <<= shift;
-
-		 (c->op)(vram_offset, operator, c);
-
+		(c->op)(vram_offset, operator, c);
 		vram_offset += 4;
 	}
 }
-void bopti_end(const unsigned char *end, int size, struct Command *c)
+void bopti_end(const unsigned char *end, int size, command_t *c)
 {
 	uint32_t (*get)(const unsigned char **data) =
 		(size == 2) ? (bopti_end_get2) : (bopti_end_get1);
 
 	int vram_offset = (c->y << 2) + (c->x >> 5);
-	uint32_t row_data, operator;
+	uint32_t row_data;
 	int row;
 
 	int shift_base = (32 - (size << 3));
@@ -225,15 +223,8 @@ void bopti_end(const unsigned char *end, int size, struct Command *c)
 	for(row = c->top; row < c->bottom; row++)
 	{
 		row_data = (*get)(&end);
-
-		operator = row_data >> shift1;
-		 (c->op)(vram_offset, operator, c);
-
-
-		operator = row_data << shift2;
-		 (c->op)(vram_offset + 1, operator, c);
-
-
+		(c->op)(vram_offset, row_data >> shift1, c);
+		(c->op)(vram_offset + 1, row_data << shift2, c);
 		vram_offset += 4;
 	}
 }
@@ -248,7 +239,7 @@ void bopti_end(const unsigned char *end, int size, struct Command *c)
 	bopti()
 	Draws a layer in the video ram.
 */
-void bopti(const unsigned char *layer, struct Structure *s, struct Command *c)
+void bopti(const unsigned char *layer, structure_t *s, command_t *c)
 {
 	const unsigned char *grid, *end;
 	int grid_columns, has_end;
@@ -283,9 +274,10 @@ void bopti(const unsigned char *layer, struct Structure *s, struct Command *c)
 
 /*
 	getStructure()
-	Determines the image size and data pointer.
+	Determines the image size (large images have a somehow different
+	structure), the data pointer and a few dimensions inside the image.
 */
-void getStructure(image_t *img, struct Structure *s)
+void getStructure(image_t *img, structure_t *s)
 {
 	int column_count, end, end_bytes, layer;
 

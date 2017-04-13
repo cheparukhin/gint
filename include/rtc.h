@@ -2,7 +2,10 @@
 //
 //	gint core module: rtc
 //
-//	Manages RTC. This module is used behind standard module time.
+//	Manages the Real-Time Clock (RTC). This module provides access to the
+//	current time as well as regular callbacks at predefined frequencies,
+//	more or less like a timer.
+//	The standard time module is built upon this one.
 //
 //---
 
@@ -36,14 +39,14 @@ typedef struct
 	Reads the current time from the RTC. There is no guarantee that the
 	week day is correct (use the time API for that).
 */
-rtc_time_t rtc_getTime(void);
+void rtc_getTime(rtc_time_t *time);
 
 /*
 	rtc_setTime()
 	Sets the time in the RTC registers. The week day is set to 0 if greater
 	than 6. Other fields are not checked.
 */
-void rtc_setTime(rtc_time_t time);
+void rtc_setTime(const rtc_time_t *time);
 
 
 
@@ -58,14 +61,14 @@ void rtc_setTime(rtc_time_t time);
 */
 typedef enum
 {
-	RTCFreq_500mHz	= 7,
-	RTCFreq_1Hz	= 6,
-	RTCFreq_2Hz	= 5,
-	RTCFreq_4Hz	= 4,
-	RTCFreq_16Hz	= 3,
-	RTCFreq_64Hz	= 2,
-	RTCFreq_256Hz	= 1,
-	RTCFreq_None	= 0,
+	rtc_freq_500mHz	= 7,
+	rtc_freq_1Hz	= 6,
+	rtc_freq_2Hz	= 5,
+	rtc_freq_4Hz	= 4,
+	rtc_freq_16Hz	= 3,
+	rtc_freq_64Hz	= 2,
+	rtc_freq_256Hz	= 1,
+	rtc_freq_none	= 0,
 
 } rtc_frequency_t;
 
@@ -94,7 +97,7 @@ void rtc_cb_end(int id);
 	  -1	Callback does not exist
 	  -2	Invalid parameters
 	This function never removes a callback. Call rtc_cb_end() for this. One
-	can set the function to NULL or the frequency to RTCFreq_None to
+	can set the function to NULL or the frequency to rtc_freq_none to
 	temporarily disable the callback.
 */
 int rtc_cb_edit(int id, rtc_frequency_t new_freq, void (*new_function)(void));

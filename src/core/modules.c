@@ -1,4 +1,6 @@
 #include <modules/timer.h>
+#include <modules/rtc.h>
+
 #include <stddef.h>
 #include <mpu.h>
 
@@ -11,7 +13,8 @@
 //	confront to the hardware directly.
 //---
 
-volatile mod_tmu_t TMU;
+mod_tmu_t	TMU;
+mod_rtc_t	RTC;
 
 
 
@@ -26,6 +29,10 @@ static void mod_init_7705(void)
 	TMU.timers[2]	= (void *)0xfffffeac;
 	TMU.TSTR	= (void *)0xfffffe92;
 	TMU.TCPR2	= (void *)0xfffffeb8;
+
+	RTC.RCR1	= (void *)0xfffffedc;
+	RTC.RCR2	= (void *)0xfffffede;
+	RTC.time	= (void *)0xfffffec0;
 }
 
 static void mod_init_7305(void)
@@ -35,6 +42,10 @@ static void mod_init_7305(void)
 	TMU.timers[2]	= (void *)0xa4490020;
 	TMU.TSTR	= (void *)0xa4490004;
 	TMU.TCPR2	= NULL;
+
+	RTC.RCR1	= (void *)0xa413fedc;
+	RTC.RCR2	= (void *)0xa413fede;
+	RTC.time	= (void *)0xa413fec0;
 }
 
 /*

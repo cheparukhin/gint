@@ -20,7 +20,7 @@ extern uint32_t
 	etext, btext,		// Location of .text section
 	bdata, edata,		// Location of .data section
 	bbss, ebss,		// Location of .bss section
-	bgint, egint,		// Location of interrut handler and gint data
+	bgint, egint,		// Location of interrupt handler and gint data
 	gint_vbr,		// VBR address
 	romdata;		// ROM address of .data section contents
 
@@ -45,7 +45,7 @@ __attribute__((section(".pretext.entry"))) int start(void)
 {
 	#ifdef	GINT_DIAGNOSTICS
 
-	// Ok, so fill as much information as possible so that in case anything
+	// OK, so fill as much information as possible so that in case anything
 	// goes wrong we can try to analyze what's been going on.
 	volatile gint_diagnostics_t *dg = gint_diagnostics();
 
@@ -77,7 +77,7 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->section_data.length		= (uint32_t)&edata - (uint32_t)&bdata;
 	dg->section_bss.address		= (uint32_t)&bbss;
 	dg->section_bss.length		= (uint32_t)&ebss  - (uint32_t)&bbss;
-	dg->romdata	= (uint32_t)&romdata;
+	dg->romdata			= (uint32_t)&romdata;
 
 	// Basic information about the running library.
 	dg->vbr_address			= (uint32_t)&gint_vbr;
@@ -108,10 +108,11 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->stage	= stage_mmu;
 	#endif
 
-	// Detecting the MPU type, initializing the register module addresses,
-	// and initializing gint.
-	mpu_init();
-	mod_init();
+	// Initializing gint, which does several things:
+	//   - Detect the MPU and platform
+	//   - Initialize register addresses in a platform-independent way
+	//   - Save the current environment information in a large buffer
+	//   - Set up the interrupt handler and configure everything gint needs
 	gint_init();
 
 	#ifdef	GINT_DIAGNOSTICS
@@ -148,16 +149,15 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	if(!x) exit_code = main();
 
 
+
 	#ifdef	GINT_DIAGNOSTICS
 	dg->stage	= stage_leaving;
 	#endif
 
 	/* TODO Flush and close opened streams. */
 
-	// Calling exit handlers.
+	// Calling exit handlers and destructors.
 	while(atexit_index > 0) (*atexit_handlers[--atexit_index])();
-
-	// Calling the destructors.
 	fini();
 
 	#ifdef	GINT_DIAGNOSTICS

@@ -8,7 +8,7 @@
 
 #include <mpu.h>
 
-mpu_t MPU_CURRENT;
+const mpu_t MPU_CURRENT;
 
 /*
 	getMPU()
@@ -66,15 +66,4 @@ mpu_t getMPU(void)
 
 	// By default, the MPU is unknown.
 	return mpu_unknown;
-}
-
-
-
-/*
-	mpu_init()
-	Determines the MPU type and stores the result into MPU_CURRENT.
-*/
-__attribute__((constructor)) void mpu_init(void)
-{
-	MPU_CURRENT = getMPU();
 }

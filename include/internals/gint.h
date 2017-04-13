@@ -37,7 +37,7 @@ void gint_setvbr(uint32_t vbr, void (*setup)(void));
 
 
 //---
-//	Initialization and termination routines.
+//	Initialization and termination routines, environment saves.
 //---
 
 /*
@@ -53,29 +53,80 @@ void gint_init(void);
 */
 void gint_quit(void);
 
+#include <modules/rtc.h>
+#include <modules/timer.h>
+
+/*
+	environment_t
+	Structure where all registers used by gint are saved by default to
+	ensure that the operating system is not disturbed.
+*/
+typedef struct
+{
+	// Interrupt controller.
+	uint16_t	IPR[8];
+
+	// Real-Time Clock.
+	uint8_t		RCR1, RCR2;
+
+	// Timer Unit.
+	mod_tmu_timer_t	TMU0, TMU1, TMU2;
+	uint8_t		TSTR;
+
+	// I/O ports for the keyboard driver.
+	uint16_t	PACR, PBCR, PMCR;
+	uint8_t		PADR, PBDR, PMDR;
+
+} environment_7705_t;
+
+typedef struct
+{
+	// Interrupt controller.
+	uint16_t	IPR[12];
+
+	// Real-Time Clock.
+	uint8_t		RCR1, RCR2;
+
+	// Timer Unit.
+	mod_tmu_timer_t	TMU0, TMU1, TMU2;
+	uint8_t		TSTR;
+
+	// I/O ports for the keyboard driver.
+	uint16_t	PMCR, PNCR, PZCR;
+	uint8_t		PMDR, PNDR, PZDR;
+	uint8_t		key;
+
+} environment_7305_t;
+
+typedef union
+{
+	environment_7705_t	env_7705;
+	environment_7305_t	env_7305;
+
+} environment_t;
+
 /*
 	gint_save()
-	Saves many registers into a buffer to ensure that the system is not
-	upset by gint's configuration when the application ends.
+	Saves many registers into an internal environment buffer.
 */
-// void gint_save_7705(gint_save_buffer_t *buffer);
-// void gint_save_7305(gint_save_buffer_t *buffer);
+void gint_save_7705(environment_7705_t *env);
+void gint_save_7305(environment_7305_t *env);
 
 /*
-	gint_setup()
-	Configures interrupt priorities and some parameters to allow gint to
-	take control of the interrupt flow.
+	gint_lock_and_setup()
+	Locks all interrupts (ie. disables them by default) and sets initial
+	values to all registers, allows specific interrupts, etc.
 */
-void gint_setup_7705(void);
-void gint_setup_7305(void);
+void gint_lock_and_setup_7705(void);
+void gint_lock_and_setup_7305(void);
 
 /*
-	gint_restore()
-	Restores the parameters saved in a save buffer to give back the
-	interrupt control to the system.
+	gint_restore_and_unlock()
+	Restores the parameters saved in the environment buffer to give back
+	the interrupt control to the system.
 */
-// void gint_restore_7705(gint_save_buffer_t *buffer);
-// void gint_restore_7305(gint_save_buffer_t *buffer);
+void gint_restore_and_unlock_7705(environment_7705_t *env);
+void gint_restore_and_unlock_7305(environment_7305_t *env);
 
 /*
 	gint_reg()

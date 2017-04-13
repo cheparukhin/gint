@@ -59,6 +59,6 @@ typedef struct
 
 // The actual thing is there. It's initialized by gint at startup and contains
 // addresses and information suitable for the current platform.
-extern volatile mod_tmu_t TMU;
+extern mod_tmu_t TMU;
 
 #endif	// _MODULES_TIMER

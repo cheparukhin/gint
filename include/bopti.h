@@ -46,8 +46,11 @@ void dimage(int x, int y, image_t *image);
 	Point (left, top) is included, but (left + width, top + height) is
 	excluded.
 */
-void dimage_part(int x, int y, image_t *img, int left, int top, int width,
-	int height);
+void dimage_part(
+	int x, int y,
+	image_t *img,
+	int left, int top, int width, int height
+);
 
 /*
 	gimage()
@@ -61,7 +64,10 @@ void gimage(int x, int y, image_t *image);
 	Point (left, top) is included, but (left + width, top + height) is
 	excluded.
 */
-void gimage_part(int x, int y, image_t *image, int left, int top, int width,
-	int height);
+void gimage_part(
+	int x, int y,
+	image_t *image,
+	int left, int top, int width, int height
+);
 
 #endif	// _BOPTI_H
