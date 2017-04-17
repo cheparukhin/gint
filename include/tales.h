@@ -98,6 +98,12 @@ typedef struct Font Font;
 void text_configure(struct Font *font, color_t operator);
 
 /*
+	text_length()
+	Computes the length of a string using the currently configured font.
+*/
+size_t text_length(const char *str);
+
+/*
 	dtext()
 	Prints the given string, without any analysis.
 */
