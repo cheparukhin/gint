@@ -55,7 +55,7 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->magic	= GINT_DIAGNOSTICS_MAGIC;
 	dg->counter	= dg->counter + 1;
 	dg->mpu		= mpu_unknown;
-	dg->version	= GINT_VERSION;
+	dg->version	= (uint32_t)&GINT_VERSION;
 	dg->stage	= stage_startup;
 
 	// Exception records: what kind of exceptions / TLB faults / interrupts

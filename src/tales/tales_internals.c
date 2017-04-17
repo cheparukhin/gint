@@ -234,6 +234,8 @@ void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
 	// Computing the initial operator offset to have 32-aligned operators.
 	// This allows to write directly video ram longs instead of having to
 	// shift operators, and do all the vram operation twice.
+	// I double-checked that this operation is still valid when x is
+	// negative.
 	available = 32 - (x & 31);
 	x &= ~31;
 

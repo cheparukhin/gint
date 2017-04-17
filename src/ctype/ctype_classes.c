@@ -1,7 +1,7 @@
 #include <ctype.h>
 
-// Let's save up some space and readability (That's Cake's idea, its a bit of a
-// preprocessor trick but a rather nice trick).
+// Let's save up some space and readability (that's Cake's idea, it's a bit of
+// a preprocessor trick - but a rather nice trick).
 #define	r4(x)	(x), (x), (x), (x)
 #define	r5(x)	r4(x), (x)
 #define	r6(x)	r5(x), (x)

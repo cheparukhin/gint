@@ -113,8 +113,10 @@ void test_tales(void)
 			for(int j = 0; j < 16; j++) str[j] = 32 + (i << 4) + j;
 			str[16] = 0;
 
-			gtext(2, 2 + i * height, str);
+			gtext(-3, -3 + i * height, str);
 		}
+		gtext(120, 60, "Hello, World!");
+		gtext(-40, 2, "Try");
 
 		gimage(0, 56, &res_opt_tales);
 
