@@ -133,20 +133,21 @@ endef
 #---
 
 # Retrieve version information.
-version_string	:= $(shell cat version | sed 's/[-.]/ /g')
-version_type	:= $(word 1,$(version_string))
-version_major	:= $(word 2,$(version_string))
-version_minor	:= $(word 3,$(version_string))
-version_build	:= $(word 4,$(version_string))
+version_string	= $(shell cat version | sed 's/[-.]/ /g')
+version_type	= $(word 1,$(version_string))
+version_major	= $(word 2,$(version_string))
+version_minor	= $(word 3,$(version_string))
+version_build	= $(word 4,$(version_string))
 
-# Bump build number and make up the new version integer.
-version_build	:= $(shell echo $$(($(version_build) + 1)))
-version_letter	:= $(shell echo -n $(version_type) | sed -r 's/^(.).*/\1/')
-version_symbol	:= $(shell printf '0x%02x%01x%01x%04x' "'$(version_letter)'" \
+# Make up the new version integer.
+version_build_n	= $(shell echo $$(($(version_build) + 1)))
+version_letter	= $(shell echo -n $(version_type) | sed -r 's/^(.).*/\1/')
+version_symbol	= $(shell printf '0x%02x%01x%01x%04x' "'$(version_letter)'" \
 		$(version_major) $(version_minor) $(version_build))
 
 # Tell the linker to define the version symbol.
-ldflags += -Wl,--defsym,GINT_VERSION=$(version_symbol)
+demo-ldflags	+= -Wl,--defsym,_GINT_VERSION=$(version_symbol)
+debug-ldflags	+= -Wl,--defsym,_GINT_VERSION=$(version_symbol)
 
 
 
@@ -165,7 +166,7 @@ build:
 	$(if $(VERBOSE),,@) mkdir -p $@
 
 version: $(obj-std) $(obj-lib)
-	@ echo '$(version_type)-$(version_major).$(version_minor)-$(version_build)' > $@
+	@ echo '$(version_type)-$(version_major).$(version_minor)-$(version_build_n)' > $@
 
 
 $(obj-std) $(obj-lib) $(demo-obj): | build
@@ -230,6 +231,10 @@ build/display_font_%.bmp.o: src/display/font_%.bmp
 build/demo_%.c.o: demo/%.c $(hdr-dep) $(demo-dep) $(config)
 	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
 	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(demo-cflags)
+
+build/demo_%.s.o: demo/%.s $(config)
+	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m as $<\n')
+	$(if $(VERBOSE),,@) $(as) -c $< -o $@
 
 build/demo_font_%.bmp.o: demo/resources/font_%.bmp
 	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')

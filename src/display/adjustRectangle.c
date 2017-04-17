@@ -7,7 +7,7 @@
 	- x1 < x2
 	- y1 < y2
 	which is needed when working with screen rectangles.
-	Returns non-zero if the rectangle is outside the screen.
+	Returns non-zero if the rectangle is entirely outside the screen.
 */
 int adjustRectangle(int *x1, int *y1, int *x2, int *y2)
 {

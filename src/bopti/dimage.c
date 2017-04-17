@@ -10,7 +10,7 @@
 void dimage_part(int x, int y, image_t *img, int left, int top, int width,
 	int height)
 {
-	if(!img || img->magic != 0x01) return;
+	if(!img || img->magic != 0xb7) return;
 
 	structure_t s;
 	command_t command;

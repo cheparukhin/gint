@@ -7,6 +7,7 @@
 //---
 
 #include <mpu.h>
+#include <stdint.h>
 
 const mpu_t MPU_CURRENT;
 
@@ -29,15 +30,14 @@ const mpu_t MPU_CURRENT;
 mpu_t getMPU(void)
 {
 	// Processor version register.
-	volatile unsigned int *pvr = (unsigned int *)0xff000030;
+	volatile uint32_t *pvr	= (void *)0xff000030;
 	// Product version register.
-	volatile unsigned int *prr = (unsigned int *)0xff000044;
+	volatile uint32_t *prr	= (void *)0xff000044;
 	// Port L control register.
-	volatile unsigned short *plcr = (unsigned short *)0xa4000114;
+	volatile uint16_t *plcr	= (void *)0xa4000114;
 	// Saved value for PLCR.
-	unsigned short saved_plcr;
-	unsigned int tested_plcr;
-
+	uint16_t saved_plcr;
+	uint16_t tested_plcr;
 
 	// Looking for SH-3-based MPUs by testing PLCR writing access.
 	saved_plcr = *plcr;
@@ -50,12 +50,12 @@ mpu_t getMPU(void)
 	if(tested_plcr == 0x0fff) return mpu_sh7355;
 
 	// Looking for SH-4-based MPUs by testing the version registers. This
-	// needs to have the three upper bytes of the processor version
-	// register match 0x10300b :
+	// needs the three upper bytes of the processor version register to
+	// match 0x10300b :
 	if((*pvr & 0xffffff00) != 0x10300b00) return mpu_unknown;
 
 	// Now that we have an SH-4-based MPU, checking whether it is SH7305 or
-	// SH7724.
+	// SH7724, just for reference.
 	switch(*prr & 0xfffffff0)
 	{
 	case 0x00002c00:

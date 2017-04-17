@@ -7,6 +7,7 @@
 #include <gray.h>
 
 #include <internals/stdio.h>
+#include <stdio.h>
 
 
 
@@ -324,7 +325,13 @@ void main_menu(int *category, int *app)
 	extern unsigned int romdata;
 	int gint_size = (char *)&egint - (char *)&bgint;
 
-
+	// Building a version string.
+	char gint_version[20];
+	uint32_t v = (uint32_t)&GINT_VERSION;
+	sprintf(gint_version, "%s-%d.%d-%d",
+		(v >> 24 == 'a') ? "alpha" : (v >> 24 == 'b') ? "beta" :
+		(v >> 24 == 'd') ? "dev" : (v >> 24 == 'r') ? "release" : "?",
+		(v >> 20) & 0x0f, (v >> 16) & 0x0f, v & 0xffff);
 
 	static int tab = 0, index = 0, scroll = 0;
 	// Set to 1 when interface has to be redrawn.
@@ -345,8 +352,7 @@ void main_menu(int *category, int *app)
 		switch(tab)
 		{
 		case 0:
-			print(1, 1, "Demo application");
-//			print(2, 3, "gint version: %5s", GINT_VERSION_STR);
+			print(1, 1, "gint %s", gint_version);
 			print(2, 4, "handler size: %5d", gint_size);
 			print(2, 5, "mpu type:   %7s", mpu);
 			print(2, 6, "romdata:   %08x", &romdata);

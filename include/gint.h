@@ -15,6 +15,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// This one is defined by the linked and consists in four fields:
+//   - Version type, an ascii char ('a'lpha, 'b'eta, 'd'ev, 'r'elease), 8 bits
+//   - Major version number, 4 bits
+//   - Minor version numer, 4 bits
+//   - Build number, 16 bits
+extern uint32_t GINT_VERSION;
+
 //---
 //	System info provided by the library
 //---
