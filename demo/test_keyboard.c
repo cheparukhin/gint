@@ -53,14 +53,15 @@ static void draw_keyboard(volatile uint8_t *state)
 
 typedef struct {
 	event_type_t type;
-	int key;
+	uint32_t key;
 	int repeats;
 
 } enhanced_event_t;
 
 static void push_history(enhanced_event_t *history, int size, event_t event)
 {
-	#define	event_eq(x, y) ((x).type == (y).type && (x).key == (y).key)
+	#define	event_eq(x, y) \
+		((x).type == (y).type && (x).key == (y).key.code)
 
 	// Determining where the history ends.
 	int length = 0;
@@ -82,7 +83,7 @@ static void push_history(enhanced_event_t *history, int size, event_t event)
 
 	// Adding a new entry to the history.
 	history[length].type	= event.type;
-	history[length].key	= event.key;
+	history[length].key	= event.key.code;
 	history[length].repeats	= 1;
 
 	#undef	event_eq
@@ -135,7 +136,7 @@ void test_keyboard_events(void)
 		dupdate();
 
 		event = waitevent();
-		if(event.type == event_key_press && event.key == KEY_EXIT)
+		if(event.type == event_key_press && event.key.code == KEY_EXIT)
 			break;
 		push_history(history, history_size, event);
 	}

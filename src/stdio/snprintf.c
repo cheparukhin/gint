@@ -13,7 +13,6 @@ int snprintf(char *str, size_t size, const char *format, ...)
 
 	int x = __printf(size, format, args);
 	memcpy(str, __stdio_buffer, x + 1);
-		
 
 	va_end(args);
 	return x;

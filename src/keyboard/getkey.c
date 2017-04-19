@@ -53,7 +53,7 @@ int getkey_opt(getkey_option_t options, int delay_ms)
 		break;
 
 	case event_key_press:
-		key = event.key;
+		key = event.key.code;
 
 		if(options & getkey_manage_backlight && key == KEY_OPTN
 			&& (modifier & MOD_SHIFT))
@@ -79,7 +79,7 @@ int getkey_opt(getkey_option_t options, int delay_ms)
 		return key | modifier;
 
 	case event_key_repeat:
-		key = event.key;
+		key = event.key.code;
 		if(key != last_key) continue;
 
 		// Checking that this type of repetition is allowed.
@@ -98,7 +98,7 @@ int getkey_opt(getkey_option_t options, int delay_ms)
 		break;
 
 	case event_key_release:
-		if(event.key != last_key) break;
+		if((int)event.key.code != last_key) break;
 		last_key	= KEY_NONE;
 		last_repeats	= 0;
 		last_time	= 0;

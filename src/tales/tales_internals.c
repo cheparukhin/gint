@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <gray.h>
 
-struct Font *font;
+font_t *font = NULL;
 color_t operator;
 
 /*
@@ -27,8 +27,8 @@ int getCharacterIndex(int c)
 {
 	const char *data = (const char *)&font->glyphs;
 	int index, current;
-	int offset;
 	int width, bits;
+	size_t offset;
 
 	c &= 0x7f;
 
@@ -36,33 +36,33 @@ int getCharacterIndex(int c)
 
 	// Getting the character index in the glyph array.
 
-	if(font->format == FontFormat_Ascii) index = c;
-	else if(font->format == FontFormat_Print) index = c - 32;
+	if(font->format == font_format_ascii) index = c;
+	else if(font->format == font_format_print) index = c - 32;
 
 	else switch(font->format)
 	{
-	case FontFormat_Numeric:
+	case font_format_numeric:
 		if(!isdigit(c)) return -1;
 		index = c - '0';
 		break;
-	case FontFormat_LowerCase:
+	case font_format_lower:
 		if(!islower(c)) return -1;
 		index = c - 'a';
 		break;
-	case FontFormat_UpperCase:
+	case font_format_upper:
 		if(!isupper(c)) return -1;
 		index = c - 'A';
 		break;
-	case FontFormat_Letters:
+	case font_format_letters:
 		if(!isalpha(c)) return -1;
 		index = c - 'A' - ('a' - 'Z') * (c >= 'a');
 		break;
-	case FontFormat_Common:
+	case font_format_common:
 		if(!isalnum(c)) return -1;
 		index = c - '0' - ('A' - '9') * (c >= 'A') -
 			('a' - 'Z') * (c >= 'a');
 		break;
-	case FontFormat_Unknown:
+	case font_format_unknown:
 	default:
 		return -1;
 	}
@@ -93,13 +93,16 @@ int getCharacterIndex(int c)
 */
 void operate_mono(OPERATE_ARGS)
 {
+	if(x < 0) return;
+
 	uint32_t *vram	= display_getCurrentVRAM();
-	uint32_t *video	= vram + (x >> 5) + (y << 2);
+	int start = (y < 0) ? (-y) : (0);
+	uint32_t *video	= vram + (x >> 5) + ((y + start) << 2);
 
 	switch(operator)
 	{
 	case color_white:
-		for(int i = 0; i < height; i++)
+		for(int i = start; i < height; i++)
 		{
 			*video &= ~operators[i];
 			video += 4;
@@ -107,7 +110,7 @@ void operate_mono(OPERATE_ARGS)
 		break;
 
 	case color_black:
-		for(int i = 0; i < height; i++)
+		for(int i = start; i < height; i++)
 		{
 			*video |= operators[i];
 			video += 4;
@@ -115,7 +118,7 @@ void operate_mono(OPERATE_ARGS)
 		break;
 
 	case color_invert:
-		for(int i = 0; i < height; i++)
+		for(int i = start; i < height; i++)
 		{
 			*video ^= operators[i];
 			video += 4;
@@ -163,7 +166,7 @@ int update(uint32_t *operators, int height, int available, uint32_t *glyph)
 		shift = 32 - available;
 
 		// Getting the next 'width' bits. In some cases these bits will
-		// intersect two different longs.
+		// intersect two different longs...
 		line = data & glyph_mask;
 		line = (shift >= 0) ? (line >> shift) : (line << -shift);
 		operators[i] |= line;
@@ -171,7 +174,7 @@ int update(uint32_t *operators, int height, int available, uint32_t *glyph)
 		data <<= width;
 		bits_available -= width;
 
-		// Continue until they do.
+		// ... continue looping until they do.
 		if(bits_available >= 0) continue;
 
 		// Computing a special mask that extracts just the number of
@@ -180,6 +183,10 @@ int update(uint32_t *operators, int height, int available, uint32_t *glyph)
 		data = glyph[data_index++];
 		shift += width + bits_available;
 
+		// In case this condition is not verified, the program invokes
+		// undefined behavior because of the bit shift. Anyway, it
+		// means that the end of the end of the operators was reached,
+		// in which case the function should not continue writing.
 		if(shift <= 31)
 		{
 			line = data & partial_mask;
@@ -202,34 +209,32 @@ int update(uint32_t *operators, int height, int available, uint32_t *glyph)
 */
 void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
 {
+	if(!font) return;
+
 	// Operator data, and number of available bits in the operators (which
 	// is the same for all operators, since they are treated equally).
 	uint32_t *operators;
 	int available;
 
-	// Raw glyph data, each glyph being represented by one or several
+	// Raw glyph data, each glyph being represented as one or several
 	// longwords, and an index in this array.
 	uint32_t *data = (uint32_t *)font->glyphs;
 	int index;
 
-	// Height of each glyph. This value is constant because the storage
-	// format requires it: it allows greater optimization.
-	int height;
-
-	int i;
-
+	// Storage height of each glyph. This is a constant for all glyphs
+	// because the format required it. It makes this routine consequently
+	// faster.
+	int height = font->data_height;
 
 
-	if(!font) return;
 
 	// Allocating data. There will be one operator for each line.
-	height = font->data_height;
 	if(x > 127 || y > 63 || y <= -height) return;
 	if(y + height > 64) height = 64 - y;
 
 	operators = alloca(height * sizeof(uint32_t));
-	for(i = 0; i < height; i++) operators[i] = 0;
 	if(!operators) return;
+	for(int i = 0; i < height; i++) operators[i] = 0;
 
 	// Computing the initial operator offset to have 32-aligned operators.
 	// This allows to write directly video ram longs instead of having to
@@ -263,22 +268,23 @@ void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
 		x += 32;
 		if(x > 96) break;
 
-		memset(operators, 0, height << 2);
+		for(int i = 0; i < height; i++) operators[i] = 0;
 		if(available >= 0)
 		{
-			available = 31 + available;
+			available += 31;
 			continue;
 		}
 
-		// Finishing update, in case it has been only partially done,
-		// because there was not enough bits available to fit all the
-		// information. Also adding a space, assuming that characters
-		// aren't more than 30 bits wide.
+		// Finishing update, in cases where it has been only partially
+		// done because there was not enough bits available to fit all
+		// the information. Also adding a space, assuming that
+		// characters aren't more than 30 bits wide. (=p)
 		available += 32 + (data[index] >> 24);
 		available = update(operators, height, available, data + index);
 		available--;
 	}
 
-	// Final operation.
-	if(x <= 96 && available < 32) (*op)(operators, height, x, y);
+	// Final operation. This condition allows a single bit of the operators
+	// to be used - that's because the loop will add a final spacing pixel.
+	if(x <= 96 && available < 31) (*op)(operators, height, x, y);
 }

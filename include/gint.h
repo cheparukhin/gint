@@ -15,11 +15,16 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// This one is defined by the linked and consists in four fields:
+// The version symbol is defined through the linker and consists of four
+// fields:
 //   - Version type, an ascii char ('a'lpha, 'b'eta, 'd'ev, 'r'elease), 8 bits
 //   - Major version number, 4 bits
-//   - Minor version numer, 4 bits
+//   - Minor version number, 4 bits
 //   - Build number, 16 bits
+// Please note that the version number is the *ADDRESS* of GINT_VERSION, which
+// you definitely want to cast to uint32_t. Evaluating GINT_VERSION is illegal
+// (dereferencing a pointer which is actually a four-field version number just
+// cannot work) and will certainly crash your program.
 extern uint32_t GINT_VERSION;
 
 //---

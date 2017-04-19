@@ -42,6 +42,23 @@ typedef enum
 } event_type_t;
 
 /*
+	key_event_t
+	Keyboard events. "I think the user wants something."
+*/
+typedef struct
+{
+	// This is the key code as defined in <keyboard.h> (a matrix code), and
+	// probably what you need.
+	uint32_t	code;
+	// This is a "compact id" which can be used for array subscript. There
+	// are only a few holes in the "compact id" numbering.
+	uint32_t	id;
+	// Character associated with the event key.
+	int		character;
+
+} key_event_t;
+
+/*
 	event_t
 	Wake up, something's going on. The union member that holds information
 	about the event is specified by the type attribute.
@@ -55,7 +72,7 @@ typedef struct
 		// For event_user.
 		void *data;
 		// For event_key_press, event_key_repeat and event_key_release.
-		int key;
+		key_event_t key;
 		// For event_timer_underflow.
 		timer_t *timer;
 	};

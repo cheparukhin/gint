@@ -1,6 +1,5 @@
 #include <internals/mmu.h>
-
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
+#include <stdint.h>
 
 /*
 	mmu_pseudoTLBInit()
@@ -15,15 +14,16 @@
 */
 void mmu_pseudoTLBInit(void)
 {
-	extern unsigned int romdata;
-	unsigned int address = 0x00300000;
-	unsigned int x;
+	extern uint32_t romdata;
+	uint32_t limit = (uint32_t)&romdata;
 
-	while(address <= (unsigned int)&romdata)
+	uint32_t address = 0x00300000;
+
+	// Access every page to make the system load everything in the TLB (and
+	// just hope it works and the add-in fits in).
+	while(address <= limit)
 	{
-		x = *((volatile unsigned int *)address);
+		*((volatile uint32_t *)address);
 		address += 0x1000;
 	}
 }
-
-#pragma GCC diagnostic pop

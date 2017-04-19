@@ -53,7 +53,7 @@ time_t mktime(struct tm *time)
 	time->tm_wday	= (1 + days) % 7;
 
 	// This RTC does not seem to have any DST feature.
-	time->tm_isdst = 0;
+	time->tm_isdst	= 0;
 
 	if(time->tm_year + 1900 < 1970) return (time_t)-1;
 

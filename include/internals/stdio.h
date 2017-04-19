@@ -1,12 +1,3 @@
-//---
-//
-//	standard library module: stdio
-//
-//	Handles most input/output for the program. This module does not
-//	interact with the file system directly.
-//
-//---
-
 #ifndef	_INTERNALS_STDIO_H
 #define	_INTERNALS_STDIO_H
 

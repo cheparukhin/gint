@@ -10,9 +10,11 @@
 #ifndef	_SETJMP_H
 #define	_SETJMP_H
 
+#include <stdint.h>
+
 // There are 16 CPU registers that *must* be saved to ensure a basically
 // safe jump.
-typedef	unsigned int jmp_buf[16];
+typedef uint32_t jmp_buf[16];
 
 
 

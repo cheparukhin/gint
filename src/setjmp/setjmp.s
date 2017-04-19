@@ -1,22 +1,19 @@
-/*
-	standard library module: setjmp
-
-	Long jumps. The register contents are saved in a buffer when setjmp()
-	is called and restored at any time when longjmp() performs the jump.
-
-	This is based on a trick that uses pr ; the user program is resumed
-	after the setjmp() call when longjmp() is invoked but this is not
-	setjmp() that returns. longjmp() restores the pr value that was saved
-	by setjmp() and performs an rts instruction.
-
-	setjmp() returns 0 when called to set up the jump point and a non-zero
-	value when invoked through a long jump. If 0 is given as return value
-	to longjmp(), then 1 is returned.
-*/
 
 	.global	_setjmp
 	.global	_longjmp
 
+/*
+	setjmp()
+
+	This function is implemented using a trick that changes the value of
+	pr (so that it points just after the call to setjmp()) within the
+	longjmp() function, which lets the rts function perform the actual
+	jump. This value is obtained from the save buffer.
+
+	setjmp() returns 0 when called to set up the jump point and a non-zero
+	value when invoked through a long jump. If 0 is provided as argument to
+	longjmp(), 1 is returned instead.
+*/
 _setjmp:
 	/* Getting some free space. */
 	add	#64, r4
@@ -42,8 +39,8 @@ _setjmp:
 	sts.l	pr, @-r4
 
 	/* This function always return 0. The cases where setjmp() seems to
-	return non-zero values, when a long jump has just been performed, is
-	actually handled by longjmp(). */
+	return non-zero values, when a long jump has just been performed, are
+	those when the longjmp() function returns. */
 	rts
 	mov	#0, r0
 
@@ -52,7 +49,7 @@ _setjmp:
 _longjmp:
 	/* Restoring the system and control registers. Restoring pr is actually
 	what performs the jump -- and makes the user program think that
-	setjmp() has returned. */
+	setjmp() has just returned. */
 	lds.l	@r4+, pr
 	lds.l	@r4+, macl
 	lds.l	@r4+, mach

@@ -66,16 +66,16 @@ static void kdelay(void)
 	krow()
 	Reads a keyboard row.
 */
-static int krow(int row)
+static uint8_t krow(int row)
 {
 	// '11' on the active row, '00' everywhere else.
-	unsigned short smask	= 0x0003 << ((row % 8) * 2);
+	uint16_t smask	= 0x0003 << ((row % 8) * 2);
 	// '0' on the active row, '1' everywhere else.
-	unsigned char cmask 	= ~(1 << (row % 8));
+	uint8_t cmask 	= ~(1 << (row % 8));
 	// Line results.
-	int result		= 0;
+	uint8_t result	= 0;
 
-	if(row < 0 || row > 9) return 0;
+	if(row < 0 || row > 9) return 0x00;
 
 	// Initial configuration.
 	PFC.PBCR.WORD = 0xaaaa;

@@ -10,11 +10,11 @@
 	Displays some text using different modes and clipping options.
 */
 
-static Font *select(Font *current)
+static font_t *select(font_t *current)
 {
-	extern Font res_font_modern;
+	extern font_t res_font_modern;
 	struct {
-		Font *font;
+		font_t *font;
 		const char *name;
 	} fonts[] = {
 		{ NULL,			"gint default"	},
@@ -83,7 +83,7 @@ void test_tales(void)
 	color_t colors[] = { color_black, color_dark, color_light, color_white,
 		color_invert };
 	extern image_t res_opt_tales;
-	Font *font = NULL;
+	font_t *font = NULL;
 
 	int black_bg = 0;
 	int color = 0;
@@ -113,10 +113,8 @@ void test_tales(void)
 			for(int j = 0; j < 16; j++) str[j] = 32 + (i << 4) + j;
 			str[16] = 0;
 
-			gtext(-3, -3 + i * height, str);
+			gtext(1, 1 + i * height, str);
 		}
-		gtext(120, 60, "Hello, World!");
-		gtext(-40, 2, "Try");
 
 		gimage(0, 56, &res_opt_tales);
 

@@ -23,6 +23,7 @@ __attribute__((always_inline)) static inline uint32_t swap32(uint32_t longw)
 		"swap.b r0, %0	\n\t"
 		: "=r"(result)
 		: "r"(longw)
+		: "r0"
 	);
 	return result;
 }

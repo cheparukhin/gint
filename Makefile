@@ -30,7 +30,7 @@ wr		= g1a-wrapper
 
 # Flags for gint
 lib-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
-		  -Wall -Wextra @gcc.cfg
+		  -Wall -Wextra @gcc.cfg -g0
 
 # Demo application (could be done better)
 demo-src	= $(notdir $(wildcard demo/*.[cs]))
