@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 
-// Padding is just empty space, we don't want to give it a name. There's also
+// Padding is just empty space, we don't want to give it a type. There's also
 // some subtle preprocessor trick to automatically add a (supposedly) unique
 // name to each padding member. For instance the substitution may operate as:
 //   name(__LINE__) -> namesub(78) -> _##78 -> _78
 #define	namesub(x)	_##x
 #define	name(x)		namesub(x)
 #define	pad(bytes)				\
-	uint8_t name(__LINE__)[bytes]		\
+	uint8_t name(__LINE__)[bytes]
 
 // Fixed-width types for bit field are totally meaningless.
 typedef unsigned uint;

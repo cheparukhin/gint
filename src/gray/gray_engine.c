@@ -11,14 +11,18 @@
 #include <timer.h>
 #include <mpu.h>
 
+// Additional video rams used by the gray engine.
 static uint32_t internal_vrams[3][256];
 static uint32_t *vrams[4];
 
+// Current vram set (0 or 1), delays of the light and dark frames respectively.
 static int current = 0;
 static int delays[2];
 
+// Is the engine currently running?
 static int runs = 0;
 
+// Hardware timer used to run the engine.
 static timer_t *gray_timer = NULL;
 
 
@@ -87,6 +91,9 @@ void gray_stop(void)
 	timer_stop(gray_timer);
 	runs = 0;
 
+	/* TODO This may not be very wise considering the fact that the user
+	may have specified another monochrome vram address. This raises again
+	the idea of a parameter stack. */
 	display_useVRAM(display_getLocalVRAM());
 }
 

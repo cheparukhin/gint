@@ -1,4 +1,5 @@
 #include <screen.h>
+#include <stdint.h>
 #include <mpu.h>
 
 /*
@@ -9,13 +10,13 @@ void screen_setBacklight(int on)
 {
 	if(isSH3())
 	{
-		volatile unsigned char *PGDR = (void *)0xa400012c;
+		volatile uint8_t *PGDR = (void *)0xa400012c;
 		if(on)	*PGDR |=  0x80;
 		else	*PGDR &= ~0x80;
 	}
 	else
 	{
-		volatile unsigned char *PNDR = (void *)0xa4050138;
+		volatile uint8_t *PNDR = (void *)0xa4050138;
 		if(on)	*PNDR |=  0x10;
 		else	*PNDR &= ~0x10;
 	}
@@ -29,12 +30,12 @@ void screen_toggleBacklight(void)
 {
 	if(isSH3())
 	{
-		volatile unsigned char *PGDR = (void *)0xa400012c;
+		volatile uint8_t *PGDR = (void *)0xa400012c;
 		*PGDR ^= 0x80;
 	}
 	else
 	{
-		volatile unsigned char *PNDR = (void *)0xa4050138;
+		volatile uint8_t *PNDR = (void *)0xa4050138;
 		*PNDR ^= 0x10;
 	}
 }

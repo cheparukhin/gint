@@ -36,7 +36,7 @@ struct tm
 	clock_t
 	Only used by clock().
 */
-typedef	signed int clock_t;
+typedef signed int clock_t;
 
 /*
 	time_t

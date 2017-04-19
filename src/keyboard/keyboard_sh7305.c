@@ -30,8 +30,8 @@
 	many keys on the same column are pressed, other keys of the same column
 	may be triggered.
 
-	(The following values do not apply to the latest tests, even if the
-	trend remains the same.)
+	(The following values do not apply to the latest tests, but the trend
+	remains the same.)
 	- Less	Bad key detection.
 	- 8	Very few column effects. Most often, three keys may be pressed
 		simultaneously. However, [UP] has latencies and is globally not
@@ -63,7 +63,7 @@ static void kdelay(void)
 	Reads a keyboard row. Works like krow() for SH7705; see source file
 	keyboard_7705.c for more details.
 */
-static int krow(int row)
+static uint8_t krow(int row)
 {
 	volatile uint16_t *injector1	= (void *)0xa4050116;
 	volatile uint8_t  *data1	= (void *)0xa4050136;
@@ -79,9 +79,9 @@ static int krow(int row)
 
 	uint16_t smask;
 	uint8_t cmask;
-	int result = 0;
+	uint8_t result = 0;
 
-	if(row < 0 || row > 9) return 0;
+	if(row < 0 || row > 9) return 0x00;
 
 	// Additional configuration for SH7305.
 	*detector	= 0xaaaa;

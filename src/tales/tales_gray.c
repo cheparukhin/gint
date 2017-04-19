@@ -4,12 +4,15 @@
 
 void operate_gray(OPERATE_ARGS)
 {
-	size_t vram_offset = (x >> 5) + (y << 2);
-	uint32_t *light = gray_lightVRAM() + vram_offset;
-	uint32_t *dark  = gray_darkVRAM()  + vram_offset;
+	if(x < 0) return;
+
+	int start = (y < 0) ? (-y) : (0);
+	size_t vram_offset = (x >> 5) + ((y + start) << 2);
+	uint32_t *light = (uint32_t *)gray_lightVRAM() + vram_offset;
+	uint32_t *dark  = (uint32_t *)gray_darkVRAM()  + vram_offset;
 	uint32_t op, old_light;
 
-	for(int i = 0; i < height; i++)
+	for(int i = start; i < height; i++)
 	{
 		op = operators[i];
 

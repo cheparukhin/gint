@@ -7,7 +7,7 @@
 //	which is stored in a global variable MPU_CURRENT and determined at
 //	startup.
 //
-//	If you need to do MPU-dependant jobs, use isSH3() or (possibly) isSH4()
+//	If you need to do MPU-dependent jobs, use isSH3() or (possibly) isSH4()
 //	instead of testing the value of MPU_CURRENT because these macros take
 //	care of assuming unknown MPUs are SH4, which is the more reasonable
 //	option.

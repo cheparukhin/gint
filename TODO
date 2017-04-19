@@ -3,14 +3,11 @@ Bugs to fix:
 -  Lost keyboard control at startup                      (could not reproduce)
 -  Alignment of ALL .data / .rodata files is required to ensure converted data
    is properly aligned
--  Reported video ram overflow when rendering text at borderline positions 
 
 Things to do before 1.0:
 -  bopti:	Test partial transparency
 *  core:	Allow return to menu
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
--  display:	Implement rectangle-based drawing functions
--  project:	Add a real build-based version system
 -  project:	Check size of *all* library structures
 -  project:	Clean headers that have some internal definitions
 -  project:	Unify this hellish mess of register access!
@@ -24,7 +21,13 @@ Things to do later:
 -  core:	Review interrupt system (again) - this one is too slow
 -  errno:	Introduce errno and use it more or less everywhere
 -  esper:	Cleaner playback, synthesizing
+-  events:	Allow customization of keyboard event system (option to return
+   |		events with modifiers, etc)
+-  events:	Generate keyboard events on-the-fly by reading state arrays,
+   |		allowing both a faster interrupt and avoiding supressing other
+   |		events inside getkey() and multigetkey()
 -  serial:	Implement a driver
+-  stdio:	More serious formatted printing functions
 -  string:	Use cmp/str to implement memchr() (assembler examples)
 -  string:	Do some tests for memcmp() and memcpy()
 -  usb:		Implement a driver

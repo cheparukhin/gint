@@ -36,27 +36,39 @@ timer_t *vtimer = NULL;
 
 static inline void push_press(int keycode)
 {
+	uint32_t id = key_id(keycode);
+
 	event_t event = {
-		.type	= event_key_press,
-		.key	= keycode,
+		.type		= event_key_press,
+		.key.code	= keycode,
+		.key.id		= id,
+		.key.character	= key_char(keycode),
 	};
 	event_push(event);
 }
 
 static inline void push_repeat(int keycode)
 {
+	uint32_t id = key_id(keycode);
+
 	event_t event = {
-		.type	= event_key_repeat,
-		.key	= keycode,
+		.type		= event_key_repeat,
+		.key.code	= keycode,
+		.key.id		= id,
+		.key.character	= key_char(keycode),
 	};
 	event_push(event);
 }
 
 static inline void push_release(int keycode)
 {
+	uint32_t id = key_id(keycode);
+
 	event_t event = {
-		.type	= event_key_release,
-		.key	= keycode,
+		.type		= event_key_release,
+		.key.code	= keycode,
+		.key.id		= id,
+		.key.character	= key_char(keycode),
 	};
 	event_push(event);
 }

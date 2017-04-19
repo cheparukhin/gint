@@ -19,42 +19,43 @@
 //---
 
 /*
-	enum ImageFormat
+	font_format_t
 	This type holds information about the characters in the font. Each bit
 	represents various characters, and the type itself is a combination of
 	several of those bits.
 	Bits represent the following characters (lsb right):
 	--  --  --  non-print  |  special  capitals  lower  numbers
 */
-enum FontFormat
+typedef enum
 {
-	FontFormat_Unknown	= 0x00,
-	FontFormat_Numeric	= 0x01,
-	FontFormat_LowerCase	= 0x02,
-	FontFormat_UpperCase	= 0x04,
-	FontFormat_Letters	= 0x06,
-	FontFormat_Common	= 0x07,
-	FontFormat_Print	= 0x0f,
-	FontFormat_Ascii	= 0x1f,
-};
+	font_format_unknown	= 0x00,
+	font_format_numeric	= 0x01,
+	font_format_lower	= 0x02,
+	font_format_upper	= 0x04,
+	font_format_letters	= 0x06,
+	font_format_common	= 0x07,
+	font_format_print	= 0x0f,
+	font_format_ascii	= 0x1f,
+
+} font_format_t;
 
 /*
-	struct FontGlyph
+	font_glyph_t
 	Holds a glyph's data. The width is used for spacing, and the raw data
 	is encoded line after line, from to to bottom, by appending bits
 	without consideration of the byte boundaries.
 	This structure is actually never used, because data is read directly
 	as a longword array (hence the 4-byte alignment).
 */
-struct FontGlyph
+typedef struct
 {
-	unsigned char width;
+	uint8_t width;
+	const uint8_t data[];
 
-	const unsigned char data[];
-} __attribute__((aligned(4)));
+} __attribute__((packed, aligned(4))) font_glyph_t;
 
 /*
-	struct Font
+	font_t
 	Holds a font's data. Data is accessed using longword operations, hence
 	the 4-alignment attributes. The line height is the one given in the
 	font image header line, which may be used by applications that write
@@ -65,13 +66,12 @@ struct FontGlyph
 	The name field may not be NUL-terminated when the name contains 28
 	characters. When the name is shorter, the field is padded with zeros.
 */
-struct Font
+typedef struct
 {
-	unsigned char magic;
-
-	unsigned char format;
-	unsigned char line_height;
-	unsigned char data_height;
+	uint8_t magic;
+	uint8_t format;
+	uint8_t line_height;
+	uint8_t data_height;
 
 	// Warning : this field may not be NUL-terminated.
 	char name[28];
@@ -80,9 +80,7 @@ struct Font
 
 	__attribute__((aligned(4))) const uint32_t glyphs[];
 
-} __attribute__((aligned(4)));
-// Useful shorthand for user code.
-typedef struct Font Font;
+} __attribute__((packed, aligned(4))) font_t;
 
 
 
@@ -95,7 +93,7 @@ typedef struct Font Font;
 	Sets the font and color to use for subsequent text operations. Pass
 	font = NULL to use the default font.
 */
-void text_configure(struct Font *font, color_t operator);
+void text_configure(font_t *font, color_t operator);
 
 /*
 	text_length()

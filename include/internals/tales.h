@@ -3,10 +3,11 @@
 
 #include <tales.h>
 #include <stdint.h>
+#include <stddef.h>
 
 #define	OPERATE_ARGS	uint32_t *operators, int height, int x, int y
 
-extern struct Font *font;
+extern font_t *font;
 extern color_t operator;
 
 /*

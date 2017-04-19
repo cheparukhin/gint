@@ -1,4 +1,5 @@
 #include <screen.h>
+#include <stdint.h>
 
 /*
 	screen_display()
@@ -9,12 +10,11 @@
 */
 void screen_display(const void *ptr)
 {
-	const char *vram = (const char *)ptr;
-	volatile char *selector	= (char *)0xb4000000;
-	volatile char *data	= (char *)0xb4010000;
-	int line, bytes;
+	volatile uint8_t *selector	= (void *)0xb4000000;
+	volatile uint8_t *data		= (void *)0xb4010000;
+	const uint8_t *vram		= ptr;
 
-	for(line = 0; line < 64; line++)
+	for(int line = 0; line < 64; line++)
 	{
 		// Setting the x-address register.
 		*selector = 4;
@@ -29,7 +29,27 @@ void screen_display(const void *ptr)
 		*data = 0;
 
 		// Selecting data write register 7 and sending a line's bytes.
+		// We could loop but I suspect it will be faster to iterate.
 		*selector = 7;
-		for(bytes = 0; bytes < 16; bytes++) *data = *vram++;
+
+		/* TODO Manually load the video-ram line into the cache? */
+
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
+		*data = *vram++;
 	}
 }
