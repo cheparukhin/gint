@@ -24,28 +24,49 @@ mod_rtc_t	RTC;
 
 static void mod_init_7705(void)
 {
-	TMU.timers[0]	= (void *)0xfffffe94;
-	TMU.timers[1]	= (void *)0xfffffea0;
-	TMU.timers[2]	= (void *)0xfffffeac;
-	TMU.TSTR	= (void *)0xfffffe92;
-	TMU.TCPR2	= (void *)0xfffffeb8;
+/*
+	INTC._7705.iprs.IPRA	= (void *)0xfffffee2;
+	INTC._7705.iprs.IPRB	= (void *)0xfffffee4;
+	INTC._7705.iprs.IPRC	= (void *)0xa4000016;
+	INTC._7705.iprs.IPRD	= (void *)0xa4000018;
+	INTC._7705.iprs.IPRE	= (void *)0xa400001a;
+	INTC._7705.iprs.IPRF	= (void *)0xa4080000;
+	INTC._7705.iprs.IPRG	= (void *)0xa4080002;
+	INTC._7705.iprs.IPRH	= (void *)0xa4080004;
 
-	RTC.RCR1	= (void *)0xfffffedc;
-	RTC.RCR2	= (void *)0xfffffede;
-	RTC.time	= (void *)0xfffffec0;
+	INTC._7705.ICR0		= (void *)0xfffffee0;
+	INTC._7705.ICR1		= (void *)0xa4000010;
+	INTC._7705.ICR2		= (void *)0xa4000012;
+	INTC._7705.PINTER	= (void *)0xa4000014;
+	INTC._7705.IRR0		= (void *)0xa4000004;
+	INTC._7705.IRR1		= (void *)0xa4000006;
+	INTC._7705.IRR2		= (void *)0xa4000008;
+*/
+
+	TMU.timers[0]		= (void *)0xfffffe94;
+	TMU.timers[1]		= (void *)0xfffffea0;
+	TMU.timers[2]		= (void *)0xfffffeac;
+	TMU.TSTR		= (void *)0xfffffe92;
+	TMU.TCPR2		= (void *)0xfffffeb8;
+
+	RTC.RCR1		= (void *)0xfffffedc;
+	RTC.RCR2		= (void *)0xfffffede;
+	RTC.time		= (void *)0xfffffec0;
 }
 
 static void mod_init_7305(void)
 {
-	TMU.timers[0]	= (void *)0xa4490008;
-	TMU.timers[1]	= (void *)0xa4490014;
-	TMU.timers[2]	= (void *)0xa4490020;
-	TMU.TSTR	= (void *)0xa4490004;
-	TMU.TCPR2	= NULL;
+//	INTC._7305.iprs		= (void *)0xa4080000;
 
-	RTC.RCR1	= (void *)0xa413fedc;
-	RTC.RCR2	= (void *)0xa413fede;
-	RTC.time	= (void *)0xa413fec0;
+	TMU.timers[0]		= (void *)0xa4490008;
+	TMU.timers[1]		= (void *)0xa4490014;
+	TMU.timers[2]		= (void *)0xa4490020;
+	TMU.TSTR		= (void *)0xa4490004;
+	TMU.TCPR2		= NULL;
+
+	RTC.RCR1		= (void *)0xa413fedc;
+	RTC.RCR2		= (void *)0xa413fede;
+	RTC.time		= (void *)0xa413fec0;
 }
 
 /*

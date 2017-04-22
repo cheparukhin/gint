@@ -75,7 +75,7 @@ typedef struct command_t
 	uint32_t masks[4];
 	// Video rams being used.
 	union {
-		// Different names, same fate. (Kingdom Hearts II)
+		// "Different names, same fate." (Kingdom Hearts II)
 		uint32_t *vram;
 		uint32_t *v1;
 	};
