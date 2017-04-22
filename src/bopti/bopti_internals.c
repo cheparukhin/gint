@@ -298,6 +298,12 @@ void getStructure(image_t *img, structure_t *s)
 		s->height	= img->height;
 		s->data		= (uint8_t *)img->data;
 
+		/* TODO This is the same as
+		column_count = (img->width + 15) >> 5;
+		end = (img->width & 0x0f);
+		end_bytes = (end + 7) >> 3;
+		*/
+
 		column_count = img->width >> 5;
 		end = img->width & 31;
 		end_bytes =

@@ -16,6 +16,7 @@ Things to do before 1.0:
 Things to do later:
 -  bopti:	Implement blending modes for monochrome bitmaps
 -  clock:	Handle overclock (relaunch clocks when overclocking)
+-  core:	Change interrupt priority using the gint API
 -  core:	Register more interrupts (and understand their parameters)
 -  core:	Remove redundant code linked to environment saves
 -  core:	Review interrupt system (again) - this one is too slow

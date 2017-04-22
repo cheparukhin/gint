@@ -15,8 +15,8 @@ void gimage_part(int x, int y, image_t *img, int left, int top, int width,
 
 	structure_t s;
 	command_t command;
-	int actual_width;
-	int format = img->format, i = 0;
+	int actual_width, actual_height;
+	int format = img->format;
 
 	getStructure(img, &s);
 	if(width < 0) width = s.width;
@@ -33,14 +33,19 @@ void gimage_part(int x, int y, image_t *img, int left, int top, int width,
 	if(left + width > s.width) width = s.width - left;
 	if(top + height > s.height) height = s.height - top;
 
-	if(x + left + width <= 0 || x > 127 || y + top + height <= 0 || y > 63)
+	if(x + width <= 0 || x > 127 || y + height <= 0 || y > 63
+		|| width <= 0 || height <= 0)
 		return;
 
+	// command.bottom is excluded...
 	command.top	= (y < 0) ? (top - y) : top;
-	command.bottom	= top + ((y + height > 64) ? (64 - y) : height);
+	actual_height	= (y + height > 64) ? (64 - y) : height;
+	command.bottom	= top + actual_height;
+
+	// ... but command.right is included. Great.
 	command.left	= ((x < 0) ? (left - x) : left) >> 5;
 	actual_width	= (x + width > 128) ? (128 - x) : width;
-	command.right	= ((left + actual_width + 31) >> 5) - 1;
+	command.right	= (left + actual_width - 1) >> 5;
 
 	command.op	= bopti_op_gray;
 
@@ -50,20 +55,14 @@ void gimage_part(int x, int y, image_t *img, int left, int top, int width,
 	bopti_v1 = gray_lightVRAM();
 	bopti_v2 = gray_darkVRAM();
 
-	while(format)
+	for(int i = 0; format; format >>= 1, i++) if(format & 1)
 	{
-		if(format & 1)
-		{
-			command.x = x - left;
-			command.y = y - top;
-			command.channel = (1 << i);
+		command.x = x - left;
+		command.y = y - top;
+		command.channel = (1 << i);
 
-			bopti(s.data, &s, &command);
-			s.data += s.layer_size;
-		}
-
-		format >>= 1;
-		i++;
+		bopti(s.data, &s, &command);
+		s.data += s.layer_size;
 	}
 }
 

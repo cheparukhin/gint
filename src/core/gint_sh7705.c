@@ -1,9 +1,10 @@
 #include <internals/gint.h>
 #include <modules/rtc.h>
+#include <modules/interrupts.h>
 #include <gint.h>
 #include <timer.h>
-#include <7705.h>
 #include <rtc.h>
+#include <7705.h>
 
 /*
 	gint_reg()
