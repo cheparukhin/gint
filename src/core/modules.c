@@ -1,5 +1,6 @@
 #include <modules/timer.h>
 #include <modules/rtc.h>
+#include <modules/interrupts.h>
 
 #include <stddef.h>
 #include <mpu.h>
@@ -15,6 +16,7 @@
 
 mod_tmu_t	TMU;
 mod_rtc_t	RTC;
+mod_intc_t	INTC;
 
 
 
@@ -24,7 +26,6 @@ mod_rtc_t	RTC;
 
 static void mod_init_7705(void)
 {
-/*
 	INTC._7705.iprs.IPRA	= (void *)0xfffffee2;
 	INTC._7705.iprs.IPRB	= (void *)0xfffffee4;
 	INTC._7705.iprs.IPRC	= (void *)0xa4000016;
@@ -41,7 +42,6 @@ static void mod_init_7705(void)
 	INTC._7705.IRR0		= (void *)0xa4000004;
 	INTC._7705.IRR1		= (void *)0xa4000006;
 	INTC._7705.IRR2		= (void *)0xa4000008;
-*/
 
 	TMU.timers[0]		= (void *)0xfffffe94;
 	TMU.timers[1]		= (void *)0xfffffea0;
@@ -56,7 +56,17 @@ static void mod_init_7705(void)
 
 static void mod_init_7305(void)
 {
-//	INTC._7305.iprs		= (void *)0xa4080000;
+	INTC._7305.ICR0		= (void *)0xa4140000;
+	INTC._7305.ICR1		= (void *)0xa414001c;
+	INTC._7305.INTPRI00	= (void *)0xa4140010;
+	INTC._7305.iprs		= (void *)0xa4080000;
+	INTC._7305.INTMSK00	= (void *)0xa4140044;
+	INTC._7305.masks	= (void *)0xa4080080;
+	INTC._7305.INTMSKCLR00	= (void *)0xa4140064;
+	INTC._7305.masks_clear	= (void *)0xa40800c0;
+	INTC._7305.INTREQ00	= (void *)0xa4140024;
+	INTC._7305.USERIMASK	= (void *)0xa4700000;
+	INTC._7305.NMIFCR	= (void *)0xa41400c0;
 
 	TMU.timers[0]		= (void *)0xa4490008;
 	TMU.timers[1]		= (void *)0xa4490014;
