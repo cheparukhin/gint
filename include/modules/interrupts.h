@@ -465,6 +465,178 @@ typedef mod_intc_irq_7305_t mod_intc_intmsk00_7305_t;
 typedef mod_intc_irq_7305_t mod_intc_intmskclr00_7305_t;
 
 /*
+	mod_intc_masks_7305_t
+	A set of bits to mask individual interrupts.
+	- Masking interrupts is realized by writing 1 to IMRs ;
+	- Clearing masks is realized by writing 1 to IMCRs ;
+	Using the wrong register set, such as writing 0 to IMRs to clear a
+	mask, will be ignored and have no effect. Reading from IMCRs yields an
+	undefined value.
+*/
+typedef struct
+{
+	byte_union(IMR0,
+		uint		:1;
+		uint TUNI1_2	:1;	/* TMU1 overflow interrupts */
+		uint TUNI1_1	:1;
+		uint TUNI1_0	:1;
+		uint SDHII3	:1;	/* SD Card Host 1 interrupts */
+		uint SDHII2	:1;
+		uint SDHII1	:1;
+		uint SDHII0	:1;
+	);
+	pad(3);
+
+	byte_union(IMR1,
+		uint		:4;
+		uint DEI3	:1;	/* DMAC0A interrupts */
+		uint DEI2	:1;
+		uint DEI1	:1;
+		uint DEI0	:1;
+	);
+	pad(3);
+
+	byte_union(IMR2,
+		uint		:7;
+		uint SCIFA0	:1;	/* Asynchronous Serial interrupts */
+	);
+	pad(3);
+
+	byte_union(IMR3,
+		uint DEI3	:1;	/* DMAC1A interrupts */
+		uint DEI2	:1;
+		uint DEI1	:1;
+		uint DEI0	:1;
+		uint		:4;
+	);
+	pad(3);
+
+	byte_union(IMR4,
+		uint		:1;
+		uint TUNI0_2	:1;	/* TMU0 overflow interrupts */
+		uint TUNI0_1	:1;
+		uint TUNI0_0	:1;
+		uint		:3;
+		uint LCDCI	:1;	/* LCD Controller Interrupt */
+	);
+	pad(3);
+
+	byte_union(IMR5,
+		uint KEYI	:1;	/* Key Interface */
+		uint DADERR	:1;	/* DMAC0B interrupts */
+		uint DEI5	:1;
+		uint DEI4	:1;
+		uint		:1;
+		uint SCIF2	:1;	/* Serial Communication Interface */
+		uint SCIF1	:1;
+		uint SCIF0	:1;
+	);
+	pad(3);
+
+	byte_union(IMR6,
+		uint		:2;
+		uint		:1;
+		uint SCIFA4	:1;	/* SCIFA4 interrupt */
+		uint		:1;
+		uint		:1;
+		uint MSIOFI0	:1;	/* Clock-synchronized SCIF channel 0 */
+		uint MSIOFI1	:1;	/* Clock-synchronized SCIF channel 1 */
+	);
+	pad(3);
+
+	uint8_t IMR7;
+	pad(3);
+
+	byte_union(IMR8,
+		uint SDHII3	:1;	/* SD Card Host 0 interrupts */
+		uint SDHII2	:1;
+		uint SDHII1	:1;
+		uint SDHII0	:1;
+		uint 		:2;
+		uint SCFIA5	:1;	/* SCIFA5 interrupt */
+		uint FSI	:1;	/* FIFO-Buffered Serial Interface */
+	);
+	pad(3);
+
+	byte_union(IMR9,
+		uint 		:3;
+		uint CMTI	:1;	/* Compare Match Timer Interrupt */
+		uint 		:1;
+		uint USI1	:1;	/* USB1 */
+		uint USI0	:1;	/* USB0 */
+		uint 		:1;
+	);
+	pad(3);
+
+	byte_union(IMR10,
+		uint 		:1;
+		uint DADERR	:1;	/* DMAC1B interrupts */
+		uint DEI5	:1;
+		uint DEI4	:1;
+		uint		:1;
+		uint ATI	:1;	/* RTC Alarm interrupt */
+		uint PRI	:1;	/* RTC Periodic interrupt */
+		uint CUI	:1;	/* RTC Carry interrupt */
+	);
+	pad(3);
+
+	byte_union(IMR11,
+		uint 		:5;
+		uint TPUI	:1;	/* Timer-Pulse Unit */
+		uint		:2;
+	);
+	pad(3);
+
+	uint8_t IMR12;
+	char gap2[15];
+
+} __attribute__((packed)) mod_intc_masks_7305_t;
+
+/*
+	mod_intc_userimask_7305_t
+	User Interrupt Mask: Specifies the minimum required level for
+	interrupts to be accepted.
+
+	WARNING: Writing to this register requires the eight upper bits of the
+	operand (ie. the new value of USERIMASK) to be 0xa5; otherwise, the
+	write is ignored. To modify the value of this register, do not access
+	the bit field directly, backup the variable and modify it:
+
+	void set_user_imask(int new_level)
+	{
+		mod_intc_userimask_7305_t mask = *(INTC._7305.USERIMASK);
+		mask._a5	= 0xa5;
+		mask.UIMASK	= new_level & 0x0f;
+		*(INTC._7305.USERIMASK) = mask;
+	}
+*/
+typedef struct
+{
+	lword_union(,
+		uint _a5	:8;	/* Always set to 0xa5 before writing */
+		uint		:16;
+		uint UIMASK	:4;	/* User Interrupt Mask Level */
+		uint		:4;
+	);
+
+} __attribute__((packed, aligned(4))) mod_intc_userimask_7305_t;
+
+/*
+	mod_intc_nmifcr_7305_t
+	NMI Flag Control Register: Indicates the state of the NMI pin and the
+	NMI interrupt request.
+*/
+typedef struct
+{
+	byte_union(,
+		uint const NMIL	:1;	/* NMI Interupt Level */
+		uint		:14;
+		uint NMIFL	:1;	/* NMI Interrupt Request Flag */
+	);
+
+} __attribute__((packed, aligned(2))) mod_intc_nmifcr_7305_t;
+
+/*
 	mod_intc_7305_t
 	Finally the whole interrupt controller.
 */
@@ -480,10 +652,34 @@ typedef struct
 
 	/* Interrupt mask & mask clear registers */
 	volatile mod_intc_intmsk00_7305_t	*INTMSK00;
-//	volatile mod_intc_masks_7305_t		*masks;
+	volatile mod_intc_masks_7305_t		*masks;
 	volatile mod_intc_intmskclr00_7305_t	*INTMSKCLR00;
-//	volatile mod_intc_masks_clear_7305_t	*masks_clear;
+	volatile mod_intc_masks_7305_t		*masks_clear;
+
+	/* Other registers */
+	volatile mod_intc_intreq00_7305_t	*INTREQ00;
+	volatile mod_intc_userimask_7305_t	*USERIMASK;
+	volatile mod_intc_nmifcr_7305_t		*NMIFCR;
 
 } mod_intc_7305_t;
+
+
+
+//---
+//	Platform-independent structures.
+//	Unfortunately there is nothing here. Users willing to manage interrupts
+//	using the INTC register will have to handle explicitely both platforms.
+//---
+
+/*
+	mod_intc_t
+	Interrupt Controller.
+*/
+typedef union
+{
+	mod_intc_7705_t		_7705;
+	mod_intc_7305_t		_7305;
+
+} __attribute__((packed)) mod_intc_t;
 
 #endif	// _MODULE_INTERRUPTS
