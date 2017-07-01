@@ -4,7 +4,6 @@
 	All the system calls used by the library. Somehow "the less, the
 	better".
 	We have finally gotten rid of every obscure system-related syscalls!
-	Looks like an important step towards being completely free-standing :)
 */
 
 	.global	___malloc
@@ -45,6 +44,18 @@ ___system_menu:
 	sts.l	pr, @-r15
 	add	#-4, r15
 
+	/* Copying gint's VRAM into the system's. */
+	mov.l	syscall_table, r1
+	mov.l	.syscall_vram, r0
+	jsr	@r1
+	mov.l	r4, @r15			/* gint video ram */
+	mov	r0, r4
+	mov.l	@r15, r5
+	mov.w	.vram_size, r6
+	mov.l	.memcpy, r1
+	jsr	@r1
+	nop
+
 	/* Putting the matrix code in the key buffer. */
 
 	mov	r15, r4
@@ -60,14 +71,14 @@ ___system_menu:
 	mov	r15, r4				/* column pointer */
 	add	#-4, r15
 	mov	r15, r5				/* row pointer */
-	mov	#-5, r15
-	mov	r15, r1
+	add	#-4, r15
+	mov	r15, r1				/* keycode pointer */
 
 	mov	#2, r6				/* type of waiting */
 	mov	#0, r7				/* timeout period */
-	mov.l	r1, @-r15			/* keycode pointer */
-	mov	#0, r2
-	mov.l	r2, @-r15			/* allow return to menu */
+	mov.l	r1, @-r15
+	mov	#0, r2				/* allow return to menu */
+	mov.l	r2, @-r15
 
 	mov.l	syscall_table, r1
 	mov.l	.syscall_getkeywait, r0
@@ -88,8 +99,14 @@ ___system_menu:
 	.long	0x0247
 .syscall_putcode:
 	.long	0x024f
+.syscall_vram:
+	.long	0x0135
 .matrix_menu:
 	.word	0x0308
+.vram_size:
+	.word	1024
+.memcpy:
+	.long	_memcpy
 
 
 

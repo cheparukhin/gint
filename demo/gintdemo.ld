@@ -3,7 +3,7 @@
 	output. Note how symbols romdata, bbss, ebss, bdata and edata are used
 	in the initialization routine (crt0.c) to initialize the application.
 
-	Two ram areas are specified. The "real ram" is accessed direcly while
+	Two ram areas are specified. The "real ram" is accessed directly while
 	the other area is virtualized. It is not possible to execute code in
 	virtualized ram.
 */

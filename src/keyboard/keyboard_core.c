@@ -82,42 +82,66 @@ static inline void push_release(int keycode)
 */
 void keyboard_interrupt(void)
 {
-	uint8_t state[10] = { 0 };
+	// This procedure is critical for speed. If there's anything that could
+	// be optimized, please tell me.
 
+	// New keyboard state.
+	uint8_t state[10] = { 0 };
 	isSH3()	? keyboard_updateState_7705(state)
 		: keyboard_updateState_7305(state);
 
-	// This procedure really needs to be speed-optimized... and it's hard
-	// because of this bit manipulation. This condition handles AC/ON.
-	if(keyboard_state[0] ^ state[0])
-	{
-		uint8_t pressed		= ~keyboard_state[0] &  state[0];
-		uint8_t released	=  keyboard_state[0] & ~state[0];
+	// Event types associated with each old/new state pair (see later).
+	uint8_t events[4] = {
+		event_none,
+		event_key_release,
+		event_key_press,
+		event_key_repeat,
+	};
 
-		if(pressed & 1)  push_press(KEY_AC_ON);
-		if(released & 1) push_release(KEY_AC_ON);
+	// AC/ON has not a matrix code that corresponds to its location in the
+	// buffer, so we need to check it independently.
+	if(keyboard_state[0] | state[0])
+	{
+		int kind = (state[0] << 1) | keyboard_state[0];
+
+		if(kind)
+		{
+			event_t event = {
+				.type		= events[kind],
+				.key.code	= KEY_AC_ON,
+				.key.id		= key_id(KEY_AC_ON),
+				.key.character	= key_char(KEY_AC_ON)
+			};
+			event_push(event);
+		}
 	}
 	keyboard_state[0] = state[0];
 
 	for(int row = 1; row <= 9; row++)
 	{
-		uint8_t pressed		= ~keyboard_state[row] &  state[row];
-		uint8_t repeated	=  keyboard_state[row] &  state[row];
-		uint8_t released	=  keyboard_state[row] & ~state[row];
+		// Shifting the new state will allow us to make up a 2-bit
+		// value for each key more easily, improving efficiency.
+		uint16_t old	= keyboard_state[row];
+		uint16_t new	= state[row] << 1;
+
+		if(!new && !old) continue;
 		keyboard_state[row] = state[row];
 
-		// Make this a bit faster.
-		if(!(pressed | repeated | released)) continue;
-
-		for(int column = 0; column < 8; column++)
+		for(uint8_t code = row; code < (row | 0x80); code += 0x10)
 		{
-			if(pressed  & 1) push_press  ((column << 4) | row);
-			if(repeated & 1) push_repeat ((column << 4) | row);
-			if(released & 1) push_release((column << 4) | row);
+			int kind = (new & 2) | (old & 1);
+			old >>= 1;
+			new >>= 1;
 
-			pressed  >>= 1;
-			repeated >>= 1;
-			released >>= 1;
+			if(!kind) continue;
+
+			event_t event = {
+				.type		= events[kind],
+				.key.code	= code,
+				.key.id		= key_id(code),
+				.key.character	= key_char(code)
+			};
+			event_push(event);
 		}
 	}
 

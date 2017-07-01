@@ -153,7 +153,7 @@ void gint_install(gint_interrupt_type_t type, void *function)
 
 /*
 	gint_uninstall()
-	Uninstalls the exception or interrupt handler that was used for the
+	Un-installs the exception or interrupt handler that was used for the
 	given interrupt, falling back to gint's default handler.
 */
 void gint_uninstall(gint_interrupt_type_t type)

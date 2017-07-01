@@ -140,8 +140,6 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	dg->stage	= stage_running;
 	#endif
 
-
-
 	// Saving the execution state there.
 	int x = setjmp(env);
 	// If the program has just started, executing main(). Otherwise, the
@@ -252,14 +250,4 @@ int atexit(void (*function)(void))
 
 	atexit_handlers[atexit_index++] = function;
 	return 0;
-}
-
-void crt0_system_menu(void)
-{
-	fini();
-	gint_quit();
-	__system_menu();
-	mmu_pseudoTLBInit();
-	gint_init();
-	init();
 }

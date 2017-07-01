@@ -141,6 +141,17 @@ uint32_t *gray_darkVRAM(void)
 }
 
 /*
+	gray_currentVRAM()
+	Returns the currently displayed video ram (if the engine runs). Used
+	internally, but has no interest for the user. You don't want to draw to
+	this vram.
+*/
+uint32_t *gray_currentVRAM(void)
+{
+	return vrams[current ^ 1];
+}
+
+/*
 	gray_getDelays()
 	Returns the gray engine delays. Pointers are not set if NULL.
 */

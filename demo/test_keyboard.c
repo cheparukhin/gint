@@ -4,8 +4,9 @@
 #include <stdlib.h>
 #include <events.h>
 
-static void draw_keyboard(volatile uint8_t *state)
+static int draw_keyboard(volatile uint8_t *state)
 {
+	int pressed_keys = 0;
 	int i, j, k, l;
 	int x, y;
 
@@ -29,6 +30,7 @@ static void draw_keyboard(volatile uint8_t *state)
 		// Drawing a filled shape when the key is pressed.
 		if(state[i] & (0x80 >> j))
 		{
+			pressed_keys++;
 			for(k = -2; k <= 2; k++) for(l = -2; l <= 2; l++)
 				if(abs(k) + abs(l) <= 2)
 					dpixel(x + k, y + l, color_black);
@@ -49,47 +51,61 @@ static void draw_keyboard(volatile uint8_t *state)
 
 	// An horizontal line to separate parts of the keyboard.
 	dline(5, 28, 32, 28, color_black);
+
+	return pressed_keys;
 }
 
 typedef struct {
-	event_type_t type;
 	uint32_t key;
 	int repeats;
+} history_key_t;
 
-} enhanced_event_t;
+typedef struct {
+	history_key_t *data;
+	int size;
+	int pressed;
+} history_t;
 
-static void push_history(enhanced_event_t *history, int size, event_t event)
+static int pressed_keys = -1;
+static int releases = 0;
+
+static void history_push(history_t *h, event_t event)
 {
-	#define	event_eq(x, y) \
-		((x).type == (y).type && (x).key == (y).key.code)
+	// Only reset the number of pressed keys in the history when the actual
+	// number of pressed keys reaches 0.
 
-	// Determining where the history ends.
-	int length = 0;
-	while(length < size && history[length].type != event_none) length++;
-
-	// Checking if the previous event is being repeated.
-	if(length > 0 && event_eq(history[length - 1], event))
+	if(event.type == event_key_release)
 	{
-		history[length - 1].repeats++;
+		pressed_keys--;
+		if(!pressed_keys) h->pressed = 0;
 		return;
 	}
 
-	// Making up some space if required.
-	if(length == size)
+	// Now we're sure a key was pressed or repeated. Check if it's in the
+	// last pressed elements of the history array, if so, update it.
+	// Otherwise make space for a new entry and add it.
+
+	if(event.type == event_key_press) pressed_keys++;
+
+	for(int i = h->size - h->pressed; i < h->size; i++)
 	{
-		for(int i = 0; i < size - 1; i++) history[i] = history[i + 1];
-		length = size - 1;
+		if(h->data[i].key == event.key.code)
+		{
+			h->data[i].repeats++;
+			return;
+		}
 	}
 
-	// Adding a new entry to the history.
-	history[length].type	= event.type;
-	history[length].key	= event.key.code;
-	history[length].repeats	= 1;
+	// If there are already h->size keys pressed, do not add more.
+	if(event.type == event_key_press) h->pressed++;
+	if(h->pressed > h->size) return;
 
-	#undef	event_eq
+	for(int i = 0; i < h->size - 1; i++) h->data[i] = h->data[i + 1];
+	h->data[h->size - 1].key = event.key.code;
+	h->data[h->size - 1].repeats = 1;
 }
 
-static void draw_events(enhanced_event_t *history, int size)
+static void draw_events(history_t *h)
 {
 	const char *key_names[] = {
 		"F1",       "F2",            "F3",   "F4",   "F5",    "F6",
@@ -102,17 +118,21 @@ static void draw_events(enhanced_event_t *history, int size)
 		"1",        "2",             "3",    "+",    "-",     NULL,
 		"0",        ".",             "\x08", "(-)",  "EXE",   NULL
 	};
-	const char *event_names[] = {
-		"None ", "User ", "Press", "Rept.", "Rel. ", "Timer"
-	};
 
-	for(int i = 0; i < size && history[i].type != event_none; i++)
+	int y = 3;
+
+	print(8, 2, "%d %d %d", pressed_keys, h->pressed, releases);
+
+	for(int i = 0; i < h->size; i++)
 	{
-		print(8, 3 + i, "%s %s", event_names[history[i].type],
-			key_names[key_id(history[i].key)]);
-		if(history[i].repeats > 1)
-			print(19, 3 + i, "%d", history[i].repeats);
+		if(!h->data[i].key) continue;
+		print(8, y, "%s", key_names[key_id(h->data[i].key)]);
+		if(h->data[i].repeats > 1)
+			print(18, y, "%d", h->data[i].repeats);
+		y++;
 	}
+
+	if(h->pressed > h->size) print(8, 8, "(more)");
 }
 
 /*
@@ -121,23 +141,31 @@ static void draw_events(enhanced_event_t *history, int size)
 */
 void test_keyboard_events(void)
 {
-	enhanced_event_t history[5];
-	int history_size = 5;
+	history_key_t history_data[5] = { 0 };
+	history_t history = {
+		.data		= history_data,
+		.size		= 5,
+		.pressed	= 0,
+	};
 	event_t event;
-
-	for(int i = 0; i < history_size; i++) history[i].type = event_none;
 
 	while(1)
 	{
 		dclear();
 		locate(1, 1, "Keyboard and events");
-		draw_keyboard(keyboard_stateBuffer());
-		draw_events(history, history_size);
+
+		// There may be more than zero keys pressed when this test
+		// starts. We need to detect this count automatically.
+		int x = draw_keyboard(keyboard_stateBuffer());
+		if(pressed_keys < 0) pressed_keys = x;
+
+		draw_events(&history);
 		dupdate();
 
 		event = waitevent();
+		if(event.type == event_key_release) releases++;
 		if(event.type == event_key_press && event.key.code == KEY_EXIT)
 			break;
-		push_history(history, history_size, event);
+		history_push(&history, event);
 	}
 }

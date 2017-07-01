@@ -39,7 +39,7 @@ typedef unsigned uint;
 		uint16_t word;			\
 		struct { fields }		\
 		__attribute__((packed));	\
-	} __attribute__((packed)) name
+	} __attribute__((packed, aligned(2))) name
 
 /*
 	lword_union()
@@ -52,6 +52,6 @@ typedef unsigned uint;
 		uint32_t lword;			\
 		struct { fields }		\
 		__attribute__((packed));	\
-	} __attribute__((packed)) name
+	} __attribute__((packed, aligned(4))) name
 
 #endif	// _MODULES_MACROS_H

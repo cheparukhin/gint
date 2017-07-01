@@ -236,4 +236,16 @@ typedef enum
 */
 volatile void *gint_reg(gint_register_t reg);
 
+
+
+//---
+//	Other functions
+//---
+
+/*
+	gint_switch()
+	Temporarily returns to the system's main menu.
+*/
+void gint_switch(void);
+
 #endif	// _GINT_H

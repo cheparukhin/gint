@@ -590,7 +590,7 @@ typedef struct
 	uint8_t IMR12;
 	char gap2[15];
 
-} __attribute__((packed)) mod_intc_masks_7305_t;
+} __attribute__((packed, aligned(4))) mod_intc_masks_7305_t;
 
 /*
 	mod_intc_userimask_7305_t
@@ -605,7 +605,7 @@ typedef struct
 	void set_user_imask(int new_level)
 	{
 		mod_intc_userimask_7305_t mask = *(INTC._7305.USERIMASK);
-		mask._a5	= 0xa5;
+		mask._0xa5	= 0xa5;
 		mask.UIMASK	= new_level & 0x0f;
 		*(INTC._7305.USERIMASK) = mask;
 	}
@@ -613,7 +613,7 @@ typedef struct
 typedef struct
 {
 	lword_union(,
-		uint _a5	:8;	/* Always set to 0xa5 before writing */
+		uint _0xa5	:8;	/* Always set to 0xa5 before writing */
 		uint		:16;
 		uint UIMASK	:4;	/* User Interrupt Mask Level */
 		uint		:4;
@@ -628,7 +628,7 @@ typedef struct
 */
 typedef struct
 {
-	byte_union(,
+	word_union(,
 		uint const NMIL	:1;	/* NMI Interupt Level */
 		uint		:14;
 		uint NMIFL	:1;	/* NMI Interrupt Request Flag */
@@ -681,5 +681,8 @@ typedef union
 	mod_intc_7305_t		_7305;
 
 } __attribute__((packed)) mod_intc_t;
+
+// Here's what you'll need to use.
+extern mod_intc_t INTC;
 
 #endif	// _MODULE_INTERRUPTS
