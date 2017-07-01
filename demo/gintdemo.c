@@ -277,6 +277,9 @@ void tlb_debug(void)
 }
 */
 
+#include <modules/rtc.h>
+#include <modules/interrupts.h>
+
 /*
 	main_menu()
 	Displays the main menu and returns user's choice: 0 for [EXIT],
@@ -301,7 +304,7 @@ void main_menu(int *category, int *app)
 	};
 
 	const char *list_tests[] = {
-		"Keyboard and events",
+		"Keyboard & events",
 		"Gray engine",
 		"Image rendering",
 		"Text rendering",
@@ -353,9 +356,10 @@ void main_menu(int *category, int *app)
 		{
 		case 0:
 			print(1, 1, "gint %s", gint_version);
-			print(2, 4, "handler size: %5d", gint_size);
-			print(2, 5, "mpu type:   %7s", mpu);
-			print(2, 6, "romdata:   %08x", &romdata);
+			print(2, 3, "MPU type    %7s", mpu);
+			print(2, 4, "Add-in size    %3dk",
+				((uint32_t)&romdata - 0x00300000) >> 10);
+			print(2, 5, "gint size    %5do", gint_size);
 
 			list = NULL;
 			break;
@@ -408,9 +412,6 @@ void main_menu(int *category, int *app)
 
 			switch(getkey())
 			{
-//			case KEY_7:
-//				crt0_system_menu();
-//				break;
 			case KEY_F1:
 				if(!tab) break;
 				tab	= 0;
@@ -433,6 +434,9 @@ void main_menu(int *category, int *app)
 				tab	= 3;
 				index	= 0;
 				scroll	= 0;
+				break;
+			case KEY_F5:
+				gint_switch();
 				break;
 			case KEY_F6:;
 				void screen(void);
@@ -480,11 +484,11 @@ void main_menu(int *category, int *app)
 				if(app) *app = index + 1;
 				return;
 
-			case KEY_MENU:
+/*			case KEY_MENU:
 				if(category) *category = 0;
 				if(app) *app = 0;
 				return;
-
+*/
 			default:
 				leave = 0;
 			}

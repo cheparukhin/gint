@@ -6,11 +6,10 @@ Bugs to fix:
 
 Things to do before 1.0:
 -  bopti:	Test partial transparency
-*  core:	Allow return to menu
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  project:	Check size of *all* library structures
 -  project:	Clean headers that have some internal definitions
--  project:	Unify this hellish mess of register access!
+-  project:	Get rid of 7705.h (keyboard) and 7305.h (keyboard, gint)
 -  time:	Compute CLOCKS_PER_SEC
 
 Things to do later:

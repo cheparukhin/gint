@@ -44,7 +44,7 @@ static void rtc_cb_update(void)
 	  -1	Array is full
 	  -2	Invalid parameter
 	The number of repeats may be set to 0, in which case the callback is
-	called indefinitely unless the user calls rtc_cb_end().
+	called indefinitely until the user calls rtc_cb_end().
 */
 int rtc_cb_add(rtc_frequency_t freq, void (*function)(void), int repeats)
 {

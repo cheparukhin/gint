@@ -3,6 +3,7 @@
 #include <keyboard.h>
 #include <events.h>
 #include <screen.h>
+#include <gint.h>
 
 /*
 	getkey()
@@ -15,6 +16,7 @@ int getkey(void)
 		getkey_shift_modifier		|
 		getkey_alpha_modifier		|
 		getkey_manage_backlight		|
+		getkey_task_switch		|
 		getkey_repeat_arrow_keys,
 
 		0
@@ -62,6 +64,11 @@ int getkey_opt(getkey_option_t options, int delay_ms)
 			modifier &= ~MOD_SHIFT;
 			continue;
 		}
+		if((options & getkey_task_switch) && key == KEY_MENU
+			&& !modifier)
+		{
+			continue;
+		}
 		if(options & getkey_shift_modifier && key == KEY_SHIFT)
 		{
 			modifier ^= MOD_SHIFT;
@@ -98,6 +105,13 @@ int getkey_opt(getkey_option_t options, int delay_ms)
 		break;
 
 	case event_key_release:
+		if((options & getkey_task_switch) && event.key.code == KEY_MENU
+			&& !modifier)
+		{
+			gint_switch();
+			continue;
+		}
+
 		if((int)event.key.code != last_key) break;
 		last_key	= KEY_NONE;
 		last_repeats	= 0;

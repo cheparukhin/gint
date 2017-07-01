@@ -69,3 +69,5 @@ _inline int tolower(int c) {
 _inline int toupper(int c) {
 	return c & ~(islower(c) << 1);
 }
+
+#undef	_inline

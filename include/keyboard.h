@@ -162,6 +162,10 @@ typedef enum
 	// compatible models.
 	getkey_manage_backlight		= 0x04,
 
+	// Allow returning to menu using the [MENU] key. (This operation is not
+	// absolutely safe.)
+	getkey_task_switch		= 0x08,
+
 	// Allow key repetition. This option does not control the generation of
 	// repeat events (use keyboard_setRepeatRate() for this) but filters
 	// them. Please note that modifiers will never be repeated, even when
