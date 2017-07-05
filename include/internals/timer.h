@@ -11,11 +11,9 @@
 */
 typedef struct timer_t
 {
-	// Current delay, how much time elapsed since last interrupt occurred,
-	// and how many repeats are left.
-	int ms_delay;
-	int ms_elapsed;
-	int repeats_left;
+	// Current delay, how much time elapsed since last interrupt occurred.
+	uint32_t ms_delay;
+	uint32_t ms_elapsed;
 
 	// Is the virtual slot free? Is the virtual timer active?
 	uint8_t	used		:1;
@@ -25,12 +23,14 @@ typedef struct timer_t
 	uint8_t vsupport	:1;
 	// How many events do I have received but not executed?
 	uint8_t	events		:4;
+	// How many repeats are left.
+	uint32_t repeats_left	:24;
 
 	// Callback function (NULL for event-firing timers) and its argument.
 	void *callback;
 	void *argument;
 
-} timer_t;
+} __attribute__((packed, aligned(4))) timer_t;
 
 // Hardware timers.
 extern timer_t htimers[3];

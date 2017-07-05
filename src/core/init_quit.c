@@ -21,11 +21,11 @@ static void setup(void)
 	isSH3()	? gint_lock_and_setup_7705()
 		: gint_lock_and_setup_7305();
 }
-void gint_init(void)
+void gint_init(mpu_t mpu)
 {
-	// Detecting the MPU type. I don't like const-casting but this is still
+	// Setting the MPU type. I don't like const-casting but this is still
 	// better than allowing the user to change the variable by mistake.
-	*((mpu_t *)&MPU_CURRENT) = getMPU();
+	*((mpu_t *)&MPU_CURRENT) = mpu;
 	// Loading the register addresses of the current platform.
 	mod_init();
 
@@ -90,22 +90,28 @@ void gint_quit(void)
 #include <gray.h>
 
 /*
+	__system_menu()
+	Updates the system's vram and triggers the calculator's main menu.
+*/
+void __system_menu(void *vram);
+
+// Stores gint's configuration while the user visits the main menu.
+static environment_t switch_env;
+
+/*
 	gint_switch()
 	Temporarily returns to the system's main menu.
 */
-static environment_t switch_env;
-static void switch_(void)
+static void restore(void)
 {
 	isSH3()	? gint_restore_and_unlock_7705(&switch_env.env_7705)
 		: gint_restore_and_unlock_7305(&switch_env.env_7305);
 }
 void gint_switch(void)
 {
-	// Save the current environment in a special buffer, so that we can
-	// restore it if we ever come back to gint.
 	isSH3()	? gint_save_7705(&switch_env.env_7705)
 		: gint_save_7305(&switch_env.env_7305);
-	// Give the control back to the system.
+
 	gint_setvbr(gint.system_vbr, stop);
 
 	// When returning to the add-in from the menu, the system displays the
@@ -120,5 +126,5 @@ void gint_switch(void)
 	__system_menu(vram);
 
 	// If the user came back, restore the gint working environment.
-	gint_setvbr(gint.gint_vbr, switch_);
+	gint_setvbr(gint.gint_vbr, restore);
 }

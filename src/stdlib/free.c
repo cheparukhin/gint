@@ -3,7 +3,7 @@
 #pragma GCC diagnostic ignored "-Wunused-parameter"
 
 #ifndef	GINT_NO_SYSCALLS
-void __free(void *ptr);
+#include <internals/syscalls.h>
 #endif
 
 /*
@@ -12,6 +12,9 @@ void __free(void *ptr);
 */
 void free(void *ptr)
 {
+	// Just to be sure.
+	if(!ptr) return;
+
 	#ifndef	GINT_NO_SYSCALLS
 	__free(ptr);
 	#endif

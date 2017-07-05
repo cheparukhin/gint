@@ -1,14 +1,25 @@
 /*
 	gint core module: syscalls
 
-	All the system calls used by the library. Somehow "the less, the
-	better".
-	We have finally gotten rid of every obscure system-related syscalls!
+	System calls (and the like) used by the library. The library should
+	rely the least possible on the system, but sometimes using the syscalls
+	is nothing of a nuisance.
+
+	For instance, using the malloc()-family syscalls is a bit annoying
+	because it "locks" many functionalities. On the other hand, getting the
+	SaveDisp() buffer addresses to store data here is not a problem since
+	such data can very easily be relocated to static RAM.
 */
 
+	/* Dynamic allocation */
 	.global	___malloc
 	.global	___free
 	.global	___realloc
+
+	/* OS version */
+	.global	___get_os_version
+
+	/* Return to menu */
 	.global	___system_menu
 
 
@@ -33,6 +44,13 @@ ___realloc:
 	jmp	@r2
 	nop
 1:	.long	0xe6d
+
+___get_os_version:
+	mov.l	syscall_table, r2
+	mov.l	1f, r0
+	jmp	@r2
+	nop
+1:	.long	0x02ee
 
 /*
 	__system_menu()

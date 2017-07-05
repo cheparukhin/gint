@@ -11,13 +11,6 @@ extern font_t *font;
 extern color_t operator;
 
 /*
-	tales_init()
-	Configures tales with the default font (which is part of gint).
-*/
-__attribute__((constructor))
-void tales_init(void);
-
-/*
 	getCharacterIndex()
 	Returns the index of a character in a font data area depending on the
 	font format and the size of the characters. Returns the index in the

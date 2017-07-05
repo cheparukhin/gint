@@ -16,7 +16,9 @@ int getkey(void)
 		getkey_shift_modifier		|
 		getkey_alpha_modifier		|
 		getkey_manage_backlight		|
+#ifndef GINT_NO_SYSCALLS
 		getkey_task_switch		|
+#endif
 		getkey_repeat_arrow_keys,
 
 		0
@@ -105,12 +107,14 @@ int getkey_opt(getkey_option_t options, int delay_ms)
 		break;
 
 	case event_key_release:
+#ifndef GINT_NO_SYSCALLS
 		if((options & getkey_task_switch) && event.key.code == KEY_MENU
 			&& !modifier)
 		{
 			gint_switch();
 			continue;
 		}
+#endif
 
 		if((int)event.key.code != last_key) break;
 		last_key	= KEY_NONE;

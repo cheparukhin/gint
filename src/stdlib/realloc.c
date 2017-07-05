@@ -6,8 +6,8 @@
 */
 
 #ifndef	GINT_NO_SYSCALLS
+#include <internals/syscalls.h>
 
-void *__realloc(void *ptr, size_t size);
 void *realloc(void *ptr, size_t size)
 {
 	return __realloc(ptr, size);

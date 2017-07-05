@@ -11,27 +11,26 @@
 static void draw(int delay1, int delay2, int selected)
 {
 	extern image_t res_opt_gray;
+	extern font_t res_font_modern;
 	uint32_t *vl = gray_lightVRAM();
 	uint32_t *vd = gray_darkVRAM();
 
 	gclear();
 	locate(1, 1, "Gray engine");
 
-	for(int i = 0; i < 36; i++)
+	for(int i = 0; i < 64; i++)
 	{
-		int o = ((i + 12) << 2) + 2;
-		unsigned light	= -((i % 24) < 12);
-		unsigned dark	= -(i < 24);
-		vl[o]		= light >> 8;
-		vl[o + 1]	= light << 8;
-		vd[o]		= dark >> 8;
-		vd[o + 1]	= dark << 8;
+		int offset = (i << 2) + 3;
+		vl[offset] = -(!(i & 16));
+		vd[offset] = -(i < 32);
 	}
 
-	locate(3, 3, "light");
-	print(4, 4, "%d", delay1);
+	text_configure(&res_font_modern, color_black);
+	gtext(13, 17, "light");
+	gtext(13, 31, "dark");
 
-	locate(3, 5, "dark");
+	text_configure(NULL, color_black);
+	print(4, 4, "%d", delay1);
 	print(4, 6, "%d", delay2);
 
 	locate(3, selected ? 6 : 4, "\x02");

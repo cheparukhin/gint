@@ -11,7 +11,7 @@ include Makefile.cfg
 #---
 
 # Modules
-modules-gint	= bopti clock core display events gray keyboard mmu rtc \
+modules-gint	= bopti clock core display events gray init keyboard mmu rtc \
 		  screen tales timer
 modules-libc	= ctype setjmp stdio stdlib string time
 
@@ -19,7 +19,6 @@ modules-libc	= ctype setjmp stdio stdlib string time
 target-lib	= libgint.a
 target-std	= libc.a
 target-g1a	= gintdemo.g1a
-target-dbg	= gintdbg.g1a
 
 # Tools
 cc		= sh3eb-elf-gcc
@@ -43,17 +42,6 @@ demo-bin	= build/gintdemo.bin
 demo-ldflags	= $(demo-cflags) -T demo/gintdemo.ld -L. -lgint -lc -lgcc
 demo-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
 		  -Wall -Wextra
-
-# Debugger application (displays past diagnostics without running gint)
-debug-src	= $(notdir $(wildcard debug/*.[cs]))
-debug-dep	= $(wildcard debug/*.h)
-debug-icon	= debug/icon.bmp
-debug-obj	= $(debug-src:%=build/debug_%.o)
-debug-elf	= build/gintdbg.elf
-debug-bin	= build/gintdbg.bin
-debug-ldflags	= $(debug-cflags) -T debug/addin.ld -L debug -lfx -lgcc
-debug-cflags	= -m3 -mb -nostdlib -ffreestanding -I debug/include -I \
-		  include -std=c11 -Os -Wall -Wextra
 
 # Specific objects
 obj-lib-spec	= build/display_font_system.bmp.o
@@ -159,7 +147,7 @@ debug-ldflags	+= -Wl,--defsym,_GINT_VERSION=$(version_symbol)
 
 all-lib: $(config) $(target-std) $(target-lib)
 
-all: $(config) $(target-std) $(target-lib) $(target-g1a) $(target-dbg)
+all: $(config) $(target-std) $(target-lib) $(target-g1a)
 
 build:
 	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
@@ -193,17 +181,6 @@ $(target-g1a): $(config) $(target-std) $(target-lib) $(demo-obj)
 	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m g1a-wrapper -o $@\n')
 	$(if $(VERBOSE),,@) $(wr) $(demo-bin) -o $@ -i $(demo-icon)
 	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built demo application ('
-	@ printf $$(stat -c %s $@)
-	@ printf ' bytes)\n\n'
-
-$(target-dbg): $(config) $(debug-obj)
-	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m ld -o $(debug-elf)\n')
-	$(if $(VERBOSE),,@) $(cc) -o $(debug-elf) $(debug-obj) $(debug-ldflags)
-	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m objcopy -o $(debug-bin)\n')
-	$(if $(VERBOSE),,@) $(ob) -R .comment -R .bss -O binary $(debug-elf) $(debug-bin)
-	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m g1a-wrapper -o $@\n')
-	$(if $(VERBOSE),,@) $(wr) $(debug-bin) -o $@ -i $(debug-icon)
-	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built debug application ('
 	@ printf $$(stat -c %s $@)
 	@ printf ' bytes)\n\n'
 
@@ -244,16 +221,6 @@ build/demo_%.bmp.o: demo/resources/%.bmp
 	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
 	$(if $(VERBOSE),,@) fxconv $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
 
-# Debug application
-
-build/debug_%.s.o: debug/%.s $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m as $<\n')
-	$(if $(VERBOSE),,@) $(as) -c $< -o $@
-
-build/debug_%.c.o: debug/%.c $(hdr-dep) $(debug-dep) $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
-	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(debug-cflags)
-
 
 
 #---
@@ -282,9 +249,7 @@ endif
 
 install-demo: all
 	p7 send -f $(target-g1a)
-install-debug: all
-	p7 send -f $(target-dbg)
 
 .PHONY: all-lib all help
 .PHONY: clean mrproper distclean
-.PHONY: install install-demo install-debug
+.PHONY: install install-demo

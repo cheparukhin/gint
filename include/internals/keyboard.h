@@ -39,4 +39,11 @@ int getPressedKeys(volatile uint8_t *keyboard_state, int *keys, int count);
 void keyboard_updateState_7705(volatile uint8_t *state);
 void keyboard_updateState_7305(volatile uint8_t *state);
 
+/*
+	keyboard_interrupt()
+	Answers an interrupt event by updating the keyboard state and
+	generating the associated keyboard events.
+*/
+void keyboard_interrupt(void);
+
 #endif	// _INTERNALS_KEYBOARD_H

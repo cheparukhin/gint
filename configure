@@ -7,9 +7,10 @@
 declare -A conf
 
 # Behavior
-conf[GINT_DIAGNOSTICS]=
+conf[GINT_STARTUP_LOG]=
 conf[GINT_NO_SYSCALLS]=
 conf[GINT_EXTENDED_LIBC]=
+conf[GINT_STATIC_GRAY]=
 
 # Size limits
 conf[ATEXIT_MAX]=16
@@ -37,15 +38,18 @@ help()
 Configuration script for the gint library.
 
 Options that affect the behavior of the library:
-  $Cr--diagnostics $Cg[default:$Cp false$Cg]$C0
-    Use gint in debug mode, where the library outputs some diagnostics in
-    memory or briefly on screen to diagnose incompatibilites or crashes.
+  $Cr--startup-log $Cg[default:$Cp false$Cg]$C0
+    Enable a on-screen log at startup if a key is kept pressed while launching
+    the add-in, allowing easy debug and crash diagnoses.
   $Cr--no-syscalls $Cg[default:$Cp false$Cg]$C0
-    Never use syscalls. Expect some trouble with the malloc() function... do
+    Never use syscalls. Expect trouble with malloc() and the gray engine. Do
     not trigger this switch unless you know what you are doing.
   $Cr--extended-libc $Cg[default:$Cp false$Cg]$C0
     Enable specific C99 headers/features that are normally not required by
     calculator programs. This may allow porting programs from other platforms.
+  $Cr--static-gray-engine $Cg[default:$Cp false$Cg]$C0
+    Place the gray engine vram in static ram instead of using the heap. Always
+    use this option when using both the gray engine and --no-syscalls.
 
 Options that customize size limits:
   $Cr--atexit-max$C0=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
@@ -66,9 +70,10 @@ EOF
 fail=false
 for arg; do case "$arg" in
 	-h | --help) help;;
-	--diagnostics)   conf[GINT_DIAGNOSTICS]=true;;
-	--no-syscalls)   conf[GINT_NO_SYSCALLS]=true;;
-	--extended-libc) conf[GINT_EXTENDED_LIBC]=true;;
+	--startup-log)		conf[GINT_STARTUP_LOG]=true;;
+	--no-syscalls)		conf[GINT_NO_SYSCALLS]=true;;
+	--extended-libc)	conf[GINT_EXTENDED_LIBC]=true;;
+	--static-gray-engine)	conf[GINT_STATIC_GRAY]=true;;
 
 	--atexit-max=*)
 		size=${arg#*=}
@@ -103,9 +108,10 @@ esac; done
 
 output_config_gcc()
 {
-	[ "${conf[GINT_DIAGNOSTICS]}"   != "" ] && echo "-D GINT_DIAGNOSTICS"
+	[ "${conf[GINT_STARTUP_LOG]}"   != "" ] && echo "-D GINT_STARTUP_LOG"
 	[ "${conf[GINT_NO_SYSCALLS]}"   != "" ] && echo "-D GINT_NO_SYSCALLS"
 	[ "${conf[GINT_EXTENDED_LIBC]}" != "" ] && echo "-D GINT_EXTENDED_LIBC"
+	[ "${conf[GINT_STATIC_GRAY]}"   != "" ] && echo "-D GINT_STATIC_GRAY"
 
 	echo "-D ATEXIT_MAX=${conf[ATEXIT_MAX]}"
 	echo "-D TIMER_SLOTS=${conf[TIMER_SLOTS]}"
