@@ -4,17 +4,10 @@
 #include <ctype.h>
 #include <gray.h>
 
-font_t *font = NULL;
-color_t operator;
-
-/*
-	tales_init()
-	Configures tales with the default font (which is part of gint).
-*/
-void tales_init(void)
-{
-	text_configure(NULL, color_black);
-}
+/* Put these in gint's uninitialized bss section so that text rendering can be
+   used before the library is fully initialized */
+__attribute__((section(".gint.bss"))) font_t *font = NULL;
+__attribute__((section(".gint.bss"))) color_t operator;
 
 /*
 	getCharacterIndex()

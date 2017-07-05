@@ -1,9 +1,8 @@
 #include <display.h>
 
-// Program video ram. It resides in BSS section, therefore it is cleared at
-// program initialization and stripped from the executable file.
-static uint32_t local_vram[256];
-uint32_t *vram = local_vram;
+/* Add-in monochrome vram in gint's uninitialized bss section */
+__attribute__((section(".gint.bss"))) static uint32_t vram_local[256];
+__attribute__((section(".gint.bss"))) uint32_t *vram;
 
 /*
 	display_getLocalVRAM()
@@ -16,7 +15,7 @@ uint32_t *vram = local_vram;
 */
 inline uint32_t *display_getLocalVRAM(void)
 {
-	return local_vram;
+	return vram_local;
 }
 
 /*
@@ -43,6 +42,6 @@ inline uint32_t *display_getCurrentVRAM(void)
 */
 inline void display_useVRAM(uint32_t *ptr)
 {
-	if((intptr_t)ptr & 3) return;
+	if((uintptr_t)ptr & 3) return;
 	vram = ptr;
 }

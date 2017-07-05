@@ -9,7 +9,8 @@
 #include <mpu.h>
 #include <stdint.h>
 
-const mpu_t MPU_CURRENT;
+/* Located in gint's uninitialized bss section */
+__attribute__((section(".gint.bss"))) const mpu_t MPU_CURRENT;
 
 /*
 	getMPU()

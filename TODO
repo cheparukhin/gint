@@ -1,10 +1,11 @@
 Bugs to fix:
--  A few key hits ignored after leaving the application  (could not reproduce)
--  Lost keyboard control at startup                      (could not reproduce)
 -  Alignment of ALL .data / .rodata files is required to ensure converted data
    is properly aligned
+-  Unpreditcable crap happens when more than 10 keys are pressed simultaneously
+-  Ensure heap data is freed when a task-switch results in leaving the app
 
 Things to do before 1.0:
+-  init:	Move qdiv10() somewhere else
 -  bopti:	Test partial transparency
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  project:	Check size of *all* library structures
@@ -33,8 +34,15 @@ Things to do later:
 -  usb:		Implement a driver
 
 Things to investigate:
--  Packed bit fields alignment
 -  Registers that may need to be saved within setjmp()
 -  Optimizing core/gint.c leads to raising of an illegal slot exception when
    running the interrupt handler, although it ends on rte; lds.l @r15+, mach,
    which is totally not an illegal slot.
+
+Possibly useful modules:
+-  DMAC
+-  SCIF, SCIFA
+-  TPU
+-  USB
+-  CMT on SH7305, WDT on SH7705
+-  ACD (SH7705 only)

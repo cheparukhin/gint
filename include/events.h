@@ -49,14 +49,14 @@ typedef struct
 {
 	// This is the key code as defined in <keyboard.h> (a matrix code), and
 	// probably what you need.
-	uint32_t	code;
+	uint16_t	code;
 	// This is a "compact id" which can be used for array subscript. There
 	// are only a few holes in the "compact id" numbering.
-	uint32_t	id;
+	uint16_t	id;
 	// Character associated with the event key.
 	int		character;
 
-} key_event_t;
+} __attribute__((packed, aligned(4))) key_event_t;
 
 /*
 	event_t
@@ -77,7 +77,7 @@ typedef struct
 		timer_t *timer;
 	};
 
-} event_t;
+} __attribute__((packed, aligned(4))) event_t;
 
 
 

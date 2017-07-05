@@ -277,8 +277,7 @@ void tlb_debug(void)
 }
 */
 
-#include <modules/rtc.h>
-#include <modules/interrupts.h>
+#include <internals/timer.h>
 
 /*
 	main_menu()
@@ -435,14 +434,11 @@ void main_menu(int *category, int *app)
 				index	= 0;
 				scroll	= 0;
 				break;
-			case KEY_F5:
-				gint_switch();
-				break;
-			case KEY_F6:;
+/*			case KEY_F6:;
 				void screen(void);
 				screen();
 				break;
-
+*/
 			case KEY_UP:
 				if(list && list_len > 1)
 				{
@@ -484,11 +480,6 @@ void main_menu(int *category, int *app)
 				if(app) *app = index + 1;
 				return;
 
-/*			case KEY_MENU:
-				if(category) *category = 0;
-				if(app) *app = 0;
-				return;
-*/
 			default:
 				leave = 0;
 			}
@@ -533,7 +524,7 @@ int main(void)
 	return 0;
 }
 
-void crash(void)
+static void crash(void)
 {
 	__asm__(
 		"mov	#0, r0		\n\t"
@@ -542,7 +533,7 @@ void crash(void)
 	);
 }
 
-void screen(void)
+static void screen(void)
 {
 	enum { File = 1, Folder = 5 };
 	enum { Read = 0x01, Write = 0x02, ReadWrite = Read | Write };

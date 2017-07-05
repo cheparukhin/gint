@@ -4,9 +4,8 @@
 #include <stdlib.h>
 #include <events.h>
 
-static int draw_keyboard(volatile uint8_t *state)
+static void draw_keyboard(volatile uint8_t *state)
 {
-	int pressed_keys = 0;
 	int i, j, k, l;
 	int x, y;
 
@@ -30,7 +29,6 @@ static int draw_keyboard(volatile uint8_t *state)
 		// Drawing a filled shape when the key is pressed.
 		if(state[i] & (0x80 >> j))
 		{
-			pressed_keys++;
 			for(k = -2; k <= 2; k++) for(l = -2; l <= 2; l++)
 				if(abs(k) + abs(l) <= 2)
 					dpixel(x + k, y + l, color_black);
@@ -51,8 +49,6 @@ static int draw_keyboard(volatile uint8_t *state)
 
 	// An horizontal line to separate parts of the keyboard.
 	dline(5, 28, 32, 28, color_black);
-
-	return pressed_keys;
 }
 
 typedef struct {
@@ -66,7 +62,7 @@ typedef struct {
 	int pressed;
 } history_t;
 
-static int pressed_keys = -1;
+static int pressed_keys = 0;
 static int releases = 0;
 
 static void history_push(history_t *h, event_t event)
@@ -120,19 +116,25 @@ static void draw_events(history_t *h)
 	};
 
 	int y = 3;
+	int y_limit = 8 - (h->pressed > h->size);
 
-	print(8, 2, "%d %d %d", pressed_keys, h->pressed, releases);
+	extern font_t res_font_modern;
+	text_configure(&res_font_modern, color_black);
+	dtext(49, 12, "Key");
+	dtext(89, 12, "Rep.");
+	// dprint(49, 7, "%d %d %d", h->pressed, pressed_keys, releases);
+	text_configure(NULL, color_black);
+	dline(45, 18, 120, 18, color_black);
 
-	for(int i = 0; i < h->size; i++)
+	for(int i = 0; i < h->size && y < y_limit; i++) if(h->data[i].key)
 	{
-		if(!h->data[i].key) continue;
-		print(8, y, "%s", key_names[key_id(h->data[i].key)]);
+		dtext(49, y * 8 - 4, key_names[key_id(h->data[i].key)]);
 		if(h->data[i].repeats > 1)
-			print(18, y, "%d", h->data[i].repeats);
+			dprint(89, y * 8 - 4, "%d", h->data[i].repeats);
 		y++;
 	}
 
-	if(h->pressed > h->size) print(8, 8, "(more)");
+	if(h->pressed > h->size) dtext(49, 52, "(more)");
 }
 
 /*
@@ -149,15 +151,37 @@ void test_keyboard_events(void)
 	};
 	event_t event;
 
+	// There may be keys pressed when this test starts. We need to detect
+	// which and create a valid history for them.
+	volatile const uint8_t *buffer = keyboard_stateBuffer();
+
+	// For the purpose of this function we don't need to calculate the
+	// other fields.
+	event_t push_event = {
+		.type		= event_key_press,
+		.key.code	= KEY_AC_ON,
+	};
+
+	// Finding all the pressed keys and pushing them in the history.
+	if(buffer[0] & 1) history_push(&history, push_event);
+	for(int row = 1; row <= 9; row++) for(int col = 0; col < 8; col++)
+	{
+		// Eliminate non-existing keys.
+		if(col > 6 || col <= (row <= 4)) continue;
+
+		if(buffer[row] & (1 << col))
+		{
+			push_event.key.code = (col << 4) | row;
+			history_push(&history, push_event);
+		}
+	}
+
 	while(1)
 	{
 		dclear();
 		locate(1, 1, "Keyboard and events");
 
-		// There may be more than zero keys pressed when this test
-		// starts. We need to detect this count automatically.
-		int x = draw_keyboard(keyboard_stateBuffer());
-		if(pressed_keys < 0) pressed_keys = x;
+		draw_keyboard(keyboard_stateBuffer());
 
 		draw_events(&history);
 		dupdate();

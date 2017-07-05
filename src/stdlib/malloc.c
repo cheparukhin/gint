@@ -7,8 +7,8 @@
 */
 
 #ifndef	GINT_NO_SYSCALLS
+#include <internals/syscalls.h>
 
-void *__malloc(size_t size);
 void *malloc(size_t size)
 {
 	return __malloc(size);

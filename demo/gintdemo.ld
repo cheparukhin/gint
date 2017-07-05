@@ -13,36 +13,32 @@ ENTRY(_start)
 
 MEMORY
 {
+	/* System-managed mappings map this area into the add-in data */
 	rom	: o = 0x00300200, l = 512k
-	/* 0x0810000 is apparently mapped to 0x8801c0000. */
+	/* 0x0810000 is apparently mapped to 0x8801c0000 */
 	ram	: o = 0x08100000, l = 8k
+	/* RAM section from P1 area, no MMU involved */
 	realram	: o = 0x8800d000, l = 12k
 }
 
 SECTIONS
 {
-	/*
-		ROM sections : binary code and read-only data.
-	*/
+	/* ROM sections: binary code and read-only data */
 
 	.text : {
-		_btext = . ;
-
 		/* Initialization code. */
 		*(.pretext.entry)
 		*(.pretext)
 
-		_bctors = . ;
+		_bctors = ABSOLUTE(.);
 		*(.ctors)
-		_ectors = . ;
-		_bdtors = . ;
+		_ectors = ABSOLUTE(.);
+		_bdtors = ABSOLUTE(.);
 		*(.dtors)
-		_edtors = . ;
+		_edtors = ABSOLUTE(.);
 
 		*(.text)
 		*(.text.*)
-
-		_etext = . ;
 	} > rom
 
 	.rodata : {
@@ -55,26 +51,23 @@ SECTIONS
 		_romdata = ALIGN(4) ;
 	} > rom
 
-
-
-	/*
-		RAM sections : bss section and read/write data.
-		The BSS section is meant to be stripped from the ELF file (to
-		reduce the binary size) and initialized with zeros in the
-		initialization routine, therefore its location is undefined.
-	*/
+	/* RAM sections: bss section and read/write data
+	   The .bss section is to be stripped from the ELF file and wiped at
+	   startup, hence its location is undefined */
 
 	.bss : {
-		_bbss = . ;
+		_bbss = ABSOLUTE(.);
+		_sbss = ABSOLUTE(SIZEOF(.bss));
+
 		*(.bss)
-		_ebss = . ;
 	} > ram
 
 	.data : AT(_romdata) ALIGN(4) {
-		_bdata = . ;
+		_bdata = ABSOLUTE(.);
+		_sdata = ABSOLUTE(SIZEOF(.data));
+
 		*(.data)
 		*(.data.*)
-		_edata = . ;
 	} > ram
 
 	.cc : AT(_romdata + SIZEOF(.data)) ALIGN(4) {
@@ -82,33 +75,39 @@ SECTIONS
 		*(.jcr)
 
 		. = ALIGN(4);
-		_gint_data = _romdata + SIZEOF(.data) + SIZEOF(.cc) ;
 	} > ram
 
+	/* Real RAM sections: interrupt handlers and some *uninitialized* gint
+	   data */
 
-
-	/*
-		Real RAM : interrupt, exception and TLB miss handlers.
-	*/
+	_gint_data = _romdata + SIZEOF(.data) + SIZEOF(.cc) ;
 
 	.gint : AT(_gint_data) ALIGN(4) {
-		/* The vbr needs to be 0x100-aligned because of an ld issue. */
+		/* The vbr needs to be 0x100-aligned because of an ld issue */
 		. = ALIGN(0x100) ;
-		_gint_vbr = . ;
-		_bgint = . ;
 
-		/* Exception handler. */
+		_gint_vbr = . ;
+		_bgint = ABSOLUTE(.) ;
+
+		/* Exception handler */
 		. = _gint_vbr + 0x100 ;
 		*(.gint.exc)
 
-		/* TLB miss handler. */
+		/* TLB miss handler */
 		. = _gint_vbr + 0x400 ;
 		*(.gint.tlb)
 
-		/* Interrupt handler. */
+		/* Interrupt handler */
 		. = _gint_vbr + 0x600 ;
 		*(.gint.int)
 
-		_egint = . ;
+		. = ALIGN(4);
+		_egint = ABSOLUTE(.) ;
+	} > realram
+
+	.gint_bss : AT(_gint_data + SIZEOF(.gint)) ALIGN(4) {
+		_bgbss = ABSOLUTE(.) ;
+		*(.gint.bss)
+		_egbss = ABSOLUTE(.) ;
 	} > realram
 }

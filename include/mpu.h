@@ -12,8 +12,8 @@
 //	care of assuming unknown MPUs are SH4, which is the more reasonable
 //	option.
 //
-//	In a general way, it is advised to always use the following
-//	alternative (which gint does):
+//	It is advised to always use the following alternative (which gint
+//	does):
 //
 //		if(isSH3())
 //		{
@@ -54,7 +54,7 @@ extern const mpu_t MPU_CURRENT;
 // Quick SH3 test. It is safer to assume that an unknown model is SH4 because
 // SH3-based models are not produced anymore.
 #define isSH3() (MPU_CURRENT == mpu_sh7337 || MPU_CURRENT == mpu_sh7355)
-#define isSH4() !isSH3()
+#define isSH4() (!isSH3())
 
 
 
