@@ -8,14 +8,6 @@
 
 #include <display.h>
 
-struct qdiv
-{
-	uint32_t q, r;
-};
-
-/* qdiv10() -- quickly divide by 10 */
-struct qdiv qdiv10(uint32_t n);
-
 /* init_version() -- get a version string */
 const char *init_version(void);
 

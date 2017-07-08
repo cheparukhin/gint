@@ -2,24 +2,7 @@
 #include <string.h>
 #include <clock.h>
 #include <gint.h>
-
-/* qdiv10() -- quickly divide by 10 */
-struct qdiv qdiv10(uint32_t n)
-{
-	uint32_t magic10 = 0x1999999a;
-	struct qdiv result;
-
-	__asm__(
-		"dmuls.l %1, %2		\n\t"
-		"sts     mach, %0	"
-		: "=r"(result.q)
-		: "r"(n), "r"(magic10)
-		: "macl", "mach"
-	);
-
-	result.r = n - 10 * result.q;
-	return result;
-}
+#include <math.h>
 
 /* init_version() -- get a version string */
 const char *init_version(void)
@@ -32,8 +15,8 @@ const char *init_version(void)
 	memcpy(data, "gint #0.0-000", 14);
 
 	/* Quickly get the three digits of the build number */
-	struct qdiv x = qdiv10(s & 0xffff);
-	struct qdiv y = qdiv10(x.q);
+	qdiv_t x = qdiv_10(s & 0xffff);
+	qdiv_t y = qdiv_10(x.q);
 
 	data[5]   = (s & 0xff000000) >> 24;
 	data[6]  += ((s & 0x00f00000) >> 20);
@@ -66,7 +49,7 @@ void print_dec(int x, int y, int n, int digits)
 
 	while(--digits >= 0)
 	{
-		struct qdiv d = qdiv10(n);
+		qdiv_t d = qdiv_10(n);
 		str[digits] = '0' + d.r;
 		n = d.q;
 	}
