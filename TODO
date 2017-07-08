@@ -5,7 +5,6 @@ Bugs to fix:
 -  Ensure heap data is freed when a task-switch results in leaving the app
 
 Things to do before 1.0:
--  init:	Move qdiv10() somewhere else
 -  bopti:	Test partial transparency
 -  demo:	Try 284x124 at (-60, -28) (all disadvantages)
 -  project:	Check size of *all* library structures

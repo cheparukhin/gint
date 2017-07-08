@@ -13,7 +13,7 @@ include Makefile.cfg
 # Modules
 modules-gint	= bopti clock core display events gray init keyboard mmu rtc \
 		  screen tales timer
-modules-libc	= ctype setjmp stdio stdlib string time
+modules-libc	= ctype math setjmp stdio stdlib string time
 
 # Targets
 target-lib	= libgint.a
@@ -44,8 +44,8 @@ demo-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
 		  -Wall -Wextra
 
 # Specific objects
-obj-lib-spec	= build/display_font_system.bmp.o
 obj-std-spec	=
+obj-lib-spec	= build/display_font_system.bmp.o
 
 # Configuration files
 config		= gcc.cfg
@@ -101,7 +101,7 @@ hdr-dep = $(wildcard include/*.h include/*/*.h)
 #   $3  dependencies
 define rule-c-source
 build/$1_$2.o: src/$1/$2 $3 $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $$<\n')
+	$(if $(VERBOSE),,@ printf '\e[34;1m    gcc\e[0m $$<\n')
 	$(if $(VERBOSE),,@) $(cc) -c $$< -o $$@ $(lib-cflags)
 endef
 
@@ -110,7 +110,7 @@ endef
 #   $2  filename
 define rule-asm-source
 build/$1_$2.o: src/$1/$2 $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m as $$<\n')
+	$(if $(VERBOSE),,@ printf '\e[34;1m     as\e[0m $$<\n')
 	$(if $(VERBOSE),,@) $(as)  -c $$< -o $$@
 endef
 
@@ -135,7 +135,6 @@ version_symbol	= $(shell printf '0x%02x%01x%01x%04x' "'$(version_letter)'" \
 
 # Tell the linker to define the version symbol.
 demo-ldflags	+= -Wl,--defsym,_GINT_VERSION=$(version_symbol)
-debug-ldflags	+= -Wl,--defsym,_GINT_VERSION=$(version_symbol)
 
 
 
@@ -150,37 +149,37 @@ all-lib: $(config) $(target-std) $(target-lib)
 all: $(config) $(target-std) $(target-lib) $(target-g1a)
 
 build:
-	$(if $(VERBOSE),,@ printf '\e[35;1mdir \u00bb\e[0m mkdir $@\n')
+	$(if $(VERBOSE),,@ printf '\e[35;1m  mkdir\e[0m $@\n')
 	$(if $(VERBOSE),,@) mkdir -p $@
 
-version: $(obj-std) $(obj-lib)
+version: src include
 	@ echo '$(version_type)-$(version_major).$(version_minor)-$(version_build_n)' > $@
 
 
 $(obj-std) $(obj-lib) $(demo-obj): | build
 
 $(target-std): $(obj-std) version
-	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
+	$(if $(VERBOSE),,@ printf '\e[35;1m     ar\e[0m ar $@\n')
 	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-std)
-	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libc ('
+	@ printf '\n\e[32;1m\u00bb\e[0m Succesfully built libc ('
 	@ printf $$(stat -c %s $@)
 	@ printf ' bytes)\n\n'
 
 $(target-lib): $(config) $(target-std) $(obj-lib) version
-	$(if $(VERBOSE),,@ printf '\e[35;1mlib \u00bb\e[0m ar $@\n')
+	$(if $(VERBOSE),,@ printf '\e[35;1m     ar\e[0m $@\n')
 	$(if $(VERBOSE),,@) $(ar) rcs $@ $(obj-lib)
-	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built libgint ('
+	@ printf '\n\e[32;1m\u00bb\e[0m Succesfully built libgint ('
 	@ printf $$(stat -c %s $@)
 	@ printf ' bytes)\n\n'
 
 $(target-g1a): $(config) $(target-std) $(target-lib) $(demo-obj)
-	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m ld -o $(demo-elf)\n')
+	$(if $(VERBOSE),,@ printf '\e[35;1m     ld\e[0m $(demo-elf)\n')
 	$(if $(VERBOSE),,@) $(cc) -o $(demo-elf) $(demo-obj) $(demo-ldflags)
-	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m objcopy -o $(demo-bin)\n')
+	$(if $(VERBOSE),,@ printf '\e[35;1mobjcopy\e[0m $(demo-bin)\n')
 	$(if $(VERBOSE),,@) $(ob) -R .comment -R .bss -O binary $(demo-elf) $(demo-bin)
-	$(if $(VERBOSE),,@ printf '\e[35;1mexe \u00bb\e[0m g1a-wrapper -o $@\n')
+	$(if $(VERBOSE),,@ printf '\e[35;1m  fxg1a\e[0m $@\n')
 	$(if $(VERBOSE),,@) $(wr) $(demo-bin) -o $@ -i $(demo-icon)
-	@ printf '\e[32;1mmsg \u00bb\e[0m Succesfully built demo application ('
+	@ printf '\n\e[32;1m\u00bb\e[0m Succesfully built demo application ('
 	@ printf $$(stat -c %s $@)
 	@ printf ' bytes)\n\n'
 
@@ -200,26 +199,26 @@ $(foreach mod,$(modules), \
 # why for now.
 
 build/display_font_%.bmp.o: src/display/font_%.bmp
-	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
-	$(if $(VERBOSE),,@) fxconv $< -o $@ --font -n $(<:src/display/font_%.bmp=gint_font_%)
+	$(if $(VERBOSE),,@ printf '\e[30;1m fxconv\e[0m -font $<\n')
+	$(if $(VERBOSE),,@) fxconv -font $< -o $@ -font -n $(<:src/display/font_%.bmp=gint_font_%)
 
 # Demo application
 
 build/demo_%.c.o: demo/%.c $(hdr-dep) $(demo-dep) $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m cc $<\n')
+	$(if $(VERBOSE),,@ printf '\e[34;1m    gcc\e[0m $<\n')
 	$(if $(VERBOSE),,@) $(cc) -c $< -o $@ $(demo-cflags)
 
 build/demo_%.s.o: demo/%.s $(config)
-	$(if $(VERBOSE),,@ printf '\e[34;1msrc \u00bb\e[0m as $<\n')
+	$(if $(VERBOSE),,@ printf '\e[34;1m     as\e[0m $<\n')
 	$(if $(VERBOSE),,@) $(as) -c $< -o $@
 
 build/demo_font_%.bmp.o: demo/resources/font_%.bmp
-	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
-	$(if $(VERBOSE),,@) fxconv $< -o $@ --font -n $(patsubst demo/resources/%.bmp,res_%,$<)
+	$(if $(VERBOSE),,@ printf '\e[30;1m fxconv\e[0m -font $<\n')
+	$(if $(VERBOSE),,@) fxconv -font $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
 
 build/demo_%.bmp.o: demo/resources/%.bmp
-	$(if $(VERBOSE),,@ printf '\e[36;1mres \u00bb\e[0m fxconv $<\n')
-	$(if $(VERBOSE),,@) fxconv $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
+	$(if $(VERBOSE),,@ printf '\e[30;1m fxconv\e[0m -image $<\n')
+	$(if $(VERBOSE),,@) fxconv -image $< -o $@ -n $(patsubst demo/resources/%.bmp,res_%,$<)
 
 
 
@@ -237,15 +236,24 @@ mrproper: clean
 distclean: mrproper
 
 install: $(target-std) $(target-lib)
-	mkdir -p $(folder)
-	install -m 644 $^ $(folder)
-	install -m 644 -T demo/gintdemo.ld $(folder)/linker.ld
-	mkdir -p $(folder)/gint
-	install -m 644 include/*.h $(folder)/gint
+	$(if $(VERBOSE),,@ printf '\e[35;1m  mkdir\e[0m $(folder)\n')
+	$(if $(VERBOSE),,@) mkdir -p $(folder)
+
+	$(if $(VERBOSE),,@ printf '\e[33;1minstall\e[0m 644 $^\n')
+	$(if $(VERBOSE),,@) install -m 644 $^ $(folder)
+	$(if $(VERBOSE),,@ printf '\e[33;1minstall\e[0m 644 demo/gintdemo.ld\n')
+	$(if $(VERBOSE),,@) install -m 644 -T demo/gintdemo.ld $(folder)/linker.ld
+
+	$(if $(VERBOSE),,@ printf '\e[35;1m  mkdir\e[0m $(folder)/gint/modules\n')
+	$(if $(VERBOSE),,@) mkdir -p $(folder)/gint/modules
+
+	$(if $(VERBOSE),,@ printf '\e[33;1minstall\e[0m 644 include/**.h\n')
+	$(if $(VERBOSE),,@) install -m 644 include/*.h $(folder)/gint
+	$(if $(VERBOSE),,@) install -m 644 include/modules/*.h $(folder)/gint/modules
 ifdef config_ext
-	install -m 644 include/extended/*.h $(folder)/gint
+	$(if $(VERBOSE),,@) install -m 644 include/extended/*.h $(folder)/gint
 endif
-	@ printf '\e[32;1mmsg \u00bb\e[0m All installed!\n'
+	@ printf "\n\033[32;1m\u00bb\033[0m Successfully installed gint\n\n"
 
 install-demo: all
 	p7 send -f $(target-g1a)

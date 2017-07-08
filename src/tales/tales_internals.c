@@ -202,7 +202,7 @@ int update(uint32_t *operators, int height, int available, uint32_t *glyph)
 */
 void render(int x, int y, const char *str, void (*op)(OPERATE_ARGS))
 {
-	if(!font) return;
+	if(!font || font->magic != 0x01) return;
 
 	// Operator data, and number of available bits in the operators (which
 	// is the same for all operators, since they are treated equally).
