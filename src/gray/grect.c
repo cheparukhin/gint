@@ -20,7 +20,7 @@ void grect(int x1, int y1, int x2, int y2, color_t operator)
 	// Doing things in this order will be slower, but man, I can't stand
 	// writing that many lines of code for such a simple task. It will be
 	// terribly heavy in the binary file...
-	while(lvideo > lbase) for(int i = 0; i < 4; i++) switch(operator)
+	while(lvideo > lbase) for(int i = 3; i >= 0; i--) switch(operator)
 	{
 	case color_white:
 		*--lvideo &= ~masks[i];

@@ -8,10 +8,9 @@
 	Lets the user set the gray delays and see the results.
 */
 
-static void draw(int delay1, int delay2, int selected)
+static void draw(int delay1, int delay2, int selected, int gran)
 {
 	extern image_t res_opt_gray;
-	extern font_t res_font_modern;
 	uint32_t *vl = gray_lightVRAM();
 	uint32_t *vd = gray_darkVRAM();
 
@@ -25,15 +24,16 @@ static void draw(int delay1, int delay2, int selected)
 		vd[offset] = -(i < 32);
 	}
 
-	text_configure(&res_font_modern, color_black);
-	gtext(13, 17, "light");
-	gtext(13, 31, "dark");
+	print(2, 3, "light  %d", delay1);
+	print(2, 4, " dark  %d", delay2);
+	print(2, 6, "Mode: \x04%d", gran);
 
-	text_configure(NULL, color_black);
-	print(4, 4, "%d", delay1);
-	print(4, 6, "%d", delay2);
-
-	locate(3, selected ? 6 : 4, "\x02");
+	int lengths[2] = {
+		4 - (delay1 < 1000),
+		4 - (delay2 < 1000)
+	};
+	print(8, 3 + selected, "\x01");
+	print(9 + lengths[selected], 3 + selected, "\x02");
 
 	gimage(0, 56, &res_opt_gray);
 	gupdate();
@@ -44,6 +44,7 @@ void test_gray(void)
 	int delays[2]; // { light, dark }
 	int key, changed = 1;
 	int selected = 0;
+	int gran = 1;
 
 	gray_getDelays(delays, delays + 1);
 	gray_start();
@@ -53,11 +54,11 @@ void test_gray(void)
 		if(changed)
 		{
 			gray_setDelays(delays[0], delays[1]);
-			draw(delays[0], delays[1], selected);
+			draw(delays[0], delays[1], selected, gran);
 		}
 		changed = 0;
 
-		key = getkey_opt(getkey_repeat_arrow_keys, 25);
+		key = getkey_opt(getkey_default, 25);
 		if(key == KEY_EXIT) break;
 
 		changed = 1;
@@ -65,31 +66,33 @@ void test_gray(void)
 		switch(key)
 		{
 		case KEY_F1:
-			selected = !selected;
-			break;
-		case KEY_F2:
 			delays[0] = 912;
 			delays[1] = 1343;
 			break;
-		case KEY_F3:
+		case KEY_F2:
 			delays[0] = 993;
 			delays[1] = 1609;
 			break;
-		case KEY_F4:
+		case KEY_F3:
 			delays[0] = 860;
 			delays[1] = 1298;
 			break;
+		case KEY_F5:
+			if(gran >= 100) gran = 1;
+			else gran *= 10;
 		case KEY_UP:
-			delays[selected] += 10;
+			selected = 0;
 			break;
 		case KEY_DOWN:
-			if(delays[selected] >= 110) delays[selected] -= 10;
-			break;
-		case KEY_RIGHT:
-			delays[selected]++;
+			selected = 1;
 			break;
 		case KEY_LEFT:
-			if(delays[selected] >= 101) delays[selected]--;
+			if(delays[selected] - gran >= 100)
+				delays[selected] -= gran;
+			break;
+		case KEY_RIGHT:
+			if(delays[selected] + gran < 10000)
+				delays[selected] += gran;
 			break;
 		default:
 			changed = 0;

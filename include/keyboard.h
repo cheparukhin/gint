@@ -177,6 +177,9 @@ typedef enum
 	// Shorthand for the four previous properties.
 	getkey_repeat_all_keys		= 0xf0,
 
+	// Default combination of getkey().
+	getkey_default			= 0x1f,
+
 } getkey_option_t;
 
 /*

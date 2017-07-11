@@ -14,11 +14,14 @@ Things to do before 1.0:
 
 Things to do later:
 -  bopti:	Implement blending modes for monochrome bitmaps
+-  clock:	Only measure if requires as option, otherwise trust {FTune}
 -  clock:	Handle overclock (relaunch clocks when overclocking)
+-  clock:	Split code into several files, change clock_config_t type
 -  core:	Change interrupt priority using the gint API
 -  core:	Register more interrupts (and understand their parameters)
 -  core:	Remove redundant code linked to environment saves
 -  core:	Review interrupt system (again) - this one is too slow
+-  display:	Try to make this module lighter (lots of code in text section)
 -  errno:	Introduce errno and use it more or less everywhere
 -  esper:	Cleaner playback, synthesizing
 -  events:	Allow customization of keyboard event system (option to return
@@ -26,10 +29,12 @@ Things to do later:
 -  events:	Generate keyboard events on-the-fly by reading state arrays,
    |		allowing both a faster interrupt and avoiding supressing other
    |		events inside getkey() and multigetkey()
+-  gray:	Same as display, it's quite heavy
 -  serial:	Implement a driver
--  stdio:	More serious formatted printing functions
+-  stdio:	More serious formatted printing functions and headers
 -  string:	Use cmp/str to implement memchr() (assembler examples)
 -  string:	Do some tests for memcmp() and memcpy()
+-  string:	Lighter functions?
 -  usb:		Implement a driver
 
 Things to investigate:

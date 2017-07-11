@@ -1,5 +1,5 @@
-#ifndef	_MODULES_INTERRUPTS
-#define	_MODULES_INTERRUPTS
+#ifndef	_MODULES_INTERRUPTS_H
+#define	_MODULES_INTERRUPTS_H
 
 #include <modules/macros.h>
 #include <stdint.h>
@@ -685,4 +685,4 @@ typedef union
 // Here's what you'll need to use.
 extern mod_intc_t INTC;
 
-#endif	// _MODULE_INTERRUPTS
+#endif	// _MODULE_INTERRUPTS_H
