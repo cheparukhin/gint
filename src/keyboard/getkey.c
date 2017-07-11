@@ -12,17 +12,7 @@
 */
 int getkey(void)
 {
-	return getkey_opt(
-		getkey_shift_modifier		|
-		getkey_alpha_modifier		|
-		getkey_manage_backlight		|
-#ifndef GINT_NO_SYSCALLS
-		getkey_task_switch		|
-#endif
-		getkey_repeat_arrow_keys,
-
-		0
-	);
+	return getkey_opt(getkey_default, 0);
 }
 
 /*

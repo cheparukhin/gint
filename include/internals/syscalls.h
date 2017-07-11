@@ -1,6 +1,9 @@
 //---
+//
 //	gint core module: syscalls
+//
 //	Some of the functionality still requires interacting with the system.
+//
 //---
 
 #ifndef	_INTERNALS_SYSCALLS_H

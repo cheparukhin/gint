@@ -52,11 +52,11 @@ Options that affect the behavior of the library:
     use this option when using both the gray engine and --no-syscalls.
 
 Options that customize size limits:
-  $Cr--atexit-max$C0=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
+  $Cr--atexit-max=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
     Number of exit handlers that can be registered by atexit().
-  $Cr--timer-slots$C0=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
+  $Cr--timer-slots=$Cy<integer>$Cg [default:$Cp 16$Cg]$C0
     Number of virtual timers that may be registered at the same time.
-  $Cr--events-queue-size$C0=$Cy<integer>$Cg [default:$Cp 64$Cg]$C0
+  $Cr--events-queue-size=$Cy<integer>$Cg [default:$Cp 64$Cg]$C0
     Number of events simultaneously stored in the event queue.
 EOF
 

@@ -19,7 +19,7 @@
 	---------------------------------------------------------
 	zelda.bmp	 86 * 280	Mono		-
 	isometric.bmp	 37 * 27	Mono		Full
-			 		Mono		Greater
+	-		 -		Mono		Greater
 	--------------------------------------------------------- 
 */
 
@@ -60,6 +60,7 @@ static image_t *select(image_t *current)
 		res_swords,
 		res_zelda,
 		res_isometric;
+	extern image_t res_screen;
 
 	struct {
 		image_t *img;
@@ -71,6 +72,7 @@ static image_t *select(image_t *current)
 		{ &res_swords,		"Swords",	"Gray Alpha"	},
 		{ &res_zelda,		"Zelda",	"Mono"		},
 		{ &res_isometric,	"Isometric",	"Mono Alpha"	},
+		{ &res_screen,		"TLT",		"Mono"		},
 		{ NULL,			NULL,		NULL		}
 	};
 
@@ -81,6 +83,7 @@ static image_t *select(image_t *current)
 
 	while(images[items].img) items++;
 
+	keyboard_setRepeatRate(625, 125);
 	gray_start();
 
 	while(1)
@@ -141,8 +144,10 @@ void test_bopti(void)
 	int black_bg = 0;
 	int x = 0, y = 0;
 
+
 	while(1)
 	{
+		keyboard_setRepeatRate(25, 25);
 		if(img && (img->format & channel_light))
 		{
 			gray_start();
@@ -152,8 +157,7 @@ void test_bopti(void)
 			if(img) gimage(x, y, img);
 
 			grect(0, 55, 127, 63, color_white);
-			gimage(0, 56, &res_opt_bitmap);
-			gupdate();
+			gimage_part(0, 56, &res_opt_bitmap, 0, 0, 96, 8);
 		}
 		else if(img)
 		{
@@ -164,8 +168,7 @@ void test_bopti(void)
 			if(img) dimage(x, y, img);
 
 			drect(0, 55, 127, 63, color_white);
-			dimage(0, 56, &res_opt_bitmap);
-			dupdate();
+			dimage_part(0, 56, &res_opt_bitmap, 0, 0, 96, 8);
 		}
 		else
 		{
@@ -174,8 +177,34 @@ void test_bopti(void)
 			dclear();
 			locate(3, 3, "No image selected");
 
-			dimage(0, 56, &res_opt_bitmap);
+			dimage_part(0, 56, &res_opt_bitmap, 0, 0, 96, 8);
 			dupdate();
+		}
+
+		if(img)
+		{
+			int width, height;
+			getwh(img, &width, &height);
+
+			if(x < 0) print(1, 4, "\x01");
+			if(x + width > 128) print(21, 4, "\x02");
+
+			if(img->format & channel_light)
+			{
+				if(y < 0) gimage_part(61, 0, &res_opt_bitmap,
+					122, 0, 6, 8);
+				if(y + height > 64) gimage_part(61, 48,
+					&res_opt_bitmap, 116, 0, 6, 8);
+				gupdate();
+			}
+			else
+			{
+				if(y < 0) dimage_part(61, 0, &res_opt_bitmap,
+					122, 0, 6, 8);
+				if(y + height > 64) dimage_part(61, 48,
+					&res_opt_bitmap, 116, 0, 6, 8);
+				dupdate();
+			}
 		}
 
 		do
@@ -185,6 +214,7 @@ void test_bopti(void)
 			switch(getkey())
 			{
 			case KEY_EXIT:
+				keyboard_setRepeatRate(625, 125);
 				gray_stop();
 				return;
 
@@ -192,22 +222,14 @@ void test_bopti(void)
 				img = select(img);
 				getxy(img, &x, &y);
 				break;
-			case KEY_F5:
+			case KEY_F2:
 				black_bg = !black_bg;
 				break;
 
-			case KEY_UP:
-				y--;
-				break;
-			case KEY_DOWN:
-				y++;
-				break;
-			case KEY_LEFT:
-				x--;
-				break;
-			case KEY_RIGHT:
-				x++;
-				break;
+			case KEY_UP:	y++; break;
+			case KEY_DOWN:	y--; break;
+			case KEY_LEFT:	x++; break;
+			case KEY_RIGHT: x--; break;
 
 			default:
 				leave = 0;
@@ -216,6 +238,7 @@ void test_bopti(void)
 		while(!leave);
 	}
 
+	keyboard_setRepeatRate(625, 125);
 	gray_stop();
 	return;
 }

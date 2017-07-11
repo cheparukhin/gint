@@ -8,6 +8,7 @@
 #include <display.h>
 #include <internals/init.h>
 #include <internals/modules.h>
+#include <modules/interrupts.h>
 
 /* We need some more functionality to generate these */
 #ifdef	GINT_STARTUP_LOG
@@ -15,7 +16,6 @@
   #include <clock.h>
   #include <events.h>
   #include <internals/keyboard.h>
-  #include <modules/interrupts.h>
 
   #ifndef GINT_NO_SYSCALLS
     #include <internals/syscalls.h>
@@ -226,7 +226,7 @@ __attribute__((section(".pretext.entry"))) int start(void)
 	init();
 
 #ifdef GINT_STARTUP_LOG
-	/* Keep this visible for a second or so */
+	/* Keep this visible if a key is kept pressed */
 	keyboard_interrupt();
 	if(pollevent().type != event_none) getkey();
 #endif
