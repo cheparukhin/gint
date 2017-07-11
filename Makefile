@@ -47,17 +47,21 @@ demo-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
 obj-std-spec	=
 obj-lib-spec	= build/display_font_system.bmp.o
 
-# Configuration files
+# Configuration files, require them only if we're not cleaning
 config		= gcc.cfg
+ifeq "$(filter clean mrproper distclean,$(MAKECMDGOALS))" ""
 ifeq ($(wildcard $(config)),)
 $(error "Configuration files are missing. Did you ./configure ?")
 endif
+endif
 
-# Target folder
+# Target folder, require it only if we want to install
+ifneq "$(filter install,$(MAKECMDGOALS))" ""
 folder		:= $(shell fxsdk --folder)
 ifndef folder
 $(error "Could not get the fxSDK storage folder. Did you install fxSDK \
 properly?")
+endif
 endif
 
 
