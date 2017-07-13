@@ -22,6 +22,7 @@ target-g1a	= gintdemo.g1a
 
 # Tools
 cc		= sh3eb-elf-gcc
+ld		= sh3eb-elf-ld
 as		= sh3eb-elf-as
 ar		= sh3eb-elf-ar
 ob		= sh3eb-elf-objcopy
@@ -45,7 +46,7 @@ demo-cflags	= -m3 -mb -nostdlib -I include -ffreestanding -std=c11 -Os \
 
 # Specific objects
 obj-std-spec	=
-obj-lib-spec	= build/display_font_system.bmp.o
+obj-lib-spec	= build/display_font_system.bmp.o build/version.o
 
 # Configuration files, require them only if we're not cleaning
 config		= gcc.cfg
@@ -137,9 +138,6 @@ version_letter	= $(shell echo -n $(version_type) | sed -r 's/^(.).*/\1/')
 version_symbol	= $(shell printf '0x%02x%01x%01x%04x' "'$(version_letter)'" \
 		$(version_major) $(version_minor) $(version_build))
 
-# Tell the linker to define the version symbol.
-demo-ldflags	+= -Wl,--defsym,_GINT_VERSION=$(version_symbol)
-
 
 
 #---
@@ -198,9 +196,14 @@ $(foreach mod,$(modules), \
 
 # Specific rules
 
-# Optimizing this one makes the interrupt handler raise illegal slot exception
-# on rte; lds.l @r15+, mach. This is totally weird but I haven't understood
-# why for now.
+# Define the version symbol in a specific object file. ld generates a .stack
+# section on sh3eb-elf, which it didn't on x86_64. I don't understand the
+# details of why, so I just fall back to removing it afterwards.
+build/version.o:
+	@ echo "_GINT_VERSION = $(version_symbol);" > $@.txt
+	$(if $(VERBOSE),,@ printf '\e[35;1m     ld\e[0m $@\n')
+	$(if $(VERBOSE),,@) $(ld) -r -R $@.txt -o $@
+	$(if $(VERBOSE),,@) $(ob) -R .stack $@ $@
 
 build/display_font_%.bmp.o: src/display/font_%.bmp
 	$(if $(VERBOSE),,@ printf '\e[30;1m fxconv\e[0m -font $<\n')
