@@ -5,19 +5,12 @@ build/**
 *.sublime-project
 *.sublime-workspace
 
-# Object files.
-*.o
-
-# Some notes.
+# Lots of unordered project notes
 notes/**
 
 # Output files
-libc.a
-libgint.a
-gintdemo.g1a
-gintdbg.g1a
+bin/**
 
 # Configuration files
-gcc.cfg
-Makefile.cfg
+config/**
 
