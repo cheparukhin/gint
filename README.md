@@ -9,6 +9,8 @@ target) and the [fxSDK](http://git.planet-casio.com/lephe/fxsdk).
 gint is free software: you may use it for any purpose, share it, modify it and
 share your changes. No credit of any kind is required, though appreciated.
 
+**TODO: Update this file for everything related to project organization**
+
 
 Programming interface
 ---------------------
