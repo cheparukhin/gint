@@ -5,11 +5,10 @@
 **	blocks depending on its configuration.
 */
 
-
-	.global	_inth_entry_7305
+	.global _inth_entry_7305
 
 #ifdef FX9860G
-	.global	_inth_entry_7705
+	.global _inth_entry_7705
 #endif
 
 	.section .gint.blocks, "ax"
@@ -34,20 +33,13 @@
      references unless their relative order is fully known. This happens with
      the timer driver, and it works swimmingly; just be careful. */
 
-/* SH7305-TYPE INTERRUPT HANDLER ENTRY - 20 BYTES */
+/* SH7305-TYPE DEBUG INTERRUPT HANDLER - 26 BYTES */
 
+#if 0
 _inth_entry_7305:
-	/* Get the event code from the INTEVT register */
 	mov.l	1f, r0
-	/* TODO: mov.l @r0, r0 */
 	mov.l	@r0, r4
 
-	/* Interrupt codes start at 0x400 */
-	mov	#4, r1
-	shll8	r1
-	sub	r1, r0
-
-	/* Jump to a C routine (TODO: Remove this) */
 	sts.l	pr, @-r15
 	mov.l	2f, r0
 	jsr	@r0
@@ -56,12 +48,30 @@ _inth_entry_7305:
 	rte
 	nop
 
-	/* Add the distance between nop and the first entry, and jump
-	add	#16, r0
-	braf	r0
-	nop */
+	.zero 6
 
 2:	.long	_debug
+1:	.long	0xff000028
+#endif
+
+/* SH7305-TYPE INTERRUPT HANDLER ENTRY - 20 BYTES */
+
+_inth_entry_7305:
+	/* Get the event code from the INTEVT register */
+	mov.l	1f, r0
+	mov.l	@r0, r0
+
+	/* Interrupt codes start at 0x400 */
+	mov	#4, r1
+	shll8	r1
+	sub	r1, r0
+
+	/* Add the distance to the first entry and jump */
+	add	#16, r0
+	braf	r0
+	nop
+
+	.zero	12
 1:	.long	0xff000028
 
 #ifdef FX9860G
@@ -90,11 +100,10 @@ _inth_entry_7705:
 1:	.long	0xa4000000	/* INTEVT2 register */
 2:	.long	_inth_remap
 
-
 	.section .gint.data
 	.align 4
 
-/* EVENT CODE TRANSLATION TABLE - 72 BYTES */
+/* EVENT CODE TRANSLATION TABLE - 96 BYTES */
 
 _inth_remap:
 	.byte	0x00, 0x01, 0x02, 0xfe, 0x34, 0x35, 0x36, 0xff
@@ -106,5 +115,8 @@ _inth_remap:
 	.byte	0xff, 0x31, 0x32, 0x33, 0xff, 0xff, 0xff, 0xff
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 	.byte	0x2d, 0x2d, 0xff, 0xff, 0x2d, 0x2d, 0xff, 0xff
+	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+	.byte	0x2f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 
 #endif

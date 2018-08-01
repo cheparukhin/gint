@@ -14,7 +14,7 @@ extern char
 	sgdata, sgbss, sdata, sbss,
 	btors, mtors, etors;
 
-/* bootlog_loaded() - Section loading stage */
+/* bootlog_loaded() - section loading stage */
 void bootlog_loaded(void)
 {
 	/* Version string - the string constant resides in ROM */
@@ -61,6 +61,7 @@ void bootlog_loaded(void)
 	print_dec(11, 3, gint_size, 4);
 	print_dec(17, 3, &mtors - &btors, 2);
 	print_dec(20, 3, &etors - &mtors, 2);
+
 	Bdisp_PutDisp_DD();
 }
 
@@ -74,17 +75,17 @@ void bootlog_mapped(int rom, int ram)
 	print(1, 4, "MMU ROM:   k RAM:   k");
 	(rom < 0) ? print(9,  4, "???") : print_dec(9,  4, rom, 3);
 	(ram < 0) ? print(18, 4, "???") : print_dec(18, 4, ram, 3);
+
 	Bdisp_PutDisp_DD();
 }
 
-/* bootlog_kernel() - Gint loading stage */
+/* bootlog_kernel() - gint loading stage */
 void bootlog_kernel(void)
 {
-	if(isSH3())
-	{
-		#ifdef FX9860G
-		extern sh7705_intc_t INTC3;
+	print(15, 1, " Kernel");
 
+	mpuSwitch({
+		/* SH3-based */
 		print(1, 5, "ABCD");
 		print_hex( 6, 5, INTC3._.IPRA->word, 4);
 		print_hex(10, 5, INTC3._.IPRB->word, 4);
@@ -95,12 +96,8 @@ void bootlog_kernel(void)
 		print_hex(10, 6, INTC3._.IPRF->word, 4);
 		print_hex(14, 6, INTC3._.IPRG->word, 4);
 		print_hex(18, 6, INTC3._.IPRH->word, 4);
-		#endif
-	}
-	else
-	{
-		extern sh7305_intc_t INTC4;
-
+	},{
+		/* SH4-based */
 		print(1, 5, "ACFG");
 		print_hex( 6, 5, INTC4._->IPRA.word, 4);
 		print_hex(10, 5, INTC4._->IPRC.word, 4);
@@ -111,7 +108,7 @@ void bootlog_kernel(void)
 		print_hex(10, 6, INTC4._->IPRJ.word, 4);
 		print_hex(14, 6, INTC4._->IPRK.word, 4);
 		print_hex(18, 6, INTC4._->IPRL.word, 4);
-	}
+	});
 
 	Bdisp_PutDisp_DD();
 }

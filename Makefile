@@ -16,12 +16,12 @@ cfg	:= config/Makefile.cfg
 cfgdep	:= $(if $(shell [ -f $(cfg) ] || echo n),CFGDEP,$(cfg))
 
 cf-fx	:= -m3 -mb -ffreestanding -nostdlib -Wall -Wextra -std=c11 -Os \
-	   -I include $(cfg_macros)
+	   -fstrict-volatile-bitfields -I include $(cfg_macros)
 cf-cg	:= -m4 -mb -ffreestanding -nostdlib -Wall -Wextra -std=c11 -Os \
-	   -I include $(cfg_macros)
+	   -fstrict-volatile-bitfields -I include $(cfg_macros)
 
-# On fx9860g, use the sh3eb-elf toolchain; on fxcg50, prefer sh4eb-elf
-toolchain := $(if $(filter $(cfg_target),fx),sh3eb-elf,sh4eb-elf)
+# On fx9860g, use the sh3eb-elf toolchain; on fxcg50, prefer sh4eb-nofpu-elf
+toolchain := $(if $(filter $(cfg_target),fx),sh3eb-elf,sh4eb-nofpu-elf)
 
 # Compiler flags, assembler flags, dependency generation, archiving
 cflags	:= $(cf-$(cfg_target))

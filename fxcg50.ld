@@ -118,15 +118,15 @@ SECTIONS
 
 	/*
 	**	gint-related sections
-	**	88160000:4k  VBR space
-	**	88161000:4k  .gint.data and .gint.bss
+	**	8c160000:4k  VBR space
+	**	8c161000:4k  .gint.data and .gint.bss
 	*/
 
 	/* VBR address: let's just start at the beginning of the RAM area.
 	   There's an unused 0x100-byte gap at the start of the VBR space.
 	   The VBR space is already a large block (> 2 kiB), so I'm cutting off
 	   the gap to spare some memory */
-	_gint_vbr = 0x8815ff00;
+	_gint_vbr = ORIGIN(vbr) - 0x100;
 
 	. = ORIGIN(rram);
 
@@ -161,10 +161,17 @@ SECTIONS
 	*/
 
 	/* Unwanted sections going to meet Dave Null:
+	   - SH3-only data sections
+	   - Debug sections, often come out of libgcc
 	   - Java classes registration (why are there even here?)
 	   - Asynchronous unwind tables: no C++ exception handling for now ^^
 	   - Comments or anything the compiler might put in its assembler */
 	/DISCARD/ : {
+		*(.gint.bss.sh3)
+		*(.gint.data.sh3)
+
+		*(.debug_info .debug_abbrev .debug_loc .debug_aranges
+		  .debug_ranges .debug_line .debug_str)
 		*(.jcr)
 		*(.eh_frame_hdr)
 		*(.eh_frame)

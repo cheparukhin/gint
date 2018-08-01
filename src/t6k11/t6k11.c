@@ -140,16 +140,15 @@ void t6k11_backlight(int setting)
 	/* This setting is mapped to an I/O port:
 	   - On SH3, bit 7 of port G
 	   - On SH4, bit 4 of port N */
-	if(isSH3())
-	{
+	mpuSwitch({
+		/* SH3-based */
 		port = (void *)0xa400012c;
 		mask = 0x80;
-	}
-	else
-	{
+	},{
+		/* SH4-based */
 		port = (void *)0xa4050138;
 		mask = 0x10;
-	}
+	});
 
 	if(!setting) *port &= ~mask;
 	if(setting > 0) *port |= mask;
@@ -198,6 +197,7 @@ static void ctx_restore(void *buf)
 
 gint_driver_t drv_t6k11 = {
 	.name		= "Toshiba T6K11",
+	.init		= NULL,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,

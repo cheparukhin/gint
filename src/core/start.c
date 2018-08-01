@@ -118,7 +118,6 @@ int start(int isappli, int optnum)
 	mpu_init();
 	#endif
 
-
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
 	regcpy(lgdata, sgdata, rgdata);
@@ -129,23 +128,25 @@ int start(int isappli, int optnum)
 	bootlog_loaded();
 	#endif
 
-	/* TODO: Do the TLB investigation on SH3 (UTLB things are SH4 only) */
-
 	/* Traverse all ROM pages */
 	explore(brom, srom);
+
 	/* Count how much memory got mapped from this process */
 	uint32_t rom, ram;
-	utlb_mapped_memory(&rom, &ram);
+	mpuSwitch(
+		tlb_mapped_memory(&rom, &ram),	/* SH3-based */
+		utlb_mapped_memory(&rom, &ram)	/* SH4-based */
+	);
+
+	#ifdef GINT_BOOT_LOG
+	bootlog_mapped(rom, ram);
+	#endif
 
 	//---
 
-	#ifdef GINT_BOOT_LOG
-	isSH3() ? bootlog_mapped(-1, -1)
-		: bootlog_mapped(rom, ram);
-	#endif
-
 	/* Cancel add-in execution if not all pages are mapped
-	   TODO: Resort to better graphical display */
+	   TODO: Resort to better graphical display, but still fxlib since
+	   add-in is not mapped yet */
 	if(rom < (uint32_t)&srom)
 	{
 		Bdisp_AllClr_VRAM();
@@ -176,7 +177,9 @@ int start(int isappli, int optnum)
 	/* Initialize all drivers by saving the system settings */
 	for(drv = &bdrv; drv < &edrv; drv++)
 	{
+		if(isSH3() && drv->driver_sh3) drv->driver_sh3();
 		drv->ctx_save(drv->sys_ctx);
+		if(drv->init) drv->init();
 	}
 
 	/* With gint fully initialized, we are ready to start the hosted user
@@ -195,15 +198,10 @@ int start(int isappli, int optnum)
 	/* Before leaving the application, we need to clean up our mess. We
 	   have changed many OS settings while accessing the peripheral
 	   modules. The OS is bound to be confused (and crash) if we don't
-	   resoture them. */
+	   restore them */
 
-	/* Restore all driver settings */
-	for(drv = &drv; drv < &edrv; drv++)
-	{
-		drv->ctx_restore(drv->sys_ctx);
-	}
-
-	/* Finally, unload gint and give back control to the system */
+	/* Unload gint and give back control to the system. Driver settings
+	   will be restored while interrupts are disabled */
 	gint_unload();
 
 	/* TODO: Invoke main menu instead of returning? */

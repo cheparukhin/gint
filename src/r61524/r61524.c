@@ -66,8 +66,8 @@ INLINE static void select(uint16_t reg)
 
 	/* Set RS back. We don't do this in read()/write() because the display
 	   driver is optimized for consecutive GRAM access. LCD-transfers will
-	   be faster when executing select() followed by many write().
-	   (Most applications should use DMA though.) */
+	   be faster when executing select() followed by several calls to
+	   write(). (Although most applications should use the DMA instead.) */
 	*PRDR |= 0x10;
 	synco();
 }
@@ -126,7 +126,7 @@ void r61524_test(void)
 	{
 		print(1, 2, "Aborting.");
 		Bdisp_PutDisp_DD();
-		delay(20);
+		delay(40);
 		return;
 	}
 
@@ -194,7 +194,7 @@ void r61524_test(void)
 	print_hex(12, 6, COL, 1);
 
 	Bdisp_PutDisp_DD();
-	delay(10);
+	delay(50);
 
 	//---
 
@@ -211,7 +211,12 @@ void r61524_test(void)
 	print_hex(14, 3, VEA, 3);
 
 	Bdisp_PutDisp_DD();
-	delay(20);
+	delay(50);
+
+	//
+
+	Bdisp_AllClr_VRAM();
+	Bdisp_PutDisp_DD();
 
 	//---
 
@@ -227,57 +232,24 @@ void r61524_test(void)
 
 	//---
 
-//	Bdisp_AllClr_VRAM();
-//	Bdisp_PutDisp_DD();
-
 	select(ram_address_horizontal);
 	write(HEA);
 	select(ram_address_vertical);
 	write(VSA);
 	select(write_data);
 
-	uint16_t color = 0xf3e4;
-	for(int v = 0; v < 396; v++)
-	for(int h = 0; h < 224; h++)
+	uint16_t color;
+	for(int v = 0; v < 224; v++)
+	for(int h = 0; h < 396; h++)
 	{
-		color = (v << 7) ^ h ^ 0x3754;
+//		int offset = 396 * v + h;
+//		uint8_t *src = gimp_image.pixel_data + 2 * offset;
+		color = 0x3eb7; // (src[1] << 8) | src[0];
+
 		write(color);
 	}
 
-	delay(60);
-
-	//---
-
-	/* Shift by 9, not 8, because of horizontal/vertical range inversion */
-	select(ram_address_horizontal);
-	AD = read();
-	select(ram_address_vertical);
-	AD |= read() << 9;
-
-	select(horizontal_ram_start);
-	HSA = read();
-	select(horizontal_ram_end);
-	HEA = read();
-
-	select(vertical_ram_start);
-	VSA = read();
-	select(vertical_ram_end);
-	VEA = read();
-
-	Bdisp_AllClr_VRAM();
-
-	print(1, 1, "Address=?????");
-	print_hex(9, 1, AD, 5);
-
-	print(1, 2, "HSA=???  HEA=???");
-	print_hex(5,  2, HSA, 3);
-	print_hex(14, 2, HEA, 3);
-	print(1, 3, "VSA=???  VEA=???");
-	print_hex(5,  3, VSA, 3);
-	print_hex(14, 3, VEA, 3);
-
-	Bdisp_PutDisp_DD();
-	delay(10);
+	delay(200);
 }
 
 //---
@@ -330,6 +302,7 @@ static void ctx_restore(void *buf)
 
 gint_driver_t drv_r61524 = {
 	.name		= "Renesas R61524",
+	.init		= NULL,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,

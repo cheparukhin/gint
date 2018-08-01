@@ -56,4 +56,68 @@ void gint_unload(void);
    getkey() call. */
 void gint_pause(void);
 
+//---
+//	Public functions
+//---
+
+/* gint_intlevel() - configure the level of interrupts
+
+   This function changes the interrupt level of the requested interrupt. Make
+   sure you are aware of interrupt assignments to avoid breaking other code.
+   This function is mainly used by drivers to enable the interrupts that they
+   support.
+
+   The first parameter 'intid' identifies an interrupt by its position in the
+   sequence:
+
+     IPRA & 0xf000 ; IPRA & 0x0f00 .. IPRA & 0x000f ; IPRB & 0xf000 ..
+
+   For instance ID 7 refers to the low nibble of IPRB. These IDs and the range
+   for which there are valid is heavily platform-dependent and any call to this
+   function should be wrapped inside an MPU type check. This function will
+   crash if the provided interrupt ID is invalid.
+
+   The interrupt level should be in the range 0 (disabled) .. 15 (highest
+   priority).
+
+   @intid  Interrupt ID of the targeted interrupt
+   @level  Requested interrupt level
+   Returns the interrupt level that was assigned before the call. */
+int gint_intlevel(int intid, int level);
+
+/* gint_inthandler() - configure interrupt handlers
+
+   This function installs (copies) interrupt handlers in the VBR space of the
+   application. Each handler is a 32-byte block aligned on a 32-byte boundary.
+   When an interrupt request is accepted, the hardware jumps to a specific
+   interrupt handler at an address that depends on the interrupt source.
+
+   Each interrupt handler should only refer to data within its own block
+   because the relative displacement between blocks is MPU-dependent. There are
+   a few exceptions to this, such as timer handlers, which are contiguous on
+   all currently-used platforms. Be careful.
+
+   This function allows anyone to replace any interrupt handler so make sure
+   you're not interfering with usual interrupt assignments.
+
+   The first parameter 'event_code' represents the event_code associated with
+   the interrupt. These codes are normally platform-dependent, but gint always
+   uses the SH7305 codes: SH3 platforms have a translation table. See the
+   documentation for a list of event codes and their associated interrupts.
+
+   The handler function must be an interrupt handler: it should not raise
+   exceptions, must end with 'rte', uses the kernel register bank... and it
+   must fit within 32 bytes. If it's not written in assembler, then you're
+   likely doing something wrong.
+
+   It is common for interrupt handlers to have a few bytes of data, such as the
+   address of a callback function. gint often stores this data in the last
+   bytes of the block. This function returns the VBR address of the block to
+   allow the caller to edit the parameters.
+
+   @event_code  Identifier of the interrupt block
+   @handler     Address of handler function
+   Returns the VBR address where the handlers was installed. */
+void *gint_inthandler(int event_code, const void *handler);
+
 #endif /* GINT_GINT */
