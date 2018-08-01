@@ -173,11 +173,14 @@ SECTIONS
 	*/
 
 	/* Unwanted sections going to meet Dave Null:
+	   - Debug sections, often come out of libgcc
 	   - Java classes registration (why are there even here?)
 	   - Asynchronous unwind tables: no C++ exception handling for now ^^
 	   - Comments or anything the compiler might put in its assembler
 	   - A stack section sometimes generated for build/version.o */
 	/DISCARD/ : {
+		*(.debug_info .debug_abbrev .debug_loc .debug_aranges
+		  .debug_ranges .debug_line .debug_str)
 		*(.jcr)
 		*(.eh_frame_hdr)
 		*(.eh_frame)

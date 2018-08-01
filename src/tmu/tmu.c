@@ -1,0 +1,429 @@
+//---
+//	gint:tmu - Timer operation
+//---
+
+#include <gint/timer.h>
+#include <gint/drivers.h>
+#include <gint/gint.h>
+
+#include <core/intc.h>
+
+#include <defs/attributes.h>
+#include <defs/types.h>
+
+//---
+//	Timer structures
+//---
+
+/* tmu_t - a single timer from a standard timer unit */
+typedef volatile struct
+{
+	uint32_t TCOR;			/* Constant register */
+	uint32_t TCNT;			/* Counter register, counts down */
+
+	word_union(TCR,
+		uint16_t	:7;
+		uint16_t UNF	:1;	/* Underflow flag */
+		uint16_t	:2;
+		uint16_t UNIE	:1;	/* Underflow interrupt enable */
+		uint16_t CKEG	:2;	/* Input clock edge */
+		uint16_t TPSC	:3;	/* Timer prescaler (input clock) */
+	);
+
+} PACKED(4) tmu_t;
+
+/* tmu_extra_t - extra timers on sh7337, sh7355 and sh7305 */
+typedef volatile struct
+{
+	uint8_t TSTR;			/* Only bit 0 is used */
+	pad(3);
+
+	uint32_t TCOR;			/* Constant register */
+	uint32_t TCNT;			/* Counter register */
+
+	byte_union(TCR,
+		uint8_t		:6;
+		uint8_t UNF	:1;	/* Underflow flag */
+		uint8_t UNIE	:1;	/* Underflow interrupt enable */
+	);
+
+} PACKED(4) tmu_extra_t;
+
+/* inth_data_t - data storage inside interrupt handlers */
+typedef struct
+{
+	int (*callback)(void *arg);	/* User-provided callback function */
+	void *arg;			/* Argument for [callback] */
+	volatile void *structure;	/* Either TCR or timer address */
+
+} PACKED(4) inth_data_t;
+
+/* timer_t - all data required to run a single timer */
+typedef struct
+{
+	void *tmu;			/* Address of timer structure */
+	inth_data_t *data;		/* Interrupt handler data */
+	uint16_t event;			/* Interrupt event code */
+} timer_t;
+
+
+//---
+//	Driver storage
+//---
+
+/* This is the description of the structure on SH4. SH3-based fx9860g models,
+   which are already very rare, will adapt the values in init functions */
+GDATA static timer_t timers[9] = {
+	{ .tmu = (void *)0xa4490008, .event = 0x400 },
+	{ .tmu = (void *)0xa4490014, .event = 0x420 },
+	{ .tmu = (void *)0xa4490020, .event = 0x440 },
+	{ .tmu = (void *)0xa44d0030, .event = 0x9e0 },
+	{ .tmu = (void *)0xa44d0050, .event = 0xc20 },
+	{ .tmu = (void *)0xa44d0070, .event = 0xc40 },
+	{ .tmu = (void *)0xa44d0090, .event = 0x900 },
+	{ .tmu = (void *)0xa44d00b0, .event = 0xd00 },
+	{ .tmu = (void *)0xa44d00d0, .event = 0xfa0 },
+};
+
+/* TSTR register for standard timers */
+GDATA static volatile uint8_t *TSTR = (void *)0xa4490004;
+
+//---
+//	Timer API
+//---
+
+/* timer_setup() - set up a timer */
+int timer_setup(int tid, uint32_t delay, timer_input_t clock,
+	int (*callback)(void *arg), void *arg)
+{
+	/* We need to distinguish normal and extra timers */
+	if(tid < 3)
+	{
+		/* Refuse to setup timers that are already in use */
+		tmu_t *t = timers[tid].tmu;
+		if(t->TCR.UNIE) return -1;
+
+		/* Configure the registers of the target timer */
+		t->TCOR		= delay;
+		t->TCNT		= delay;
+		t->TCR.TPSC	= clock;
+
+		/* Clear the interrupt flag */
+		do t->TCR.UNF = 0;
+		while(t->TCR.UNF);
+
+		t->TCR.UNIE	= 1;	/* Enable interrupt on underflow */
+		t->TCR.CKEG	= 0;	/* Count on rising edge (SH7705) */
+	}
+
+	/* Extra timers have a simpler structure */
+	else
+	{
+		tmu_extra_t *t = timers[tid].tmu;
+		if(t->TCR.UNIE) return -1;
+
+		/* There is no clock input and no clock edge settings */
+		t->TCOR = delay;
+		t->TCNT = delay;
+
+		/* Clear the interrupt flag */
+		do t->TCR.UNF = 0;
+		while(t->TCR.UNF);
+
+		t->TCR.UNIE = 1;
+	}
+
+	/* Register the callback and its argument */
+	timers[tid].data->callback = callback;
+	timers[tid].data->arg = arg;
+
+	/* Return the timer id, since configuration was successful */
+	return tid;
+}
+
+/* timer_delay() - compute a delay constant from a duration in seconds */
+uint32_t timer_delay(int tid, int delay_us)
+{
+	/* TODO: Proper timer_delay() */
+#ifdef FX9860G
+	uint64_t freq = 14750000 >> 2;	/* 14.75 MHz / 4 */
+#else
+	uint64_t freq = 29020000 >> 2;	/* 29.49 MHz / 4 */
+#endif
+	if(tid >= 3) freq = 32768;	/* 32768 Hz */
+
+	uint64_t product = freq * (uint64_t)delay_us;
+	return product / 1000000;
+}
+
+/* timer_control() - start or stop a timer
+   @timer  Timer ID to configure
+   @state  0 to start the timer, 1 to stop it (nothing else!) */
+static void timer_control(int tid, int state)
+{
+	if(tid < 3)
+	{
+		/* For standard timers, use the MPU's TSTR register */
+		*TSTR = (*TSTR | (1 << tid)) ^ (state << tid);
+	}
+	else
+	{
+		/* Extra timers all have their own TSTR register */
+		tmu_extra_t *t = timers[tid].tmu;
+		t->TSTR = (t->TSTR | 1) ^ state;
+	}
+}
+
+/* timer_start() - start a configured timer */
+void timer_start(int tid)
+{
+	timer_control(tid, 0);
+}
+
+/* timer_reload() - change a timer's constant register for next interrupts */
+void timer_reload(int tid, uint32_t delay, timer_input_t clock)
+{
+	if(tid < 3) ((tmu_t *)timers[tid].tmu)->TCOR = delay;
+	else  ((tmu_extra_t *)timers[tid].tmu)->TCOR = delay;
+}
+
+/* timer_pause() - stop a running timer */
+void timer_pause(int tid)
+{
+	timer_control(tid, 1);
+}
+
+/* timer_free() - free a timer */
+void timer_free(int tid)
+{
+	/* Stop the timer and disable UNIE to indicate that it's free */
+	timer_pause(tid);
+
+	if(tid < 3)
+	{
+		tmu_t *t = timers[tid].tmu;
+		t->TCR.UNIE = 0;
+	}
+	else
+	{
+		tmu_extra_t *t = timers[tid].tmu;
+		t->TCR.UNIE = 0;
+
+		/* Also clear TCOR and TCNT to avoid spurious interrupts */
+		t->TCOR = 0xffffffff;
+		t->TCNT = 0xffffffff;
+
+		do t->TCR.UNF = 0;
+		while(t->TCR.UNF);
+	}
+}
+
+//---
+//	Driver initialization
+//---
+
+/* Interrupt handlers provided by tmu/inth.s for standard timers */
+extern void inth_tmu_0(void);
+extern void inth_tmu_1(void);
+extern void inth_tmu_2(void);
+extern void inth_tmu_storage(void);
+
+/* Interrupt handlers provided by tmu/inth.s for extra timers */
+extern void inth_tmu_extra1(void);
+extern void inth_tmu_extra2(void);
+extern void inth_tmu_extra_help(void);
+extern void inth_tmu_extra_others(void);
+
+static void init(void)
+{
+	/* Install the standard's TMU interrupt handlers. By chance TMU gates
+	   use the same event codes on SH7705 and SH7305 */
+	UNUSED void *h0, *h1, *h2, *hs;
+	h0 = gint_inthandler(0x400, inth_tmu_0);
+	h1 = gint_inthandler(0x420, inth_tmu_1);
+	h2 = gint_inthandler(0x440, inth_tmu_2);
+	hs = gint_inthandler(0x460, inth_tmu_storage);
+
+	/* User information in interrupt handlers */
+	timers[0].data = h2 + 20;
+	timers[1].data = hs + 8;
+	timers[2].data = hs + 20;
+
+	/* SH3: Override the address of TSTR in the interrupt handler helper */
+	if(isSH3()) *(volatile uint8_t **)(hs + 4) = TSTR;
+
+	/* Stop all timers */
+	*TSTR = 0;
+
+	/* This driver uses the UNIE (UNderflow Interrupt Enable) bit of the
+	   TCR register to indicate which timers are being used; reset them */
+	for(int i = 0; i < 3; i++)
+	{
+		tmu_t *t = timers[i].tmu;
+		t->TCR.UNIE = 0;
+
+		do t->TCR.UNF = 0;
+		while(t->TCR.UNF);
+
+		/* Standard timers: TCR is provided to the interrupt handler */
+		timers[i].data->structure = &t->TCR;
+	}
+
+	/* Clear the extra timers */
+	for(int i = 3; i < timer_count(); i++)
+	{
+		tmu_extra_t *t = timers[i].tmu;
+
+		/* This is *extremely important*: extra timers will generate
+		   interrupts as long as TCNT = 0 *regardless of TSTR*! */
+		t->TCOR = 0xffffffff;
+		t->TCNT = 0xffffffff;
+
+		t->TCR.UNIE = 0;
+		t->TSTR = 0;
+
+		do t->TCR.UNF = 0;
+		while(t->TCR.UNF);
+	}
+
+	/* Install the extra timers. We need three extra timers for the
+	   interrupt handlers to work, so install 3 on SH3, even if only one
+	   actually exists */
+	int limit = isSH3() ? 6 : 9;
+
+	for(int i = 3; i < limit; i++)
+	{
+		void *handler = (i == 5)
+			? inth_tmu_extra2
+			: inth_tmu_extra_others;
+		void *h = gint_inthandler(timers[i].event, handler);
+
+		timers[i].data = h + 20;
+		timers[i].data->structure = timers[i].tmu;
+	}
+
+	/* Also install the helper handler */
+	gint_inthandler(0xc60, inth_tmu_extra_help);
+
+	/* Enable TMU0 at level 13, TMU1 at level 11, TMU2 at level 9 */
+	gint_intlevel(0, 13);
+	gint_intlevel(1, 11);
+	gint_intlevel(2, 9);
+
+	/* Enable the extra TMUs at level 7 */
+	mpuSwitch({
+		/* SH3-based */
+		gint_intlevel(23, 7);
+	},{
+		/* SH4-based */
+		gint_intlevel(36, 7);
+		gint_intlevel(25, 7);
+		gint_intlevel(26, 7);
+		gint_intlevel(18, 7);
+		gint_intlevel(32, 7);
+		gint_intlevel(44, 7);
+
+		/* Unmask the interrupts */
+		INTC4.MSKCLR->IMR2 = 0x01;
+		INTC4.MSKCLR->IMR5 = 0x06;
+		INTC4.MSKCLR->IMR6 = 0x18;
+		INTC4.MSKCLR->IMR8 = 0x02;
+	});
+}
+
+//---
+//	Context system for this driver
+//---
+
+typedef struct
+{
+	tmu_t std[3];
+	tmu_extra_t extra[6];
+	uint8_t TSTR;
+
+} PACKED(4) ctx_t;
+
+/* Allocate a system buffer in gint's BSS area */
+GBSS static ctx_t sys_ctx;
+
+#ifdef FX9860G
+static void driver_sh3(void)
+{
+	timers[0].tmu = (void *)0xfffffe94;
+	timers[1].tmu = (void *)0xfffffea0;
+	timers[2].tmu = (void *)0xfffffeac;
+	/* We don't need to change the event code of ETMU0 since it's
+	   translated to the SH4 code by the interrupt handler */
+	timers[3].tmu = (void *)0xa44c0030;
+
+	TSTR = (void *)0xfffffe92;
+}
+#endif
+
+static void ctx_save(void *buf)
+{
+	ctx_t *ctx = buf;
+
+	for(int i = 0; i < 3; i++)
+	{
+		tmu_t *t = timers[i].tmu;
+		ctx->std[i].TCOR	= t->TCOR;
+		ctx->std[i].TCNT	= t->TCNT;
+		ctx->std[i].TCR.word	= t->TCR.word;
+	}
+
+	ctx->TSTR = *TSTR;
+
+	for(int i = 0; i < timer_count() - 3; i++)
+	{
+		tmu_extra_t *t = timers[i + 3].tmu;
+		ctx->extra[i].TCOR	= t->TCOR;
+		ctx->extra[i].TCNT	= t->TCNT;
+		ctx->extra[i].TCR.byte	= t->TCR.byte;
+		ctx->extra[i].TSTR	= t->TSTR;
+	}
+}
+
+static void ctx_restore(void *buf)
+{
+	ctx_t *ctx = buf;
+
+	for(int i = 0; i < 3; i++)
+	{
+		tmu_t *t = timers[i].tmu;
+		t->TCNT		= ctx->std[i].TCNT;
+		t->TCOR		= ctx->std[i].TCOR;
+		t->TCR.word	= ctx->std[i].TCR.word;
+	}
+
+	*TSTR = ctx->TSTR;
+
+	for(int i = 0; i < timer_count() - 3; i++)
+	{
+		tmu_extra_t *t = timers[i + 3].tmu;
+		/* Avoid some interrupts that occur when TCNT = 0 */
+		t->TSTR		= 0;
+		t->TCNT		= 0xffffffff;
+
+		t->TCNT		= ctx->extra[i].TCNT;
+		t->TCOR		= ctx->extra[i].TCOR;
+		t->TCR.byte	= ctx->extra[i].TCR.byte;
+		t->TSTR		= ctx->extra[i].TSTR;
+	}
+}
+
+//---
+//	Driver structure definition
+//---
+
+gint_driver_t drv_tmu = {
+	.name		= "Timer Unit",
+	.init		= init,
+	.ctx_size	= sizeof(ctx_t),
+	.sys_ctx	= &sys_ctx,
+	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
+	.ctx_save	= ctx_save,
+	.ctx_restore	= ctx_restore,
+};
+
+GINT_DECLARE_DRIVER(drv_tmu);

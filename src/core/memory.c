@@ -85,23 +85,24 @@ void *memcpy(void * restrict dst, const void * restrict src, size_t n)
 	return dst;
 }
 
-void *_memmove(void *dst, const void *src, size_t n)
+void *_memmove(UNUSED void *dst, UNUSED const void *src, UNUSED size_t n)
 {
 	// (same as memcpy, but heed for direction if areas overlap)
 
-	// more complicated
-	// allocate a buffer aligned with destination (source would be ok too)
-	// read unaligned from source to buffer
-	// copy aligned from buffer to destination
+	// copy by increasing addresses if dst < src
+	// copy by decreasing addresses if dst > src
 	return dst;
 }
 
-int _memcmp(const void *s1, const void *s2, size_t n)
+int _memcmp(UNUSED const void *s1, UNUSED const void *s2, UNUSED size_t n)
 {
 	return 0;
 }
 
-void *_memset(void *s, int byte, size_t n)
+void *memset(void *s, int byte, size_t n)
 {
+	/* TODO: Do it efficiently */
+	char *dst = s;
+	while(n--) *dst++ = byte;
 	return s;
 }

@@ -1,0 +1,64 @@
+//---
+//	gint:core:gint - Library functions
+//---
+
+#include <gint/gint.h>
+#include <core/mpu.h>
+#include <core/intc.h>
+#include <core/memory.h>
+
+/* Interrupt controllers */
+
+GDATA3 sh7705_intc_t INTC3 = {
+	.IPRS = {
+		(void *)0xfffffee2, (void *)0xfffffee4,
+		(void *)0xa4000016, (void *)0xa4000018, (void *)0xa400001a,
+		(void *)0xa4080000, (void *)0xa4080002, (void *)0xa4080004,
+	},
+	.ICR1 = (void *)0xa4000010,
+};
+
+GDATA sh7305_intc_t INTC4 = {
+	.IPRS		= (void *)0xa4080000,
+	.MSK		= (void *)0xa4080080,
+	.MSKCLR		= (void *)0xa40800c0,
+	.USERIMASK	= (void *)0xa4700000,
+};
+
+//---
+//	Library functions
+//---
+
+/* gint_intlevel() - configure the level of interrupts */
+int gint_intlevel(int intid, int level)
+{
+	int shift = (~intid & 0x3) << 2;
+	volatile uint16_t *ipr;
+	level &= 0xf;
+
+	mpuSwitch(
+		ipr = INTC3.IPRS[intid >> 2],		/* SH3-based */
+		ipr = &INTC4.IPRS[2 * (intid >> 2)]	/* SH4-based */
+	);
+
+	int oldlevel = (*ipr >> shift) & 0xf;
+	*ipr = (*ipr & ~(0xf << shift)) | (level << shift);
+
+	return oldlevel;
+}
+
+/* gint_inthandler() - configure interrupt handlers */
+void *gint_inthandler(int event_code, const void *handler)
+{
+	extern char gint_vbr;
+
+	/* Normalize the event code */
+	event_code -= 0x400;
+	event_code &= ~0x1f;
+
+	/* Prevent overriding the entry gate */
+	if(event_code < 0) return NULL;
+
+	void *dest = (void *)&gint_vbr + event_code + 0x620;
+	return memcpy(dest, handler, 32);
+}

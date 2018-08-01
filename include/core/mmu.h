@@ -12,6 +12,68 @@
 #include <defs/attributes.h>
 #include <defs/types.h>
 
+//---
+//	SH7705 TLB
+//---
+
+#ifdef FX9860G
+
+/* tlb_addr_t - address part of a TLB entry */
+typedef struct
+{
+	uint VPN	:22;
+	uint		:1;
+	uint V		:1;
+	uint ASID	:8;
+
+} PACKED(4) tlb_addr_t;
+
+/* tlb_data_t - data part of a TLB entry */
+typedef struct
+{
+	uint		:3;
+	uint PPN	:19;
+	uint		:1;
+	uint V		:1;
+	uint		:1;
+	uint PR		:2;
+	uint SZ		:1;
+	uint C		:1;
+	uint D		:1;
+	uint SH		:1;
+	uint		:1;
+
+} PACKED(4) tlb_data_t;
+
+/* tlb_addr() - get the P4 address of a TLB address entry
+   @way  TLB way (0..3)
+   @E    Entry number (0..31)
+   Returns a pointer to the entry. */
+const tlb_addr_t *tlb_addr(uint way, uint E);
+
+/* tlb_data() - get the P4 address of a TLB data entry
+   @way  TLB way (0..3)
+   @E    Entry number (0..31)
+   Returns a pointer to the entry. */
+const tlb_data_t *tlb_data(uint way, uint E);
+
+/* tlb_mapped_memort() - count amount of mapped memory
+   This function returns the amount of mapped text and data segment memory, in
+   bytes. The ranges are defined as follows:
+     ROM  00300000:512k
+     RAM  08100000:512k
+   Other mappings are ignored. Both pointers may be NULL.
+
+   @rom  Pointer to amount of mapped ROM
+   @ram  Pointer to amount of mapped RAM */
+void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram);
+
+#endif
+
+//---
+//	SH7305 Unified TLB
+//---
+
 /* utlb_addr_t - address part of a UTLB entry */
 typedef struct
 {
@@ -52,7 +114,7 @@ const utlb_data_t *utlb_data(uint E);
 /* utlb_mapped_memory() - count amount of mapped memory
    This function returns the amount of mapped text and data segment memory, in
    bytes. The ranges are defined as follows:
-     ROM  00300000:512k
+     ROM  00300000:4M
      RAM  08100000:512k
    Other mappings are ignored. Both pointers may be NULL.
 

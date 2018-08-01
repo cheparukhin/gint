@@ -13,6 +13,9 @@
 /* Objects from the .gint.data and .gint.bss sections */
 #define GDATA		__attribute__((section(".gint.data")))
 #define GBSS		__attribute__((section(".gint.bss")))
+/* Additional sections that are only needed on SH3 */
+#define GDATA3		__attribute__((section(".gint.data.sh3")))
+#define GBSS3		__attribute__((section(".gint.bss.sh3")))
 /* Initialization functions */
 #define PRETEXT		__attribute__((section(".pretext")))
 

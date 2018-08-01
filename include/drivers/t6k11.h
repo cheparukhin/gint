@@ -40,12 +40,13 @@ void t6k11_contrast(int contrast);
 
 /* t6k11_backlight() - manage the screen backlight
 
-   Changes the backlight setting depending on the value of "setting":
-   - If setting = 0, turns the backlight off.
+   Changes the backlight status depending on the value of the argument:
    - If setting > 0, turns the backlight on.
+   - If setting = 0, turns the backlight off.
    - If setting < 0, toggles backlight.
 
-   This function has no effect on models that do not support the backlight.
+   This function has no effect on models that do not support the backlight,
+   although gint does not provide any facility for detecting them.
 
    @setting  Requested backlight setting */
 void t6k11_backlight(int setting);
