@@ -5,6 +5,7 @@
 #include <gint/timer.h>
 #include <gint/drivers.h>
 #include <gint/gint.h>
+#include <gint/clock.h>
 
 #include <core/intc.h>
 
@@ -65,7 +66,6 @@ typedef struct
 	inth_data_t *data;		/* Interrupt handler data */
 	uint16_t event;			/* Interrupt event code */
 } timer_t;
-
 
 //---
 //	Driver storage
@@ -133,9 +133,12 @@ int timer_setup(int tid, uint32_t delay, timer_input_t clock,
 		t->TCR.UNIE = 1;
 	}
 
-	/* Register the callback and its argument */
-	timers[tid].data->callback = callback;
-	timers[tid].data->arg = arg;
+	/* Register the callback and its argument (TMU-owned timers only) */
+	if(timers[tid].data)
+	{
+		timers[tid].data->callback = callback;
+		timers[tid].data->arg = arg;
+	}
 
 	/* Return the timer id, since configuration was successful */
 	return tid;
@@ -145,11 +148,14 @@ int timer_setup(int tid, uint32_t delay, timer_input_t clock,
 uint32_t timer_delay(int tid, int delay_us)
 {
 	/* TODO: Proper timer_delay() */
-#ifdef FX9860G
-	uint64_t freq = 14750000 >> 2;	/* 14.75 MHz / 4 */
-#else
-	uint64_t freq = 29020000 >> 2;	/* 29.49 MHz / 4 */
-#endif
+	const clock_frequency_t *clock = clock_freq();
+	uint64_t freq;
+
+	freq = isSH3() ? 14750000 >> 2 : clock->Pphi_f >> 2;
+
+	/* fxcg50: Calculated = 29491200 but it's too low */
+	// uint64_t freq = 29020000 >> 2;
+
 	if(tid >= 3) freq = 32768;	/* 32768 Hz */
 
 	uint64_t product = freq * (uint64_t)delay_us;
@@ -180,8 +186,8 @@ void timer_start(int tid)
 	timer_control(tid, 0);
 }
 
-/* timer_reload() - change a timer's constant register for next interrupts */
-void timer_reload(int tid, uint32_t delay, timer_input_t clock)
+/* timer_reload() - change a timer's delay constant for next interrupts */
+void timer_reload(int tid, uint32_t delay)
 {
 	if(tid < 3) ((tmu_t *)timers[tid].tmu)->TCOR = delay;
 	else  ((tmu_extra_t *)timers[tid].tmu)->TCOR = delay;
@@ -193,9 +199,11 @@ void timer_pause(int tid)
 	timer_control(tid, 1);
 }
 
-/* timer_free() - free a timer */
-void timer_free(int tid)
+/* timer_stp() - stop and free a timer */
+void timer_stop(int tid)
 {
+	return;
+
 	/* Stop the timer and disable UNIE to indicate that it's free */
 	timer_pause(tid);
 
@@ -234,15 +242,29 @@ extern void inth_tmu_extra2(void);
 extern void inth_tmu_extra_help(void);
 extern void inth_tmu_extra_others(void);
 
+#ifdef FX9860G
+static void driver_sh3(void)
+{
+	timers[0].tmu = (void *)0xfffffe94;
+	timers[1].tmu = (void *)0xfffffea0;
+	timers[2].tmu = (void *)0xfffffeac;
+	/* We don't need to change the event code of ETMU0 since it's
+	   translated to the SH4 code by the interrupt handler */
+	timers[3].tmu = (void *)0xa44c0030;
+
+	TSTR = (void *)0xfffffe92;
+}
+#endif
+
 static void init(void)
 {
 	/* Install the standard's TMU interrupt handlers. By chance TMU gates
 	   use the same event codes on SH7705 and SH7305 */
 	UNUSED void *h0, *h1, *h2, *hs;
-	h0 = gint_inthandler(0x400, inth_tmu_0);
-	h1 = gint_inthandler(0x420, inth_tmu_1);
-	h2 = gint_inthandler(0x440, inth_tmu_2);
-	hs = gint_inthandler(0x460, inth_tmu_storage);
+	h0 = gint_inthandler(0x400, inth_tmu_0, 32);
+	h1 = gint_inthandler(0x420, inth_tmu_1, 32);
+	h2 = gint_inthandler(0x440, inth_tmu_2, 32);
+	hs = gint_inthandler(0x460, inth_tmu_storage, 32);
 
 	/* User information in interrupt handlers */
 	timers[0].data = h2 + 20;
@@ -296,14 +318,14 @@ static void init(void)
 		void *handler = (i == 5)
 			? inth_tmu_extra2
 			: inth_tmu_extra_others;
-		void *h = gint_inthandler(timers[i].event, handler);
+		void *h = gint_inthandler(timers[i].event, handler, 32);
 
 		timers[i].data = h + 20;
 		timers[i].data->structure = timers[i].tmu;
 	}
 
 	/* Also install the helper handler */
-	gint_inthandler(0xc60, inth_tmu_extra_help);
+	gint_inthandler(0xc60, inth_tmu_extra_help, 32);
 
 	/* Enable TMU0 at level 13, TMU1 at level 11, TMU2 at level 9 */
 	gint_intlevel(0, 13);
@@ -311,11 +333,12 @@ static void init(void)
 	gint_intlevel(2, 9);
 
 	/* Enable the extra TMUs at level 7 */
-	mpuSwitch({
-		/* SH3-based */
+	if(isSH3())
+	{
 		gint_intlevel(23, 7);
-	},{
-		/* SH4-based */
+	}
+	else
+	{
 		gint_intlevel(36, 7);
 		gint_intlevel(25, 7);
 		gint_intlevel(26, 7);
@@ -323,12 +346,12 @@ static void init(void)
 		gint_intlevel(32, 7);
 		gint_intlevel(44, 7);
 
-		/* Unmask the interrupts */
+		/* Unmask the extra timers' interrupts */
 		INTC4.MSKCLR->IMR2 = 0x01;
 		INTC4.MSKCLR->IMR5 = 0x06;
 		INTC4.MSKCLR->IMR6 = 0x18;
 		INTC4.MSKCLR->IMR8 = 0x02;
-	});
+	}
 }
 
 //---
@@ -345,20 +368,6 @@ typedef struct
 
 /* Allocate a system buffer in gint's BSS area */
 GBSS static ctx_t sys_ctx;
-
-#ifdef FX9860G
-static void driver_sh3(void)
-{
-	timers[0].tmu = (void *)0xfffffe94;
-	timers[1].tmu = (void *)0xfffffea0;
-	timers[2].tmu = (void *)0xfffffeac;
-	/* We don't need to change the event code of ETMU0 since it's
-	   translated to the SH4 code by the interrupt handler */
-	timers[3].tmu = (void *)0xa44c0030;
-
-	TSTR = (void *)0xfffffe92;
-}
-#endif
 
 static void ctx_save(void *buf)
 {
@@ -401,10 +410,12 @@ static void ctx_restore(void *buf)
 	for(int i = 0; i < timer_count() - 3; i++)
 	{
 		tmu_extra_t *t = timers[i + 3].tmu;
-		/* Avoid some interrupts that occur when TCNT = 0 */
-		t->TSTR		= 0;
-		t->TCNT		= 0xffffffff;
 
+		/* This thing is being unloaded while interrupts are disabled,
+		   so we don't have to heed for ctx->extra[i].TCNT = 0, which
+		   can generate interrupts. I tried to do t->TCNT = 0xffffffff
+		   then restore ctx->extra[i], but it causes hangs on SH3 when
+		   the overclock level is too high. */
 		t->TCNT		= ctx->extra[i].TCNT;
 		t->TCOR		= ctx->extra[i].TCOR;
 		t->TCR.byte	= ctx->extra[i].TCR.byte;
@@ -418,12 +429,12 @@ static void ctx_restore(void *buf)
 
 gint_driver_t drv_tmu = {
 	.name		= "Timer Unit",
+	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
 	.init		= init,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
-	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };
 
-GINT_DECLARE_DRIVER(drv_tmu);
+GINT_DECLARE_DRIVER(2, drv_tmu);

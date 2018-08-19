@@ -36,10 +36,9 @@ int gint_intlevel(int intid, int level)
 	volatile uint16_t *ipr;
 	level &= 0xf;
 
-	mpuSwitch(
-		ipr = INTC3.IPRS[intid >> 2],		/* SH3-based */
-		ipr = &INTC4.IPRS[2 * (intid >> 2)]	/* SH4-based */
-	);
+	ipr = isSH3()
+	? INTC3.IPRS[intid >> 2]		/* SH3-based */
+	: &INTC4.IPRS[2 * (intid >> 2)];	/* SH4-based */
 
 	int oldlevel = (*ipr >> shift) & 0xf;
 	*ipr = (*ipr & ~(0xf << shift)) | (level << shift);
@@ -48,7 +47,7 @@ int gint_intlevel(int intid, int level)
 }
 
 /* gint_inthandler() - configure interrupt handlers */
-void *gint_inthandler(int event_code, const void *handler)
+void *gint_inthandler(int event_code, const void *handler, size_t size)
 {
 	extern char gint_vbr;
 
@@ -60,5 +59,5 @@ void *gint_inthandler(int event_code, const void *handler)
 	if(event_code < 0) return NULL;
 
 	void *dest = (void *)&gint_vbr + event_code + 0x620;
-	return memcpy(dest, handler, 32);
+	return memcpy(dest, handler, size);
 }

@@ -3,13 +3,10 @@
 //
 //	This component detects the architecture and MPU type of the underlying
 //	hardware by relying on version registers and/or side-information. It
-//	provides macros isSH3() and isSH4(), but the best way of performing
-//	MPU-dependent jobs is to use mpuSwitch():
+//	provides macros isSH3() and isSH4() for MPU-dependent jobs
 //
-//	  mpuSwitch(
-//		print("SH3 code"),
-//		print("SH4 code")
-//	  );
+//	  if(isSH3()) print("SH3 code");
+//	  else print("SH4 code");
 //---
 
 #ifndef GINT_CORE_MPU
@@ -40,8 +37,6 @@ typedef enum
 	#define isSH3() (mpu_id() & 1)
 	#define isSH4() (!isSH3())
 
-	#define mpuSwitch(a, b) do { if(isSH3()) { a; } else { b; } } while(0)
-
 	/* mpu_init() - probe the MPU type
 	   This function must be executed before mpu_id() can be used. */
 	void mpu_init(void);
@@ -52,8 +47,6 @@ typedef enum
 	#define mpu_id() mpu_sh7305
 	#define isSH3() 0
 	#define isSH4() 1
-
-	#define mpuSwitch(a, b) do { b; } while(0)
 
 #endif /* FX9860G */
 

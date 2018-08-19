@@ -18,9 +18,9 @@ MEMORY
 	   The first 0x2000 bytes are reserved by gint, see below */
 	ram  (rw):	o = 0x08102000, l = 512k
 	/* gint's VBR space, mentioned here for completeness */
-	vbr  (rwx):	o = 0x8c160000, l = 4k
+	vbr  (rwx):	o = 0x8c160000, l = 5k
 	/* Some RAM region from P1 area; gint's data will reside here */
-	rram (rwx):	o = 0x8c161000, l = 4k
+	rram (rwx):	o = 0x8c161400, l = 3k
 }
 
 SECTIONS
@@ -68,7 +68,13 @@ SECTIONS
 	   driver, even if the symbols are not referenced */
 	.gint.drivers : {
 		_bdrv = . ;
-		KEEP(*(.gint.drivers));
+		KEEP(*(.gint.drivers.0));
+		KEEP(*(.gint.drivers.1));
+		KEEP(*(.gint.drivers.2));
+		KEEP(*(.gint.drivers.3));
+		KEEP(*(.gint.drivers.4));
+		KEEP(*(.gint.drivers.5));
+		KEEP(*(.gint.drivers.6));
 		_edrv = . ;
 	} > rom
 

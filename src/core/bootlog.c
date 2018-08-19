@@ -84,8 +84,8 @@ void bootlog_kernel(void)
 {
 	print(15, 1, " Kernel");
 
-	mpuSwitch({
-		/* SH3-based */
+	if(isSH3())
+	{
 		print(1, 5, "ABCD");
 		print_hex( 6, 5, INTC3._.IPRA->word, 4);
 		print_hex(10, 5, INTC3._.IPRB->word, 4);
@@ -96,8 +96,9 @@ void bootlog_kernel(void)
 		print_hex(10, 6, INTC3._.IPRF->word, 4);
 		print_hex(14, 6, INTC3._.IPRG->word, 4);
 		print_hex(18, 6, INTC3._.IPRH->word, 4);
-	},{
-		/* SH4-based */
+	}
+	else
+	{
 		print(1, 5, "ACFG");
 		print_hex( 6, 5, INTC4._->IPRA.word, 4);
 		print_hex(10, 5, INTC4._->IPRC.word, 4);
@@ -108,7 +109,7 @@ void bootlog_kernel(void)
 		print_hex(10, 6, INTC4._->IPRJ.word, 4);
 		print_hex(14, 6, INTC4._->IPRK.word, 4);
 		print_hex(18, 6, INTC4._->IPRL.word, 4);
-	});
+	}
 
 	Bdisp_PutDisp_DD();
 }

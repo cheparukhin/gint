@@ -30,24 +30,28 @@ typedef struct
    @arg  ctx	gint core context object */
 static void gint_ctx_save(gint_core_ctx *ctx)
 {
-	mpuSwitch(
-		/* SH3-based */
-		for(int i = 0; i < 8; i++) ctx->iprs[i] = *(INTC3.IPRS[i]),
-		/* SH4-based */
-		for(int i = 0; i < 12; i++) ctx->iprs[i] = INTC4.IPRS[2 * i]
-	);
+	if(isSH3())
+	{
+		for(int i = 0; i < 8; i++) ctx->iprs[i] = *(INTC3.IPRS[i]);
+	}
+	else
+	{
+		for(int i = 0; i < 12; i++) ctx->iprs[i] = INTC4.IPRS[2 * i];
+	}
 }
 
 /* gint_ctx_restore() - restore interrupt controller configuration
    @arg  ctx	gint core context object */
 static void gint_ctx_restore(gint_core_ctx *ctx)
 {
-	mpuSwitch(
-		/* SH3-based */
-		for(int i = 0; i < 8; i++) *(INTC3.IPRS[i]) = ctx->iprs[i],
-		/* SH4-based */
-		for(int i = 0; i < 12; i++) INTC4.IPRS[2 * i] = ctx->iprs[i]
-	);
+	if(isSH3())
+	{
+		for(int i = 0; i < 8; i++) *(INTC3.IPRS[i]) = ctx->iprs[i];
+	}
+	else
+	{
+		for(int i = 0; i < 12; i++) INTC4.IPRS[2 * i] = ctx->iprs[i];
+	}
 }
 
 //---
@@ -61,12 +65,14 @@ GBSS static gint_core_ctx sys_ctx;
 static void lock(void)
 {
 	/* Just disable everything, drivers will enable what they support */
-	mpuSwitch(
-		/* SH3-based */
-		for(int i = 0; i < 8; i++) *(INTC3.IPRS[i]) = 0x0000,
-		/* SH4-based */
-		for(int i = 0; i < 12; i++) INTC4.IPRS[2 * i] = 0x0000
-	);
+	if(isSH3())
+	{
+		for(int i = 0; i < 8; i++) *(INTC3.IPRS[i]) = 0x0000;
+	}
+	else
+	{
+		for(int i = 0; i < 12; i++) INTC4.IPRS[2 * i] = 0x0000;
+	}
 }
 
 /* gint_install() - install and start gint */
@@ -87,19 +93,20 @@ void gint_install(void)
 	/* Load the event handler entry points into memory */
 	/* TODO: Load an exception handler and a TLB miss handler */
 
-	mpuSwitch({
-		/* SH3-based */
+	if(isSH3())
+	{
 		extern void exch_entry_7705(void);
 		extern void inth_entry_7705(void);
 		exch_entry = exch_entry_7705;
 		inth_entry = inth_entry_7705;
-	},{
-		/* SH4-based */
+	}
+	else
+	{
 		extern void exch_entry_7305(void);
 		extern void inth_entry_7305(void);
 		exch_entry = exch_entry_7305;
 		inth_entry = inth_entry_7305;
-	});
+	}
 
 	memcpy((void *)(vbr + 0x100), exch_entry, 32);
 	memcpy((void *)(vbr + 0x600), inth_entry, 32);
@@ -113,10 +120,12 @@ static void unlock(void)
 {
 	gint_ctx_restore(&sys_ctx);
 
-	/* Restore all driver settings */
-	for(gint_driver_t *drv = &bdrv; drv < &edrv; drv++)
+	/* Restore all driver settings, but do it in reverse order of loading
+	   to honor the dependency system */
+	for(gint_driver_t *drv = &edrv; (--drv) >= &edrv;)
 	{
-		drv->ctx_restore(drv->sys_ctx);
+		if(drv->unload) drv->unload();
+		if(drv->ctx_restore) drv->ctx_restore(drv->sys_ctx);
 	}
 }
 
