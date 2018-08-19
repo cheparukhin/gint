@@ -29,13 +29,7 @@
    what you intended. */
 
 /* timer_count() - tells how many timers are available on the platform */
-HDRFUNC int timer_count(void)
-{
-	mpuSwitch(
-		return 4,	/* SH3-based */
-		return 9	/* SH4-based */
-	);
-}
+#define timer_count() (isSH3() ? 4 : 9)
 
 /* Clock input
 
@@ -123,21 +117,15 @@ uint32_t timer_delay(int timer, int delay_us);
    @timer  Timer id, as returned by timer_setup() */
 void timer_start(int timer);
 
-/* timer_reload() - change a timer's delay and source
+/* timer_reload() - change a timer's delay constant for next interrupts
 
-   Changes the delay and source of the given timer. This function does not
-   start the timer if it stopped. The timer will start counting down from the
-   new delay when it is started (or immediately if it was running), no matter
-   how much time has elapsed since it last fired. Accumulated events are not
-   dropped.
-
-   In cases where choosing a delay and input clock is difficult (such as when
-   using overclocking), use the timer_delay() function.
+   Changes the delay constant of the given timer. Nothing will happen until the
+   next callback; then the timer will update its delay to reflect the new
+   constant. The new delay can be calculated by the timer_delay() function.
 
    @timer  Timer id, as returned by timer_setup()
-   @delay  New delay (unit depends on the clock source)
-   @clock  New clock source to be used by the timer */
-void timer_reload(int timer, uint32_t delay, timer_input_t clock);
+   @delay  New delay (unit depends on the clock source) */
+void timer_reload(int timer, uint32_t delay);
 
 /* timer_pause() - stop a running timer
    The specified timer will be paused; its counter will not be reset. A stopped
@@ -147,11 +135,11 @@ void timer_reload(int timer, uint32_t delay, timer_input_t clock);
   @timer  Timer id, as returned by timer_setup() */
 void timer_pause(int timer);
 
-/* timer_free() - free a timer
+/* timer_stop() - stop and free a timer
    Stops and destroys a timer, making its id free for re-use. The id must not
    be used anymore until it is returned by a further call to timer_setup().
 
    @timer  Timer id, as returned by timer_setup() */
-void timer_free(int timer);
+void timer_stop(int timer);
 
 #endif /* GINT_TIMER */

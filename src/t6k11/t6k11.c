@@ -140,15 +140,16 @@ void t6k11_backlight(int setting)
 	/* This setting is mapped to an I/O port:
 	   - On SH3, bit 7 of port G
 	   - On SH4, bit 4 of port N */
-	mpuSwitch({
-		/* SH3-based */
+	if(isSH3())
+	{
 		port = (void *)0xa400012c;
 		mask = 0x80;
-	},{
-		/* SH4-based */
+	}
+	else
+	{
 		port = (void *)0xa4050138;
 		mask = 0x10;
-	});
+	}
 
 	if(!setting) *port &= ~mask;
 	if(setting > 0) *port |= mask;
@@ -204,6 +205,6 @@ gint_driver_t drv_t6k11 = {
 	.ctx_restore	= ctx_restore,
 };
 
-GINT_DECLARE_DRIVER(drv_t6k11);
+GINT_DECLARE_DRIVER(5, drv_t6k11);
 
 #endif /* FX9860G */

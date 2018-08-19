@@ -133,10 +133,8 @@ int start(int isappli, int optnum)
 
 	/* Count how much memory got mapped from this process */
 	uint32_t rom, ram;
-	mpuSwitch(
-		tlb_mapped_memory(&rom, &ram),	/* SH3-based */
-		utlb_mapped_memory(&rom, &ram)	/* SH4-based */
-	);
+	isSH3() ? tlb_mapped_memory(&rom, &ram)
+		: utlb_mapped_memory(&rom, &ram);
 
 	#ifdef GINT_BOOT_LOG
 	bootlog_mapped(rom, ram);
@@ -155,7 +153,8 @@ int start(int isappli, int optnum)
 		print(1, 3, "<");
 		print_hex(1, 4, (uint32_t)&srom, 8);
 		Bdisp_PutDisp_DD();
-		delay(20);
+		while(1);
+//		delay(20);
 		return 1;
 	}
 
@@ -178,7 +177,7 @@ int start(int isappli, int optnum)
 	for(drv = &bdrv; drv < &edrv; drv++)
 	{
 		if(isSH3() && drv->driver_sh3) drv->driver_sh3();
-		drv->ctx_save(drv->sys_ctx);
+		if(drv->ctx_save) drv->ctx_save(drv->sys_ctx);
 		if(drv->init) drv->init();
 	}
 
@@ -197,8 +196,8 @@ int start(int isappli, int optnum)
 
 	/* Before leaving the application, we need to clean up our mess. We
 	   have changed many OS settings while accessing the peripheral
-	   modules. The OS is bound to be confused (and crash) if we don't
-	   restore them */
+	   modules. The OS is bound to be confused (and hang, or crash, or any
+	   other kind of giving up) if we don't restore them */
 
 	/* Unload gint and give back control to the system. Driver settings
 	   will be restored while interrupts are disabled */

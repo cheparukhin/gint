@@ -309,6 +309,6 @@ gint_driver_t drv_r61524 = {
 	.ctx_restore	= ctx_restore,
 };
 
-GINT_DECLARE_DRIVER(drv_r61524);
+GINT_DECLARE_DRIVER(5, drv_r61524);
 
 #endif /* FXCG50 */

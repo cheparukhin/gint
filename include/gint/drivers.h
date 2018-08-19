@@ -39,6 +39,11 @@ typedef struct
 	   may be set to NULL */
 	void (*init)(void);
 
+	/* unload() - unitialize the driver
+	   This function is called before ctx_restore() when gint is unloaded.
+	   If there is no unload function, the field may be set to NULL */
+	void (*unload)(void);
+
 	/* Size of a context object for the driver */
 	uint ctx_size;
 
@@ -63,11 +68,17 @@ typedef struct
 } PACKED(4) gint_driver_t;
 
 /* GINT_DECLARE_DRIVER() - make a driver visible to gint
+
    Use this macro to expose a driver by passing it the name of a gint_driver_t
-   structure. This macro moves the structure to the .gint.drivers section,
-   which is automatically traversed at startup */
-#define GINT_DECLARE_DRIVER(name) \
-	SECTION(".gint.drivers") extern gint_driver_t name;
+   structure. This macro moves the structure to the .gint.drivers.* sections,
+   which are automatically traversed at startup.
+
+   The @level argument represents the priority level: lower numbers mean that
+   drivers will be loaded sooner. This numbering allows a primitive form of
+   dependency for drivers. You need to specifiy a level which is strictly
+   higher than the level of all the drivers you depend on. */
+#define GINT_DECLARE_DRIVER(level, name) \
+	SECTION(".gint.drivers." #level) extern gint_driver_t name;
 
 /* GINT_DRIVER_SH3() - declare a function for SH3-rectification
    This macros allows the argument function to not exist on fxcg50. */

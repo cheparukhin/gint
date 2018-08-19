@@ -92,23 +92,27 @@ int gint_intlevel(int intid, int level);
    When an interrupt request is accepted, the hardware jumps to a specific
    interrupt handler at an address that depends on the interrupt source.
 
-   Each interrupt handler should only refer to data within its own block
-   because the relative displacement between blocks is MPU-dependent. There are
-   a few exceptions to this, such as timer handlers, which are contiguous on
-   all currently-used platforms. Be careful.
+   For safety, interrupt handlers should avoir referring to data from other
+   blocks because the arrangement of blocks at runtime depends on event codes.
+   The assembler program will assume that consecutive blocks in the source code
+   will be consecutive in memory, which is not always true. Avoiding cross-
+   references is a practical rule to avoid problems. (gint breaks this rule
+   very often but does it carefully... I guess?)
 
    This function allows anyone to replace any interrupt handler so make sure
    you're not interfering with usual interrupt assignments.
 
    The first parameter 'event_code' represents the event_code associated with
-   the interrupt. These codes are normally platform-dependent, but gint always
-   uses the SH7305 codes: SH3 platforms have a translation table. See the
+   the interrupt. The codes are normally platform-dependent, but gint always
+   uses SH7305 codes: SH3 platforms have a translation table. See the
    documentation for a list of event codes and their associated interrupts.
 
-   The handler function must be an interrupt handler: it should not raise
-   exceptions, must end with 'rte', uses the kernel register bank... and it
-   must fit within 32 bytes. If it's not written in assembler, then you're
-   likely doing something wrong.
+   The handler function must be an interrupt handler: it must not raise
+   exceptions, must end with 'rte', and it will use the kernel register bank.
+   For convenience I allow any block size to be loaded as an interrupt handler,
+   but it should really be a multiple of 32 bytes and not override other
+   handlers. If it's not written in assembler, then you're likely doing
+   something wrong.
 
    It is common for interrupt handlers to have a few bytes of data, such as the
    address of a callback function. gint often stores this data in the last
@@ -117,7 +121,8 @@ int gint_intlevel(int intid, int level);
 
    @event_code  Identifier of the interrupt block
    @handler     Address of handler function
+   @size        How many bytes to copy
    Returns the VBR address where the handlers was installed. */
-void *gint_inthandler(int event_code, const void *handler);
+void *gint_inthandler(int event_code, const void *handler, size_t size);
 
 #endif /* GINT_GINT */

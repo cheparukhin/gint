@@ -30,6 +30,9 @@
 #define CTOR(x)		__attribute__((constructor ((x) + 101))) PRETEXT
 #define DTOR(x)		__attribute__((destructor  ((x) + 101)))
 
+/* Aligned variables */
+#define ALIGNED(x)	__attribute__((aligned(x)))
+
 /* Packed structures. I require explicit alignment because if it's unspecified,
    GCC cannot optimize access size, and reads to memory-mapped I/O with invalid
    access sizes silently fail - honestly you don't want this to happen */
