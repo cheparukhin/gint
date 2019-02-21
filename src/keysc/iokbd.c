@@ -2,8 +2,8 @@
 //	gint:keysc:iokbd - I/O-based keyboard input
 //---
 
-#include <defs/types.h>
-#include <core/pfc.h>
+#include <gint/defs/types.h>
+#include <gint/mpu/pfc.h>
 
 /* This file is SH7705-only. */
 #ifdef FX9860G
@@ -104,6 +104,7 @@ uint8_t iokbd_row(int row)
 	return input;
 }
 
+/* iokbd_scan() - scan ports A/B/M to generate 12 rows of key data */
 void iokbd_scan(uint8_t *scan)
 {
 	/* Scan each row independently; the gain from scanning them altogether

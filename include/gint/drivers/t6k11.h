@@ -7,7 +7,7 @@
 #ifndef GINT_DRIVERS_T6K11
 #define GINT_DRIVERS_T6K11
 
-#include <defs/types.h>
+#include <gint/defs/types.h>
 
 /* t6k11_display() - send vram data to the LCD device
 
@@ -33,7 +33,7 @@ void t6k11_display(const void *vram, int y1, int y2, size_t stride);
    It would be possible to restore contrast, or update the system value on
    change, if the address was known for all OS versions.
 
-     OS 02.05.2201	8800b93c
+     OS 02.05.2201	8800'b93c
 
    @contrast  Requested contrast value */
 void t6k11_contrast(int contrast);

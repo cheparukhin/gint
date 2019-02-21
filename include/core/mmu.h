@@ -1,22 +1,20 @@
 //---
-//	gint:core:mmu - MMU-related definitions
+//	core:mmu - MMU-related definitions
 //
-//	gint does not touch the MMU because the risk of interfering with the
-//	system is deemed too high. However, to ensure that the add-in runs
-//	properly, checks using read-only access to the MMU are performed.
+//	gint does not touch the MMU because the risk of permanently wreaking
+//	the system is deemed too high. However, to ensure that the add-in runs
+//	properly, checks using read-only accesses to the MMU are performed.
 //---
 
 #ifndef GINT_CORE_MMU
 #define GINT_CORE_MMU
 
-#include <defs/attributes.h>
-#include <defs/types.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
 
 //---
 //	SH7705 TLB
 //---
-
-#ifdef FX9860G
 
 /* tlb_addr_t - address part of a TLB entry */
 typedef struct
@@ -26,7 +24,7 @@ typedef struct
 	uint V		:1;
 	uint ASID	:8;
 
-} PACKED(4) tlb_addr_t;
+} GPACKED(4) tlb_addr_t;
 
 /* tlb_data_t - data part of a TLB entry */
 typedef struct
@@ -43,7 +41,7 @@ typedef struct
 	uint SH		:1;
 	uint		:1;
 
-} PACKED(4) tlb_data_t;
+} GPACKED(4) tlb_data_t;
 
 /* tlb_addr() - get the P4 address of a TLB address entry
    @way  TLB way (0..3)
@@ -57,7 +55,7 @@ const tlb_addr_t *tlb_addr(uint way, uint E);
    Returns a pointer to the entry. */
 const tlb_data_t *tlb_data(uint way, uint E);
 
-/* tlb_mapped_memort() - count amount of mapped memory
+/* tlb_mapped_memory() - count amount of mapped memory
    This function returns the amount of mapped text and data segment memory, in
    bytes. The ranges are defined as follows:
      ROM  00300000:512k
@@ -67,8 +65,6 @@ const tlb_data_t *tlb_data(uint way, uint E);
    @rom  Pointer to amount of mapped ROM
    @ram  Pointer to amount of mapped RAM */
 void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram);
-
-#endif
 
 //---
 //	SH7305 Unified TLB
@@ -82,7 +78,7 @@ typedef struct
 	uint V		:1;
 	uint ASID	:8;
 
-} PACKED(4) utlb_addr_t;
+} GPACKED(4) utlb_addr_t;
 
 /* utlb_addr() - get the P4 address of a UTLB address entry
    @E  Entry number (should be in range 0..63)
@@ -104,7 +100,7 @@ typedef struct
 	uint SH		:1;
 	uint WT		:1;
 
-} PACKED(4) utlb_data_t;
+} GPACKED(4) utlb_data_t;
 
 /* utlb_data() - get the P4 address of a UTLB data entry
    @E  Entry number (should be in range 0..63)

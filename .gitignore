@@ -1,5 +1,5 @@
-# Build directory
-build/**
+# Build directories
+build*/**
 
 # Sublime Text files
 *.sublime-project
@@ -7,10 +7,3 @@ build/**
 
 # Lots of unordered project notes
 notes/**
-
-# Output files
-bin/**
-
-# Configuration files
-config/**
-

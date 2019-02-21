@@ -1,5 +1,5 @@
 //---
-//	gint:core:bootlog - Boot-time on-screen log for extreme debugging
+//	core:bootlog - Boot-time on-screen log for extreme debugging
 //---
 
 #ifndef GINT_CORE_BOOTLOG
@@ -20,5 +20,12 @@ void bootlog_mapped(uint32_t rom, uint32_t ram);
    Called when gint has been installed, the VBR switched and the interrupt
    handlers set up. */
 void bootlog_kernel(void);
+
+/* All these functions are enabled only if GINT_BOOT_LOG is defined */
+#ifndef GINT_BOOT_LOG
+  #define bootlog_loaded(...)
+  #define bootlog_mapped(...)
+  #define bootlog_kernel(...)
+#endif
 
 #endif /* GINT_CORE_BOOTLOG */

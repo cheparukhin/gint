@@ -5,8 +5,8 @@
 #ifndef GINT_DRIVERS
 #define GINT_DRIVERS
 
-#include <defs/attributes.h>
-#include <defs/types.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
 
 //---
 //	Driver initialization
@@ -39,7 +39,7 @@ typedef struct
 	   may be set to NULL */
 	void (*init)(void);
 
-	/* unload() - unitialize the driver
+	/* unload() - deinitialize the driver
 	   This function is called before ctx_restore() when gint is unloaded.
 	   If there is no unload function, the field may be set to NULL */
 	void (*unload)(void);
@@ -65,7 +65,7 @@ typedef struct
 	   @ctx  A context buffer filled by ctx_save() */
 	void (*ctx_restore)(void *ctx);
 
-} PACKED(4) gint_driver_t;
+} GPACKED(4) gint_driver_t;
 
 /* GINT_DECLARE_DRIVER() - make a driver visible to gint
 
@@ -75,10 +75,10 @@ typedef struct
 
    The @level argument represents the priority level: lower numbers mean that
    drivers will be loaded sooner. This numbering allows a primitive form of
-   dependency for drivers. You need to specifiy a level which is strictly
+   dependency for drivers. You need to specify a level which is strictly
    higher than the level of all the drivers you depend on. */
 #define GINT_DECLARE_DRIVER(level, name) \
-	SECTION(".gint.drivers." #level) extern gint_driver_t name;
+	GSECTION(".gint.drivers." #level) extern gint_driver_t name;
 
 /* GINT_DRIVER_SH3() - declare a function for SH3-rectification
    This macros allows the argument function to not exist on fxcg50. */

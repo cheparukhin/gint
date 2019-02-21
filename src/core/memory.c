@@ -1,4 +1,5 @@
-#include <core/mpu.h>
+#include <gint/defs/attributes.h>
+#include <gint/mpu.h>
 #include <stddef.h>
 #include <stdint.h>
 
@@ -85,7 +86,7 @@ void *memcpy(void * restrict dst, const void * restrict src, size_t n)
 	return dst;
 }
 
-void *_memmove(UNUSED void *dst, UNUSED const void *src, UNUSED size_t n)
+void *_memmove(GUNUSED void *dst, GUNUSED const void *src, GUNUSED size_t n)
 {
 	// (same as memcpy, but heed for direction if areas overlap)
 
@@ -94,7 +95,7 @@ void *_memmove(UNUSED void *dst, UNUSED const void *src, UNUSED size_t n)
 	return dst;
 }
 
-int _memcmp(UNUSED const void *s1, UNUSED const void *s2, UNUSED size_t n)
+int _memcmp(GUNUSED const void *s1, GUNUSED const void *s2, GUNUSED size_t n)
 {
 	return 0;
 }

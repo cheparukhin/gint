@@ -130,7 +130,13 @@ SECTIONS
 		. = ALIGN(16);
 	} > ram AT> rom
 
-	_sdata = SIZEOF(.data);
+	/* Read-write data sub-aligned to 4 bytes (mainly from fxconv) */
+	.data.4 : SUBALIGN(4) {
+		*(.data.4)
+		. = ALIGN(16);
+	} > ram AT> rom
+
+	_sdata = SIZEOF(.data) + SIZEOF(.data.4);
 
 
 

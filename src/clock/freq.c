@@ -1,13 +1,12 @@
 //---
-//	gint:core:freq - Clock frequency management
+//	gint:clock:freq - Clock frequency management
 //---
 
 #include <gint/drivers.h>
 #include <gint/clock.h>
 
-#include <defs/types.h>
-#include <core/mpu.h>
-#include <core/cpg.h>
+#include <gint/mpu.h>
+#include <gint/mpu/cpg.h>
 
 //---
 //	Driver storage
@@ -69,6 +68,11 @@ static void sh7705_probe(void)
 }
 
 #undef CPG
+#else
+
+/* This prototype will silence warnings on fxcg50 */
+void sh7705_probe(void);
+
 #endif /* FX9860G */
 
 //---
@@ -80,17 +84,17 @@ static void sh7705_probe(void)
 static void sh7305_probe(void)
 {
 	/* The meaning of the PLL setting on SH7305 differs from the
-	   documentation of SH7224; the setting must not be doubled. */
+	   documentation of SH7224; the value must not be doubled. */
 	int pll = CPG.FRQCRA.STC + 1;
 	freq.PLL = pll;
 
-	/* The FLL ratio is the value of the setting, possibly halved */
+	/* The FLL ratio is the value of the setting, halved if SELXM=1 */
 	int fll = CPG.FLLFRQ.FLF;
 	if(CPG.FLLFRQ.SELXM == 1) fll >>= 1;
 	freq.FLL = fll;
 
-	/* On SH7724, the divider ratio is given by 1 / (setting + 1), but here
-	   it's actually 1 / (2^setting + 1). */
+	/* On SH7724, the divider ratio is given by 1 / (setting + 1), but
+	   SH7305 behaves as 1 / (2^setting + 1). */
 
 	int divb = CPG.FRQCRA.BFC;
 	int divi = CPG.FRQCRA.IFC;
@@ -125,7 +129,7 @@ static void init(void)
 }
 
 gint_driver_t drv_cpg = {
-	.name		= "Clock Pulse Generator",
+	.name		= "CPG",
 	.init		= init,
 	.ctx_size	= 0,
 	.sys_ctx	= NULL,

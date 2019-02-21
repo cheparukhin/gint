@@ -5,9 +5,8 @@
 #ifndef GINT_TIMER
 #define GINT_TIMER
 
-#include <defs/attributes.h>
-#include <defs/types.h>
-#include <core/mpu.h>
+#include <gint/defs/types.h>
+#include <gint/mpu.h>
 
 /* Timer identifiers
 
@@ -88,7 +87,7 @@ typedef enum
    @callback  Callback function (called when the timer fires)
    @arg       Passed as argument to the callback function */
 int timer_setup(int timer, uint32_t delay, timer_input_t clock,
-	int (*callback)(void *arg), void *arg);
+	int (*callback)(volatile void *arg), volatile void *arg);
 
 /* timer_delay() - compute a delay constant from a duration in seconds
 
@@ -108,7 +107,7 @@ int timer_setup(int timer, uint32_t delay, timer_input_t clock,
 
    @timer     The timer you are planning to use
    @delay_us  Requested delay in microseconds */
-uint32_t timer_delay(int timer, int delay_us);
+uint32_t timer_delay(int timer, uint64_t delay_us);
 
 /* timer_start() - start a configured timer
    The specified timer will start counting down and fire callbacks at regular
@@ -141,5 +140,15 @@ void timer_pause(int timer);
 
    @timer  Timer id, as returned by timer_setup() */
 void timer_stop(int timer);
+
+//---
+//	Predefined timer callbacks
+//---
+
+/* timer_timeout() - callback that sets a flag and halts the timer
+   This predefined callback may be used when a timeout is required. It sets its
+   argument pointer to 1 and halts the timer. The pointer must be of type
+   int * and you must declare the variable as volatile int. */
+int timer_timeout(volatile void *arg);
 
 #endif /* GINT_TIMER */

@@ -5,6 +5,8 @@
 #ifndef GINT_CORE_RTC
 #define GINT_CORE_RTC
 
+#include <gint/defs/attributes.h>
+
 //---
 //	Hybrid SH7705-SH7305 Real-Time Clock. Refer to:
 //	  "Renesas SH7705 Group Hardware Manual"
@@ -22,7 +24,7 @@ typedef struct
 	);
 	pad(1);
 
-} PACKED(2) rtc_BCD2_t;
+} GPACKED(2) rtc_BCD2_t;
 
 /* sh7705_rtc_t, sh7305_rtc_t - Date and time access, RTC control */
 typedef volatile struct
@@ -68,7 +70,7 @@ typedef volatile struct
 	);
 	pad(1);
 
-} PACKED(4) rtc_t;
+} GPACKED(4) rtc_t;
 
 #define SH7705_RTC (*((rtc_t *)0xfffffec0))
 #define SH7305_RTC (*((rtc_t *)0xa413fec0))

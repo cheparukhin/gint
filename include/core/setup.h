@@ -1,19 +1,19 @@
 //---
-//	gint:core:setup - Installing and unloading the library
+//	core:setup - Installing and unloading the library
 //---
 
 #ifndef GINT_CORE_SETUP
 #define GINT_CORE_SETUP
 
-#include <defs/types.h>
+#include <gint/defs/types.h>
 
 /* Prototypes for the library management functions are in <gint/gint.h> */
 
 /* gint_setvbr()
-   Changes the VBR address and the calls the configuration function while
-   interrupts are disabled. The configuration function must change either the
-   priority registers or the interrupt masks, and make sure that all the
-   interrupts that it leaves enabled are handled by the new VBR handlers.
+   Changes the VBR address and calls the configuration function while
+   interrupts are disabled. The configuration function must disable all
+   interrupts that the new handlers cannot handle, either by clearing the
+   priority registers or by setting the interrupt masks.
 
    @vbr		New VBR address
    @configure	Configuration function

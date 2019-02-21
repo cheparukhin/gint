@@ -27,7 +27,7 @@ _inth_rtc_pri:
 
 	/* Jump to another gate to finish the work:
 	   - 0xc is the size of storage below
-	   - 0x20 is the size of the next gate (alarm interrupt) */
+	   - 0x20 is the size of the gap before next gate (alarm interrupt) */
 	mov	#0x2c, r2
 	braf	r2
 	nop

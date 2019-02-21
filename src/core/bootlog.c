@@ -2,9 +2,11 @@
 //	gint:core:bootlog - Boot-time on-screen log for extreme debugging
 //---
 
-#include <defs/types.h>
-#include <core/intc.h>
-#include <core/mpu.h>
+/* TODO: Review, enhance and fix bootlog */
+
+#include <gint/defs/types.h>
+#include <gint/mpu.h>
+#include <gint/mpu/intc.h>
 #include <core/mmu.h>
 #include <gint/gint.h>
 
@@ -18,7 +20,7 @@ extern char
 void bootlog_loaded(void)
 {
 	/* Version string - the string constant resides in ROM */
-	uint32_t v = gint_version();
+	uint32_t v = GINT_VERSION;
 	const char *model = "gint #0.0-000";
 	char str[14];
 
@@ -43,7 +45,7 @@ void bootlog_loaded(void)
 	uint32_t gint_size	= (uint32_t)&sgdata + (uint32_t)&sgbss;
 
 	/* MPU type */
-	mpu_t mpu = mpu_id();
+	mpu_t mpu = gint_mpu();
 	const char *names = "SH7337\0 SH7305\0 SH7355\0 SH7724";
 
 	/* TODO: Use a solid API for boot-time printing */
@@ -87,28 +89,28 @@ void bootlog_kernel(void)
 	if(isSH3())
 	{
 		print(1, 5, "ABCD");
-		print_hex( 6, 5, INTC3._.IPRA->word, 4);
-		print_hex(10, 5, INTC3._.IPRB->word, 4);
-		print_hex(14, 5, INTC3._.IPRC->word, 4);
-		print_hex(18, 5, INTC3._.IPRD->word, 4);
+		print_hex( 6, 5, SH7705_INTC._.IPRA->word, 4);
+		print_hex(10, 5, SH7705_INTC._.IPRB->word, 4);
+		print_hex(14, 5, SH7705_INTC._.IPRC->word, 4);
+		print_hex(18, 5, SH7705_INTC._.IPRD->word, 4);
 		print(1, 6, "EFGH");
-		print_hex( 6, 6, INTC3._.IPRE->word, 4);
-		print_hex(10, 6, INTC3._.IPRF->word, 4);
-		print_hex(14, 6, INTC3._.IPRG->word, 4);
-		print_hex(18, 6, INTC3._.IPRH->word, 4);
+		print_hex( 6, 6, SH7705_INTC._.IPRE->word, 4);
+		print_hex(10, 6, SH7705_INTC._.IPRF->word, 4);
+		print_hex(14, 6, SH7705_INTC._.IPRG->word, 4);
+		print_hex(18, 6, SH7705_INTC._.IPRH->word, 4);
 	}
 	else
 	{
 		print(1, 5, "ACFG");
-		print_hex( 6, 5, INTC4._->IPRA.word, 4);
-		print_hex(10, 5, INTC4._->IPRC.word, 4);
-		print_hex(14, 5, INTC4._->IPRF.word, 4);
-		print_hex(18, 5, INTC4._->IPRG.word, 4);
+		print_hex( 6, 5, SH7305_INTC._->IPRA.word, 4);
+		print_hex(10, 5, SH7305_INTC._->IPRC.word, 4);
+		print_hex(14, 5, SH7305_INTC._->IPRF.word, 4);
+		print_hex(18, 5, SH7305_INTC._->IPRG.word, 4);
 		print(1, 6, "HJKL");
-		print_hex( 6, 6, INTC4._->IPRH.word, 4);
-		print_hex(10, 6, INTC4._->IPRJ.word, 4);
-		print_hex(14, 6, INTC4._->IPRK.word, 4);
-		print_hex(18, 6, INTC4._->IPRL.word, 4);
+		print_hex( 6, 6, SH7305_INTC._->IPRH.word, 4);
+		print_hex(10, 6, SH7305_INTC._->IPRJ.word, 4);
+		print_hex(14, 6, SH7305_INTC._->IPRK.word, 4);
+		print_hex(18, 6, SH7305_INTC._->IPRL.word, 4);
 	}
 
 	Bdisp_PutDisp_DD();

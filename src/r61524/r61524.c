@@ -3,7 +3,7 @@
 //---
 
 #include <gint/drivers.h>
-#include <defs/types.h>
+#include <gint/defs/types.h>
 
 #ifdef FXCG50
 
@@ -56,7 +56,7 @@ GDATA static volatile uint16_t *intf = (void *)0xb4000000;
 /* Bit 4 of Port R controls the RS bit of the display driver */
 GDATA static volatile uint8_t *PRDR = (void *)0xa405013c;
 
-INLINE static void select(uint16_t reg)
+GINLINE static void select(uint16_t reg)
 {
 	/* Clear RS and write the register number */
 	*PRDR &= ~0x10;
@@ -72,12 +72,12 @@ INLINE static void select(uint16_t reg)
 	synco();
 }
 
-INLINE static uint16_t read(void)
+GINLINE static uint16_t read(void)
 {
 	return *intf;
 }
 
-INLINE static void write(uint16_t data)
+GINLINE static void write(uint16_t data)
 {
 	*intf = data;
 }
@@ -261,7 +261,7 @@ typedef struct
 	/* Graphics RAM range */
 	uint16_t HSA, HEA, VSA, VEA;
 
-} PACKED(2) ctx_t;
+} GPACKED(2) ctx_t;
 
 /* Allocate one buffer in gint's storage section */
 GBSS static ctx_t sys_ctx;
@@ -301,7 +301,7 @@ static void ctx_restore(void *buf)
 //---
 
 gint_driver_t drv_r61524 = {
-	.name		= "Renesas R61524",
+	.name		= "R61524",
 	.init		= NULL,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,

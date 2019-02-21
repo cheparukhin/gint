@@ -5,37 +5,26 @@
 #ifndef GINT_DEFS_ATTRIBUTES
 #define GINT_DEFS_ATTRIBUTES
 
-/* Generic attribute element */
-#define ATTR(...)	__attribute__((__VA_ARGS__))
-
 /* Objects from specific sections */
-#define SECTION(x)	__attribute__((section(x)))
+#define GSECTION(x)	__attribute__((section(x)))
 /* Objects from the .gint.data and .gint.bss sections */
 #define GDATA		__attribute__((section(".gint.data")))
 #define GBSS		__attribute__((section(".gint.bss")))
 /* Additional sections that are only needed on SH3 */
 #define GDATA3		__attribute__((section(".gint.data.sh3")))
 #define GBSS3		__attribute__((section(".gint.bss.sh3")))
-/* Initialization functions */
-#define PRETEXT		__attribute__((section(".pretext")))
 
 /* Unused parameters or variables */
-#define UNUSED		__attribute__((unused))
+#define GUNUSED		__attribute__((unused))
 /* Functions that *must* be inlined */
-#define INLINE		__attribute__((always_inline)) inline
-/* Short static functions defined in header files */
-#define HDRFUNC		__attribute__((always_inline)) static inline
-
-/* Constructors and destructors */
-#define CTOR(x)		__attribute__((constructor ((x) + 101))) PRETEXT
-#define DTOR(x)		__attribute__((destructor  ((x) + 101)))
+#define GINLINE		__attribute__((always_inline)) inline
 
 /* Aligned variables */
-#define ALIGNED(x)	__attribute__((aligned(x)))
+#define GALIGNED(x)	__attribute__((aligned(x)))
 
 /* Packed structures. I require explicit alignment because if it's unspecified,
    GCC cannot optimize access size, and reads to memory-mapped I/O with invalid
    access sizes silently fail - honestly you don't want this to happen */
-#define PACKED(x)	__attribute__((packed, aligned(x)))
+#define GPACKED(x)	__attribute__((packed, aligned(x)))
 
 #endif /* GINT_DEFS_ATTRIBUTES */

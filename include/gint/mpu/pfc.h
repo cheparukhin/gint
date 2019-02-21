@@ -8,7 +8,8 @@
 #ifndef GINT_CORE_PFC
 #define GINT_CORE_PFC
 
-#include <defs/types.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
 
 //---
 //	SH7705 Pin Function Controller. Refer to:
@@ -66,7 +67,7 @@ typedef volatile struct
 	uint8_t PNDR;
 	pad(1);
 
-} PACKED(4) sh7705_pfc_t;
+} GPACKED(4) sh7705_pfc_t;
 
 #define SH7705_PFC (*((sh7705_pfc_t *)0xa4000100))
 

@@ -2,15 +2,16 @@
 //	gint:core:mpu - Runtime MPU detection
 //---
 
-#include <core/mpu.h>
-#include <defs/attributes.h>
-#include <defs/types.h>
+#include <gint/mpu.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
+#include <gint/defs/util.h>
 
 /* This file is only useful on fx9860g machines because all fxcg50 are SH4 */
 #ifdef FX9860G
 
 /* Holds the name of the current MPU; initialized at startup by mpu_init() */
-GBSS const mpu_t mpu;
+GBSS const mpu_t gint_mpu_id;
 
 /* mpu_detect() - detect the underlying MPU
    Many thanks to Simon Lothar for relevant documentation.
@@ -54,7 +55,7 @@ static mpu_t mpu_detect(void)
 /* mpu_init() - detect and save information about the underlying MPU */
 void mpu_init(void)
 {
-	const_cast(mpu, mpu_t) = mpu_detect();
+	const_cast(gint_mpu_id, mpu_t) = mpu_detect();
 }
 
 #endif

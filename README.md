@@ -1,98 +1,112 @@
-gint project
-============
+# gint project
 
-gint (pronounce 'guin') is a low-level library for fx-9860G calculators. It
-provides a mostly free-standing runtime support for the platform, and can be
-used to develop add-ins under Linux along with the gcc toolchain (`sh3eb-elf`
-target) and the [fxSDK](http://git.planet-casio.com/lephe/fxsdk).
+gint (pronounce 'guin') is a development system for Casio fx-9860G II and
+fx-CG 50 calculators. It provides a mostly free-standing runtime and is used
+to develop add-ins under Linux, along with specialized GCC toolchains and the
+[fxSDK](http://git.planet-casio.com/lephe/fxsdk).
 
-gint is free software: you may use it for any purpose, share it, modify it and
-share your changes. No credit of any kind is required, though appreciated.
+gint is a modular kernel that implements its own drivers for the calculator's
+hardware, overriding the operating system and its syscalls. It is a drop-in
+replacement from fxlib, with which it is mostly incompatible. gint exposes a
+new, richer API to manipulate the hardware and take advantage of the full
+capabilities of the machine.
+
+This is free software: you may use it for any purpose, share it, and modify it
+as long as you share your changes. Credit is not required, but please let me
+know!
 
 **TODO: Update this file for everything related to project organization**
 
 
-Programming interface
----------------------
+## Programming interface
 
 Because of its free-standing design, gint's API provides direct and efficient
 access to the low-level MPU features, among which:
-* Extensive keyboard control, including replication of the system behavior for
-  office applications and event-driven decisions for games
-* Hardware timers running at over 10 MHz, allowing microsecond-level control
-* Unlimited mappings of callbacks to Real-Time Clock events (requires build)
-* Access to processor registers for debugging information, determination of
-  processor speed (overclock is on the TODO list), backlight management...
+
+* Multi-key management with event systems suitable for games
+* Hardware timers with sub-millisecond and sub-microsecond resolution
+* Fast screen drivers with DMAC on fx-CG 50
+* Efficient and user-extendable interrupt management
 
 The library also offers powerful higher-level features:
-* A gray engine that works by rapidly swapping monochrome images
-* Blazingly fast drawing functions when working with the fxSDK (10 times faster
-  image rendering that MonochromeLib)
-* C Standard functions such as the `printf()` family
+
+* An enhanced versio of the system's GetKey() and GetKeyWait()
+* A gray engine that works by rapidly swapping monochrome images on fx-9860G II
+* Blazingly fast drawing functions when working with the fxSDK (image rendering
+  is 10 times faster than MonochromeLib)
+* Integrated font management with the fxSDK
+* Integration with a Newlib port by Memallox (WIP)
 
 
-Interrupt handler
------------------
+## Building and installing gint
 
-The interrupt handler is the lowest-level part of the library. It directly
-accesses the peripheral modules and workarounds the system to perform keyboard
-analyzes directly on hardware or timer management.
+You can choose to build gint for fx-9860G II (monochrome calculators, aka
+Graph 85 family), fx-CG 50 (color calculators, aka Prizm or Graph 90 family),
+or both. There are a few dependencies:
 
-gint does not allow user programs to use their own handlers, but it allows them
-to complete the original handler if they want to use interrupts that are not
-supported by the library. It is also possible to map various interrupt-driven
-events to user-provided callbacks using the API, which is not allowed by the
-operating system. This is particularly useful for timers and the Real-Time
-Clock (the 16 Hz interrupt can be used to run a physical engine, while the 1 Hz
-interrupt can be used in a real-time management game).
-
-
-Building and installing
------------------------
-
-To build and install gint, you will need the following components:
-* The `sh3eb-elf` toolchain linked somewhere in the PATH
+* A suitable GCC toolcahin in the `PATH`. You can absolutely *not* build gint
+  with your system compiler!
+  * For fx-9860G II, `sh3eb-elf` is strongly advised
+  * For fx-CG 50, `sh4eb-nofpu-elf` is slightly better but `sh3eb-elf` is
+    completely fine
 * The [fxSDK](http://git.planet-casio.com/lephe/fxsdk) installed and available
-  in the PATH
+  in the PATH. You will need `fxsdk` and `fxconv` to build gint, and if you
+  intend to develop add-ins for fx-9860G II, you probably want `fxg1a` as well.
 
-The classical way to build gint is to enter a terminal and use the usual:
+fx-CG 50 developers probably want a g3a wrapper as well; the reference
+implementation is tari's [mkg3a](https://www.taricorp.net/projects/mkg3a/).
+This is only necessary when creating g3a files, not to use gint.
 
-	$ ./configure
-	$ make
-	# make install
+The build process is detailed below for both platforms, the principle is the
+same. You can build both targets at the same time by reading the two sections.
 
-This will build the `all-lib` target and install the following components in
-the storage folder of the fxSDK:
-* `libgint.a`, the gint library
-* `libc.a`, the partial standard library
-* The libgint headers for development
+By default gint will be installed in the appropriate compiler folder, which
+is `$PREFIX/` for libraries and linker scripts, and `$PREFIX/include/gint/` for
+headers, where `PREFIX` is obtained by running
+`${toolchain}-gcc --print-search-dirs` and reading the line that starts with
+`install:`. You can change this with the `--prefix` configure option.
 
-When explicitly running target `all`, the following additional files will be
-generated in the working directory:
-* `gintdemo.g1a`, a test application
-* `gintdbg.g1a`, a non-gint application used for debugging in case gint crashes
+### Building for fx-9860G II
 
-The usual `clean`, `mrproper`, and `distclean` rules will clean the directory.
-There are configuration options, which can be obtained using
-`./configure --help`. Most of them customize size limits, if a project needs to
-extend them. The true free-standing program may build the library using the
-`--no-syscalls` switch, but some features will be disabled (dynamic
-allocation...).
+Create a build directory and configure in it:
 
+    % mkdir build.fx && cd build.fx
+    % ../configure --target=fx9860g
 
-Source organization
--------------------
+Then build the source and install the library files to the selected directory.
+You might need root access if you selected a target directory owned by root
+with `--prefix`, or if you built your compiler as root.
 
-gint is made of *modules*. Each module has one or more of the following
-component files:
-* A header file in `/include`
-* An internal header file in `/include/internals`
-* Single-function source files in `/src/module`: to avoid linking against the
-  whole library, some functions have their own object files. Their names are
-  those of the functions.
-* Other source files in `/src/module`: contain multiple functions that always
-  work together, or are lightweight enough not to be separated. Their names
-  often begin with `module_`.
-* Other files in `/src/module`: the `display` module contains a font.
+    % make
+    % make install
 
-The demo application is in the `demo` folder.
+### Building for fx-CG 50
+
+Create a build directory and configure in it. The default toolchain is
+`sh4eb-nofpu-elf`, if you wish to build with `sh3eb-elf`, you need to add a
+command-line option `--toolchain=sh3eb-elf`.
+
+    % mkdir build.cg && cd build.cg
+    % ../configure --target=fxcg50
+
+Then build the source and install the library files to the selected directory.
+
+    % make
+    % make install
+
+## Using gint
+
+To use gint as your runtime environment, the bare minimum is:
+
+* Build with `-ffreestanding`;
+* Link with `-T fx9860g.ld` and `-lgint-fx` on fx-9860G;
+* Link with `-T fxcg50.ld` and `-lgint-cg` on fx-CG 50.
+
+If you don't have a standard library such as
+[Memallox's port of newlib](https://git.planet-casio.com/Memallox/libc), you
+also need `-nostdlib`. I typically use `-m3 -mb` or `-m4 -mb` to specify the
+platform, but that may not even be necessary.
+
+Typically you might want to do this with the
+[fxSDK](http://git.planet-casio.com/lephe/fxsdk), which hides most of the
+details and makes it easy to roll add-ins.

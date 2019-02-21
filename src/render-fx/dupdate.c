@@ -1,0 +1,15 @@
+#define GINT_NEED_VRAM
+#include <gint/display.h>
+#include <gint/drivers/t6k11.h>
+
+/* Standard video RAM for fx9860g is 1 bit per pixel */
+GSECTION(".bss") static uint32_t fx_vram[256];
+
+/* Here is the definition of the VRAM pointer */
+GDATA uint32_t *vram = fx_vram;
+
+/* dupdate() - pushes the video RAM to the display driver */
+void dupdate(void)
+{
+	t6k11_display(vram, 0, 64, 16);
+}

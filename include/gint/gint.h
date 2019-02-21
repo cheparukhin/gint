@@ -5,11 +5,10 @@
 #ifndef GINT_GINT
 #define GINT_GINT
 
-#include <defs/attributes.h>
-#include <defs/types.h>
+#include <gint/defs/types.h>
 
-/* gint_version() - get the library version number
-   Returns gint's running version number, which is made of four fields:
+/* GINT_VERSION - the library version number
+   Provides gint's running version number, which is made of four fields:
 
       31           24 23   20 19   16 15                            0
      +---------------+---------------+---------------+---------------+
@@ -22,11 +21,9 @@
    The build number uniquely identifies a binary version of the library.
 
    For instance, 0x72100053 translates as "release 1.0 build 83". */
-HDRFUNC uint32_t gint_version(void)
-{
-	extern char GINT_VERSION;
-	return (uint32_t)&GINT_VERSION;
-}
+/* TODO: Fix version number */
+extern char GINT_VERSION;
+#define GINT_VERSION ((uint32_t)&GINT_VERSION)
 
 //---
 //	Library management
@@ -103,16 +100,17 @@ int gint_intlevel(int intid, int level);
    you're not interfering with usual interrupt assignments.
 
    The first parameter 'event_code' represents the event_code associated with
-   the interrupt. The codes are normally platform-dependent, but gint always
-   uses SH7305 codes: SH3 platforms have a translation table. See the
-   documentation for a list of event codes and their associated interrupts.
+   the interrupt. If it's not a multiple of 0x20 then you're doing something
+   wrong. The codes are normally platform-dependent, but gint always uses
+   SH7305 codes: SH3 platforms have a translation table. See the documentation
+   for a list of event codes and their associated interrupts.
 
    The handler function must be an interrupt handler: it must not raise
    exceptions, must end with 'rte', and it will use the kernel register bank.
    For convenience I allow any block size to be loaded as an interrupt handler,
-   but it should really be a multiple of 32 bytes and not override other
+   but it should really be a multiple of 0x20 bytes and not override other
    handlers. If it's not written in assembler, then you're likely doing
-   something wrong.
+   something wrong, even with __attribute__((interrupt_handler)).
 
    It is common for interrupt handlers to have a few bytes of data, such as the
    address of a callback function. gint often stores this data in the last

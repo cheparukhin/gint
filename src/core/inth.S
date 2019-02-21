@@ -29,9 +29,9 @@
 
    - It is possible to map MPU-specific blocks at runtime, to avoid checking
      the MPU each time an interrupt is handled;
-   - However, the blocks cannot rely on relative displacements or cross-
-     references unless their relative order is fully known. This happens with
-     the timer driver, and it works swimmingly; just be careful. */
+   - However, the blocks can only rely on relative displacements or cross-
+     references if their relative order is known and heeded for. A good example
+     of this is the timer driver. Please be careful. */
 
 /* SH7305-TYPE DEBUG INTERRUPT HANDLER - 26 BYTES */
 

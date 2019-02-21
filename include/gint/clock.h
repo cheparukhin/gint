@@ -5,8 +5,6 @@
 #ifndef GINT_CLOCK
 #define GINT_CLOCK
 
-#include <defs/types.h>
-
 //---
 //	Clock signals
 //---
@@ -59,7 +57,7 @@ const clock_frequency_t *clock_freq(void);
    The function stops the processor until an interrupt is accepted; the
    duration is not known in advance. This function should be used when the
    add-in is idle, for instance while waiting for keyboard input. */
-void sleep(void);
+#define sleep() __asm__("sleep")
 
 /* sleep_us() - sleep for a definite duration in microseconds
 

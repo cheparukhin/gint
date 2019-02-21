@@ -4,78 +4,87 @@
 #  Basic configuration
 #
 
-declare -A conf
-
 # Target platform
-conf_target=
+target=
+toolchain=
+
+# Build options
+prefix=
+cflags=
 
 # Behavior
-conf[GINT_BOOT_LOG]=
-conf[GINT_NO_SYSCALLS]=
-cong[GINT_LAX]=
-conf[GINT_EXTENDED_LIBC]=
-conf[GINT_STATIC_GRAY]=
+boot_log=
+no_syscalls=
+static_gray=
 
 # Size limits
-conf[ATEXIT_MAX]=16
-conf[TIMER_SLOTS]=16
-conf[EVENTS_QUEUE_SIZE]=64
+atexit_max=
 
 # Output files
-output="config/Makefile.cfg"
+output="Makefile.cfg"
 
 #
-#  Help screen and output util
+#  Help screen
 #
-
-error="\e[31;1merror:\e[0m"
-C_="$(echo -e '\e[30;1m')"
-Cr="$(echo -e '\e[31;1m')"
-Cg="$(echo -e '\e[32;1m')"
-Cp="$(echo -e '\e[34;1m')"
-C0="$(echo -e '\e[0m')"
 
 help()
 {
-	cat << EOF
+  cat << EOF
 Configuration script for the gint library.
 Usage: $0 [options...]
 
-Platform settings (specify exactly one):
-  ${Cg}-fx9860g$C0
-    Target platform is fx-9860G II: all monochrome models that support add-ins
-    or can be flashed to support them.
-  ${Cg}-fxcg50$C0
-    Target platform is fx-CG 50; there is some compatibility with fx-CG 10/20.
+You should build out-of-tree by creating a build directory and configuring from
+there.
 
-Options that affect the behavior of the library $C_[${Cp}default$C_]$C0:
-  $Cr-boot-log $C_[${Cp}disabled$C_]$C0
-    Enable an on-screen log at startup if a key is kept pressed while launching
-    the add-in, allowing easy debug and crash diagnoses.
-  $Cr-no-syscalls $C_[${Cp}disabled$C_]$C0
-    Never use syscalls. Expect trouble with malloc() and the gray engine. Do
-    not trigger this switch unless you know what you are doing.
-  $Cr-lax $C_[${Cp}disabled$C_]$C0
-    Make more assumptions about functions parameters. This disables coordinate
-    checks in drawing functions. Be careful!
-  $Cr-extended-libc $C_[${Cp}disabled$C_]$C0
-    Enable specific C99 headers/features that are normally not required by
-    calculator programs. This may allow porting programs from other platforms.
-  $Cr-static-gray-engine $C_[${Cp}disabled$C_]$C0
-    Place the gray engine vram in static ram instead of using the heap. Always
-    use this option when using both the gray engine and -no-syscalls.
+Target selection:
+  --target=fx9860g|fxcg50
 
-Options that customize size limits $C_[${Cp}default$C_]$C0:
-  $Cr-atexit-max$C0=${Cg}integer$C_ [${Cp}16$C_]$C0
-    Number of exit handlers that can be registered by atexit().
-  $Cr-timer-slots$C0=${Cg}integer$C_ [${Cp}16$C_]$C0
-    Number of virtual timers that may be registered at the same time.
-  $Cr-events-queue-size$C0=${Cg}integer$C_ [${Cp}64$C_]$C0
-    Number of events simultaneously stored in the event queue.
+  fx9860g covers all fx-9860G II-like monochromes models that support add-ins
+  or can be flashed with an OS that does. This includes SH3 and SH4 machines.
+  Default toolchain is 'sh3eb-elf'.
+
+  fxcg50 covers just the fx-CG 50; there is some unofficial compatibility with
+  fx-CG 10/20. All of these are SH4-only.
+  Default toolchain is 'sh4eb-nofpu-elf'.
+
+Build options:
+  --toolchain=TRIPLET  Build with a different toolchain
+  --prefix=PREFIX      Install prefix (PREFIX/lib and PREFIX/include are used)
+  --cflags=FLAGS       Additional compiler flags at end of command
+
+Library options (disabled by default):
+  --boot-log           Display a boot debug log at startup if a key is pressed
+                       Used to investigate unstabilities.
+  --no-syscalls        Cut off all syscalls (this will break things)
+                       Only use this option if you have a good idea of which.
+  --static-gray        Allocate gray VRAMs in static RAM instead of the heap
+                       May help when --no-syscalls is on.
+
+Size limits:
+  --atexit-max=NUM     Number of exit handlers in atexit()'s array [16]
+
+Deprecated options (to be removed):
+  -extended-libc       Provide a few C99 headers (in the future, refer to the
+                       newlib port by Memallox's for the standard library)
+  -timer-slots=<n>     Number of virtual timer slots (this feature will be
+                       moved to an independent library) [16]
+  -events-queue-size=<n>
+                       Size of event queue (this mechanism is likely to
+                       disappear in future versions) [64]
 EOF
-
-	exit 0
+  exit 0
 }
+
+if [[ "$@" == "--help" ]]; then
+  help
+  exit 1
+fi
+
+if [[ -f make/Makefile ]]; then
+  echo "error: you should configure from a build directory, like this:" >&2
+  echo "  mkdir build && cd build && ../configure [options..]" >&2
+  exit 1
+fi
 
 #
 #  Parsing arguments
@@ -83,53 +92,82 @@ EOF
 
 fail=false
 for arg; do case "$arg" in
-	-h | -? | --help) help;;
+  -h | -? | --help)
+    help;;
 
-	-fx9860g)
-		conf_target="FX9860G";;
-	-fxcg50)
-		conf_target="FXCG50";;
+  --target=*)
+    case ${arg#*=} in
+      "fx9860g")
+        target=fx9860g
+        toolchain=${toolchain:-sh3eb-elf};;
+      "fxcg50")
+        target=fxcg50
+        toolchain=${toolchain:-sh4eb-nofpu-elf};;
+      *)
+        echo "error: invalid target '$target'"
+        fail=true
+    esac;;
 
-	-boot-log)		conf[GINT_BOOT_LOG]=true;;
-	-no-syscalls)		conf[GINT_NO_SYSCALLS]=true;;
-	-lax)			conf[GINT_LAX]=true;;
-	-extended-libc)		conf[GINT_EXTENDED_LIBC]=true;;
-	-static-gray-engine)	conf[GINT_STATIC_GRAY]=true;;
+  --prefix=*)
+    prefix=${arg#*=};;
+  --cflags=*)
+    cflags=${arg#*=};;
 
-	-atexit-max=*)
-		size=${arg#*=}
-		if [[ $size == +([0-9]) ]]; then
-			conf[ATEXIT_MAX]=$size
-		else echo -e "$error -atexit-max expects an integer value"
-			fail=true; fi;;
-	-timer-slots=*)
-		size=${arg#*=}
-		if [[ $size == +([0-9]) ]]; then
-			conf[TIMER_SLOTS]=$size
-		else echo -e "$error -timer-slots expects an integer value"
-			fail=true; fi;;
-	-events-queue-size=*)
-		size=${arg#*=}
-		if [[ $size == +([0-9]) ]]; then
-			conf[EVENTS_QUEUE_SIZE]=$size
-		else echo -e "$error -events-queue-size expects an integer"\
-			"value"
-			fail=true; fi;;
+  --boot-log)
+    boot_log=true;;
+  --no-syscalls)
+    no_syscalls=true;;
+  --static-gray)
+    static_gray=true;;
 
-	-atexit-max | -timer-slots | -events-queue-size)
-		echo -e "$error syntax for $arg is $arg=<integer-value>";;
+  --atexit-max=*)
+    n=${arg#*=}
+    if [[ $n == +([0-9]) ]]; then
+      atexit_max=$n
+    else
+      echo -e "error: -atexit-max expects an integer value"
+      fail=true
+    fi;;
 
-	*)
-		echo -e "$error unrecognized argument '$arg'"; fail=true;;
+  --atexit-max)
+    echo "error: '$arg' expects a value (see '$0 --help')";
+    fail=true;;
+
+  -extended-libc)
+    echo "warning: support for '-extended-libc' has been removed";;
+  -timer-slots=*)
+    echo "warning: support for '-timer-slots' has been removed";;
+  -events-queue-size=*)
+    echo "warning: support for '-events-queue-size' has been removed";;
 esac; done
 
 #
 #  Checking mandatory arguments
 #
 
-if [[ ! $conf_target ]]; then
-	echo -e "$error No target specified. See $0 --help."
-	fail=true;
+if [[ -z "$target" ]]; then
+  echo "error: no target specified! (see '$0 --help')"
+  fail=true;
+fi
+
+# If no prefix is specified, install to the GCC's build folder
+if [[ -z "$prefix" ]]; then
+  echo "No prefix specified, let's ask the compiler:"
+  echo "  $toolchain-gcc --print-search-dirs | grep install | sed 's/install: //'"
+  inst=$($toolchain-gcc --print-search-dirs | grep install | sed 's/install: //')
+
+  if [[ $? != 0 ]]; then
+    echo "Call returned $?, giving up."
+  fi
+
+  echo "Got '$inst'".
+
+  if [[ ! -d $inst ]]; then
+    echo "Directory does not exist (or is not a directory), giving up."
+  fi
+
+  echo ""
+  prefix=$inst
 fi
 
 #
@@ -138,32 +176,34 @@ fi
 
 output_config()
 {
-	[ ${conf_target} == "FX9860G" ] \
-	&& echo "cfg_target = fx" \
-	|| echo "cfg_target = cg"
+  mod=${target/98/fx}
+  echo "CONFIG.TARGET = ${mod:2:2}"
+  echo "CONFIG.TARGET.LONG = $target"
 
-	echo -n "cfg_macros ="
-	echo -n " -D$conf_target"
+  [[ $prefix    ]] && echo "PREFIX = $prefix"
+  [[ $toolchain ]] && echo "CONFIG.TOOLCHAIN = $toolchain"
+  [[ $cflags    ]] && echo "CONFIG.CFLAGS = $cflags"
 
-	[ "${conf[GINT_BOOT_LOG]}"      ] && echo -n " -DGINT_BOOT_LOG"
-	[ "${conf[GINT_NO_SYSCALLS]}"   ] && echo -n " -DGINT_NO_SYSCALLS"
-	[ "${conf[GINT_LAX]}"		] && echo -n " -DGINT_LAX"
-	[ "${conf[GINT_EXTENDED_LIBC]}" ] && echo -n " -DGINT_EXTENDED_LIBC"
-	[ "${conf[GINT_STATIC_GRAY]}"   ] && echo -n " -DGINT_STATIC_GRAY"
-
-	echo -n " -DATEXIT_MAX=${conf[ATEXIT_MAX]}"
-	echo -n " -DTIMER_SLOTS=${conf[TIMER_SLOTS]}"
-	echo -n " -DEVENTS_QUEUE_SIZE=${conf[EVENTS_QUEUE_SIZE]}"
-
-	echo ""
-
-	[ "${conf[GINT_EXTENDED_LIBC]}" != "" ] && echo "cfg_ext = true"
+  echo -n "CONFIG.MACROS ="
+  echo -n " -D$(echo $target | tr 'a-z' 'A-Z')"
+  [[ "$boot_log"    ]] && echo -n " -DGINT_BOOT_LOG"
+  [[ "$no_syscalls" ]] && echo -n " -DGINT_NO_SYSCALLS"
+  [[ "$static_gray" ]] && echo -n " -DGINT_STATIC_GRAY"
+  [[ "$atexit_max"  ]] && echo -n " -DATEXIT_MAX=$atexit_max"
+  echo ""
 }
 
 if $fail; then
-	echo "Output file $output has not been modified."
-else
-	mkdir -p config
-	output_config > $output
-	echo "Configuration saved in $output, ready to make!"
+  echo "note: output file $output has not been changed."
+  exit 1
 fi
+
+output_config > $output
+
+src="Makefile"
+dst="../make/Makefile"
+
+[[ -L $src && $(readlink $src) == $dst ]] && rm $src
+ln -s $dst $src
+
+echo "Configuration saved in $output, ready to make!"

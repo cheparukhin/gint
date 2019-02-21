@@ -7,10 +7,10 @@
 #include <gint/gint.h>
 #include <gint/clock.h>
 
-#include <core/intc.h>
+#include <gint/mpu/intc.h>
 
-#include <defs/attributes.h>
-#include <defs/types.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
 
 //---
 //	Timer structures
@@ -31,7 +31,7 @@ typedef volatile struct
 		uint16_t TPSC	:3;	/* Timer prescaler (input clock) */
 	);
 
-} PACKED(4) tmu_t;
+} GPACKED(4) tmu_t;
 
 /* tmu_extra_t - extra timers on sh7337, sh7355 and sh7305 */
 typedef volatile struct
@@ -48,16 +48,16 @@ typedef volatile struct
 		uint8_t UNIE	:1;	/* Underflow interrupt enable */
 	);
 
-} PACKED(4) tmu_extra_t;
+} GPACKED(4) tmu_extra_t;
 
 /* inth_data_t - data storage inside interrupt handlers */
 typedef struct
 {
-	int (*callback)(void *arg);	/* User-provided callback function */
-	void *arg;			/* Argument for [callback] */
+	int (*cb)(volatile void *arg);	/* User-provided callback */
+	volatile void *arg;		/* Argument for [callback] */
 	volatile void *structure;	/* Either TCR or timer address */
 
-} PACKED(4) inth_data_t;
+} GPACKED(4) inth_data_t;
 
 /* timer_t - all data required to run a single timer */
 typedef struct
@@ -94,7 +94,7 @@ GDATA static volatile uint8_t *TSTR = (void *)0xa4490004;
 
 /* timer_setup() - set up a timer */
 int timer_setup(int tid, uint32_t delay, timer_input_t clock,
-	int (*callback)(void *arg), void *arg)
+	int (*callback)(volatile void *arg), volatile void *arg)
 {
 	/* We need to distinguish normal and extra timers */
 	if(tid < 3)
@@ -122,13 +122,16 @@ int timer_setup(int tid, uint32_t delay, timer_input_t clock,
 		tmu_extra_t *t = timers[tid].tmu;
 		if(t->TCR.UNIE) return -1;
 
-		/* There is no clock input and no clock edge settings */
-		t->TCOR = delay;
-		t->TCNT = delay;
-
 		/* Clear the interrupt flag */
 		do t->TCR.UNF = 0;
 		while(t->TCR.UNF);
+
+		/* There is no clock input and no clock edge settings */
+		t->TCOR = delay;
+
+		/* TODO: FXCG50: does not always work on first try */
+		do t->TCNT = delay;
+		while(t->TCNT != delay);
 
 		t->TCR.UNIE = 1;
 	}
@@ -136,7 +139,7 @@ int timer_setup(int tid, uint32_t delay, timer_input_t clock,
 	/* Register the callback and its argument (TMU-owned timers only) */
 	if(timers[tid].data)
 	{
-		timers[tid].data->callback = callback;
+		timers[tid].data->cb = callback;
 		timers[tid].data->arg = arg;
 	}
 
@@ -145,20 +148,19 @@ int timer_setup(int tid, uint32_t delay, timer_input_t clock,
 }
 
 /* timer_delay() - compute a delay constant from a duration in seconds */
-uint32_t timer_delay(int tid, int delay_us)
+uint32_t timer_delay(int tid, uint64_t delay_us)
 {
 	/* TODO: Proper timer_delay() */
 	const clock_frequency_t *clock = clock_freq();
-	uint64_t freq;
-
-	freq = isSH3() ? 14750000 >> 2 : clock->Pphi_f >> 2;
+	uint64_t freq = clock->Pphi_f >> 2;
 
 	/* fxcg50: Calculated = 29491200 but it's too low */
 	// uint64_t freq = 29020000 >> 2;
 
-	if(tid >= 3) freq = 32768;	/* 32768 Hz */
+	/* Extra timers all run at 32768 Hz */
+	if(tid >= 3) freq = 32768;
 
-	uint64_t product = freq * (uint64_t)delay_us;
+	uint64_t product = freq * delay_us;
 	return product / 1000000;
 }
 
@@ -167,17 +169,10 @@ uint32_t timer_delay(int tid, int delay_us)
    @state  0 to start the timer, 1 to stop it (nothing else!) */
 static void timer_control(int tid, int state)
 {
-	if(tid < 3)
-	{
-		/* For standard timers, use the MPU's TSTR register */
-		*TSTR = (*TSTR | (1 << tid)) ^ (state << tid);
-	}
-	else
-	{
-		/* Extra timers all have their own TSTR register */
-		tmu_extra_t *t = timers[tid].tmu;
-		t->TSTR = (t->TSTR | 1) ^ state;
-	}
+	/* For standard timers, use the MPU's TSTR register */
+	if(tid < 3) *TSTR = (*TSTR | (1 << tid)) ^ (state << tid);
+	/* Extra timers all have their own TSTR register */
+	else ((tmu_extra_t *)timers[tid].tmu)->TSTR = state ^ 1;
 }
 
 /* timer_start() - start a configured timer */
@@ -202,8 +197,6 @@ void timer_pause(int tid)
 /* timer_stp() - stop and free a timer */
 void timer_stop(int tid)
 {
-	return;
-
 	/* Stop the timer and disable UNIE to indicate that it's free */
 	timer_pause(tid);
 
@@ -219,11 +212,26 @@ void timer_stop(int tid)
 
 		/* Also clear TCOR and TCNT to avoid spurious interrupts */
 		t->TCOR = 0xffffffff;
-		t->TCNT = 0xffffffff;
+
+		/* TODO: FXCG50: Again */
+		do t->TCNT = 0xffffffff;
+		while(t->TCNT + 1);
 
 		do t->TCR.UNF = 0;
 		while(t->TCR.UNF);
 	}
+}
+
+//---
+//	Predefined timer callbacks
+//---
+
+/* timer_timeout() - callback that sets a flag and halts the timer */
+int timer_timeout(volatile void *arg)
+{
+	volatile int *x = arg;
+	(*x)++;
+	return 0;
 }
 
 //---
@@ -258,11 +266,10 @@ static void driver_sh3(void)
 
 static void init(void)
 {
-	/* Install the standard's TMU interrupt handlers. By chance TMU gates
-	   use the same event codes on SH7705 and SH7305 */
-	UNUSED void *h0, *h1, *h2, *hs;
-	h0 = gint_inthandler(0x400, inth_tmu_0, 32);
-	h1 = gint_inthandler(0x420, inth_tmu_1, 32);
+	/* Install the standard's TMU interrupt handlers */
+	void *h2, *hs;
+	     gint_inthandler(0x400, inth_tmu_0, 32);
+	     gint_inthandler(0x420, inth_tmu_1, 32);
 	h2 = gint_inthandler(0x440, inth_tmu_2, 32);
 	hs = gint_inthandler(0x460, inth_tmu_storage, 32);
 
@@ -270,7 +277,6 @@ static void init(void)
 	timers[0].data = h2 + 20;
 	timers[1].data = hs + 8;
 	timers[2].data = hs + 20;
-
 	/* SH3: Override the address of TSTR in the interrupt handler helper */
 	if(isSH3()) *(volatile uint8_t **)(hs + 4) = TSTR;
 
@@ -282,10 +288,12 @@ static void init(void)
 	for(int i = 0; i < 3; i++)
 	{
 		tmu_t *t = timers[i].tmu;
-		t->TCR.UNIE = 0;
 
-		do t->TCR.UNF = 0;
-		while(t->TCR.UNF);
+		t->TCOR = 0xffffffff;
+		t->TCNT = 0xffffffff;
+
+		do t->TCR.word = 0;
+		while(t->TCR.word);
 
 		/* Standard timers: TCR is provided to the interrupt handler */
 		timers[i].data->structure = &t->TCR;
@@ -296,16 +304,21 @@ static void init(void)
 	{
 		tmu_extra_t *t = timers[i].tmu;
 
-		/* This is *extremely important*: extra timers will generate
-		   interrupts as long as TCNT = 0 *regardless of TSTR*! */
-		t->TCOR = 0xffffffff;
-		t->TCNT = 0xffffffff;
+		/* Extra timers seem to generate interrupts as long as TCNT=0,
+		   regardless of TSTR. I'm not entirely sure about this weird
+		   behaviour, but for safety I'll set TCOR/TCNT to non-zero.
+		   This may be related to difficulties when setting TCNT. */
 
-		t->TCR.UNIE = 0;
 		t->TSTR = 0;
+		t->TCOR = 0xffffffff;
 
-		do t->TCR.UNF = 0;
-		while(t->TCR.UNF);
+		/* TODO: FXCG50: Safety */
+		do t->TCNT = 0xffffffff;
+		while(t->TCNT + 1);
+
+		/* Clear interrupts */
+		do t->TCR.byte = 0;
+		while(t->TCR.byte);
 	}
 
 	/* Install the extra timers. We need three extra timers for the
@@ -347,10 +360,10 @@ static void init(void)
 		gint_intlevel(44, 7);
 
 		/* Unmask the extra timers' interrupts */
-		INTC4.MSKCLR->IMR2 = 0x01;
-		INTC4.MSKCLR->IMR5 = 0x06;
-		INTC4.MSKCLR->IMR6 = 0x18;
-		INTC4.MSKCLR->IMR8 = 0x02;
+		SH7305_INTC.MSKCLR->IMR2 = 0x01;
+		SH7305_INTC.MSKCLR->IMR5 = 0x06;
+		SH7305_INTC.MSKCLR->IMR6 = 0x18;
+		SH7305_INTC.MSKCLR->IMR8 = 0x02;
 	}
 }
 
@@ -364,7 +377,7 @@ typedef struct
 	tmu_extra_t extra[6];
 	uint8_t TSTR;
 
-} PACKED(4) ctx_t;
+} GPACKED(4) ctx_t;
 
 /* Allocate a system buffer in gint's BSS area */
 GBSS static ctx_t sys_ctx;
@@ -428,7 +441,7 @@ static void ctx_restore(void *buf)
 //---
 
 gint_driver_t drv_tmu = {
-	.name		= "Timer Unit",
+	.name		= "TMU",
 	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
 	.init		= init,
 	.ctx_size	= sizeof(ctx_t),

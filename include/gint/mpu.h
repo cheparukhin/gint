@@ -12,8 +12,6 @@
 #ifndef GINT_CORE_MPU
 #define GINT_CORE_MPU
 
-#include <defs/attributes.h>
-
 /* mpu_t - supported MPUs */
 typedef enum
 {
@@ -27,14 +25,11 @@ typedef enum
 #ifdef FX9860G
 
 	/* mpu_id() - get the name of the underlying MPU */
-	HDRFUNC mpu_t mpu_id(void)
-	{
-		extern const mpu_t mpu;
-		return mpu;
-	}
+	extern const mpu_t gint_mpu_id;
+	#define gint_mpu() (gint_mpu_id)
 
 	/* Quick SH-3/SH-4 tests. Unknown models are assumed to be SH-4A */
-	#define isSH3() (mpu_id() & 1)
+	#define isSH3() (gint_mpu() & 1)
 	#define isSH4() (!isSH3())
 
 	/* mpu_init() - probe the MPU type
@@ -44,7 +39,7 @@ typedef enum
 #else /* FXCG50 */
 
 	/* All fxcg50 machines have an SH7305, which makes things simpler. */
-	#define mpu_id() mpu_sh7305
+	#define gint_mpu() mpu_sh7305
 	#define isSH3() 0
 	#define isSH4() 1
 

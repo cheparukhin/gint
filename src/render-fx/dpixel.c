@@ -1,0 +1,28 @@
+#define GINT_NEED_VRAM
+#include <gint/display.h>
+#include <gint/defs/types.h>
+
+/* dpixel() - change a pixel's color */
+void dpixel(int x, int y, color_t color)
+{
+	/* Sanity checks */
+	if((uint)x >= 64 || (uint)y >= 128) return;
+
+	uint32_t *lword = vram + (y << 2) + (x >> 5);
+	uint32_t mask = 1 << (~x & 31);
+
+	switch(color)
+	{
+	case color_white:
+		*lword &= ~mask;
+		break;
+	case color_black:
+		*lword |= mask;
+		break;
+	case color_reverse:
+		*lword ^= mask;
+		break;
+	default:
+		return;
+	}
+}

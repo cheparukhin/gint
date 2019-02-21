@@ -3,11 +3,11 @@
 //---
 
 #include <gint/drivers.h>
-#include <drivers/t6k11.h>
+#include <gint/drivers/t6k11.h>
 
-#include <defs/attributes.h>
-#include <defs/types.h>
-#include <core/mpu.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
+#include <gint/mpu.h>
 
 #ifdef FX9860G
 
@@ -55,21 +55,21 @@ GDATA static volatile uint8_t *cmd = (void *)0xb4010000;
 /* command() - send a command to set the value of a register
    @reg   Register number
    @data  Value to set in reg */
-INLINE static void command(uint8_t reg, uint8_t data)
+GINLINE static void command(uint8_t reg, uint8_t data)
 {
 	*sel = reg;
 	*cmd = data;
 }
 
 /* status() - read the status byte from the display driver */
-INLINE static uint8_t status(void)
+GINLINE static uint8_t status(void)
 {
 	return *sel;
 }
 
 /* write_row() - send 16 bytes to the display driver
    @buf  Buffer to take data from */
-INLINE static void write_row(const uint8_t *buf)
+GINLINE static void write_row(const uint8_t *buf)
 {
 	*sel = reg_data;
 
@@ -129,6 +129,12 @@ void t6k11_contrast(int contrast)
 	   fx9860G II with OS 02.05.2201, are in range 0x97 .. 0xb7.
 	   This means VLC0 = 2 and CONTRAST in [23..55] */
 	command(reg_contrast, 0x97 + contrast);
+
+	/* TODO: Turns out that different models, notably screens without
+	   TODO: backlight, will have different ranges. Plus we might want to
+	   TODO: use transitions to extreme contrast settings for visual
+	   TODO: effects.
+	   TODO: Extend the available range of contrast settings. */
 }
 
 /* t6k11_backlight() - manage the screen backlight */
@@ -168,7 +174,7 @@ typedef struct
 	/* There *are* other parameters that are affected by the driver, but
 	   they cannot be read, so I can't determine the system's setting */
 
-} PACKED(1) ctx_t;
+} GPACKED(1) ctx_t;
 
 /* Pre-allocate a context in gint's uninitialized section */
 GBSS static ctx_t sys_ctx;
@@ -197,7 +203,7 @@ static void ctx_restore(void *buf)
 //---
 
 gint_driver_t drv_t6k11 = {
-	.name		= "Toshiba T6K11",
+	.name		= "T6K11",
 	.init		= NULL,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,

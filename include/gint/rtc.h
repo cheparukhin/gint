@@ -5,7 +5,7 @@
 #ifndef GINT_RTC
 #define GINT_RTC
 
-#include <defs/types.h>
+#include <gint/defs/types.h>
 
 //---
 //	Time management
@@ -45,14 +45,14 @@ void rtc_set_time(const rtc_time_t *time);
 /* rtc_frequency_t - possible frequency settings for the RTC's interrupt */
 typedef enum
 {
-	rtc_500mHz	= 7,
-	rtc_1Hz		= 6,
-	rtc_2Hz		= 5,
-	rtc_4Hz		= 4,
-	rtc_16Hz	= 3,
-	rtc_64Hz	= 2,
-	rtc_256Hz	= 1,
-	rtc_none	= 0,
+	RTC_500mHz	= 7,
+	RTC_1Hz		= 6,
+	RTC_2Hz		= 5,
+	RTC_4Hz		= 4,
+	RTC_16Hz	= 3,
+	RTC_64Hz	= 2,
+	RTC_256Hz	= 1,
+	RTC_NONE	= 0,
 
 } rtc_frequency_t;
 
@@ -70,8 +70,8 @@ typedef enum
    up a 1 Hz-callback when the current time ends in 950 ms will result in the
    callback being called after 50 ms, then every second. This is not a problem
    for most uses. */
-void rtc_start_timer(rtc_frequency_t freq, int (*callback)(void *arg),
-	void *arg);
+void rtc_start_timer(rtc_frequency_t freq,
+	int (*callback)(volatile void *arg), volatile void *arg);
 
 /* rtc_stop_timer() - stop the RTC timer
    This function stops the RTC timer that was set up with rtc_start_timer(). If

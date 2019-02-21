@@ -11,14 +11,14 @@
 #ifdef FX9860G
 
 /* tlb_addr() - get the P4 address of a TLB address entry */
-INLINE const tlb_addr_t *tlb_addr(uint way, uint E)
+GINLINE const tlb_addr_t *tlb_addr(uint way, uint E)
 {
 	uint32_t addr = 0xf2000000 | (E << 12) | (way << 8);
 	return (void *)addr;
 }
 
 /* tlb_data() - get the P4 address of a TLB data entry */
-INLINE const tlb_data_t *tlb_data(uint way, uint E)
+GINLINE const tlb_data_t *tlb_data(uint way, uint E)
 {
 	uint32_t addr = 0xf3000000 | (E << 12)  | (way << 8);
 	return (void *)addr;
@@ -57,14 +57,14 @@ void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 //---
 
 /* utlb_addr() - get the P4 address of a UTLB address entry */
-INLINE const utlb_addr_t *utlb_addr(uint E)
+GINLINE const utlb_addr_t *utlb_addr(uint E)
 {
 	uint32_t addr = 0xf6000000 | ((E & 0x3f) << 8);
 	return (void *)addr;
 }
 
 /* utlb_data() - get the P4 address of a UTLB data entry */
-INLINE const utlb_data_t *utlb_data(uint E)
+GINLINE const utlb_data_t *utlb_data(uint E)
 {
 	uint32_t addr = 0xf7000000 | ((E & 0x3f) << 8);
 	return (void *)addr;

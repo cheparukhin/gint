@@ -12,7 +12,7 @@
 #ifndef GINT_CORE_INTC
 #define GINT_CORE_INTC
 
-#include <defs/types.h>
+#include <gint/defs/types.h>
 
 //---
 //	SH7705 Interrupt Controller. Refer to:
@@ -83,7 +83,7 @@ typedef struct
 		uint16_t	:4;
 	);
 
-} PACKED(4) sh7705_intc_ipc_t;
+} GPACKED(4) sh7705_intc_ipc_t;
 
 /* sh7705_intc_icr1_t - Interrupt Control Register 1 (general) */
 typedef volatile word_union(sh7705_intc_icr1_t,
@@ -106,12 +106,12 @@ typedef struct
 	union {
 		sh7705_intc_ipc_t	_;
 		volatile uint16_t	*IPRS[8];
-	} PACKED(4);
+	} GPACKED(4);
 
 	/* Control registers */
 	sh7705_intc_icr1_t		*ICR1;
 
-} PACKED(4) sh7705_intc_t;
+} GPACKED(4) sh7705_intc_t;
 
 
 
@@ -223,7 +223,7 @@ typedef volatile struct
 	);
 	pad(2);
 
-} PACKED(4) sh7305_intc_ipc_t;
+} GPACKED(4) sh7305_intc_ipc_t;
 
 /* sh7305_intc_masks_t - Interrupt mask management
    Writing 1 to IMR masks interrupts; writing 1 to IMCRs clears the masks.
@@ -244,7 +244,7 @@ typedef volatile struct
 	uint8_t IMR11;	pad(3);
 	uint8_t IMR12;
 
-} PACKED(4) sh7305_intc_masks_t;
+} GPACKED(4) sh7305_intc_masks_t;
 
 
 /* sh7305_intc_userimask_t - User Interrupt Mask
@@ -286,14 +286,14 @@ typedef struct
 	/* Other registers */
 	sh7305_intc_userimask_t		*USERIMASK;
 
-} PACKED(4) sh7305_intc_t;
+} GPACKED(4) sh7305_intc_t;
 
 //---
 //	Forward definitions
 //---
 
 /* Provided by core/gint.c */
-extern sh7705_intc_t INTC3;
-extern sh7305_intc_t INTC4;
+extern sh7705_intc_t SH7705_INTC;
+extern sh7305_intc_t SH7305_INTC;
 
 #endif /* GINT_CORE_INTC */

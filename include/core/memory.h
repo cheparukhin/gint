@@ -1,5 +1,5 @@
 //---
-//	gint:core:memory - Core memory functions
+//	core:memory - Core memory functions
 //
 //	These are the basic standard memory functions required by GCC.
 //---

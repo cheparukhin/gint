@@ -27,7 +27,7 @@
    - Clear the interrupt flag
    - Invoke a callback function and pass it a user-provided argument
    - Stop the timer if the callback returns non-zero
-   - Host their own callback and arguments
+   - Host their own callback pointers and arguments
 
    It is important to notice that the code of the following gates looks like
    they are contiguous in memory. The assembler will make that assumption, and
@@ -60,7 +60,7 @@ _inth_tmu_0:
 	mov.l	@(4, r0), r4
 	lds.l	@r15+, pr
 
-	/* Prepare stopping the timer */
+	/* Prepare stopping the timer and jump to second section */
 	mov.l	.tstr, r5
 	bra	.stoptimer
 	mov.l	@r15+, r1
@@ -122,11 +122,11 @@ _inth_tmu_storage:
    To implement the same functionalities as the standard timers, several blocks
    are once again needed. But the handlers for the extra timers are not located
    in adjacent gates, except for ETMU1 and ETMU2 which have event codes 0xc20
-   and 0xc40. Since handler 0xc60 is free on both SH3 and SH4, I'm using it to
-   build a three-handler block and achieve the same result as above.
+   and 0xc40. Since handler 0xc60 is free on SH4 and not redirected to on SH3,
+   I use it to build a three-handler block similar to that of the TMU above.
 
    On SH4 this means that an extra gate has to be installed, but no interrupt
-   pointed here. On SH3 this means that four gates are used for the only extra
+   point here. On SH3 this means that four gates are used for the only extra
    timer, but the incurred cost is minimal (96 bytes on the binary file)
    because the size of the VBR area can hardly be shrunk anyway.
 
@@ -141,8 +141,8 @@ _inth_tmu_storage:
 
 /* FIRST GATE - ETMU2 entry, clear flag and prepare callback */
 _inth_tmu_extra2:
-	/* Warning: the size of this section (2 bytes) is hardcoded in another
-	   interrupt handler, _inth_tmu_extra_others */
+	/* Warning: the size of the following instruction (2 bytes) is
+	   hardcoded in another interrupt handler, _inth_tmu_extra_others */
 	mova	.storage_extra_1, r0
 
 .extra_callback:
@@ -214,7 +214,7 @@ _inth_tmu_extra_others:
 	   - 0x600 to reach the interrupt handlers
 	   - 0x020 to jump over the entry gate
 	   - 0x840 to reach the handler of extra timer 2
-	   - 0x002 to jump over the first part of its code */
+	   - 0x002 to skip its first instruction (the size is hardcoded) */
 1:	.long	0xe62
 
 	.zero 4

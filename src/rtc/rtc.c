@@ -5,10 +5,10 @@
 #include <gint/rtc.h>
 #include <gint/drivers.h>
 #include <gint/gint.h>
-#include <mod/rtc.h>
 
-#include <core/mpu.h>
-#include <defs/types.h>
+#include <gint/defs/types.h>
+#include <gint/mpu.h>
+#include <gint/mpu/rtc.h>
 
 //---
 //	Real-Time Clock peripheral registers
@@ -18,10 +18,10 @@
 GDATA static rtc_t *RTC = &SH7305_RTC;
 /* Address of interrupt handler parameters */
 GBSS struct {
-	int (*callback)(void *arg);
-	void *arg;
+	int (*callback)(volatile void *arg);
+	volatile void *arg;
 	volatile uint8_t *RCR2;
-} PACKED(4) *params;
+} GPACKED(4) *params;
 
 //---
 //	Time management
@@ -97,8 +97,12 @@ void rtc_set_time(const rtc_time_t *time)
 //---
 
 /* rtc_start_timer() - configure the RTC timer */
-void rtc_start_timer(rtc_frequency_t freq, int (*callback)(void*arg), void*arg)
+void rtc_start_timer(rtc_frequency_t freq,
+	int (*callback)(volatile void *arg), volatile void *arg)
 {
+	/* Temporarily disable the interrupt */
+	RTC->RCR2.PES = RTC_NONE;
+
 	/* Set up the callback */
 	params->callback = callback;
 	params->arg = arg;
@@ -114,7 +118,7 @@ void rtc_start_timer(rtc_frequency_t freq, int (*callback)(void*arg), void*arg)
 /* rtc_stop_timer() - stop the RTC timer */
 void rtc_stop_timer(void)
 {
-	RTC->RCR2.PES = rtc_none;
+	RTC->RCR2.PES = RTC_NONE;
 }
 
 //---
@@ -136,7 +140,7 @@ static void init(void)
 	extern void inth_rtc_pri_helper(void);
 
 	/* Install the RTC interrupt handler */
-	UNUSED void *h0, *h1;
+	GUNUSED void *h0, *h1;
 	h0 = gint_inthandler(0xaa0, inth_rtc_pri, 32);
 	h1 = gint_inthandler(0xae0, inth_rtc_pri_helper, 32);
 
@@ -144,7 +148,7 @@ static void init(void)
 	params->RCR2 = &RTC->RCR2.byte;
 
 	/* Disable the periodic interrupt for now, but give it priority 5 */
-	RTC->RCR2.PES = rtc_none;
+	RTC->RCR2.PES = RTC_NONE;
 	gint_intlevel(isSH3() ? 3 : 40, 5);
 }
 
@@ -179,7 +183,7 @@ static void ctx_restore(void *buf)
 //---
 
 gint_driver_t drv_rtc = {
-	.name		= "Real-Time Clock",
+	.name		= "RTC",
 	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
 	.init		= init,
 	.ctx_size	= sizeof(ctx_t),

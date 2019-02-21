@@ -5,7 +5,8 @@
 #ifndef GINT_CORE_CPG
 #define GINT_CORE_CPG
 
-#include <defs/types.h>
+#include <gint/defs/attributes.h>
+#include <gint/defs/types.h>
 
 //---
 //	SH7705 Clock Pulse Generator. Refer to:
@@ -27,7 +28,7 @@ typedef volatile struct
 		uint16_t PFC	:2;	/* Peripheral clock divider */
 	);
 
-} PACKED(4) sh7705_cpg_t;
+} GPACKED(4) sh7705_cpg_t;
 
 #define SH7705_CPG (*((sh7705_cpg_t *)0xffffff80))
 
@@ -73,7 +74,7 @@ typedef volatile struct
 		uint32_t FLF	:11;	/* FLL Multiplication Ratio */
 	);
 
-} PACKED(4) sh7305_cpg_t;
+} GPACKED(4) sh7305_cpg_t;
 
 #define SH7305_CPG (*((sh7305_cpg_t *)0xa4150000))
 

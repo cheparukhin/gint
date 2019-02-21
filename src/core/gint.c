@@ -3,13 +3,13 @@
 //---
 
 #include <gint/gint.h>
-#include <core/mpu.h>
-#include <core/intc.h>
 #include <core/memory.h>
+#include <gint/mpu.h>
+#include <gint/mpu/intc.h>
 
 /* Interrupt controllers */
 
-GDATA3 sh7705_intc_t INTC3 = {
+GDATA3 sh7705_intc_t SH7705_INTC = {
 	.IPRS = {
 		(void *)0xfffffee2, (void *)0xfffffee4,
 		(void *)0xa4000016, (void *)0xa4000018, (void *)0xa400001a,
@@ -18,7 +18,7 @@ GDATA3 sh7705_intc_t INTC3 = {
 	.ICR1 = (void *)0xa4000010,
 };
 
-GDATA sh7305_intc_t INTC4 = {
+GDATA sh7305_intc_t SH7305_INTC = {
 	.IPRS		= (void *)0xa4080000,
 	.MSK		= (void *)0xa4080080,
 	.MSKCLR		= (void *)0xa40800c0,
@@ -37,8 +37,8 @@ int gint_intlevel(int intid, int level)
 	level &= 0xf;
 
 	ipr = isSH3()
-	? INTC3.IPRS[intid >> 2]		/* SH3-based */
-	: &INTC4.IPRS[2 * (intid >> 2)];	/* SH4-based */
+	? SH7705_INTC.IPRS[intid >> 2]			/* SH3-based */
+	: &SH7305_INTC.IPRS[2 * (intid >> 2)];		/* SH4-based */
 
 	int oldlevel = (*ipr >> shift) & 0xf;
 	*ipr = (*ipr & ~(0xf << shift)) | (level << shift);

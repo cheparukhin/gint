@@ -6,8 +6,8 @@
 #include <gint/drivers.h>
 #include <core/memory.h>
 #include <core/setup.h>
-#include <core/intc.h>
-#include <core/mpu.h>
+#include <gint/mpu.h>
+#include <gint/mpu/intc.h>
 
 /* VBR address, from the linker script */
 extern char gint_vbr;
@@ -24,34 +24,26 @@ typedef struct
 {
 	uint16_t iprs[12];
 
-} PACKED(2) gint_core_ctx;
+} GPACKED(2) gint_core_ctx;
 
 /* gint_ctx_save() - save interrupt controller configuration
    @arg  ctx	gint core context object */
 static void gint_ctx_save(gint_core_ctx *ctx)
 {
-	if(isSH3())
-	{
-		for(int i = 0; i < 8; i++) ctx->iprs[i] = *(INTC3.IPRS[i]);
-	}
-	else
-	{
-		for(int i = 0; i < 12; i++) ctx->iprs[i] = INTC4.IPRS[2 * i];
-	}
+	if(isSH3()) for(int i = 0; i < 8; i++)
+		ctx->iprs[i] = *(SH7705_INTC.IPRS[i]);
+	else for(int i = 0; i < 12; i++)
+		ctx->iprs[i] = SH7305_INTC.IPRS[2 * i];
 }
 
 /* gint_ctx_restore() - restore interrupt controller configuration
    @arg  ctx	gint core context object */
 static void gint_ctx_restore(gint_core_ctx *ctx)
 {
-	if(isSH3())
-	{
-		for(int i = 0; i < 8; i++) *(INTC3.IPRS[i]) = ctx->iprs[i];
-	}
-	else
-	{
-		for(int i = 0; i < 12; i++) INTC4.IPRS[2 * i] = ctx->iprs[i];
-	}
+	if(isSH3()) for(int i = 0; i < 8; i++)
+		*(SH7705_INTC.IPRS[i]) = ctx->iprs[i];
+	else for(int i = 0; i < 12; i++)
+		SH7305_INTC.IPRS[2 * i] = ctx->iprs[i];
 }
 
 //---
@@ -65,14 +57,10 @@ GBSS static gint_core_ctx sys_ctx;
 static void lock(void)
 {
 	/* Just disable everything, drivers will enable what they support */
-	if(isSH3())
-	{
-		for(int i = 0; i < 8; i++) *(INTC3.IPRS[i]) = 0x0000;
-	}
-	else
-	{
-		for(int i = 0; i < 12; i++) INTC4.IPRS[2 * i] = 0x0000;
-	}
+	if(isSH3()) for(int i = 0; i < 8; i++)
+		*(SH7705_INTC.IPRS[i]) = 0x0000;
+	else for(int i = 0; i < 12; i++)
+		SH7305_INTC.IPRS[2 * i] = 0x0000;
 }
 
 /* gint_install() - install and start gint */
@@ -122,7 +110,7 @@ static void unlock(void)
 
 	/* Restore all driver settings, but do it in reverse order of loading
 	   to honor the dependency system */
-	for(gint_driver_t *drv = &edrv; (--drv) >= &edrv;)
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
 	{
 		if(drv->unload) drv->unload();
 		if(drv->ctx_restore) drv->ctx_restore(drv->sys_ctx);
