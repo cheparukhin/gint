@@ -169,12 +169,13 @@ int topti_split(uint32_t const * glyph, int width, int height, int free,
    Combines glyph data onto VRAM operands and blits them efficiently onto the
    VRAM. To write a single character, use a 2-byte string with a NUL.
 
-   @x @y      Target position on VRAM
-   @str       Text source
-   @f         Font
-   @asm_text  Assembler function for the rendering proper */
+   @x @y    Target position on VRAM
+   @str     Text source
+   @f       Font
+   @asm_fg  Assembler function for text rendering
+   @asm_bg  Assembler function for background rendering */
 void topti_render(int x, int y, const char *str, font_t const *f,
-	asm_text_t *asm_text)
+	asm_text_t *asm_fg, asm_text_t *asm_bg)
 {
 	/* Storage height and number of free bits in operators[] */
 	int height = f->data_height, free;
@@ -191,9 +192,14 @@ void topti_render(int x, int y, const char *str, font_t const *f,
 	int vdisp = 0;
 	if(y < 0) vdisp = -y, y = 0;
 
-	/* Operator data */
+	/* Operator data and background */
 	uint32_t operators[height];
-	for(int i = 0; i < height; i++) operators[i] = 0;
+	uint32_t bg[height];
+	for(int i = 0; i < height; i++)
+	{
+		operators[i] = 0;
+		bg[i] = 0xffffffff >> (x & 31);
+	}
 
 	/* Put an initial offset to the operators to honor the x coordinate */
 	free = 32 - (x & 31);
@@ -223,11 +229,19 @@ void topti_render(int x, int y, const char *str, font_t const *f,
 
 		/* Once operators are full, update VRAM and start again */
 
-		if(x >= 0) asm_text(v1, v2, operators + vdisp, height - vdisp);
+		if(x >= 0)
+		{
+			asm_bg(v1, v2, bg + vdisp, height - vdisp);
+			asm_fg(v1, v2, operators + vdisp, height - vdisp);
+		}
 		v1++, v2++;
 		if(++x >= 4) break;
 
-		for(int i = 0; i < height; i++) operators[i] = 0;
+		for(int i = 0; i < height; i++)
+		{
+			operators[i] = 0;
+			bg[i] = 0xffffffff;
+		}
 		free += 32;
 
 		/* If information was lost in the split, finish it */
@@ -241,12 +255,45 @@ void topti_render(int x, int y, const char *str, font_t const *f,
 
 	/* Put the final longwords */
 	if(x >= 0 && x < 4 && free < 32)
-		asm_text(v1, v2, operators + vdisp, height - vdisp);
+	{
+		for(int i = 0; i < height; i++) bg[i] &= ~((1 << free) - 1);
+		asm_bg(v1, v2, bg + vdisp, height - vdisp);
+		asm_fg(v1, v2, operators + vdisp, height - vdisp);
+	}
+}
+
+/* dsize() - get the width and height of rendered text */
+void dsize(const char *str, font_t const * f, int *w, int *h)
+{
+	if(!f) f = topti_font;
+	if(h) *h = f->line_height;
+	if(!w) return;
+
+	/* Width for monospaced fonts is easy, unfortunately we still need to
+	   compute the length of [str]. Critical applications might do the
+	   product themselves to avoid this cost. */
+	if(!f->prop)
+	{
+		int length = 0;
+		while(*str++) length++;
+		*w = (f->width + 1) * length - 1;
+		return;
+	}
+
+	/* For proportional fonts, fetch the width of each individual glyphs */
+	int width = 0;
+	while(*str)
+	{
+		int glyph = charset_decode(f->charset, *str++);
+		if(glyph > 0) width += f->sized_data[glyph] + 1;
+	}
+	*w = width - 1;
 }
 
 /* dtext() - display a string of text */
-void dtext(int x, int y, const char *str, color_t color)
+void dtext(int x, int y, const char *str, color_t fg, color_t bg)
 {
-	if((uint)color >= 8) return;
-	topti_render(x, y, str, topti_font, topti_asm_text[color]);
+	if((uint)fg >= 8 || (uint)bg >= 8) return;
+	topti_render(x, y, str, topti_font, topti_asm_text[fg],
+		topti_asm_text[bg]);
 }

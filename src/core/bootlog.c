@@ -9,6 +9,12 @@
 #include <gint/mpu/intc.h>
 #include <core/mmu.h>
 #include <gint/gint.h>
+#include <gint/display.h>
+
+#ifdef FXCG50
+#define dclear(c) Bdisp_AllClr_VRAM()
+#define dupdate() Bdisp_PutDisp_DD()
+#endif
 
 /* Linker script symbols - see core/start.c for details */
 extern char
@@ -20,24 +26,19 @@ extern char
 void bootlog_loaded(void)
 {
 	/* Version string - the string constant resides in ROM */
-	uint32_t v = GINT_VERSION;
-	const char *model = "gint #0.0-000";
+	const char *base = "gint @";
+	const char *hexa = "0123456789abcdef";
 	char str[14];
 
-	for(int i = 0; i < 14; i++) str[i] = model[i];
+	for(int i = 0; i < 6; i++) str[i] = base[i];
+	str[13] = 0;
 
-	/* Quickly get the three digits of the build number */
-	int x_q = (v & 0xffff) / 10;
-	int x_r = (v & 0xffff) - 10 * x_q;
-	int y_q = x_q / 10;
-	int y_r = x_q - 10 * y_q;
-
-	str[5]   = (v & 0xff000000) >> 24;
-	str[6]  += (v & 0x00f00000) >> 20;
-	str[8]  += (v & 0x000f0000) >> 16;
-	str[10] += y_q;
-	str[11] += y_r;
-	str[12] += x_r;
+	/* Retrieve the commit number */
+	for(int i = 0; i < 7; i++)
+	{
+		int shift = 24 - (i << 2);
+		str[i + 6] = hexa[(GINT_VERSION >> shift) & 0xf];
+	}
 
 	/* Size of memory sections */
 	uint32_t rom_size	= (uint32_t)&srom;
@@ -49,7 +50,7 @@ void bootlog_loaded(void)
 	const char *names = "SH7337\0 SH7305\0 SH7355\0 SH7724";
 
 	/* TODO: Use a solid API for boot-time printing */
-	Bdisp_AllClr_VRAM();
+	dclear(color_white);
 	print(1, 1, str);
 	print(15, 1, " Loaded");
 
@@ -64,7 +65,7 @@ void bootlog_loaded(void)
 	print_dec(17, 3, &mtors - &btors, 2);
 	print_dec(20, 3, &etors - &mtors, 2);
 
-	Bdisp_PutDisp_DD();
+	dupdate();
 }
 
 /* bootlog_mapped() - ROM mapping stage */
@@ -78,7 +79,7 @@ void bootlog_mapped(int rom, int ram)
 	(rom < 0) ? print(9,  4, "???") : print_dec(9,  4, rom, 3);
 	(ram < 0) ? print(18, 4, "???") : print_dec(18, 4, ram, 3);
 
-	Bdisp_PutDisp_DD();
+	dupdate();
 }
 
 /* bootlog_kernel() - gint loading stage */
@@ -113,5 +114,5 @@ void bootlog_kernel(void)
 		print_hex(18, 6, SH7305_INTC._->IPRL.word, 4);
 	}
 
-	Bdisp_PutDisp_DD();
+	dupdate();
 }

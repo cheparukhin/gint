@@ -16,6 +16,8 @@
 #define DWIDTH  396
 #define DHEIGHT 224
 
+typedef void font_t;
+
 #endif /* FXCG50 */
 
 #endif /* GINT_DISPLAY_CG */

@@ -29,10 +29,10 @@ _topti_asm_white:
 	add	#16, r4
 	mov.l	@r4, r1
 	dt	r7
-	not	r1, r1
-	and	r1, r0
+	not	r0, r0
+	and	r0, r1
 	bf.s	1b
-	mov.l	r0, @r4
+	mov.l	r1, @r4
 
 	rts
 	nop
@@ -79,6 +79,7 @@ _topti_asm_black:
 1:	mov.l	@r6+, r0
 	dt	r7
 	mov.l	@r4, r1
+	/* (bubble) */
 	or	r1, r0
 	mov.l	r0, @r4
 	bf.s	1b

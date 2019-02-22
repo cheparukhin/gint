@@ -142,9 +142,9 @@ int start(int isappli, int optnum)
 	if(rom < (uint32_t)&srom)
 	{
 		Bdisp_AllClr_VRAM();
-		print(1, 1, "Missing memory!");
+		PrintXY(0, 0, "Missing memory!", 0);
 		print_hex(1, 2, rom, 8);
-		print(1, 3, "<");
+		PrintXY(0, 16, "<", 0);
 		print_hex(1, 4, (uint32_t)&srom, 8);
 		Bdisp_PutDisp_DD();
 		while(1);

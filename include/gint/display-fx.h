@@ -184,6 +184,24 @@ typedef struct
    @font  Font to use for subsequent text rendering calls */
 void dfont(font_t const * font);
 
+/* dsize() - get the width and height of rendered text
+   This function computes the size that the given string would take up if
+   rendered with a certain font. If you specify a NULL font, the currently
+   configured font will be used; this differs from  dfont() which uses gint's
+   default font when NULL is passed.
+
+   Note that the height of each glyph is not stored in the font, only the
+   maximum. Usually this is what you want because vertically-centered strings
+   must have the same baseline regardless of their contents. So the height
+   returned by dsize() is the same for all strings, only depends on the font.
+
+   The height is computed in constant time, and the width in linear time.
+
+   @str   String whose size must be evaluated
+   @font  Font to use; if NULL, defaults to the current font
+   @w @h  Set to the width and height of the rendered text, may be NULL */
+void dsize(const char *str, font_t const * font, int *w, int *h);
+
 /* dtext() - display a string of text
 
    Draws some text in the video RAM using the font set with dfont() (or gint's
@@ -196,8 +214,9 @@ void dfont(font_t const * font);
 
    @x @y   Coordinates of top-left corner of the rendered string
    @str    String to display
-   @color  Which color to use */
-void dtext(int x, int y, const char *str, color_t color);
+   @fg     Text color
+   @bg     Background color, pass [color_none] to disable */
+void dtext(int x, int y, const char *str, color_t fg, color_t bg);
 
 #endif /* FX9860G */
 

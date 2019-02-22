@@ -77,7 +77,7 @@ conv	= fxconv
 #
 
 # Version symbol is obtained by using the last commit hash on 7 nibbles
-version_hash = 0x0$(shell git show --format='%h' HEAD | tr -d "\n")
+version_hash = 0x0$(shell git rev-parse --short HEAD)
 
 
 #
@@ -114,7 +114,7 @@ version.o:
 	@ mkdir -p $(dir $@)
 	@ echo "_GINT_VERSION = $(version_hash);" > $@.txt
 	$(call cmd_b,ld,$@) $(ld) -r -R $@.txt -o $@
-
+.PHONY: version.o
 #
 #  Cleaning
 #
