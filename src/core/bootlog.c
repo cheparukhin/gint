@@ -2,16 +2,22 @@
 //	gint:core:bootlog - Boot-time on-screen log for extreme debugging
 //---
 
-/* TODO: Review, enhance and fix bootlog */
-
 #include <gint/defs/types.h>
+#include <core/std.h>
+#include <core/mmu.h>
+
 #include <gint/mpu.h>
 #include <gint/mpu/intc.h>
-#include <core/mmu.h>
+
 #include <gint/gint.h>
 #include <gint/display.h>
+#include <core/syscalls.h>
+#include <gint/clock.h>
 
 #ifdef FXCG50
+void Bdisp_AllClr_VRAM(void);
+void Bdisp_PutDisp_DD(void);
+
 #define dclear(c) Bdisp_AllClr_VRAM()
 #define dupdate() Bdisp_PutDisp_DD()
 #endif
@@ -22,28 +28,34 @@ extern char
 	sgdata, sgbss, sdata, sbss,
 	btors, mtors, etors;
 
+/* print() - formatted printing shorthand */
+static void print(int x, int y, const char *format, ...)
+{
+	char str[45];
+	va_list args;
+	va_start(args, format);
+
+	vsprintf(str + 2, format, args);
+
+	#ifdef FX9860G
+	dtext(6 * (x - 1) + 1, 7 * (y - 1), str + 2, color_black, color_white);
+	#endif
+
+	#ifdef FXCG50
+	PrintXY(x, y, str, 0, 0);
+	#endif
+
+	va_end(args);
+}
+
 /* bootlog_loaded() - section loading stage */
+GSECTION(".pretext")
 void bootlog_loaded(void)
 {
-	/* Version string - the string constant resides in ROM */
-	const char *base = "gint @";
-	const char *hexa = "0123456789abcdef";
-	char str[14];
-
-	for(int i = 0; i < 6; i++) str[i] = base[i];
-	str[13] = 0;
-
-	/* Retrieve the commit number */
-	for(int i = 0; i < 7; i++)
-	{
-		int shift = 24 - (i << 2);
-		str[i + 6] = hexa[(GINT_VERSION >> shift) & 0xf];
-	}
-
 	/* Size of memory sections */
-	uint32_t rom_size	= (uint32_t)&srom;
-	uint32_t ram_size	= (uint32_t)&sdata + (uint32_t)&sbss;
-	uint32_t gint_size	= (uint32_t)&sgdata + (uint32_t)&sgbss;
+	uint32_t rom_size  = (uint32_t)&srom;
+	uint32_t ram_size  = (uint32_t)&sdata + (uint32_t)&sbss;
+	uint32_t gint_size = (uint32_t)&sgdata + (uint32_t)&sgbss;
 
 	/* MPU type */
 	mpu_t mpu = gint_mpu();
@@ -51,68 +63,121 @@ void bootlog_loaded(void)
 
 	/* TODO: Use a solid API for boot-time printing */
 	dclear(color_white);
-	print(1, 1, str);
-	print(15, 1, " Loaded");
+	print(1, 1, "gint @%7x   SLmkd", GINT_VERSION);
 
-	if((uint)mpu < 4) print(16, 2, names + 8 * (mpu - 1));
-	else print_dec(16, 2, mpu, 6);
+	if((uint)mpu < 4) print(1, 2, names + 8 * (mpu - 1));
+	else print(1, 2, "%6d", mpu);
 
-	print(1, 2, "ROM  RAM  GINT");
-	print(4, 3, "k           c  d");
-	print_dec(1, 3, (rom_size + 0x3ff) >> 10, 3);
-	print_dec(6, 3, ram_size, 4);
-	print_dec(11, 3, gint_size, 4);
-	print_dec(17, 3, &mtors - &btors, 2);
-	print_dec(20, 3, &etors - &mtors, 2);
+	#ifdef FX9860G
+	print(8, 2, "%c?-", gint_platform.extended_ram ? 'R' : 'r');
+	#endif
+
+	#ifdef FXCG50
+	print(8, 2, "--%c", gint_platform.prizm ? 'P' : 'p');
+	#endif
+
+	char os[11];
+	__os_version(os);
+	print(12, 2, "OS%2s%2s%4s", os, os+3, os+6);
+
+	print(1, 3, "ROM%4dk RAM%3d+%1dk ??",
+		(rom_size  + 0x3ff) >> 10,
+		(ram_size  + 0x3ff) >> 10,
+		(gint_size + 0x3ff) >> 10);
 
 	dupdate();
 }
 
 /* bootlog_mapped() - ROM mapping stage */
+GSECTION(".pretext")
 void bootlog_mapped(int rom, int ram)
 {
-	rom = (rom + 0x3ff) >> 10;
-	ram = (ram + 0x3ff) >> 10;
+	/* Check whether all ROM is mapped */
+	uint32_t rom_size  = (uint32_t)&srom;
 
-	print(15, 1, " Mapped");
-	print(1, 4, "MMU ROM:   k RAM:   k");
-	(rom < 0) ? print(9,  4, "???") : print_dec(9,  4, rom, 3);
-	(ram < 0) ? print(18, 4, "???") : print_dec(18, 4, ram, 3);
+	print(20, 3, "%c%c", (rom >= (int)rom_size) ? 'F' : 'f',
+		isSH3() ? 'u' : 'U');
+	print(9, 2, (ram > 8192) ? "E" : "e");
+	print(19, 1, "M");
+	dupdate();
+}
 
+/* bootlog_unmapped() - ROM mapping stage failure */
+void bootlog_unmapped(int rom, int size)
+{
+	print(1, 6, "MMU: add-in too large");
+	print(1, 7, "%8x < %8x", rom, size);
 	dupdate();
 }
 
 /* bootlog_kernel() - gint loading stage */
 void bootlog_kernel(void)
 {
-	print(15, 1, " Kernel");
+	print(20, 1, "K");
+}
 
-	if(isSH3())
+/* bootlog_driver() - driver load
+   Called for very loaded driver. */
+void bootlog_driver(const char *drv, const char *status)
+{
+	/* Positioning for the driver name */
+
+	static int x = 1, y = 4;
+	if(y > 5)
 	{
-		print(1, 5, "ABCD");
-		print_hex( 6, 5, SH7705_INTC._.IPRA->word, 4);
-		print_hex(10, 5, SH7705_INTC._.IPRB->word, 4);
-		print_hex(14, 5, SH7705_INTC._.IPRC->word, 4);
-		print_hex(18, 5, SH7705_INTC._.IPRD->word, 4);
-		print(1, 6, "EFGH");
-		print_hex( 6, 6, SH7705_INTC._.IPRE->word, 4);
-		print_hex(10, 6, SH7705_INTC._.IPRF->word, 4);
-		print_hex(14, 6, SH7705_INTC._.IPRG->word, 4);
-		print_hex(18, 6, SH7705_INTC._.IPRH->word, 4);
+		print(21, 4, "+");
+		return;
 	}
-	else
+
+	print(x, y, "%3s", drv);
+	x += 4;
+
+	if(x + y >= 22) y++;
+
+	/* Positioning for the driver message */
+
+	if(!status) return;
+
+	int len = strlen(status);
+
+	static int mx = 1, my = 6;
+	if(mx + len > 22) mx = 1, my++;
+	if(my > 9) return;
+
+	print(mx, my, "%s", status);
+	mx += len + 1;
+
+	dupdate();
+}
+
+/* bootlog_driver_summary() - all drivers loaded */
+void bootlog_driver_summary(void)
+{
+	int interrupts = 0;
+	uint16_t ipr;
+	print(21, 1, "D");
+
+	/* Count number of enabled interrupts */
+	if(isSH3()) for(int i = 0; i < 8; i++)
 	{
-		print(1, 5, "ACFG");
-		print_hex( 6, 5, SH7305_INTC._->IPRA.word, 4);
-		print_hex(10, 5, SH7305_INTC._->IPRC.word, 4);
-		print_hex(14, 5, SH7305_INTC._->IPRF.word, 4);
-		print_hex(18, 5, SH7305_INTC._->IPRG.word, 4);
-		print(1, 6, "HJKL");
-		print_hex( 6, 6, SH7305_INTC._->IPRH.word, 4);
-		print_hex(10, 6, SH7305_INTC._->IPRJ.word, 4);
-		print_hex(14, 6, SH7305_INTC._->IPRK.word, 4);
-		print_hex(18, 6, SH7305_INTC._->IPRL.word, 4);
+		ipr = *SH7705_INTC.IPRS[i];
+		while(ipr > 0)
+		{
+			interrupts += (ipr & 0xf) != 0;
+			ipr >>= 4;
+		}
 	}
+	else for(int i = 0; i < 12; i++)
+	{
+		ipr = SH7305_INTC.IPRS[2 * i];
+		while(ipr > 0)
+		{
+			interrupts += (ipr & 0xf) != 0;
+			ipr >>= 4;
+		}
+	}
+
+	print(19, 5, "#%2d", interrupts);
 
 	dupdate();
 }

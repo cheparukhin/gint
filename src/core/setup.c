@@ -4,7 +4,7 @@
 
 #include <gint/gint.h>
 #include <gint/drivers.h>
-#include <core/memory.h>
+#include <core/std.h>
 #include <core/setup.h>
 #include <gint/mpu.h>
 #include <gint/mpu/intc.h>

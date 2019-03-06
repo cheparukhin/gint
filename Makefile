@@ -21,7 +21,7 @@ all-targets := $(foreach b,$(builds),all-$b)
 all: $(all-targets)
 
 all-build%: build%
-	@ echo -e "$B::$W Making into $<$N"
+	@ echo -e "\n$B::$W Making into $<$N"
 	@ $(MAKE) --no-print-directory -C $<
 
 #
@@ -33,7 +33,7 @@ install-targets := $(foreach b,$(builds),install-$b)
 install: $(install-targets)
 
 install-build%: build%
-	@ echo -e "$B::$W Installing from $<$N"
+	@ echo -e "\n$B::$W Installing from $<$N"
 	@ $(MAKE) --no-print-directory -C $< install
 
 #
@@ -45,7 +45,7 @@ uninstall-targets := $(foreach b,$(builds),uninstall-$b)
 uninstall: $(uninstall-targets)
 
 uninstall-build%: build%
-	@ echo -e "$B::$W Uninstalling from $<$N"
+	@ echo -e "\n$B::$W Uninstalling from $<$N"
 	@ $(MAKE) --no-print-directory -C $< uninstall
 
 #

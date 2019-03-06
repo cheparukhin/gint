@@ -65,6 +65,7 @@ typedef volatile struct
 		uint32_t CKOFF	:1;	/* CKO Output Stop */
 		uint32_t	:1;
 	);
+	/* TODO: CPG: Add the SSCGCR register */
 	pad(0x28);
 
 	lword_union(FLLFRQ,

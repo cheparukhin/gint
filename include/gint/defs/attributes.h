@@ -27,4 +27,7 @@
    access sizes silently fail - honestly you don't want this to happen */
 #define GPACKED(x)	__attribute__((packed, aligned(x)))
 
+/* Weak symbols */
+#define GWEAK		__attribute__((weak))
+
 #endif /* GINT_DEFS_ATTRIBUTES */

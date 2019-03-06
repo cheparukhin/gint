@@ -1,89 +1,45 @@
-# Since compatibility
+On the bootlog.
+* Better review of .pretext to make sure everything fits in 4k
+* Move topti to .pretext to use it in the bootlog, also update() and dclear()
+* Use topti in the error message for the missing mappings (hurray o/)
+* Use a serious formatted printing function
 
-Another, more recent list of things to do:
-- Complete memory functions in [core/memory.c]
-- Finish the boot log in <core/bootlog.h>
-- Finish the boot log in [core/bootlog.c]
-- Document the SH7305 PFC in <gint/mpu/pfc.h>
-- Change the description of the version number in <gint/gint.h>
-- Define the version number from full Git info
-- Do this display in <gint/display-fx.h> and <gint/display-cg.h>
-- Remove all mentions of GINT_LAX in the code
-- Write exception handlers
-- Do overclock in [clock/]
-- Test getkey()
+Crucial, missing things.
+! core:      the four basic memory functions
+! core:      build an exception handler and a TLB miss handler
+! core:      gint_switch() (driver contexts on stack; arbitrary code?)
 
-* Make keysc/keysc.c/state static and review forgotten global variables
-* Find out what happened to the clock frequency on fxcg50
-* Implement profiling
-* Save and restore interrupt masks
-* More keyboard
+Tests to run.
+* core:      run the alignment/size automated tests
+* bopti:     more sizes, gray
+* topti:     all charsets, colors
 
-Strange, (irreproducible?) SysERRORs on SH3?
-- Happened when dealing with overclock and after a transfer
-- SysERROR when add-in fully returns, nothing during execution
-- Affects all add-ins of the calculator!
+Completeness elements on existing code.
+* keyboard:  finish the interface
+* clock:     spread spectrum on fxcg50
+* bopti:     blending modes for monochrome bitmaps (use topti assembler)
+* display:   use more of topti's assembler in drect()
+* core:      use cmp/str for memchr()
+* stdio:     serious formatted printing function
+* timer:     try putting the definitions in <gint/mpu/tmu.h>
 
-* Make sure interrupt for extra timers is masked when you ctx_restore to avoid
-  interrupts
+Keep in mind.
+* keyboard:  make keysc.c@state static and review globals in the project
+* prizm:     don't hardcode stack address in fxcg50.ld
+* prizm:     detect P1 static RAM (stack) in TLB
+* core:      prove and use qdiv10() instead of __sdivsi3
+* setjmp:    more registers may need to be saved
+* core:      free heap when a task-switch results in leaving the app
+* core:      save and restore interrupt masks
+* timer:     make sure ETMU interrupts are disabled in ctx_restore()
+* core:      document the SH7305 PFC in <gint/mpu/pfc.h>
 
-* For modules, use #define TMU ((tmu_t *)0xdeadbeef)) instead of tmu_t *TMU
-* Don't hardcode fx-cg50 stack address in fxcg50.ld for Prizm compatibility
-* Implement the gint_switch()
+Future directions.
 * File management
-* Drawing functions, bopti and tales
 * Gray engine
-* Overclock
-* Add a driver init function to the r61524 driver.
-* Finish the bootlog and use the keyboard to control it.
-* Save driver contexts on the stack in gint_pause().
-* Write the core memory functions.
-- Allow arbitrary code in gint_pause() instead of just main menu?
-- Dynamically detect P1 static RAM in TLB for runtime Prizm compatibility.
-* Use a solid API for boot-time printing (or just use fxlib)
-- Use qdiv10() (there should be no __sdivsi3 in gint)
-  (bootlog, timer_delay(), getkey_repeat(), int2bcd())
-* Load an exception handler and a TLB miss handler.
-
-# Before compatibility
-
-Bugs to fix:
--  Alignment of ALL .data / .rodata files is required to ensure converted data
-   is properly aligned -> Ok using ALIGN(4)
--  Ensure heap data is freed when a task-switch results in leaving the app (?)
-
-Things to do before 1.0:
--  bopti:	Test partial transparency
--  perf:	Try 284x124 at (-60, -28) (all disadvantages)
--  project:	Check size of *all* library structures
--  time:	Compute CLOCKS_PER_SEC
-
-Things to do later:
--  bopti:	Implement blending modes for monochrome bitmaps
--  clock:	Only measure if requires as option, otherwise trust {FTune}
--  clock:	Handle overclock (relaunch clocks when overclocking)
--  clock:	Split code into several files, change clock_config_t type
--  core:	Remove redundant code linked to environment saves
--  display:	Try to make this module lighter (lots of code in text section)
--  esper:	Cleaner playback, synthesizing
--  events:	Allow customization of keyboard event system (option to return
-   |		events with modifiers, etc)
--  events:	Generate keyboard events on-the-fly by reading state arrays,
-   |		allowing both a faster interrupt and avoiding supressing other
-   |		events inside getkey() and multigetkey()
--  gray:	Same as display, it's quite heavy
--  serial:	Implement a driver
--  stdio:	More serious formatted printing functions and headers
--  string:	Use cmp/str to implement memchr() (assembler examples)
--  string:	Do some tests for memcmp() and memcpy()
--  usb:		Implement a driver
-
-Things to investigate:
--  Registers that may need to be saved within setjmp()
-
-Possibly useful modules:
--  DMAC
--  SCIF, SCIFA
--  TPU
--  USB
--  CMT on SH7305, WDT on SH7705
+* Integrate overclock management
+* A library for profiling with manual calls
+* Audio playback using Martin Poupe's method
+* Serial communication [SCIF] [SCIFA]
+* USB communication [USB]
+* Driver for the watchdog timer [WDT] [SH7705]

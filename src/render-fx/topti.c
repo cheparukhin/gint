@@ -1,5 +1,6 @@
 #define GINT_NEED_VRAM
 #include <gint/defs/types.h>
+#include <gint/defs/attributes.h>
 #include <gint/display.h>
 #include "topti-asm.h"
 
@@ -8,6 +9,7 @@ extern font_t gint_font5x6;
 font_t const * topti_font = &gint_font5x6;
 
 /* dfont() - set the default font for text rendering */
+GSECTION(".pretext")
 void dfont(font_t const * font)
 {
 	topti_font = font ? font : &gint_font5x6;
@@ -28,6 +30,7 @@ enum charset
 /* charset_size(): Number of elements in each character set
    @set  Character set ID
    Returns the expected number of glyphs, -1 if charset ID is invalid. */
+GSECTION(".pretext")
 int charset_size(enum charset set)
 {
 	int size[] = { 10, 26, 52, 62, 95, 128 };
@@ -39,6 +42,7 @@ int charset_size(enum charset set)
    -1 if [c] is not part of that set.
    @set  Any character set
    @c    Character to decode */
+GSECTION(".pretext")
 int charset_decode(enum charset set, uint c)
 {
 	int x, y;
@@ -76,6 +80,7 @@ int charset_decode(enum charset set, uint c)
    @glyph  Glyph number obtained by charset_decode(), must be nonnegative.
    Returns the offset the this glyph's data in the font's data array. When
    using a proportional font, the size array is not heeded for. */
+GSECTION(".pretext")
 int topti_offset(font_t const *f, uint glyph)
 {
 	/* Non-proportional fonts don't need an index */
@@ -110,6 +115,7 @@ int topti_offset(font_t const *f, uint glyph)
    0, call topti_draw() and reset the operators. If it's neative, call
    topti_draw() then do another pass of topti_split() to recover the missing
    information. */
+GSECTION(".pretext")
 int topti_split(uint32_t const * glyph, int width, int height, int free,
 	uint32_t *operators)
 {
@@ -174,6 +180,7 @@ int topti_split(uint32_t const * glyph, int width, int height, int free,
    @f       Font
    @asm_fg  Assembler function for text rendering
    @asm_bg  Assembler function for background rendering */
+GSECTION(".pretext")
 void topti_render(int x, int y, const char *str, font_t const *f,
 	asm_text_t *asm_fg, asm_text_t *asm_bg)
 {
@@ -291,6 +298,7 @@ void dsize(const char *str, font_t const * f, int *w, int *h)
 }
 
 /* dtext() - display a string of text */
+GSECTION(".pretext")
 void dtext(int x, int y, const char *str, color_t fg, color_t bg)
 {
 	if((uint)fg >= 8 || (uint)bg >= 8) return;

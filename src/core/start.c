@@ -1,5 +1,5 @@
 //---
-//	gint:core:start - Kernel initialization and C runtime
+//	gint:core:start - Kernel initialisation and C runtime
 //--
 
 #include <gint/defs/attributes.h>
@@ -108,15 +108,15 @@ int start(int isappli, int optnum)
 	   redirecting interrupts and reimplementing drivers, so we can't rely
 	   too much on the system. Ladies and gentlemen, let's have fun! ;D */
 
-	/* For now, we rely on the system to map ROM pages. RAM is always
+	/* For now, we use the system's memory mapper for ROM. RAM is always
 	   fully mapped, but we need to initialize it. We also need to do some
-	   hardware detection because old fx9860g models have an different
+	   hardware detection because old fx9860g models have a different
 	   processor with some incompatible features */
 
 	/* Detect architecture - this will tell SH3 from SH4 on fx9860g */
-	#ifdef FX9860G
-	mpu_init();
-	#endif
+	uint32_t stack;
+	__asm__("mov r15, %0" : "=r"(stack));
+	mpu_init(stack);
 
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
@@ -134,32 +134,20 @@ int start(int isappli, int optnum)
 		: utlb_mapped_memory(&rom, &ram);
 	bootlog_mapped(rom, ram);
 
-	//---
-
-	/* Cancel add-in execution if not all pages are mapped
-	   TODO: Resort to better graphical display, although still fxlib since
-	   add-in is not mapped yet */
+	/* Cancel add-in execution if not all pages are mapped */
 	if(rom < (uint32_t)&srom)
 	{
-		Bdisp_AllClr_VRAM();
-		PrintXY(0, 0, "Missing memory!", 0);
-		print_hex(1, 2, rom, 8);
-		PrintXY(0, 16, "<", 0);
-		print_hex(1, 4, (uint32_t)&srom, 8);
-		Bdisp_PutDisp_DD();
+		bootlog_unmapped(rom, (uint32_t)&srom);
 		while(1);
-//		delay(20);
 		return 1;
 	}
-
-	//---
 
 	/* Install gint and switch VBR */
 	gint_install();
 	bootlog_kernel();
 
 	/* We are now running on our own in kernel mode. Since we have taken
-	   control of interrupts, pretty much any interaction with the sytem
+	   control of interrupts, pretty much any interaction with the system
 	   will break it. We'll limit our use of syscalls and do device driving
 	   ourselves. (Hopefully we can add cool features in the process.) */
 
@@ -173,7 +161,13 @@ int start(int isappli, int optnum)
 
 		if(drv->ctx_save) drv->ctx_save(drv->sys_ctx);
 		if(drv->init) drv->init();
+
+		#ifdef GINT_BOOT_LOG
+		const char *status = drv->status ? drv->status() : NULL;
+		bootlog_driver(drv->name, status);
+		#endif
 	}
+	bootlog_driver_summary();
 
 	/* With gint fully initialized, we are ready to start the hosted user
 	   application. We have already loaded the RAM sections earlier; all

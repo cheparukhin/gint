@@ -4,6 +4,7 @@
 
 #include <gint/drivers.h>
 #include <gint/clock.h>
+#include <core/std.h>
 
 #include <gint/mpu.h>
 #include <gint/mpu/cpg.h>
@@ -53,8 +54,7 @@ static void sh7705_probe(void)
 	freq.Iphi_div = idiv + 1;
 	freq.Pphi_div = pdiv + 1;
 
-	/* Deduce the frequency of the main clocks. The following piece of code
-	   hardcodes ckio / 3 and avoids using the division operator */
+	/* Deduce the frequency of the main clocks. This value is ckio/3 */
 	int ckio_3 = 9830400;
 
 	/* Exchange the setting values 2 and 3 */
@@ -68,11 +68,6 @@ static void sh7705_probe(void)
 }
 
 #undef CPG
-#else
-
-/* This prototype will silence warnings on fxcg50 */
-void sh7705_probe(void);
-
 #endif /* FX9860G */
 
 //---
@@ -122,15 +117,36 @@ static void sh7305_probe(void)
 //	Other driver stuff
 //---
 
+#ifdef GINT_BOOT_LOG
+
+static const char *cpg_status(void)
+{
+	static char status[18];
+	sprintf(status, "I%3d B%3d P%3d C%c",
+		freq.Iphi_f / 1000000,
+		freq.Bphi_f / 1000000,
+		freq.Pphi_f / 1000000,
+		isSH3() ? 'e' : 'E'
+	);
+	return status;
+}
+
+#endif /* GINT_BOOT_LOG */
+
 static void init(void)
 {
-	isSH3() ? sh7705_probe()
-		: sh7305_probe();
+	/* This avoids warnings about sh7705() not being defined on fxcg50 */
+	#ifdef FX9860G
+	isSH3() ? sh7705_probe() :
+	#endif
+
+	sh7305_probe();
 }
 
 gint_driver_t drv_cpg = {
 	.name		= "CPG",
 	.init		= init,
+	.status		= GINT_DRIVER_STATUS(cpg_status),
 	.ctx_size	= 0,
 	.sys_ctx	= NULL,
 	.ctx_save	= NULL,

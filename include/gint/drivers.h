@@ -9,16 +9,29 @@
 #include <gint/defs/types.h>
 
 //---
-//	Driver initialization
+//	Driver procedure flow
 //
-//	Drivers are initialized in linking order. For each driver, the
-//	following functions are called:
-//	- driver_sh3() [if running on an SH3-based machine]
-//	- ctx_save()
-//	- init()
+//	Drivers are initialized in priority order, and in linking order within
+//	the same priority (which is pretty much undefined). Make sure every
+//	driver's priority level is higher than those of its dependencies.
 //
-//	When the driver is unloaded, the following functions are called:
-//	- ctx_restore()
+//	At initialization, the following functions are called:
+//	1. driver_sh3()            [if not NULL, SH3 fx9860G only]
+//	2. ctx_save(sys_ctx)       [if not NULL]
+//	3. init()                  [if not NULL]
+//
+//	Then, if the on-screen boot log is enabled, the status() function is
+//	called and the returned function is displayed (21 characters max).
+//	4. status()                [if not NULL, if GINT_BOOT_LOG is defined]
+//
+//	If the gint_switch() function is called to temporarily give back
+//	control to the operating system, the state of each driver is saved to
+//	the stack, then restored from there.
+//	5. ctx_save(stack)         [if not NULL]
+//	6. ctx_restore(stack)      [if not NULL]
+//
+//	When finally the driver is unloaded, the system context is restored.
+//	7. ctx_restore(sys_ctx)    [if not NULL]
 //---
 
 /* gint_driver_t - driver meta-information used by gint */
@@ -65,6 +78,14 @@ typedef struct
 	   @ctx  A context buffer filled by ctx_save() */
 	void (*ctx_restore)(void *ctx);
 
+	/* status() - status string generation
+	   When the boot log is defined, this function is called to print
+	   information returned by the driver, for debugging purposes. This is
+	   expected to be a short (max 21 bytes) string because only a few
+	   lines are available for all drivers.
+	   Returns a pointer to a string; a static buffer is suitable. */
+	const char * (*status)(void);
+
 } GPACKED(4) gint_driver_t;
 
 /* GINT_DECLARE_DRIVER() - make a driver visible to gint
@@ -81,11 +102,26 @@ typedef struct
 	GSECTION(".gint.drivers." #level) extern gint_driver_t name;
 
 /* GINT_DRIVER_SH3() - declare a function for SH3-rectification
-   This macros allows the argument function to not exist on fxcg50. */
+   This macro makes its argument NULL on fxcg50, this way the named function
+   can be defined under #ifdef FX9860G while keeping the structure clean. */
+
 #ifdef FX9860G
-  #define GINT_DRIVER_SH3(name) name
+#define GINT_DRIVER_SH3(name) name
+#endif
+
+#ifdef FXCG50
+#define GINT_DRIVER_SH3(name) NULL
+#endif
+
+/* GINT_DRIVER_STATUS() - declare a function for status string generation
+   This macro makes its argument NULL when GINT_BOOT_LOG is defuned, this way
+   the named function can be defined under #ifdef GINT_BOOT_LOG while keeping
+   the structure clean. */
+
+#ifdef GINT_BOOT_LOG
+#define GINT_DRIVER_STATUS(name) name
 #else
-  #define GINT_DRIVER_SH3(name) NULL
+#define GINT_DRIVER_STATUS(name) NULL
 #endif
 
 #endif /* GINT_DRIVERS */

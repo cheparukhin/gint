@@ -7,11 +7,11 @@
 #include <gint/defs/types.h>
 #include <gint/defs/util.h>
 
-/* This file is only useful on fx9860g machines because all fxcg50 are SH4 */
-#ifdef FX9860G
+/* Holds information about the current MPU */
+GBSS const platform_t gint_platform;
 
-/* Holds the name of the current MPU; initialized at startup by mpu_init() */
-GBSS const mpu_t gint_mpu_id;
+/* This function is only used on fx9860g because all fxcg50 are SH4 */
+#ifdef FX9860G
 
 /* mpu_detect() - detect the underlying MPU
    Many thanks to Simon Lothar for relevant documentation.
@@ -21,6 +21,7 @@ GBSS const mpu_t gint_mpu_id;
    by testing writable bits in the Port L Control Register (PLCR).
 
    Returns the detected MPU type, falling back on mpu_unknown */
+GSECTION(".pretext")
 static mpu_t mpu_detect(void)
 {
 	/* Processor Version Register */
@@ -53,9 +54,37 @@ static mpu_t mpu_detect(void)
 }
 
 /* mpu_init() - detect and save information about the underlying MPU */
-void mpu_init(void)
+GSECTION(".pretext")
+void mpu_init(GUNUSED uint32_t stack)
 {
-	const_cast(gint_mpu_id, mpu_t) = mpu_detect();
+	const_cast(gint_platform.mpu, mpu_t) = mpu_detect();
+
+	/* Detect additional RAM */
+
+	volatile uint8_t *after_ram = (void *)0x88040000;
+	volatile uint8_t *start_ram = (void *)0x88000000;
+
+	uint8_t backup = *after_ram;
+	*after_ram = ~backup;
+	int ext = (*start_ram == backup);
+	*after_ram = backup;
+
+	const_cint(gint_platform.extended_ram) = ext;
 }
 
-#endif
+#endif /* FX9860G */
+
+#ifdef FXCG50
+
+/* mpu_init() - detect and save information about the underlying MPU */
+GSECTION(".pretext")
+void mpu_init(uint32_t stack)
+{
+	const_cast(gint_platform.mpu, mpu_t) = mpu_sh7305;
+
+	/* Detect Prizm models */
+	int prizm = (stack < 0x8c160000);
+	const_cint(gint_platform.prizm) = prizm;
+}
+
+#endif /* FXCG50 */

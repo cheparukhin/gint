@@ -6,7 +6,7 @@
 void dpixel(int x, int y, color_t color)
 {
 	/* Sanity checks */
-	if((uint)x >= 64 || (uint)y >= 128) return;
+	if((uint)x >= 128 || (uint)y >= 64) return;
 
 	uint32_t *lword = vram + (y << 2) + (x >> 5);
 	uint32_t mask = 1 << (~x & 31);

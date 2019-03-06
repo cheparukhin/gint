@@ -27,7 +27,9 @@ extern uint32_t *vram;
 
 #ifdef FX9860G
 #include <gint/display-fx.h>
-#else
+#endif
+
+#ifdef FXCG50
 #include <gint/display-cg.h>
 #endif
 

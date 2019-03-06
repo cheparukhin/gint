@@ -199,12 +199,28 @@ static void ctx_restore(void *buf)
 }
 
 //---
+//	Driver status string
+//---
+
+#ifdef GINT_BOOT_LOG
+
+/* t6k11_status() - status string of the driver */
+static const char *t6k11_status(void)
+{
+	/* TODO: t6k11: Detect backlight existence */
+	return "6K11-cB";
+}
+
+#endif /* GINT_BOOT_LOG */
+
+//---
 //	Driver structure definition
 //---
 
 gint_driver_t drv_t6k11 = {
 	.name		= "T6K11",
 	.init		= NULL,
+	.status		= GINT_DRIVER_STATUS(t6k11_status),
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,

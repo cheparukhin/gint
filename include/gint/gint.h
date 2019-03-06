@@ -8,20 +8,11 @@
 #include <gint/defs/types.h>
 
 /* GINT_VERSION - the library version number
-   Provides gint's running version number, which is made of four fields:
 
-      31           24 23   20 19   16 15                            0
-     +---------------+---------------+---------------+---------------+
-     |    channel    | major | minor |             build             |
-     +---------------+---------------+---------------+---------------+
+   gint is versioned from it's repository commits on the master branch. The
+   GINT_VERSION integer contains the short commit hash.
 
-   The first field is a letter indicating the type of version ('a'lpha, 'b'eta,
-   'r'elease, 'd'ev, etc). The second and third field are the version number on
-   the form "major.minor". The last field is the build number for this version.
-   The build number uniquely identifies a binary version of the library.
-
-   For instance, 0x72100053 translates as "release 1.0 build 83". */
-/* TODO: Fix version number */
+   For instance, 0x03f7c0a0 means commit 3f7c0a0. */
 extern char GINT_VERSION;
 #define GINT_VERSION ((uint32_t)&GINT_VERSION)
 

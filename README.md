@@ -30,7 +30,7 @@ access to the low-level MPU features, among which:
 
 The library also offers powerful higher-level features:
 
-* An enhanced versio of the system's GetKey() and GetKeyWait()
+* An enhanced version of the system's GetKey() and GetKeyWait()
 * A gray engine that works by rapidly swapping monochrome images on fx-9860G II
 * Blazingly fast drawing functions when working with the fxSDK (image rendering
   is 10 times faster than MonochromeLib)
