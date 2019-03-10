@@ -2,14 +2,14 @@
 **	gint:core:exch - Exception handlers
 */
 
-	.global _exch_entry_7305
+.global _exch_entry_7305
 
 #ifdef FX9860G
-	.global _exch_entry_7705
+.global _exch_entry_7705
 #endif
 
-	.section .gint.blocks, "ax"
-	.align 4
+.section .gint.blocks, "ax"
+.align 4
 
 /* SH7305-TYPE DEBUG EXCEPTION HANDLER - 26 BYTES */
 

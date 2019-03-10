@@ -20,8 +20,8 @@ include $(CONFIG)
 ifeq "$(CONFIG.TOOLCHAIN)" "sh3eb-elf"
 machine := -m3 -mb
 endif
-ifeq "$(CONFIG.TOOLCHAIN)" "sh4eb-nofpu-elf"
-machine := -m4 -mb
+ifeq "$(CONFIG.TOOLCHAIN)" "sh4eb-elf"
+machine := -m4-nofpu -mb
 endif
 
 # Compiler flags, assembler flags, dependency generation, archiving

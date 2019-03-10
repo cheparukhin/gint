@@ -2,10 +2,15 @@
 //	gint:r61524 - Renesas R61524 driver
 //---
 
-#include <gint/drivers.h>
 #include <gint/defs/types.h>
+#include <gint/drivers.h>
+#include <gint/dma.h>
+#include <core/std.h>
 
 #ifdef FXCG50
+
+#define DMA SH7305_DMA
+#define POWER SH7305_POWER
 
 //---
 //	Device specification sheet
@@ -83,20 +88,38 @@ GINLINE static void write(uint16_t data)
 }
 
 //---
-//	Driver functions
+//	Window management
 //---
 
-void pixel(int ha, int va, int color)
+void r61524_win_get(uint16_t *HSA, uint16_t *HEA, uint16_t *VSA, uint16_t *VEA)
 {
-	select(ram_address_horizontal);
-	write(ha);
+	select(horizontal_ram_start);
+	*HSA = read();
+	select(horizontal_ram_end);
+	*HEA = read();
 
-	select(ram_address_vertical);
-	write(va);
-
-	select(write_data);
-	write(color);
+	select(vertical_ram_start);
+	*VSA = read();
+	select(vertical_ram_end);
+	*VEA = read();
 }
+
+void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
+{
+	select(horizontal_ram_start);
+	write(HSA);
+	select(horizontal_ram_end);
+	write(HEA);
+
+	select(vertical_ram_start);
+	write(VSA);
+	select(vertical_ram_end);
+	write(VEA);
+}
+
+//---
+//	Driver functions
+//---
 
 void r61524_test(void)
 {
@@ -108,10 +131,6 @@ void r61524_test(void)
 	int FP, BP;
 	uint16_t lpc;
 	int VEM, COL;
-
-	uint32_t AD;
-	uint16_t HSA, HEA;
-	uint16_t VSA, VEA;
 
 	//---
 
@@ -126,7 +145,7 @@ void r61524_test(void)
 	{
 		print(1, 2, "Aborting.");
 		Bdisp_PutDisp_DD();
-		delay(40);
+		getkey();
 		return;
 	}
 
@@ -149,22 +168,6 @@ void r61524_test(void)
 	lpc = read();
 	VEM = (lpc >> 4) & 1;
 	COL = lpc & 1;
-
-	/* Shift by 9, not 8, because of horizontal/vertical range inversion */
-	select(ram_address_horizontal);
-	AD = read();
-	select(ram_address_vertical);
-	AD |= read() << 9;
-
-	select(horizontal_ram_start);
-	HSA = read();
-	select(horizontal_ram_end);
-	HEA = read();
-
-	select(vertical_ram_start);
-	VSA = read();
-	select(vertical_ram_end);
-	VEA = read();
 
 	//---
 
@@ -194,62 +197,53 @@ void r61524_test(void)
 	print_hex(12, 6, COL, 1);
 
 	Bdisp_PutDisp_DD();
-	delay(50);
+	getkey();
 
-	//---
+/*	Bdisp_AllClr_VRAM();
+	print(1, 1, "MSTPCR0=????????");
+	print_hex(9, 1, POWER.MSTPCR0.lword, 8);
 
-	Bdisp_AllClr_VRAM();
+	print(1, 2, "DMAOR=????");
+	print_hex(7, 2, DMA.OR.word, 4);
 
-	print(1, 1, "Address=?????");
-	print_hex(9, 1, AD, 5);
-
-	print(1, 2, "HSA=???  HEA=???");
-	print_hex(5,  2, HSA, 3);
-	print_hex(14, 2, HEA, 3);
-	print(1, 3, "VSA=???  VEA=???");
-	print_hex(5,  3, VSA, 3);
-	print_hex(14, 3, VEA, 3);
+	print(1, 3, "SAR=????????");
+	print_hex(5, 3, DMA.DMA0.SAR, 8);
+	print(1, 4, "DAR=????????");
+	print_hex(5, 4, DMA.DMA0.DAR, 8);
+	print(1, 5, "TCR=????????");
+	print_hex(5, 5, DMA.DMA0.TCR, 8);
+	print(1, 6, "CHCR=????????");
+	print_hex(6, 6, DMA.DMA0.CHCR, 8);
 
 	Bdisp_PutDisp_DD();
-	delay(50);
+	getkey(); */
+}
 
-	//
+void r61524_dma_test(uint16_t *vram)
+{
+	int y1 = 0;
+	int height = 224;
 
-	Bdisp_AllClr_VRAM();
-	Bdisp_PutDisp_DD();
-
-	//---
-
-	select(horizontal_ram_start);
-	write(0);
-	select(horizontal_ram_end);
-	write(395);
-
-	select(vertical_ram_start);
-	write(0);
-	select(vertical_ram_end);
-	write(223);
-
-	//---
-
+	/* Move the window to the desired region, then select address 0 */
+	r61524_win_set(0, 395, y1, y1 + height - 1);
 	select(ram_address_horizontal);
-	write(HEA);
+	write(0);
 	select(ram_address_vertical);
-	write(VSA);
+	write(0);
+
+	/* Bind address 0xb4000000 to the data write command */
 	select(write_data);
 
-	uint16_t color;
-	for(int v = 0; v < 224; v++)
-	for(int h = 0; h < 396; h++)
-	{
-//		int offset = 396 * v + h;
-//		uint8_t *src = gimp_image.pixel_data + 2 * offset;
-		color = 0x3eb7; // (src[1] << 8) | src[0];
+	void *src = vram;
+	void *dst = (void *)0xb4000000;
 
-		write(color);
-	}
+	/* The thing is, 396 is not a multiple of 32.
+	   To make things simple, we can choose to always send a multiple of 8
+	   rows, which makes the 32 factor appear. */
+	int blocks = 198 * (height >> 3);
 
-	delay(200);
+	dma_transfer(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
+	dma_transfer_wait();
 }
 
 //---
@@ -269,32 +263,33 @@ GBSS static ctx_t sys_ctx;
 static void ctx_save(void *buf)
 {
 	ctx_t *ctx = buf;
-
-	select(horizontal_ram_start);
-	ctx->HSA = read();
-	select(horizontal_ram_end);
-	ctx->HEA = read();
-
-	select(vertical_ram_start);
-	ctx->VSA = read();
-	select(vertical_ram_end);
-	ctx->VEA = read();
+	r61524_win_get(&ctx->HSA, &ctx->HEA, &ctx->VSA, &ctx->VEA);
 }
 
 static void ctx_restore(void *buf)
 {
 	ctx_t *ctx = buf;
-
-	select(horizontal_ram_start);
-	write(ctx->HSA);
-	select(horizontal_ram_end);
-	write(ctx->HEA);
-
-	select(vertical_ram_start);
-	write(ctx->VSA);
-	select(vertical_ram_end);
-	write(ctx->VEA);
+	r61524_win_set(ctx->HSA, ctx->HEA, ctx->VSA, ctx->VEA);
 }
+
+//---
+//	Driver status string
+//---
+
+#ifdef GINT_BOOT_LOG
+
+/* r6524_status() - status string */
+static const char *r6524_status(void)
+{
+	select(device_code_read);
+	uint16_t dev = read();
+
+	static char str[8];
+	sprintf(str, "%4xF-b", dev);
+	return str;
+}
+
+#endif
 
 //---
 //	Driver structure definition
@@ -303,6 +298,7 @@ static void ctx_restore(void *buf)
 gint_driver_t drv_r61524 = {
 	.name		= "R61524",
 	.init		= NULL,
+	.status		= GINT_DRIVER_STATUS(r6524_status),
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,

@@ -5,19 +5,19 @@
 **  from each interrupt handler to the next.
 */
 
-	/* Gates for the standard Timer Unit (TMU) */
-	.global _inth_tmu_0
-	.global _inth_tmu_1
-	.global _inth_tmu_2
-	.global _inth_tmu_storage
+/* Gates for the standard Timer Unit (TMU) */
+.global _inth_tmu_0
+.global _inth_tmu_1
+.global _inth_tmu_2
+.global _inth_tmu_storage
 
-	/* Gates for the extra timers (informally called ETMU) */
-	.global _inth_tmu_extra2
-	.global _inth_tmu_extra_help
-	.global _inth_tmu_extra_others
+/* Gates for the extra timers (informally called ETMU) */
+.global _inth_tmu_extra2
+.global _inth_tmu_extra_help
+.global _inth_tmu_extra_others
 
-	.section .gint.blocks, "ax"
-	.align 4
+.section .gint.blocks, "ax"
+.align 4
 
 /* TMU INTERRUPT HANDLERS - 128 BYTES
    Unfortunately I did not manage to write a handler that cleared the interrupt

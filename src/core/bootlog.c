@@ -97,8 +97,12 @@ void bootlog_mapped(int rom, int ram)
 
 	print(20, 3, "%c%c", (rom >= (int)rom_size) ? 'F' : 'f',
 		isSH3() ? 'u' : 'U');
-	print(9, 2, (ram > 8192) ? "E" : "e");
 	print(19, 1, "M");
+
+	#ifdef FX9860G
+	print(9, 2, (ram > 8192) ? "E" : "e");
+	#endif
+
 	dupdate();
 }
 
@@ -132,7 +136,7 @@ void bootlog_driver(const char *drv, const char *status)
 	print(x, y, "%3s", drv);
 	x += 4;
 
-	if(x + y >= 22) y++;
+	if(x + y >= 22) x=1, y++;
 
 	/* Positioning for the driver message */
 

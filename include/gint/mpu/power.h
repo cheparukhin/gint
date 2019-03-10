@@ -1,0 +1,102 @@
+//---
+//	gint:mpu:power- Standby modes and power management
+//---
+
+#ifndef GINT_MPU_POWER
+#define GINT_MPU_POWER
+
+#include <gint/defs/types.h>
+
+//---
+//	SH7305 Standby modes and power management Refer to:
+//	  "Renesas SH7724 User's Manual: Hardware"
+//	  Section 18: "Reset and Power-Down Modes"
+//---
+
+typedef volatile struct
+{
+	/* Standby Control Register: only one of the bits may be set at any
+	   given time. Setting several bits is prohibited! */
+	lword_union(STBCR,
+		uint32_t	:24;
+		uint32_t STBY	:1;	/* Map [sleep] to standby mode */
+		uint32_t	:1;
+		uint32_t RSTBY	:1;	/* Map [sleep] to R-standby mode */
+		uint32_t USTBY	:1;	/* Map [sleep] to U-standby mode */
+		uint32_t	:4;
+	);
+	pad(12);
+
+	/* Module Stop Control Register 0
+	   Stopping the TLB (bit 31), IC (bit 30 or OC (bit 29) seems somewhat
+	   dangerous, plus requires special operations. */
+	lword_union(MSTPCR0,
+		uint32_t TLB		:1;
+		uint32_t IC		:1;
+		uint32_t OC		:1;
+		uint32_t RS		:1;
+		uint32_t IL		:1;
+		uint32_t SndCache	:1;
+		uint32_t		:1;
+		uint32_t FPU		:1;
+
+		uint32_t		:1;
+		uint32_t INTC		:1;
+		uint32_t DMAC0		:1;
+		uint32_t SuperHyway	:1;
+		uint32_t HUDI		:1;
+		uint32_t DBG		:1;
+		uint32_t UDB		:1;
+		uint32_t Debug		:1;
+
+		uint32_t TMU0		:1;
+		uint32_t CMT		:1;
+		uint32_t RWDT		:1;
+		uint32_t DMAC1		:1;
+		uint32_t 		:1;
+		uint32_t TMU1		:1;
+		uint32_t SCIF0		:1;
+		uint32_t SCIF1		:1;
+
+		uint32_t SCIF2		:1;
+		uint32_t SCIF3		:1;
+		uint32_t SCIF4		:1;
+		uint32_t SCIF5		:1;
+		uint32_t		:1;
+		uint32_t MSIOF0		:1;
+		uint32_t MSIOF1		:1;
+		uint32_t		:1;
+	);
+
+	/* Module Stop Control Register 1 */
+	lword_union(MSTPCR1,
+		uint32_t		:19;
+		uint32_t KEYSC		:1;
+		uint32_t RTC		:1;
+		uint32_t		:1;
+		uint32_t I2C0		:1;
+		uint32_t I2C1		:1;
+		uint32_t		:8;
+	);
+
+	/* Module Stop Control Register 2
+	   I stripped down this one to remove any fancy modules from the SH7724
+	   that are unlikely to even be present in the SH7305. */
+	lword_union(MSTPCR2,
+		uint32_t		:6;
+		uint32_t TPU		:1;
+		uint32_t		:4;
+		uint32_t USB0		:1;
+		uint32_t		:20;
+	);
+	pad(4);
+
+	/* Boot Address Register
+	   I really don't suggest writing to BAR. */
+	uint32_t const BAR;
+
+} sh7305_power_t;
+
+#define SH7305_POWER (*((sh7305_power_t *)0xa4150020))
+
+#endif /* GINT_MPU_POWER */

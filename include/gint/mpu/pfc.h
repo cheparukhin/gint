@@ -1,12 +1,12 @@
 //---
-//	gint:core:pfc - Pin Function Controller
+//	gint:mpu:pfc - Pin Function Controller
 //
 //	The Pin Function Controller has a simple register interface, the main
 //	difficulty is still understanding the role of its pins.
 //---
 
-#ifndef GINT_CORE_PFC
-#define GINT_CORE_PFC
+#ifndef GINT_MPU_PFC
+#define GINT_MPU_PFC
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
@@ -75,4 +75,4 @@ typedef volatile struct
 //	TODO: Document the SH7305 Pin Function Controller
 //---
 
-#endif /* GINT_CORE_PFC */
+#endif /* GINT_MPU_PFC */

@@ -1,9 +1,9 @@
 //---
-//	gint:mod:rtc - Real-Time Clock
+//	gint:mpu:rtc - Real-Time Clock
 //---
 
-#ifndef GINT_CORE_RTC
-#define GINT_CORE_RTC
+#ifndef GINT_MPU_RTC
+#define GINT_MPU_RTC
 
 #include <gint/defs/attributes.h>
 
@@ -75,4 +75,4 @@ typedef volatile struct
 #define SH7705_RTC (*((rtc_t *)0xfffffec0))
 #define SH7305_RTC (*((rtc_t *)0xa413fec0))
 
-#endif /* GINT_CORE_RTC */
+#endif /* GINT_MPU_RTC */

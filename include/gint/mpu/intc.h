@@ -1,5 +1,5 @@
 //---
-//	gint:core:intc - Interrupt Controller
+//	gint:mpu:intc - Interrupt Controller
 //
 //	The interrupt controller is unwieldy because SH7705 and SH7305 have a
 //	completely different interface. Everything here is split up and you'll
@@ -9,8 +9,8 @@
 //	management. This is probably what you are looking for.
 //---
 
-#ifndef GINT_CORE_INTC
-#define GINT_CORE_INTC
+#ifndef GINT_MPU_INTC
+#define GINT_MPU_INTC
 
 #include <gint/defs/types.h>
 
@@ -296,4 +296,4 @@ typedef struct
 extern sh7705_intc_t SH7705_INTC;
 extern sh7305_intc_t SH7305_INTC;
 
-#endif /* GINT_CORE_INTC */
+#endif /* GINT_MPU_INTC */

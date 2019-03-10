@@ -5,14 +5,14 @@
 **	blocks depending on its configuration.
 */
 
-	.global _inth_entry_7305
+.global _inth_entry_7305
 
 #ifdef FX9860G
-	.global _inth_entry_7705
+.global _inth_entry_7705
 #endif
 
-	.section .gint.blocks, "ax"
-	.align 4
+.section .gint.blocks, "ax"
+.align 4
 
 /* Interrupt handlers
 
@@ -100,8 +100,8 @@ _inth_entry_7705:
 1:	.long	0xa4000000	/* INTEVT2 register */
 2:	.long	_inth_remap
 
-	.section .gint.data
-	.align 4
+.section .gint.data
+.align 4
 
 /* EVENT CODE TRANSLATION TABLE - 96 BYTES */
 

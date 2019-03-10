@@ -45,7 +45,7 @@ Target selection:
 
   fxcg50 covers just the fx-CG 50; there is some unofficial compatibility with
   fx-CG 10/20. All of these are SH4-only.
-  Default toolchain is 'sh4eb-nofpu-elf'.
+  Default toolchain is 'sh4eb-elf'.
 
 Build options:
   --toolchain=TRIPLET  Build with a different toolchain
@@ -102,11 +102,13 @@ for arg; do case "$arg" in
         toolchain=${toolchain:-sh3eb-elf};;
       "fxcg50")
         target=fxcg50
-        toolchain=${toolchain:-sh4eb-nofpu-elf};;
+        toolchain=${toolchain:-sh4eb-elf};;
       *)
         echo "error: invalid target '$target'"
         fail=true
     esac;;
+  --toolchain=*)
+    toolchain=${arg#*=};;
 
   --prefix=*)
     prefix=${arg#*=};;

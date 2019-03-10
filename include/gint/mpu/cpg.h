@@ -1,9 +1,9 @@
 //---
-//	gint:core:cpg - Clock Pulse Generator
+//	gint:mpu:cpg - Clock Pulse Generator
 //---
 
-#ifndef GINT_CORE_CPG
-#define GINT_CORE_CPG
+#ifndef GINT_MPU_CPG
+#define GINT_MPU_CPG
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
@@ -79,4 +79,4 @@ typedef volatile struct
 
 #define SH7305_CPG (*((sh7305_cpg_t *)0xa4150000))
 
-#endif /* GINT_CORE_CPG */
+#endif /* GINT_MPU_CPG */

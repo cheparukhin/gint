@@ -4,10 +4,10 @@
 **  stop if the callback returns non-zero.
 */
 
-	.global _inth_rtc_pri
-	.global _inth_rtc_pri_helper
-	.section .gint.blocks, "ax"
-	.align 4
+.global _inth_rtc_pri
+.global _inth_rtc_pri_helper
+.section .gint.blocks, "ax"
+.align 4
 
 /* RTC PERIODIC INTERRUPT HANDLER - 56 BYTES */
 

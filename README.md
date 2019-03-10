@@ -47,8 +47,8 @@ or both. There are a few dependencies:
 * A suitable GCC toolcahin in the `PATH`. You can absolutely *not* build gint
   with your system compiler!
   * For fx-9860G II, `sh3eb-elf` is strongly advised
-  * For fx-CG 50, `sh4eb-nofpu-elf` is slightly better but `sh3eb-elf` is
-    completely fine
+  * For fx-CG 50, `sh4eb-elf` (with `-m4-nofpu`) is slightly better but
+    `sh3eb-elf` is completely fine
 * The [fxSDK](http://git.planet-casio.com/lephe/fxsdk) installed and available
   in the PATH. You will need `fxsdk` and `fxconv` to build gint, and if you
   intend to develop add-ins for fx-9860G II, you probably want `fxg1a` as well.
@@ -83,7 +83,7 @@ with `--prefix`, or if you built your compiler as root.
 ### Building for fx-CG 50
 
 Create a build directory and configure in it. The default toolchain is
-`sh4eb-nofpu-elf`, if you wish to build with `sh3eb-elf`, you need to add a
+`sh4eb-elf`, if you wish to build with `sh3eb-elf`, you need to add a
 command-line option `--toolchain=sh3eb-elf`.
 
     % mkdir build.cg && cd build.cg
