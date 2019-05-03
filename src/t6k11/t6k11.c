@@ -9,6 +9,8 @@
 #include <gint/defs/types.h>
 #include <gint/mpu.h>
 
+#include <core/syscalls.h>
+
 #ifdef FX9860G
 
 //---
@@ -52,6 +54,15 @@ GDATA static volatile uint8_t *sel = (void *)0xb4000000;
 /* RS = 1: Command data or vram data */
 GDATA static volatile uint8_t *cmd = (void *)0xb4010000;
 
+/* variant() - check for the T6K11 variant that equips the Graph 35+E II
+   TODO: At least detect some piece of Graph 35+E II hardware. */
+static int variant(void)
+{
+	char os[11];
+	__os_version(os);
+	return (os[1] == '3');
+}
+
 /* command() - send a command to set the value of a register
    @reg   Register number
    @data  Value to set in reg */
@@ -71,7 +82,7 @@ GINLINE static uint8_t status(void)
    @buf  Buffer to take data from */
 GINLINE static void write_row(const uint8_t *buf)
 {
-	*sel = reg_data;
+	*sel = variant() ? 10 : reg_data;
 
 	/* Unroll the loop for more speed */
 	*cmd = *buf++;
@@ -104,14 +115,23 @@ void t6k11_display(const void *vram, int y1, int y2, size_t stride)
 {
 	for(int y = y1; y < y2; y++)
 	{
-		/* Set the X-address register for this row */
-		command(reg_xaddr, y | 0xc0);
+		if(variant())
+		{
+			command(8, y | 0x80);
+			command(8, 4);
+		}
 
-		/* Use Y-Up mode */
-		command(reg_counter, cnt_yup);
+		else
+		{
+			/* Set the X-address register for this row */
+			command(reg_xaddr, y | 0xc0);
 
-		/* Start counting Y from 0 */
-		command(reg_yaddr, 0);
+			/* Use Y-Up mode */
+			command(reg_counter, cnt_yup);
+
+			/* Start counting Y from 0 */
+			command(reg_yaddr, 0);
+		}
 
 		/* Send the row's data to the device */
 		write_row(vram);
@@ -181,12 +201,16 @@ GBSS static ctx_t sys_ctx;
 
 static void ctx_save(void *buf)
 {
+	if(variant()) return;
+
 	ctx_t *ctx = buf;
 	ctx->strd = status();
 }
 
 static void ctx_restore(void *buf)
 {
+	if(variant()) return;
+
 	ctx_t *ctx = buf;
 
 	/* Set an X-address of 0 with the original display mode */
