@@ -1,7 +1,0 @@
-# I know there actually are a lot of dependencies but building them is already
-# long enough, and I'll be managing the runner for now. So let's KISS.
-
-build_all:
-  script:
-    - ./configure
-    - make
