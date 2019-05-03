@@ -131,6 +131,8 @@ static void ctx_restore(void *buf)
 gint_driver_t drv_dma = {
 	.name		= "DMA",
 	.init		= init,
+	/* Make sure any DMA transfer is finished before leaving the app */
+	.unload		= dma_transfer_wait,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,

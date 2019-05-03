@@ -15,9 +15,6 @@ This is free software: you may use it for any purpose, share it, and modify it
 as long as you share your changes. Credit is not required, but please let me
 know!
 
-**TODO: Update this file for everything related to project organization**
-
-
 ## Programming interface
 
 Because of its free-standing design, gint's API provides direct and efficient
@@ -37,14 +34,13 @@ The library also offers powerful higher-level features:
 * Integrated font management with the fxSDK
 * Integration with a Newlib port by Memallox (WIP)
 
-
 ## Building and installing gint
 
 You can choose to build gint for fx-9860G II (monochrome calculators, aka
 Graph 85 family), fx-CG 50 (color calculators, aka Prizm or Graph 90 family),
 or both. There are a few dependencies:
 
-* A suitable GCC toolcahin in the `PATH`. You can absolutely *not* build gint
+* A suitable GCC toolchain in the `PATH`. You can absolutely *not* build gint
   with your system compiler!
   * For fx-9860G II, `sh3eb-elf` is strongly advised
   * For fx-CG 50, `sh4eb-elf` (with `-m4-nofpu`) is slightly better but
@@ -52,6 +48,7 @@ or both. There are a few dependencies:
 * The [fxSDK](http://git.planet-casio.com/lephe/fxsdk) installed and available
   in the PATH. You will need `fxsdk` and `fxconv` to build gint, and if you
   intend to develop add-ins for fx-9860G II, you probably want `fxg1a` as well.
+  All these tools are built by default in the fxSDK.
 
 fx-CG 50 developers probably want a g3a wrapper as well; the reference
 implementation is tari's [mkg3a](https://www.taricorp.net/projects/mkg3a/).
@@ -104,8 +101,8 @@ To use gint as your runtime environment, the bare minimum is:
 
 If you don't have a standard library such as
 [Memallox's port of newlib](https://git.planet-casio.com/Memallox/libc), you
-also need `-nostdlib`. I typically use `-m3 -mb` or `-m4 -mb` to specify the
-platform, but that may not even be necessary.
+also need `-nostdlib`. I typically use `-m3 -mb` or `-m4-nofpu -mb` to specify
+the platform, but that may not even be necessary.
 
 Typically you might want to do this with the
 [fxSDK](http://git.planet-casio.com/lephe/fxsdk), which hides most of the

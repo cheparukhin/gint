@@ -118,6 +118,7 @@ void bootlog_unmapped(int rom, int size)
 void bootlog_kernel(void)
 {
 	print(20, 1, "K");
+	dupdate();
 }
 
 /* bootlog_driver() - driver load
