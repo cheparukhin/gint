@@ -6,42 +6,37 @@
 /* dhline() - optimized drawing of a horizontal line using a rectangle mask
    @x1 @x2 @y  Coordinates of endpoints of line (both included)
    @color      Allowed colors: white, black, none, reverse */
-static void dhline(int x1, int x2, int y, color_t color)
+void dhline(int x1, int x2, int y, color_t color)
 {
 	if((uint)y >= 64) return;
 	if(x1 > x2) swap(x1, x2);
 
-	uint32_t *lword = vram + (y << 2) + 4;
-	uint32_t m[4];
-
 	/* Get the masks for the [x1, x2] range */
+	uint32_t m[4];
 	masks(x1, x2, m);
 
-	switch(color)
+	uint32_t *data = vram + (y << 2);
+
+	if(color == color_white)
 	{
-	case color_white:
-		*--lword &= ~m[3];
-		*--lword &= ~m[2];
-		*--lword &= ~m[1];
-		*--lword &= ~m[0];
-		break;
-
-	case color_black:
-		*--lword |= m[3];
-		*--lword |= m[2];
-		*--lword |= m[1];
-		*--lword |= m[0];
-		break;
-
-	case color_reverse:
-		*--lword ^= m[3];
-		*--lword ^= m[2];
-		*--lword ^= m[1];
-		*--lword ^= m[0];
-		break;
-
-	default:
-		return;
+		data[0] &= ~m[0];
+		data[1] &= ~m[1];
+		data[2] &= ~m[2];
+		data[3] &= ~m[3];
+	}
+	else if(color == color_black)
+	{
+		data[0] |= m[0];
+		data[1] |= m[1];
+		data[2] |= m[2];
+		data[3] |= m[3];
+	}
+	else if(color == color_reverse)
+	{
+		data[0] ^= m[0];
+		data[1] ^= m[1];
+		data[2] ^= m[2];
+		data[3] ^= m[3];
 	}
 }
 
@@ -50,7 +45,7 @@ static void dhline(int x1, int x2, int y, color_t color)
    of the vram cannot be used here.
    @y1 @y2 @x  Coordinates of endpoints of line (both included)
    @color      Allowed colors: black, white, none, reverse */
-static void dvline(int y1, int y2, int x, color_t operator)
+void dvline(int y1, int y2, int x, color_t operator)
 {
 	if((uint)x >= 128) return;
 	if(y1 > y2) swap(y1, y2);

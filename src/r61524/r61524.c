@@ -121,7 +121,7 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 //	Driver functions
 //---
 
-void r61524_test(void)
+/* void r61524_test(void)
 {
 	uint16_t device_name;
 	uint16_t doc;
@@ -198,34 +198,15 @@ void r61524_test(void)
 
 	Bdisp_PutDisp_DD();
 	getkey();
+} */
 
-/*	Bdisp_AllClr_VRAM();
-	print(1, 1, "MSTPCR0=????????");
-	print_hex(9, 1, POWER.MSTPCR0.lword, 8);
+/* TODO: r61524: update, backlight, brightness, gamma */
 
-	print(1, 2, "DMAOR=????");
-	print_hex(7, 2, DMA.OR.word, 4);
-
-	print(1, 3, "SAR=????????");
-	print_hex(5, 3, DMA.DMA0.SAR, 8);
-	print(1, 4, "DAR=????????");
-	print_hex(5, 4, DMA.DMA0.DAR, 8);
-	print(1, 5, "TCR=????????");
-	print_hex(5, 5, DMA.DMA0.TCR, 8);
-	print(1, 6, "CHCR=????????");
-	print_hex(6, 6, DMA.DMA0.CHCR, 8);
-
-	Bdisp_PutDisp_DD();
-	getkey(); */
-}
-
-void r61524_dma_test(uint16_t *vram)
+void r61524_display(uint16_t *vram, int start, int height)
 {
-	int y1 = 0;
-	int height = 224;
 
 	/* Move the window to the desired region, then select address 0 */
-	r61524_win_set(0, 395, y1, y1 + height - 1);
+	r61524_win_set(0, 395, start, start + height - 1);
 	select(ram_address_horizontal);
 	write(0);
 	select(ram_address_vertical);
@@ -234,15 +215,17 @@ void r61524_dma_test(uint16_t *vram)
 	/* Bind address 0xb4000000 to the data write command */
 	select(write_data);
 
-	void *src = vram;
+	void *src = vram + 396 * start;
 	void *dst = (void *)0xb4000000;
 
-	/* The thing is, 396 is not a multiple of 32.
-	   To make things simple, we can choose to always send a multiple of 8
-	   rows, which makes the 32 factor appear. */
-	int blocks = 198 * (height >> 3);
+	/* The amount of data sent per row, 396*2, is not a multiple of 32. For
+	   now I assume [height] is a multiple of 4, which makes the factor 32
+	   appear. */
+	int blocks = 99 * (height >> 2);
 
+	/* Now roll! */
 	dma_transfer(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
+	/* Wait for any previous DMA transfer to finish */
 	dma_transfer_wait();
 }
 
@@ -279,7 +262,7 @@ static void ctx_restore(void *buf)
 #ifdef GINT_BOOT_LOG
 
 /* r6524_status() - status string */
-static const char *r6524_status(void)
+static const char *r61524_status(void)
 {
 	select(device_code_read);
 	uint16_t dev = read();
@@ -298,7 +281,7 @@ static const char *r6524_status(void)
 gint_driver_t drv_r61524 = {
 	.name		= "R61524",
 	.init		= NULL,
-	.status		= GINT_DRIVER_STATUS(r6524_status),
+	.status		= GINT_DRIVER_STATUS(r61524_status),
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,

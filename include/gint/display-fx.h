@@ -13,6 +13,15 @@
 
 #include <gint/defs/types.h>
 
+/* Expose the VRAM variable if GINT_NEED_VRAM is defined. It must always point
+   to a 4-aligned buffer of size 1024. Any function can use it freely to:
+   - Use another video ram area (triple buffering or more, gray engine);
+   - Implement additional drawing functions;
+   - Store data when not drawing. */
+#ifdef GINT_NEED_VRAM
+extern uint32_t *vram;
+#endif
+
 /* color_t - colors available for drawing
    The following colors are defined by the library:
 
@@ -50,9 +59,9 @@ typedef enum
 //	Area drawing functions
 //---
 
-/* dupdate() - pushes the video RAM to the display driver
+/* dupdate() - push the video RAM to the display driver
    This function makes the contents of the VRAM visible on the screen. It is
-   the direct equivalent of Bdisp_PutDisp_DD() */
+   the direct equivalent of Bdisp_PutDisp_DD(). */
 void dupdate(void);
 
 /* dclear() - fill the screen with a single color
@@ -100,7 +109,7 @@ void dpixel(int x, int y, color_t color);
 void dline(int x1, int y1, int x2, int y2, color_t color);
 
 //---
-//  Image rendering (bopti)
+//	Image rendering (bopti)
 //---
 
 /* image_t - image files encoded for bopti
@@ -126,7 +135,7 @@ typedef struct
 } GPACKED(4) image_t;
 
 //---
-//  Text rendering (topti)
+//	Text rendering (topti)
 //---
 
 /* font_t - font data encoded for topti */

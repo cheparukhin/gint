@@ -8,7 +8,7 @@ GSECTION(".bss") static uint32_t fx_vram[256];
 /* Here is the definition of the VRAM pointer */
 GDATA uint32_t *vram = fx_vram;
 
-/* dupdate() - pushes the video RAM to the display driver */
+/* dupdate() - push the video RAM to the display driver */
 void dupdate(void)
 {
 	t6k11_display(vram, 0, 64, 16);
