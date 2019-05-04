@@ -11,7 +11,7 @@
 
 #include <gint/gint.h>
 #include <gint/display.h>
-#include <core/syscalls.h>
+#include <gint/syscalls.h>
 #include <gint/clock.h>
 
 #ifdef GINT_BOOT_LOG

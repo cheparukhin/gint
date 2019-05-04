@@ -9,7 +9,7 @@
 #include <gint/defs/types.h>
 #include <gint/mpu.h>
 
-#include <core/syscalls.h>
+#include <gint/syscalls.h>
 
 #ifdef FX9860G
 
