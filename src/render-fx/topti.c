@@ -5,14 +5,14 @@
 #include "topti-asm.h"
 
 /* Default font */
-extern font_t gint_font5x6;
-font_t const * topti_font = &gint_font5x6;
+extern font_t gint_font5x7;
+font_t const * topti_font = &gint_font5x7;
 
 /* dfont() - set the default font for text rendering */
 GSECTION(".pretext")
 void dfont(font_t const * font)
 {
-	topti_font = font ? font : &gint_font5x6;
+	topti_font = font ? font : &gint_font5x7;
 }
 
 /* enum charset: Available character set decoders

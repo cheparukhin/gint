@@ -53,7 +53,7 @@ src      := $(shell find ../src \
 src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 
 # Files with special handling
-spe     := ../src/font5x6.png
+spe     := ../src/font5x7.png
 spe_obj := version.o $(foreach s,$(spe),$(call src2obj,$s))
 
 # All object files
@@ -103,10 +103,10 @@ src/%.c.o: ../src/%.c src/%.c.d
 	$(call cmd_b,gcc,$*.c) $(gcc) -c $< -o $@ $(dflags) $(cflags)
 
 # Special files
-$(call src2obj,../src/font5x6.png): ../src/font5x6.png
+$(call src2obj,../src/font5x7.png): ../src/font5x7.png
 	@ mkdir -p $(dir $@)
-	$(call cmd_m,fxconv,font5x6.png)$(conv) -f $< -o $@ name:gint_font5x6 \
-		charset:ascii grid.size:5x6 grid.padding:1 grid.border:0
+	$(call cmd_m,fxconv,font5x7.png)$(conv) -f $< -o $@ name:gint_font5x7 \
+		charset:ascii grid.size:5x7 grid.padding:1 grid.border:0
 
 # Version symbol. ld generates a .stack section for unknown reasons; I remove
 # it in the linker script.

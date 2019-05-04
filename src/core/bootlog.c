@@ -43,7 +43,7 @@ static void print(int x, int y, const char *format, ...)
 	vsprintf(str + 2, format, args);
 
 	#ifdef FX9860G
-	dtext(6 * (x-1) + 1, 7 * (y-1), str + 2, color_black, color_white);
+	dtext(6 * (x-1) + 1, 8 * (y-1), str + 2, color_black, color_white);
 	#endif
 
 	#ifdef FXCG50
@@ -154,7 +154,7 @@ void bootlog_driver(const char *drv, const char *status)
 
 	static int mx = 1, my = 6;
 	if(mx + len > 22) mx = 1, my++;
-	if(my > 9) return;
+	if(my > 8) return;
 
 	print(mx, my, "%s", status);
 	mx += len + 1;

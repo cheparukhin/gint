@@ -141,6 +141,10 @@ for arg; do case "$arg" in
     echo "warning: support for '-timer-slots' has been removed";;
   -events-queue-size=*)
     echo "warning: support for '-events-queue-size' has been removed";;
+
+  *)
+    echo "error: unrecognized argument '$arg'";
+    fail=true;;
 esac; done
 
 #
@@ -150,6 +154,11 @@ esac; done
 if [[ -z "$target" ]]; then
   echo "error: no target specified! (see '$0 --help')"
   fail=true;
+fi
+
+if $fail; then
+  echo "note: output file $output has not been changed."
+  exit 1
 fi
 
 # If no prefix is specified, install to the GCC's build folder
@@ -194,11 +203,6 @@ output_config()
   [[ "$atexit_max"  ]] && echo -n " -DATEXIT_MAX=$atexit_max"
   echo ""
 }
-
-if $fail; then
-  echo "note: output file $output has not been changed."
-  exit 1
-fi
 
 output_config > $output
 
