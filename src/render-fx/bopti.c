@@ -52,7 +52,7 @@ struct command
 
 	/* Ignored elements between two rendered grid rows */
 	int vram_stride;
-	/* Ignored elements between two columns rendered grid columns */
+	/* Ignored elements between two rendered grid columns */
 	int data_stride;
 
 	/* Assembly function, prototype depends on image type */
