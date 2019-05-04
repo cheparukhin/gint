@@ -20,6 +20,9 @@ void *memset(void *dest, int byte, size_t n);
 /* strlen() - length of a NUL-terminated string */
 size_t strlen(const char *str);
 
+/* strncpy() - copy a string with a size limit*/
+char *strncpy(char *dst, const char *src, size_t n);
+
 /* vsprintf() - an almost-empty subset of the real one */
 void vsprintf(char *str, const char *format, va_list args);
 

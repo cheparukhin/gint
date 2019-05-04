@@ -14,13 +14,18 @@
 #include <core/syscalls.h>
 #include <gint/clock.h>
 
+#ifdef GINT_BOOT_LOG
+
 #ifdef FXCG50
 void Bdisp_AllClr_VRAM(void);
 void Bdisp_PutDisp_DD(void);
-
+void PrintXY(int x, int y, const char *str, int fg, int bg);
 #define dclear(c) Bdisp_AllClr_VRAM()
 #define dupdate() Bdisp_PutDisp_DD()
 #endif
+
+/* A copy of the bootlog */
+GDATA char gint_bootlog[22*9] = { 0 };
 
 /* Linker script symbols - see core/start.c for details */
 extern char
@@ -38,12 +43,14 @@ static void print(int x, int y, const char *format, ...)
 	vsprintf(str + 2, format, args);
 
 	#ifdef FX9860G
-	dtext(6 * (x - 1) + 1, 7 * (y - 1), str + 2, color_black, color_white);
+	dtext(6 * (x-1) + 1, 7 * (y-1), str + 2, color_black, color_white);
 	#endif
 
 	#ifdef FXCG50
 	PrintXY(x, y, str, 0, 0);
 	#endif
+
+	strncpy(gint_bootlog + 22 * (y-1) + (x-1), str + 2, 21 - (x-1));
 
 	va_end(args);
 }
@@ -90,7 +97,7 @@ void bootlog_loaded(void)
 
 /* bootlog_mapped() - ROM mapping stage */
 GSECTION(".pretext")
-void bootlog_mapped(int rom, int ram)
+void bootlog_mapped(int rom, GUNUSED int ram)
 {
 	/* Check whether all ROM is mapped */
 	uint32_t rom_size  = (uint32_t)&srom;
@@ -186,3 +193,5 @@ void bootlog_driver_summary(void)
 
 	dupdate();
 }
+
+#endif /* GINT_BOOT_LOG */

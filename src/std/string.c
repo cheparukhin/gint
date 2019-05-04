@@ -13,13 +13,20 @@ GWEAK size_t strlen(const char *str)
 	return len;
 }
 
+GWEAK char *strncpy(char *dst, const char *src, size_t n)
+{
+	size_t i = 0;
+	while(i < n && (dst[i] = src[i])) i++;
+	return dst;
+}
+
 /* vsprintf() - a trimmed-down version of the function
-   This function supports formats '%%', '%nd', '%nx' and '%s' where 'n' is a
-   1-digit size, and is mandatory. For '%d' and '%x', '0' is always set.
+   This function supports formats '%%', '%<n>d', '%<n>x' and '%s' where 'n' is
+   a 1-digit size, and is mandatory. For '%d' and '%x', flag '0' is always set.
    Always outputs exactly the requested number of characters, even if it's not
    enough to completely print the value.
    Does whatever it wants if the format is invalid. This is really a basic
-   function to format output without needing 18 kB of code. */
+   function to format output without needing 18 kB of fxlib code. */
 GWEAK void vsprintf(char *str, const char *format, va_list args)
 {
 	#define in() (c = *format++)

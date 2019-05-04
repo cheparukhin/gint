@@ -12,16 +12,16 @@
 //	Driver procedure flow
 //
 //	Drivers are initialized in priority order, and in linking order within
-//	the same priority (which is pretty much undefined). Make sure every
+//	the same priority level (pretty much undefined). Make sure every
 //	driver's priority level is higher than those of its dependencies.
 //
 //	At initialization, the following functions are called:
-//	1. driver_sh3()            [if not NULL, SH3 fx9860G only]
+//	1. driver_sh3()            [if not NULL, SH3 fx9860g only]
 //	2. ctx_save(sys_ctx)       [if not NULL]
 //	3. init()                  [if not NULL]
 //
 //	Then, if the on-screen boot log is enabled, the status() function is
-//	called and the returned function is displayed (21 characters max).
+//	called and the returned string is displayed (21 characters max).
 //	4. status()                [if not NULL, if GINT_BOOT_LOG is defined]
 //
 //	If the gint_switch() function is called to temporarily give back

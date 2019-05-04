@@ -9,7 +9,7 @@
 
 /* GINT_VERSION - the library version number
 
-   gint is versioned from it's repository commits on the master branch. The
+   gint is versioned from its repository commits on the master branch. The
    GINT_VERSION integer contains the short commit hash.
 
    For instance, 0x03f7c0a0 means commit 3f7c0a0. */

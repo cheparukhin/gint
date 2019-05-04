@@ -2,6 +2,7 @@
 #include <gint/mpu/dma.h>
 #include <gint/mpu/power.h>
 #include <gint/mpu/intc.h>
+#include <gint/gint.h>
 #include <gint/dma.h>
 #include <gint/drivers.h>
 #include <gint/clock.h>
