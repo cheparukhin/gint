@@ -94,7 +94,7 @@ _topti_asm_none:
 	nop
 
 .align 4
-_topti_asm_reverse:
+_topti_asm_invert:
 1:	mov.l	@r6+, r0
 	dt	r7
 	mov.l	@r4, r1
@@ -165,7 +165,7 @@ _topti_asm_text:
 	.long	_topti_asm_dark
 	.long	_topti_asm_black
 	.long	_topti_asm_none
-	.long	_topti_asm_reverse
+	.long	_topti_asm_invert
 	.long	_topti_asm_lighten
 	.long	_topti_asm_darken
 

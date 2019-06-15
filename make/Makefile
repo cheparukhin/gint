@@ -53,8 +53,9 @@ src      := $(shell find ../src \
 src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 
 # Files with special handling
-spe     := ../src/font5x7.png
-spe_obj := version.o $(foreach s,$(spe),$(call src2obj,$s))
+spe-fx  := ../src/font5x7.png
+spe-cg  := ../src/font10x12.png
+spe_obj := version.o $(foreach s,$(spe-$(CONFIG.TARGET)),$(call src2obj,$s))
 
 # All object files
 obj := $(src_obj) $(spe_obj)
@@ -107,14 +108,18 @@ $(call src2obj,../src/font5x7.png): ../src/font5x7.png
 	@ mkdir -p $(dir $@)
 	$(call cmd_m,fxconv,font5x7.png)$(conv) -f $< -o $@ name:gint_font5x7 \
 		charset:ascii grid.size:5x7 grid.padding:1 grid.border:0
+$(call src2obj,../src/font10x12.png): ../src/font10x12.png
+	@ mkdir -p $(dir $@)
+	$(call cmd_m,fxconv,font10x12.png)$(conv) -f $< -o $@ name:gint_font10x12 \
+		charset:print grid.size:10x12 grid.padding:0 grid.border:3
 
 # Version symbol. ld generates a .stack section for unknown reasons; I remove
 # it in the linker script.
-version.o:
+version.o: ../.git/HEAD
 	@ mkdir -p $(dir $@)
 	@ echo "_GINT_VERSION = $(version_hash);" > $@.txt
 	$(call cmd_b,ld,$@) $(ld) -r -R $@.txt -o $@
-.PHONY: version.o
+
 #
 #  Cleaning
 #

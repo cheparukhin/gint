@@ -2,103 +2,13 @@
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
 #include <gint/display.h>
+#include <display/common.h>
 #include "topti-asm.h"
 
 /* Default font */
 extern font_t gint_font5x7;
+font_t const * gint_default_font = &gint_font5x7;
 font_t const * topti_font = &gint_font5x7;
-
-/* dfont() - set the default font for text rendering */
-GSECTION(".pretext")
-void dfont(font_t const * font)
-{
-	topti_font = font ? font : &gint_font5x7;
-}
-
-/* enum charset: Available character set decoders
-   Each charset is associated with a reduced character table. */
-enum charset
-{
-	charset_numeric  = 0,	/*  10 elements: 0..9 */
-	charset_upper    = 1,	/*  26 elements: A..Z */
-	charset_alpha    = 2,	/*  52 elements: A..Z, a..z */
-	charset_alnum    = 3,	/*  62 elements: A..Z, a..z, 0..9 */
-	charset_print    = 4,	/*  95 elements: 0x20..0x7e  */
-	charset_ascii    = 5,	/* 128 elements: 0x00..0x7f */
-};
-
-/* charset_size(): Number of elements in each character set
-   @set  Character set ID
-   Returns the expected number of glyphs, -1 if charset ID is invalid. */
-GSECTION(".pretext")
-int charset_size(enum charset set)
-{
-	int size[] = { 10, 26, 52, 62, 95, 128 };
-	return (uint)set < 6 ? size[set] : -1;
-}
-
-/* charset_decode(): Translate ASCII into reduced character sets
-   Returns the position of [c] in the character table of the given charset, or
-   -1 if [c] is not part of that set.
-   @set  Any character set
-   @c    Character to decode */
-GSECTION(".pretext")
-int charset_decode(enum charset set, uint c)
-{
-	int x, y;
-
-	switch(set)
-	{
-	case charset_numeric:
-		x = c - '0';
-		return (x < 10) ? x : -1;
-	case charset_upper:
-		x = (c - 'A') & ~0x20;
-		return (x < 26) ? x : -1;
-	case charset_alnum:
-		x = c - '0';
-		if(x < 10) return x;
-		/* Intentional fallthrough */
-	case charset_alpha:
-		y = c & 0x20;
-		x = (c ^ y) - 'A';
-		/* Turn 32 into 26 and leave 0 as 0 */
-		y = y - (y >> 3) - (y >> 4);
-		return (x < 26) ? (x + y) : -1;
-	case charset_print:
-		x = c - 0x20;
-		return (x < 0x5f) ? x : -1;
-	case charset_ascii:
-		return c;
-	}
-
-	return -1;
-}
-
-/* topti_offset(): Use a font index to find the location of a glyph
-   @f      Font object
-   @glyph  Glyph number obtained by charset_decode(), must be nonnegative.
-   Returns the offset the this glyph's data in the font's data array. When
-   using a proportional font, the size array is not heeded for. */
-GSECTION(".pretext")
-int topti_offset(font_t const *f, uint glyph)
-{
-	/* Non-proportional fonts don't need an index */
-	if(!f->prop) return glyph * f->storage_size;
-
-	uint8_t const *width = f->sized_data;
-
-	/* The index gives us the position of all glyphs whose IDs are mutiples
-	   of 8. Start with a close one and iterate from there. */
-	uint g = glyph & ~0x7;
-	int offset = f->index[g >> 3];
-
-	/* Traverse the width array (which is in bits) while converting to
-	   longword size */
-	while(g < glyph) offset += (width[g++] * f->data_height + 31) >> 5;
-
-	return offset;
-}
 
 /* topti_split(): Split glyph data into lines
    This function splits the data from [glyph] inyo lines and writes a bit of
@@ -299,7 +209,7 @@ void dsize(const char *str, font_t const * f, int *w, int *h)
 
 /* dtext() - display a string of text */
 GSECTION(".pretext")
-void dtext(int x, int y, const char *str, color_t fg, color_t bg)
+void dtext(int x, int y, const char *str, int fg, int bg)
 {
 	if((uint)fg >= 8 || (uint)bg >= 8) return;
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],

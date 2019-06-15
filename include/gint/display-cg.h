@@ -22,10 +22,18 @@
 
    In this module, colors are in the 16-bit R5G6B5 format, as it is the format
    used by the display controller. */
-
 #ifdef GINT_NEED_VRAM
 extern uint16_t *vram;
 #endif
+
+/* Provide a platform-agnostic definition of color_t.
+   Some functions also support transparency, in which case they take an [int]
+   as argument and recognize negative values as transparent. */
+typedef uint16_t color_t;
+
+enum {
+	color_none = -1,
+};
 
 //---
 //	Video RAM management
@@ -61,73 +69,6 @@ extern uint16_t *vram;
    @main       Main VRAM area, used alone if [secondary] is NULL
    @secondary  Additional VRAM area, enables triple buffering if non-NULL */
 void dvram(uint16_t *main, uint16_t *secondary);
-
-/* dupdate() - push the video RAM to the display driver
-   This function makes the contents of the VRAM visible on the screen. It is
-   the direct equivalent of Bdisp_PutDisp_DD().
-
-   If triple buffering is enabled (this is the default, and disabled only if
-   dvram() is used to setup double buffering instead), it also swaps buffers.
-   Also waits for the previous dupdate() call to finish before executing. */
-void dupdate(void);
-
-//---
-//	Area rendering functions
-//---
-
-/* dclear() - fill the screen with a single color
-   This function clears the screen by painting all the pixels in a single,
-   opaque color.
-
-   @color  Any R5G6B5 color */
-void dclear(uint16_t color);
-
-/* drect() - fill a rectangle of the screen
-   This functions paints a rectangle in an opaque color. The endpoints (x1 y1)
-   and (x2 y2) are included in the rectangle.
-
-   @x1 @y1 @x2 @y2  Bounding rectangle (drawn area).
-   @color           Any R5G6B5 color */
-void drect(int x1, int y1, int x2, int y2, uint16_t color);
-
-//---
-//	Point drawing functions
-//---
-
-/* dpixel() - change a pixel's color
-   Paints the selected pixel with an opaque color. Setting pixels individually
-   is a slow method for rendering. Other functions that draw lines, rectangles,
-   images or text will take advantage of possible optimizations to make the
-   rendering faster: check them out first.
-
-   @x @y   Coordinates of the pixel to repaint
-   @color  Any R5G6B5 color */
-void dpixel(int x, int y, uint16_t color);
-
-/* dline() - render a straight line
-   This function draws a line using a Bresenham-style algorithm. Please note
-   that the affected pixels may not be exactly the same when using dline() and
-   Bdisp algorithms.
-
-   dline() has optimization facilities for horizontal and vertical lines. The
-   first kind is about twice as fast, while the second avoids some computation
-   (the optimization gain is not as significant as on fx9860g). dline() is not
-   able to clip the line without calculating all the pixels, so drawing a line
-   from (-1e6,0) to (1e6,395) will work, but will be veeery slow.
-
-   @x1 @y1 @x2 @y2  End points of the line (both included).
-   @color           Any R5G6B5 color */
-void dline(int x1, int y1, int x2, int y2, uint16_t color);
-
-//---
-//	Image rendering (bopti)
-//---
-
-//---
-//	Text rendering (topti)
-//---
-
-typedef void font_t;
 
 #endif /* FXCG50 */
 

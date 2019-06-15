@@ -11,18 +11,16 @@ void dpixel(int x, int y, color_t color)
 	uint32_t *lword = vram + (y << 2) + (x >> 5);
 	uint32_t mask = 1 << (~x & 31);
 
-	switch(color)
+	if(color == color_white)
 	{
-	case color_white:
 		*lword &= ~mask;
-		break;
-	case color_black:
+	}
+	else if(color == color_black)
+	{
 		*lword |= mask;
-		break;
-	case color_reverse:
+	}
+	else if(color == color_invert)
+	{
 		*lword ^= mask;
-		break;
-	default:
-		return;
 	}
 }

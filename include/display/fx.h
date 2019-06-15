@@ -24,9 +24,6 @@
    @masks   Stores the result of the function (four uint32_t values) */
 void masks(int x1, int x2, uint32_t *masks);
 
-/* Font currently configured for text rendering */
-extern font_t const * topti_font;
-
 /* bopti_render_clip() - render a bopti image with clipping
    @x @y             Location of the top-left corner
    @img              Image encoded by [fxconv]

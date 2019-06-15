@@ -21,39 +21,21 @@ void drect(int x1, int y1, int x2, int y2, uint16_t color)
 	uint16_t *base = vram + 396 * y1;
 	int height = y2 - y1 + 1;
 
-	/* Do borders first if there are at an odd position */
-
-	if(x1 & 1)
-	{
-		uint16_t *v = base;
-		for(int h = height; h; h--)
-		{
-			v[x1] = color;
-			v += 396;
-		}
-		x1++;
-	}
-
-	if(x2 & 1) x2++;
-	else
-	{
-		uint16_t *v = base;
-		for(int h = height; h; h--)
-		{
-			v[x2] = color;
-			v += 396;
-		}
-	}
-
 	/* Now copy everything that's left as longwords */
 
-	uint32_t *v = (void *)(base + x1);
+	int ax1 = x1 + (x1 & 1);
+	int ax2 = (x2 + 1) & ~1;
+
+	uint32_t *v = (void *)(base + ax1);
 	uint32_t op = (color << 16) | color;
-	int width = (x2 - x1) >> 1;
+	int width = (ax2 - ax1) >> 1;
 
 	for(int h = height; h; h--)
 	{
+		base[x1] = color;
+		base[x2] = color;
 		for(int w = 0; w < width; w++) v[w] = op;
 		v += 198;
+		base += 396;
 	}
 }

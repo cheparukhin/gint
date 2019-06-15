@@ -37,7 +37,7 @@ void drect(int x1, int y1, int x2, int y2, color_t color)
 		*--lword |= m[1];
 		*--lword |= m[0];
 	}
-	else if(color == color_reverse) while(lword > base)
+	else if(color == color_invert) while(lword > base)
 	{
 		*--lword ^= m[3];
 		*--lword ^= m[2];

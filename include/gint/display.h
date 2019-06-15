@@ -1,5 +1,9 @@
 //---
 //	gint:display - Drawing functions
+//
+//	This module covers the drawing functions that are common to fx9860g and
+//	fxcg50. Platform-specific definitions are found in <gint/display-fx.h>
+//	and <gint/display-cg.h>.
 //---
 
 #ifndef GINT_DISPLAY
@@ -7,8 +11,8 @@
 
 #include <gint/defs/types.h>
 
-/* As you would expect, display on fx9860g and display on fxcg50 are completely
-   different worlds. As a consequence, so are the rendering functions ^^ */
+/* Platform-specific functions include VRAM management and the definition of
+   the color_t type. */
 
 #ifdef FX9860G
 #include <gint/display-fx.h>
@@ -18,26 +22,180 @@
 #include <gint/display-cg.h>
 #endif
 
-#if 0
-/* dinfo_t - summary of information provided by this module */
+/* TODO: dinfo() or similar */
+
+//---
+//	Video RAM management
+//---
+
+/* dupdate() - push the video RAM to the display driver
+   This function makes the contents of the VRAM visible on the screen. It is
+   the direct equivalent of Bdisp_PutDisp_DD().
+
+   On fxcg50, if triple buffering is enabled (which is the default and disabled
+   only by calling dvram()), it also swaps buffers. Due to the DMA being used,
+   always waits for the previous call to dupdate() call() to finish. */
+void dupdate(void);
+
+//---
+//	Area rendering functions
+//---
+
+/* dclear() - fill the screen with a single color
+   This function clears the screen by painting all the pixels in a single
+   color. It is optimized for opaque colors.
+
+   On fx9860g, use drect() if you need complex operators such as invert.
+
+   @color  fx9860g: white, black
+           fxcg50:  Any R5G6B5 color */
+void dclear(color_t color);
+
+/* drect() - fill a rectangle of the screen
+   This functions applies a color or an operator to a rectangle defined by two
+   points (x1 y1) and (x2 y2). Both are included in the rectangle.
+
+   @x1 @y1 @x2 @y2  Bounding rectangle (drawn area).
+   @color           fx9860g: white, black, none, invert
+                    fxcg50:  Any R5G6B5 color */
+void drect(int x1, int y1, int x2, int y2, color_t color);
+
+//---
+//	Point drawing functions
+//---
+
+/* dpixel() - change a pixel's color
+   Paints the selected pixel with an opaque color. Setting pixels individually
+   is a slow method for rendering. Other functions that draw lines, rectangles,
+   images or text will take advantage of possible optimizations to make the
+   rendering faster: check them out first.
+
+   On fx9860g, if an operator such as invert is used, the result will depend
+   on the current color of the pixel.
+
+   @x @y   Coordinates of the pixel to repaint
+   @color  fx9860g: white, black, none, invert
+           fxcg50:  Any R5G6B5 color */
+void dpixel(int x, int y, color_t color);
+
+/* dline() - render a straight line
+   This function draws a line using a Bresenham-style algorithm. Please note
+   that dline() may not render lines exactly like Bdisp_DrawLineVRAM().
+
+   dline() has optimization facilities for horizontal and vertical lines. The
+   speedup for horizontal lines is about x2 on fxcg50 and probably about x30
+   on fx9860g. Vertical lines have a smaller speedup.
+
+   dline() is currently not able to clip arbitrary lines without calculating
+   all the pixels, so drawing a line from (-1e6,0) to (1e6,395) will work but
+   will be veeery slow.
+
+   @x1 @y1 @x2 @y2  End points of the line (both included).
+   @color           fx9860g: white, black, none, invert
+                    fxcg50:  Any R5G6B5 color */
+void dline(int x1, int y1, int x2, int y2, color_t color);
+
+//---
+//	Text rendering (topti)
+//---
+
+/* font_t - font data encoded for topti */
 typedef struct
 {
-	/* Screen width, in pixels */
-	int width;
-	/* Screen height, in pixels */
-	int height;
-	/* Color depth (is 1 on fx9860g regardless of the gray engine) */
-	int bpp;
-	/* Current rendering font */
-	font_t const * font;
+	/* Length of font name (not necessarily NUL-terminated!) */
+	uint title    :5;
+	/* Font shape flags */
+	uint bold     :1;
+	uint italic   :1;
+	uint serif    :1;
+	uint mono     :1;
+	/* Whether data is variable-length (proportional font) */
+	uint prop     :1;
+	/* Reserved for future use */
+	uint          :2;
+	/* Implemented charcter set */
+	uint charset  :4;
+	/* Line height */
+	uint8_t line_height;
+	/* Storage height */
+	uint8_t data_height;
 
-} dinfo_t;
+	/* The rest of the data depends on whether the font is proportional */
+	union {
+		/* For monospaced fonts */
+		struct {
+			/* Width of glyphs */
+			uint16_t width;
+			/* Storage size, in longwords, of each glyph */
+			uint16_t storage_size;
+			/* Raw glyph data */
+			uint32_t data[];
+		};
+		/* For proportional fonts */
+		struct {
+			/* Storage index to find glyphs quickly */
+			uint16_t index[16];
+			/* Size array (padded to 4 bytes), 1 byte per entry,
+			   followed by glyph data */
+			uint8_t sized_data[];
+		};
+	};
 
-/* dinfo() - retrieve information from the display module
-   This function returns the value of most parameters of the display module.
+	/* The font name is stored after the data. The size is the length set
+	   in the [title] field, padded to 4 bytes with NULs. There might not
+	   be a NUL at the end. */
 
-   @info  Pointer to allocated dinfo_t structure, will be filled. */
-void dinfo(dinfo_t *info);
-#endif
+} GPACKED(4) font_t;
+
+/* dfont() - set the default font for text rendering
+   This font will be used by dtext() and sister functions. If [font = NULL],
+   gint's default font is used.
+
+   On fx9860g, the default font is a 5x7 font very close to the system's.
+   On fxcg50, the default font is an original 10x12 font.
+
+   @font  Font to use for subsequent text rendering calls */
+void dfont(font_t const * font);
+
+/* dsize() - get the width and height of rendered text
+   This function computes the size that the given string would take up if
+   rendered with a certain font. If you specify a NULL font, the currently
+   configured font will be used; this is different from dfont(), which uses
+   gint's default font when NULL is passed.
+
+   Note that the height of each glyph is not stored in the font, only the
+   maximum. Usually this is what you want because vertically-centered strings
+   must have the same baseline regardless of their contents. So the height
+   returned by dsize() is the same for all strings, only depends on the font.
+
+   The height is computed in constant time, and the width in linear time. If
+   [w = NULL], this function returns in constant time.
+
+   @str   String whose size must be evaluated
+   @font  Font to use; if NULL, defaults to the current font
+   @w @h  Set to the width and height of the rendered text, may be NULL */
+void dsize(const char *str, font_t const * font, int *w, int *h);
+
+/* dtext() - display a string of text
+
+   Draws some text in the video RAM using the font set with dfont() (or gint's
+   default if no such font was set).
+
+   On fx9860g, due to the particular design of topti, this function performs
+   drastic rendering optimizations using the line structure of the VRAM and is
+   able to render several characters at once.
+
+   This is not a printf()-family function so [str] cannot contain formats like
+   "%d" and you cannot pass aditional arguments.
+
+   @x @y   Coordinates of top-left corner of the rendered string
+   @str    String to display
+   @fg     Text color
+           fx9860g: white, black, none, invert
+           fxcg50:  Any R5G6B6 color, or [color_none]
+   @bg     Background color
+           fx9860g: white, black, none, invert
+           fxcg50:  Any R5G6B5 color, or [color_none] */
+void dtext(int x, int y, const char *str, int fg, int bg);
 
 #endif /* GINT_DISPLAY */
