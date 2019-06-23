@@ -54,7 +54,7 @@ src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 
 # Files with special handling
 spe-fx  := ../src/font5x7.png
-spe-cg  := ../src/font10x12.png
+spe-cg  := ../src/font10x12.png ../src/font8x9.png
 spe_obj := version.o $(foreach s,$(spe-$(CONFIG.TARGET)),$(call src2obj,$s))
 
 # All object files
@@ -112,6 +112,11 @@ $(call src2obj,../src/font10x12.png): ../src/font10x12.png
 	@ mkdir -p $(dir $@)
 	$(call cmd_m,fxconv,font10x12.png)$(conv) -f $< -o $@ name:gint_font10x12 \
 		charset:print grid.size:10x12 grid.padding:0 grid.border:3
+$(call src2obj,../src/font8x9.png): ../src/font8x9.png
+	@ mkdir -p $(dir $@)
+	$(call cmd_m,fxconv,font8x9.png)$(conv) -f $< -o $@ name:gint_font8x9 \
+		charset:print grid.size:8x11 grid.padding:1 grid.border:0 \
+		proportional:true
 
 # Version symbol. ld generates a .stack section for unknown reasons; I remove
 # it in the linker script.

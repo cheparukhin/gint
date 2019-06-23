@@ -91,15 +91,21 @@ int topti_split(uint32_t const * glyph, int width, int height, int free,
    @asm_fg  Assembler function for text rendering
    @asm_bg  Assembler function for background rendering */
 GSECTION(".pretext")
-void topti_render(int x, int y, const char *str, font_t const *f,
+void topti_render(int x, int y, char const *str, font_t const *f,
 	asm_text_t *asm_fg, asm_text_t *asm_bg)
 {
 	/* Storage height and number of free bits in operators[] */
 	int height = f->data_height, free;
 	/* Raw glyph data */
-	uint32_t const * data = f->prop
-		? (void *)(f->sized_data + charset_size(f->charset))
-		: f->data;
+	uint32_t const * data;
+	if(!f->prop) data = f->data;
+	else
+	{
+		int cs = charset_size(f->charset);
+		/* 4-align the result */
+		cs += (4 - cs) & 3;
+		data = (void *)(f->sized_data + cs);
+	}
 
 	/* Basic clipping */
 	if(x > 127 || y > 63 || y + height <= 0) return;
@@ -179,37 +185,9 @@ void topti_render(int x, int y, const char *str, font_t const *f,
 	}
 }
 
-/* dsize() - get the width and height of rendered text */
-void dsize(const char *str, font_t const * f, int *w, int *h)
-{
-	if(!f) f = topti_font;
-	if(h) *h = f->line_height;
-	if(!w) return;
-
-	/* Width for monospaced fonts is easy, unfortunately we still need to
-	   compute the length of [str]. Critical applications might do the
-	   product themselves to avoid this cost. */
-	if(!f->prop)
-	{
-		int length = 0;
-		while(*str++) length++;
-		*w = (f->width + 1) * length - 1;
-		return;
-	}
-
-	/* For proportional fonts, fetch the width of each individual glyphs */
-	int width = 0;
-	while(*str)
-	{
-		int glyph = charset_decode(f->charset, *str++);
-		if(glyph > 0) width += f->sized_data[glyph] + 1;
-	}
-	*w = width - 1;
-}
-
 /* dtext() - display a string of text */
 GSECTION(".pretext")
-void dtext(int x, int y, const char *str, int fg, int bg)
+void dtext(int x, int y, char const *str, int fg, int bg)
 {
 	if((uint)fg >= 8 || (uint)bg >= 8) return;
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],

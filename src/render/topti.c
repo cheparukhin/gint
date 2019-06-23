@@ -2,6 +2,10 @@
 #include <gint/display.h>
 #include <display/common.h>
 
+/* These parameters will eventually be specified by the font */
+#define CHAR_SPACING 1
+#define PROP_SPACING 5
+
 /* dfont(): Set the default font for text rendering */
 GSECTION(".pretext")
 void dfont(font_t const * font)
@@ -70,4 +74,39 @@ int topti_offset(font_t const *f, uint glyph)
 	while(g < glyph) offset += (width[g++] * f->data_height + 31) >> 5;
 
 	return offset;
+}
+
+/* dsize() - get the width and height of rendered text */
+void dsize(const char *str, font_t const * f, int *w, int *h)
+{
+	if(!f) f = topti_font;
+	if(h) *h = f->line_height;
+	if(!w) return;
+
+	/* Width for monospaced fonts is easy, unfortunately we still need to
+	   compute the length of [str]. Critical applications might do the
+	   product themselves to avoid this cost. */
+	if(!f->prop)
+	{
+		int length = 0;
+		while(*str++) length++;
+		*w = (f->width + CHAR_SPACING) * length - CHAR_SPACING;
+		return;
+	}
+
+	/* For proportional fonts, fetch the width of each individual glyphs */
+	int width = 0, c;
+
+	while((c = *str++))
+	{
+		if(c == ' ')
+		{
+			width += PROP_SPACING + CHAR_SPACING;
+			continue;
+		}
+
+		int glyph = charset_decode(f->charset, c);
+		if(glyph > 0) width += f->sized_data[glyph] + CHAR_SPACING;
+	}
+	*w = width - CHAR_SPACING;
 }

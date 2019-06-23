@@ -43,13 +43,19 @@ void topti_glyph(uint16_t *vram, uint32_t const * data, int left, int top,
 }
 
 GSECTION(".pretext")
-void topti_render(int x, int y, const char *str, size_t size, font_t const *f,
+void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	int fg, int bg)
 {
 	/* Raw glyph data */
-	uint32_t const * data = f->prop
-		? (void *)(f->sized_data + charset_size(f->charset))
-		: f->data;
+	uint32_t const * data;
+	if(!f->prop) data = f->data;
+	else
+	{
+		int cs = charset_size(f->charset);
+		/* 4-align the result */
+		cs += (4 - cs) & 3;
+		data = (void *)(f->sized_data + cs);
+	}
 
 	/* Storage height, top position within glyph */
 	int height = f->data_height, top = 0;
@@ -62,14 +68,28 @@ void topti_render(int x, int y, const char *str, size_t size, font_t const *f,
 	/* Move to top row */
 	uint16_t *target = vram + 396 * y;
 
-	/* Character spacing */
-	int space = 2;
+	/* Character spacing and space waiting to be drawn */
+	int space = 1;
+	int active_space = 0;
 
 	/* Read each character from the input string */
 	while(size--)
 	{
-		int glyph = charset_decode(f->charset, *str++);
+		int c = *str++;
+
+		int glyph = charset_decode(f->charset, c);
 		if(glyph < 0) continue;
+
+		/* Draw the space if background is opaque */
+		int prop_space = (c == ' ' && f->prop) ? 5 : 0;
+		if((active_space && bg >= 0) || prop_space)
+		{
+			active_space += prop_space;
+			drect(x, y, x + active_space - 1, y + height - 1, bg);
+		}
+		x += active_space;
+		if(prop_space) { active_space = space; continue; }
+		if(x >= 396) break;
 
 		int index = topti_offset(f, glyph);
 
@@ -80,7 +100,8 @@ void topti_render(int x, int y, const char *str, size_t size, font_t const *f,
 
 		if(x + dataw <= 0)
 		{
-			x += dataw + space;
+			x += dataw;
+			active_space = space;
 			continue;
 		}
 		if(x < 0) left = -x, width += x;
@@ -91,6 +112,14 @@ void topti_render(int x, int y, const char *str, size_t size, font_t const *f,
 		topti_glyph(target + x, data + index, left, top, width, height,
 			dataw, fg, bg);
 
-		x += dataw + space;
+		x += dataw;
+		active_space = space;
 	}
+}
+
+/* dtext() - display a string of text */
+GSECTION(".pretext")
+void dtext(int x, int y, char const *str, int fg, int bg)
+{
+	topti_render(x, y, str, strlen(str), topti_font, fg, bg);
 }

@@ -32,6 +32,12 @@ extern uint16_t *vram;
 typedef uint16_t color_t;
 
 enum {
+	/* Compatibility with fx9860g color names */
+	color_white = 0xffff,
+	color_light = 0xaaaa,
+	color_dark  = 0x5555,
+	color_black = 0x0000,
+
 	color_none = -1,
 };
 
