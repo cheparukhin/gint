@@ -54,7 +54,7 @@ src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 
 # Files with special handling
 spe-fx  := ../src/font5x7.png
-spe-cg  := ../src/font10x12.png ../src/font8x9.png
+spe-cg  := ../src/font8x9.png
 spe_obj := version.o $(foreach s,$(spe-$(CONFIG.TARGET)),$(call src2obj,$s))
 
 # All object files
@@ -108,10 +108,6 @@ $(call src2obj,../src/font5x7.png): ../src/font5x7.png
 	@ mkdir -p $(dir $@)
 	$(call cmd_m,fxconv,font5x7.png)$(conv) -f $< -o $@ name:gint_font5x7 \
 		charset:ascii grid.size:5x7 grid.padding:1 grid.border:0
-$(call src2obj,../src/font10x12.png): ../src/font10x12.png
-	@ mkdir -p $(dir $@)
-	$(call cmd_m,fxconv,font10x12.png)$(conv) -f $< -o $@ name:gint_font10x12 \
-		charset:print grid.size:10x12 grid.padding:0 grid.border:3
 $(call src2obj,../src/font8x9.png): ../src/font8x9.png
 	@ mkdir -p $(dir $@)
 	$(call cmd_m,fxconv,font8x9.png)$(conv) -f $< -o $@ name:gint_font8x9 \
@@ -138,10 +134,17 @@ distclean: clean
 #  Installing
 #
 
+m644 := -m 644
+
+# Disable -m on Mac OS
+ifeq "$(shell uname)" "Darwin"
+m644 :=
+endif
+
 install: $(target)
 	install -d $(PREFIX)
-	install $(target) -m 755 $(PREFIX)
-	install ../$(CONFIG.TARGET.LONG).ld -m 644 $(PREFIX)
+	install $(target) $(m644) $(PREFIX)
+	install ../$(CONFIG.TARGET.LONG).ld $(m644) $(PREFIX)
 	cp -r ../include/gint $(PREFIX)/include
 
 uninstall:
