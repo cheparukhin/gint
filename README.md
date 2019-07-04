@@ -3,7 +3,7 @@
 gint (pronounce 'guin') is a development system for Casio fx-9860G II and
 fx-CG 50 calculators. It provides a mostly free-standing runtime and is used
 to develop add-ins under Linux, along with specialized GCC toolchains and the
-[fxSDK](http://git.planet-casio.com/lephe/fxsdk).
+[fxSDK](/Lephenixnoir/fxsdk).
 
 gint is a modular kernel that implements its own drivers for the calculator's
 hardware, overriding the operating system and its syscalls. It is a drop-in
@@ -45,10 +45,10 @@ or both. There are a few dependencies:
   * For fx-9860G II, `sh3eb-elf` is strongly advised
   * For fx-CG 50, `sh4eb-elf` (with `-m4-nofpu`) is slightly better but
     `sh3eb-elf` is completely fine
-* The [fxSDK](http://git.planet-casio.com/lephe/fxsdk) installed and available
-  in the PATH. You will need `fxsdk` and `fxconv` to build gint, and if you
-  intend to develop add-ins for fx-9860G II, you probably want `fxg1a` as well.
-  All these tools are built by default in the fxSDK.
+* The [fxSDK](/Lephenixnoir/fxsdk) installed and available in the PATH. You
+  will need `fxconv` to build gint, and if you intend to develop add-ins for
+  fx-9860G II, you probably want `fxg1a` as well. All these tools are built by
+  default.
 
 fx-CG 50 developers probably want a g3a wrapper as well; the reference
 implementation is tari's [mkg3a](https://www.taricorp.net/projects/mkg3a/).
@@ -100,10 +100,9 @@ To use gint as your runtime environment, the bare minimum is:
 * Link with `-T fxcg50.ld` and `-lgint-cg` on fx-CG 50.
 
 If you don't have a standard library such as
-[Memallox's port of newlib](https://git.planet-casio.com/Memallox/libc), you
-also need `-nostdlib`. I typically use `-m3 -mb` or `-m4-nofpu -mb` to specify
-the platform, but that may not even be necessary.
+[Memallox's port of newlib](/PlaneteCasio/libc), you also need `-nostdlib`. I
+typically use `-m3 -mb` or `-m4-nofpu -mb` to specify the platform, but that
+may not even be necessary.
 
-Typically you might want to do this with the
-[fxSDK](http://git.planet-casio.com/lephe/fxsdk), which hides most of the
-details and makes it easy to roll add-ins.
+Typically you might want to do this with the [fxSDK](/Lephenixnoir/fxsdk),
+which hides most of the details and makes it easy to roll add-ins.
