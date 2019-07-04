@@ -6,14 +6,14 @@
 #include "topti-asm.h"
 
 /* Default font */
-extern font_t gint_font10x12;
-font_t const * gint_default_font = &gint_font10x12;
-font_t const * topti_font = &gint_font10x12;
+extern font_t gint_font8x9;
+font_t const * gint_default_font = &gint_font8x9;
+font_t const * topti_font = &gint_font8x9;
 
 /* topti_glyph(): Render a glyph on the VRAM
    Prints a glyph naively using word accesses, because for most fonts with a
-   small size (including gint's 10x12 font) this will be more efficient than
-   the complex logic for longword accesses.
+   small size (including gint's 8x9 font) this will be more efficient than the
+   complex logic for longword accesses.
 
    This function assumes that at least one of [fg] and [bg] is not transparent.
 
