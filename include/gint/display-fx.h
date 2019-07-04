@@ -40,18 +40,18 @@ extern uint32_t *vram;
 typedef enum
 {
 	/* Opaque colors */
-	color_white	= 0,
-	color_light	= 1,
-	color_dark	= 2,
-	color_black	= 3,
+	C_WHITE    = 0,
+	C_LIGHT    = 1,
+	C_DARK     = 2,
+	C_BLACK    = 3,
 
 	/* Monochrome operators */
-	color_none	= 4,
-	color_invert	= 5,
+	C_NONE     = 4,
+	C_INVERT   = 5,
 
 	/* Gray operators */
-	color_lighten	= 6,
-	color_darken	= 7,
+	C_LIGHTEN  = 6,
+	C_DARKEN   = 7,
 
 } color_t;
 

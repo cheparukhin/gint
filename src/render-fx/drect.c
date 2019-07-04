@@ -23,21 +23,21 @@ void drect(int x1, int y1, int x2, int y2, color_t color)
 	uint32_t *base	= vram + (y1 << 2);
 	uint32_t *lword	= vram + (y2 << 2) + 4;
 
-	if(color == color_white) while(lword > base)
+	if(color == C_WHITE) while(lword > base)
 	{
 		*--lword &= ~m[3];
 		*--lword &= ~m[2];
 		*--lword &= ~m[1];
 		*--lword &= ~m[0];
 	}
-	else if(color == color_black) while(lword > base)
+	else if(color == C_BLACK) while(lword > base)
 	{
 		*--lword |= m[3];
 		*--lword |= m[2];
 		*--lword |= m[1];
 		*--lword |= m[0];
 	}
-	else if(color == color_invert) while(lword > base)
+	else if(color == C_INVERT) while(lword > base)
 	{
 		*--lword ^= m[3];
 		*--lword ^= m[2];

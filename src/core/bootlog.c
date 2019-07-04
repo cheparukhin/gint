@@ -43,7 +43,7 @@ static void print(int x, int y, const char *format, ...)
 	vsprintf(str + 2, format, args);
 
 	#ifdef FX9860G
-	dtext(6 * (x-1) + 1, 8 * (y-1), str + 2, color_black, color_white);
+	dtext(6 * (x-1) + 1, 8 * (y-1), str + 2, C_BLACK, C_WHITE);
 	#endif
 
 	#ifdef FXCG50
@@ -72,7 +72,7 @@ void bootlog_loaded(void)
 	const char *names = "SH7337\0 SH7305\0 SH7355\0 SH7724";
 
 	/* TODO: Use a solid API for boot-time printing */
-	dclear(color_white);
+	dclear(C_WHITE);
 	print(1, 1, "gint @%7x   SLmkd", GINT_VERSION);
 
 	if(mpu >= 1 && mpu <= 4) print(1, 2, names + 8 * (mpu - 1));

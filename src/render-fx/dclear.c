@@ -8,7 +8,7 @@ void dclear(color_t color)
 	   pre-decrement write; the other similar mode is post-increment
 	   read. So we'll use pre-decrement writes to improve performance. */
 
-	if(color != color_white && color != color_black) return;
+	if(color != C_WHITE && color != C_BLACK) return;
 	uint32_t fill = -(color >> 1);
 
 	uint32_t *index = vram + 256;
