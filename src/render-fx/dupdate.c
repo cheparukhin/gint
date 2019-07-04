@@ -13,3 +13,9 @@ void dupdate(void)
 {
 	t6k11_display(vram, 0, 64, 16);
 }
+
+/* dupdate_noint() - Push VRAM to the display without interrupts */
+void dupdate_noint(void)
+{
+	dupdate();
+}

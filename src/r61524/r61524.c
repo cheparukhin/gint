@@ -202,9 +202,8 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 
 /* TODO: r61524: update, backlight, brightness, gamma */
 
-void r61524_display(uint16_t *vram, int start, int height)
+void r61524_display(uint16_t *vram, int start, int height, int interrupts)
 {
-
 	/* Move the window to the desired region, then select address 0 */
 	r61524_win_set(0, 395, start, start + height - 1);
 	select(ram_address_horizontal);
@@ -224,9 +223,15 @@ void r61524_display(uint16_t *vram, int start, int height)
 	int blocks = 99 * (height >> 2);
 
 	/* Now roll! */
-	dma_transfer(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
-	/* Wait for any previous DMA transfer to finish */
-	dma_transfer_wait();
+	if(interrupts)
+	{
+		/* Usa a normal, interrupt-based transfer */
+		dma_transfer(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
+		/* Wait for it to finish */
+		/* TODO: Allow r61524_display() to return early */
+		dma_transfer_wait();
+	}
+	else dma_transfer_noint(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
 }
 
 //---

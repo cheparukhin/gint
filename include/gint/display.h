@@ -152,7 +152,7 @@ typedef struct
    gint's default font is used.
 
    On fx9860g, the default font is a 5x7 font very close to the system's.
-   On fxcg50, the default font is an original 10x12 font.
+   On fxcg50, the default font is an original 8x9 font.
 
    @font  Font to use for subsequent text rendering calls */
 void dfont(font_t const * font);
@@ -192,10 +192,22 @@ void dsize(const char *str, font_t const * font, int *w, int *h);
    @str    String to display
    @fg     Text color
            fx9860g: white, black, none, invert
-           fxcg50:  Any R5G6B6 color, or [color_none]
+           fxcg50:  Any R5G6B6 color, or C_NONE
    @bg     Background color
            fx9860g: white, black, none, invert
-           fxcg50:  Any R5G6B5 color, or [color_none] */
+           fxcg50:  Any R5G6B5 color, or C_NONE */
 void dtext(int x, int y, const char *str, int fg, int bg);
+
+//---
+//	Advanced functions
+//---
+
+/* dupdate_noint() - Push VRAM to the display without interrupts
+   This function does exactly as dupdate(), but does not use interrupts and
+   always returns when the transfer is finished. It actively waits for the end
+   of the transfer and is thus bad for any general-purpose use. In fact, it is
+   only needed to display panic messages in exception handlers. Don't use it
+   unless you know precisely why you're doing it. */
+void dupdate_noint(void);
 
 #endif /* GINT_DISPLAY */

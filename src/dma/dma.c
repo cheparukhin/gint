@@ -15,13 +15,17 @@
 //	Driver interface
 //---
 
-/* dma_transfer() - Perform a data transfer */
-void dma_transfer(dma_size_t size, uint blocks,
+/* dma_setup() - Setup the DMA in interrupt or no-interrupt mode.
+   The first parameters are as for dma_transfer() and dma_transfer_noint(). The
+   last parameter indicates whether interrupts should be used.
+   Returns non-zero if the DMA is busy or a configuration error occurs. */
+static int dma_setup(dma_size_t size, uint blocks,
 	void *src, dma_address_t src_mode,
-	void *dst, dma_address_t dst_mode)
+	void *dst, dma_address_t dst_mode,
+	int interrupts)
 {
 	/* Safety guard: only start a transfer if there's not one running */
-	if(DMA.DMA0.CHCR.DE) return;
+	if(DMA.DMA0.CHCR.DE) return 1;
 
 	/* Disable DMA0 and disable the master DMA switch */
 	DMA.DMA0.CHCR.DE = 0;
@@ -41,13 +45,23 @@ void dma_transfer(dma_size_t size, uint blocks,
 	DMA.DMA0.CHCR.TS_10 = (size & 3);
 	DMA.DMA0.CHCR.DM = dst_mode;
 	DMA.DMA0.CHCR.SM = src_mode;
-	DMA.DMA0.CHCR.IE = 1;
+	DMA.DMA0.CHCR.IE = !!interrupts;
 
 	/* Prepare DMAOR by enabling the master switch and clearing the
 	   blocking flags. */
 	DMA.OR.DME = 1;
 	DMA.OR.AE = 0;
 	DMA.OR.NMIF = 0;
+
+	return 0;
+}
+
+/* dma_transfer() - Perform a data transfer */
+void dma_transfer(dma_size_t size, uint blocks,
+	void *src, dma_address_t src_mode,
+	void *dst, dma_address_t dst_mode)
+{
+	if(dma_setup(size, blocks, src, src_mode, dst, dst_mode, 1)) return;
 
 	/* Enable channel 0, starting the DMA transfer. */
 	DMA.DMA0.CHCR.DE = 1;
@@ -58,6 +72,30 @@ void dma_transfer_wait(void)
 {
 	/* The master switch is cut when the transfer ends */
 	while(DMA.OR.DME) sleep();
+}
+
+/* dma_transfer_noint() - Perform a data transfer without interruptions */
+void dma_transfer_noint(dma_size_t size, uint blocks,
+	void *src, dma_address_t src_mode,
+	void *dst, dma_address_t dst_mode)
+{
+	if(dma_setup(size, blocks, src, src_mode, dst, dst_mode, 0)) return;
+
+	/* Enable channel 0, starting the DMA transfer. */
+	DMA.DMA0.CHCR.DE = 1;
+
+	/* Actively wait until the transfer is finished */
+	while(!DMA.DMA0.CHCR.TE);
+
+	/* Disable the channel and clear the TE flag. Disable the channel first
+	   as clearing the TE flag will allow the transfer to restart */
+	DMA.DMA0.CHCR.DE = 0;
+	DMA.DMA0.CHCR.TE = 0;
+
+	/* Clear the AE and NMIF status flags and cut the master switch */
+	DMA.OR.DME = 0;
+	DMA.OR.AE = 0;
+	DMA.OR.NMIF = 0;
 }
 
 //---
