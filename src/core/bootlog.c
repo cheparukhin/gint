@@ -25,7 +25,7 @@ void PrintXY(int x, int y, const char *str, int fg, int bg);
 #endif
 
 /* A copy of the bootlog */
-GDATA char gint_bootlog[22*9] = { 0 };
+GDATA char gint_bootlog[22*8] = { 0 };
 
 /* Linker script symbols - see core/start.c for details */
 extern char
@@ -50,7 +50,7 @@ static void print(int x, int y, const char *format, ...)
 	PrintXY(x, y, str, 0, 0);
 	#endif
 
-	strncpy(gint_bootlog + 22 * (y-1) + (x-1), str + 2, 21 - (x-1));
+	memcpy(gint_bootlog + 22 * (y-1) + (x-1), str + 2, strlen(str + 2));
 
 	va_end(args);
 }
@@ -59,6 +59,9 @@ static void print(int x, int y, const char *format, ...)
 GSECTION(".pretext")
 void bootlog_loaded(void)
 {
+	memset(gint_bootlog, 0x20, 22*8);
+	for(int i = 0; i < 8; i++) gint_bootlog[22 * i + 21] = 0;
+
 	/* Size of memory sections */
 	uint32_t rom_size  = (uint32_t)&srom;
 	uint32_t ram_size  = (uint32_t)&sdata + (uint32_t)&sbss;
