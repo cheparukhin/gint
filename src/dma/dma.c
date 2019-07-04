@@ -1,4 +1,4 @@
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 #include <gint/mpu/dma.h>
 #include <gint/mpu/power.h>
 #include <gint/mpu/intc.h>
@@ -116,6 +116,8 @@ static void init(void)
 
 	/* Unmask the DMA0 interrupt */
 	INTC.MSKCLR->IMR1 = 0x01;
+
+	gint[HWDMA] = HW_LOADED;
 }
 
 //---

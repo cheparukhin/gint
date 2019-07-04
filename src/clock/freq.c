@@ -6,7 +6,7 @@
 #include <gint/clock.h>
 #include <core/std.h>
 
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 #include <gint/mpu/cpg.h>
 
 //---
@@ -65,6 +65,8 @@ static void sh7705_probe(void)
 	freq.Bphi_f = ckio;
 	freq.Iphi_f = (idiv == 3) ? ckio_3 : ckio >> idiv;
 	freq.Pphi_f = (pdiv == 3) ? ckio_3 : ckio >> pdiv;
+
+	gint[HWCPG] |= HWCPG_COMP;
 }
 
 #undef CPG
@@ -109,6 +111,8 @@ static void sh7305_probe(void)
 	freq.Bphi_f   = base >> (divb + 1);
 	freq.Iphi_f   = base >> (divi + 1);
 	freq.Pphi_f   = base >> (divp + 1);
+
+	gint[HWCPG] |= HWCPG_COMP | HWCPG_EXT;
 }
 
 #undef CPG
@@ -135,11 +139,13 @@ static const char *cpg_status(void)
 
 static void init(void)
 {
-	/* This avoids warnings about sh7705() not being defined on fxcg50 */
+	gint[HWCPG] = HW_LOADED;
+
+	/* This avoids warnings about sh7705_probe() being undefined when
+	   building for fxcg50 */
 	#ifdef FX9860G
 	isSH3() ? sh7705_probe() :
 	#endif
-
 	sh7305_probe();
 }
 

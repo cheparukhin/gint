@@ -6,7 +6,7 @@
 #define GINT_TIMER
 
 #include <gint/defs/types.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 
 /* Timer identifiers
 

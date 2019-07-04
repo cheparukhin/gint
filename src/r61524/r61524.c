@@ -3,6 +3,7 @@
 //---
 
 #include <gint/defs/types.h>
+#include <gint/hardware.h>
 #include <gint/drivers.h>
 #include <gint/dma.h>
 #include <core/std.h>
@@ -261,6 +262,19 @@ static void ctx_restore(void *buf)
 }
 
 //---
+//	Driver initialization
+//---
+
+static void init(void)
+{
+	select(device_code_read);
+	uint16_t devname = read();
+
+	gint[HWDD] = HW_LOADED | HWDD_FULL;
+	if(devname == 0x1524) gint[HWDD] |= HWDD_KNOWN;
+}
+
+//---
 //	Driver status string
 //---
 
@@ -285,7 +299,7 @@ static const char *r61524_status(void)
 
 gint_driver_t drv_r61524 = {
 	.name		= "R61524",
-	.init		= NULL,
+	.init		= init,
 	.status		= GINT_DRIVER_STATUS(r61524_status),
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,

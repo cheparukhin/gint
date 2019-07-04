@@ -6,7 +6,7 @@
 #include <core/std.h>
 #include <core/mmu.h>
 
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 #include <gint/mpu/intc.h>
 
 #include <gint/gint.h>
@@ -65,22 +65,22 @@ void bootlog_loaded(void)
 	uint32_t gint_size = (uint32_t)&sgdata + (uint32_t)&sgbss;
 
 	/* MPU type */
-	mpu_t mpu = gint_mpu();
+	int mpu = gint[HWMPU];
 	const char *names = "SH7337\0 SH7305\0 SH7355\0 SH7724";
 
 	/* TODO: Use a solid API for boot-time printing */
 	dclear(color_white);
 	print(1, 1, "gint @%7x   SLmkd", GINT_VERSION);
 
-	if((uint)mpu < 4) print(1, 2, names + 8 * (mpu - 1));
+	if(mpu >= 1 && mpu <= 4) print(1, 2, names + 8 * (mpu - 1));
 	else print(1, 2, "%6d", mpu);
 
 	#ifdef FX9860G
-	print(8, 2, "%c?-", gint_platform.extended_ram ? 'R' : 'r');
+	print(8, 2, "%c?-", gint[HWRAM] >= (512 << 10) ? 'R' : 'r');
 	#endif
 
 	#ifdef FXCG50
-	print(8, 2, "--%c", gint_platform.prizm ? 'P' : 'p');
+	print(8, 2, "---");
 	#endif
 
 	char os[11];

@@ -1,5 +1,5 @@
 #include <gint/defs/attributes.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 #include <stddef.h>
 #include <stdint.h>
 

@@ -155,6 +155,7 @@ uint32_t timer_delay(int tid, uint64_t delay_us)
 	uint64_t freq = clock->Pphi_f >> 2;
 
 	/* fxcg50: Calculated = 29491200 but it's too low */
+	/* TODO: Account for down spread spectrum in the CPG */
 	// uint64_t freq = 29020000 >> 2;
 
 	/* Extra timers all run at 32768 Hz */
@@ -262,7 +263,7 @@ static void driver_sh3(void)
 
 	TSTR = (void *)0xfffffe92;
 }
-#endif
+#endif /* FX9860G */
 
 static void init(void)
 {
@@ -364,6 +365,22 @@ static void init(void)
 		SH7305_INTC.MSKCLR->IMR5 = 0x06;
 		SH7305_INTC.MSKCLR->IMR6 = 0x18;
 		SH7305_INTC.MSKCLR->IMR8 = 0x02;
+	}
+
+	/* Record details in gint's hardware information interface */
+
+	gint[HWTMU]  = HW_LOADED;
+	gint[HWETMU] = HW_LOADED | (isSH3() ? HWETMU_1 : HWETMU_6);
+
+	for(int i = 3; i < timer_count(); i++)
+	{
+		tmu_extra_t *t = timers[i].tmu;
+		int v = !(t->TCOR + 1)
+		     && !(t->TCNT + 1)
+		     && !(t->TSTR)
+		     && !(t->TCR.UNF)
+		     && !(t->TCR.UNIE);
+		gint[HWETMU] |= v << (i - 1);
 	}
 }
 

@@ -3,6 +3,7 @@
 //---
 
 #include <core/mmu.h>
+#include <gint/hardware.h>
 
 //---
 //	SH7705 TLB
@@ -48,6 +49,9 @@ void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 
 	if(p_rom) *p_rom = rom;
 	if(p_ram) *p_ram = ram;
+
+	gint[HWMMU] = HW_LOADED;
+	gint[HWURAM] = ram;
 }
 
 #endif
@@ -92,4 +96,7 @@ void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 
 	if(p_rom) *p_rom = rom;
 	if(p_ram) *p_ram = ram;
+
+	gint[HWMMU] = HW_LOADED | HWMMU_UTLB;
+	gint[HWURAM] = ram;
 }

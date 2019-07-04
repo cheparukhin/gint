@@ -10,7 +10,7 @@
 
 #include <gint/drivers/iokbd.h>
 #include <gint/defs/attributes.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 
 //---
 //	Keyboard buffer
@@ -183,6 +183,9 @@ static void init(void)
 
 	timer_setup(tid, delay, 0, callback, NULL);
 	timer_start(tid);
+
+	gint[HWKBD] = HW_LOADED | (isSH3() ? HWKBD_IO : HWKBD_KSI);
+	gint[HWKBDSF] = KEYBOARD_SCAN_FREQUENCY;
 }
 
 /* unload() - stop the support timer */

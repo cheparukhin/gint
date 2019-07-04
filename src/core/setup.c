@@ -6,7 +6,7 @@
 #include <gint/drivers.h>
 #include <core/std.h>
 #include <core/setup.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 #include <gint/mpu/intc.h>
 
 /* VBR address, from the linker script */

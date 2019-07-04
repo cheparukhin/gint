@@ -7,7 +7,7 @@
 #include <gint/gint.h>
 
 #include <gint/defs/types.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 #include <gint/mpu/rtc.h>
 
 //---
@@ -150,6 +150,8 @@ static void init(void)
 	/* Disable the periodic interrupt for now, but give it priority 5 */
 	RTC->RCR2.PES = RTC_NONE;
 	gint_intlevel(isSH3() ? 3 : 40, 5);
+
+	gint[HWRTC] = HW_LOADED | HWRTC_TIMER;
 }
 
 //---

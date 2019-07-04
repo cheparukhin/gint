@@ -7,7 +7,7 @@
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 
 #include <gint/syscalls.h>
 
@@ -223,6 +223,15 @@ static void ctx_restore(void *buf)
 }
 
 //---
+//	Driver initialization
+//---
+
+static void init(void)
+{
+	gint[HWDD] = HW_LOADED | HWDD_LIGHT;
+}
+
+//---
 //	Driver status string
 //---
 
@@ -243,7 +252,7 @@ static const char *t6k11_status(void)
 
 gint_driver_t drv_t6k11 = {
 	.name		= "T6K11",
-	.init		= NULL,
+	.init		= init,
 	.status		= GINT_DRIVER_STATUS(t6k11_status),
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,

@@ -1,5 +1,5 @@
 //---
-//	gint:core:start - Kernel initialisation and C runtime
+//	gint:core:start - Kernel initialization and C runtime
 //--
 
 #include <gint/defs/attributes.h>
@@ -8,7 +8,7 @@
 #include <core/mmu.h>
 #include <gint/drivers.h>
 #include <gint/gint.h>
-#include <gint/mpu.h>
+#include <gint/hardware.h>
 
 /* Symbols provided by the linker script. For sections:
    - l* represents the load address (source address in ROM)
@@ -114,9 +114,7 @@ int start(int isappli, int optnum)
 	   processor with some incompatible features */
 
 	/* Detect architecture - this will tell SH3 from SH4 on fx9860g */
-	uint32_t stack;
-	__asm__("mov r15, %0" : "=r"(stack));
-	mpu_init(stack);
+	hw_detect();
 
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
