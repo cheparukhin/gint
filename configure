@@ -124,7 +124,7 @@ for arg; do case "$arg" in
 
   --atexit-max=*)
     n=${arg#*=}
-    if [[ $n == +([0-9]) ]]; then
+    if [[ $n =~ ([0-9])+ ]]; then
       atexit_max=$n
     else
       echo -e "error: -atexit-max expects an integer value"
@@ -175,6 +175,7 @@ if [[ -z "$prefix" ]]; then
 
   if [[ ! -d $inst ]]; then
     echo "Directory does not exist (or is not a directory), giving up."
+    exit 1
   fi
 
   echo ""
