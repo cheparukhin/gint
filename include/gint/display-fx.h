@@ -83,13 +83,13 @@ typedef struct
 
 /* dimage() - render a full image
    This function blits an image on the VRAM using gint's special format. It is
-   a special case of dimage_opt() where the full image is drawn with clipping.
+   a special case of dsubimage() where the full image is drawn with clipping.
 
    @x @y   Coordinates of the top-left corner of the image
    @image  Pointer to image encoded with [fxconv] */
 void dimage(int x, int y, image_t const *image);
 
-/* Option values for dimage_opt() */
+/* Option values for dsubimage() */
 enum {
 	/* Disable clipping, ie. adjustments to the specified subrectangle and
 	   screen location such that any part that overflows from the image or
@@ -97,7 +97,7 @@ enum {
 	DIMAGE_NOCLIP = 0x01,
 };
 
-/* dimage_opt() - render a section of an image
+/* dsubimage() - render a section of an image
    This function blits a subrectangle [left, top, width, height] of an image on
    the VRAM. It is more general than dimage() and also provides a few options.
 
@@ -105,7 +105,7 @@ enum {
    @image          Pointer to image encoded with [fxconv]
    @left @top      Top-left coordinates of the subrectangle within [image]
    @width @height  Subrectangle dimensions */
-void dimage_opt(int x, int y, image_t const *image, int left, int top,
+void dsubimage(int x, int y, image_t const *image, int left, int top,
 	int width, int height, int flags);
 
 #endif /* FX9860G */

@@ -8,8 +8,8 @@ void dimage(int x, int y, image_t const *img)
 	bopti_render_clip(x, y, img, 0, 0, img->width, img->height);
 }
 
-/* dimage_opt() - render a section of an image */
-void dimage_opt(int x, int y, image_t const *img, int left, int top,
+/* dsubimage() - render a section of an image */
+void dsubimage(int x, int y, image_t const *img, int left, int top,
 	int width, int height, int flags)
 {
 	if(img->gray) return;
