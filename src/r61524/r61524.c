@@ -55,7 +55,7 @@ typedef word_union(entry_mode_t,
 //	Device communication primitives
 //---
 
-#define synco() __asm__ volatile ("synco":::"memory")
+#define synco() __asm__ volatile (".word 0x00ab":::"memory")
 
 /* Interface with the controller */
 GDATA static volatile uint16_t *intf = (void *)0xb4000000;
