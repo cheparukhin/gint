@@ -27,8 +27,8 @@ font_t const * topti_font = &gint_font8x9;
    @dataw   Glyph width
    @fg @bg  Foreground and background colors */
 GSECTION(".pretext")
-void topti_glyph(uint16_t *vram, uint32_t const * data, int left, int top,
-	int width, int height, int dataw, int fg, int bg)
+static void topti_glyph(uint16_t *vram, uint32_t const * data, int left,
+	int top, int width, int height, int dataw, int fg, int bg)
 {
 	int index = top * dataw + left;
 

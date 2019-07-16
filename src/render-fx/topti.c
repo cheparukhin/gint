@@ -11,7 +11,7 @@ font_t const * gint_default_font = &gint_font5x7;
 font_t const * topti_font = &gint_font5x7;
 
 /* topti_split(): Split glyph data into lines
-   This function splits the data from [glyph] inyo lines and writes a bit of
+   This function splits the data from [glyph] into lines and writes a bit of
    each line in [operators]. This operation is meant to be used multiple times
    in a row, so [free] represents the number of free low bits in [operators].
 
@@ -22,11 +22,11 @@ font_t const * topti_font = &gint_font5x7;
    @operators  VRAM operands
 
    Returns the number of free bits in [operators] after the operation. If it's
-   0, call topti_draw() and reset the operators. If it's neative, call
+   0, call topti_draw() and reset the operators. If it's negative, call
    topti_draw() then do another pass of topti_split() to recover the missing
    information. */
 GSECTION(".pretext")
-int topti_split(uint32_t const * glyph, int width, int height, int free,
+static int topti_split(uint32_t const * glyph, int width, int height, int free,
 	uint32_t *operators)
 {
 	/* Extracts [width] bits on the left of [*glyph] */

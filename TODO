@@ -1,30 +1,30 @@
-On the bootlog.
-* Better review of .pretext to make sure everything fits in 4k
-* Move topti to .pretext to use it in the bootlog, also update() and dclear()
-* Use topti in the error message for the missing mappings (hurray o/)
-* Use a serious formatted printing function
-
 Crucial, missing things.
 ! core:      the four basic memory functions
 ! core:      build an exception handler and a TLB miss handler
 ! core:      gint_switch() (driver contexts on stack; arbitrary code?)
+! bopti:     fxcg50 version
+! syscalls:  fxcg50 BFile calls
+! gray:      the gray engine on fx9860g
 
 Tests to run.
-* core:      run the alignment/size automated tests
+* core:      run the alignment/size automated tests for memory functions
 * bopti:     more sizes, gray
 * topti:     all charsets, colors
 
 Completeness elements on existing code.
-* keyboard:  finish the interface
-* clock:     spread spectrum on fxcg50
+* core:      use topti in the error message for missing mappings
+* core:      find the #ifdef FX9860G|FXCG50 that have a cross-platform def
+* topti:     support Unicode fonts
+* hardware:  fill in the HWMEM_FITTLB flag
+* keyboard:  think of extended functions
+* cpg:       spread spectrum on fxcg50
 * bopti:     blending modes for monochrome bitmaps (use topti assembler)
 * display:   use more of topti's assembler in drect()
 * core:      use cmp/str for memchr()
-* stdio:     serious formatted printing function
-* timer:     try putting the definitions in <gint/mpu/tmu.h>
+* timer:     try putting addresses in <gint/mpu/tmu.h>
+* r61524:    brightness control and clean the file
 
 Keep in mind.
-* keyboard:  make keysc.c@state static and review globals in the project
 * prizm:     don't hardcode stack address in fxcg50.ld
 * prizm:     detect P1 static RAM (stack) in TLB
 * core:      prove and use qdiv10() instead of __sdivsi3
@@ -35,10 +35,8 @@ Keep in mind.
 * core:      document the SH7305 PFC in <gint/mpu/pfc.h>
 
 Future directions.
-* File management
-* Gray engine
+* A complete file system abstraction
 * Integrate overclock management
-* A library for profiling with manual calls
 * Audio playback using Martin Poupe's method
 * Serial communication [SCIF] [SCIFA]
 * USB communication [USB]

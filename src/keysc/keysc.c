@@ -24,7 +24,7 @@
    get a correct result. As a consequence, if an event cannot be generated
    (whatever the reason), the driver's internal copy of the keyboard state must
    not be updated (probably the event will be re-emitted at the next scan). */
-GDATA volatile uint8_t state[12] = { 0 };
+GDATA static volatile uint8_t state[12] = { 0 };
 
 /* A driver event, which is a change in a full row instead of a single key. */
 typedef struct
@@ -45,7 +45,7 @@ GDATA static int buffer_start = 0;
 GDATA static int buffer_end = 0;
 
 /* Current time, in keyboard-scanning ticks */
-GDATA int time = 0;
+GDATA static int time = 0;
 
 /* buffer_push() - add an event in the keyboard buffer
    Returns non-zero if the event cannot be pushed. */
@@ -71,7 +71,7 @@ static int buffer_poll(driver_event_t *ev)
 }
 
 /* keysc_frame() - generate a round of events for the current frame */
-void keysc_frame(void)
+static void keysc_frame(void)
 {
 	GALIGNED(2) uint8_t scan[12] = { 0 };
 

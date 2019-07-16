@@ -127,7 +127,7 @@ static void sh7305_probe(void)
 static const char *cpg_status(void)
 {
 	static char status[18];
-	sprintf(status, "I%3d B%3d P%3d C%c",
+	sprintf(status, "I%03d B%03d P%03d C%c",
 		freq.Iphi_f / 1000000,
 		freq.Bphi_f / 1000000,
 		freq.Pphi_f / 1000000,

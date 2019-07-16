@@ -41,7 +41,7 @@ static void print(int x, int y, const char *format, ...)
 	va_list args;
 	va_start(args, format);
 
-	vsprintf(str + 2, format, args);
+	vsnprintf(str + 2, 43, format, args);
 
 	#ifdef FX9860G
 	dtext(6 * (x-1) + 1, 8 * (y-1), str + 2, C_BLACK, C_WHITE);

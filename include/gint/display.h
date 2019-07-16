@@ -186,7 +186,7 @@ void dsize(const char *str, font_t const * font, int *w, int *h);
    able to render several characters at once.
 
    This is not a printf()-family function so [str] cannot contain formats like
-   "%d" and you cannot pass aditional arguments.
+   "%d" and you cannot pass additional arguments.
 
    @x @y   Coordinates of top-left corner of the rendered string
    @str    String to display

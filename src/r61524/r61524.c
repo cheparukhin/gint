@@ -288,7 +288,7 @@ static const char *r61524_status(void)
 	uint16_t dev = read();
 
 	static char str[8];
-	sprintf(str, "%4xF-b", dev);
+	sprintf(str, "%04xF-b", dev);
 	return str;
 }
 

@@ -40,11 +40,7 @@
 /* OS version */
 
 ___os_version:
-	mov.l	syscall_table, r2
-	mov.l	1f, r0
-	jmp	@r2
-	nop
-1:	.long	0x02ee
+	syscall(0x02ee)
 
 /* Dynamic allocation */
 
@@ -61,51 +57,27 @@ _realloc:
 
 # int BFile_Remove(const uint16_t *file)
 _BFile_Remove:
-	mov.l	1f, r0
-	mov.l	syscall_table, r1
-	jmp	@r1
-	mov	#0, r5
-1:	.long	0x0439
+	syscall(0x0439)
 
 # int BFile_Create(uint16_t *file, enum { file = 1, folder = 5 }, int *size)
 _BFile_Create:
-	mov.l	1f, r0
-	mov.l	syscall_table, r1
-	jmp	@r1
-	nop
-1:	.long	0x0434
+	syscall(0x0434)
 
 # int BFile_Open(const uint16_t *file, int mode)
 _BFile_Open:
-	mov.l	1f, r0
-	mov.l	syscall_table, r1
-	jmp	@r1
-	mov	#0, r6
-1:	.long	0x042c
+	syscall(0x042c)
 
 # int BFile_Close(int handle)
 _BFile_Close:
-	mov.l	1f, r0
-	mov.l	syscall_table, r1
-	jmp	@r1
-	nop
-1:	.long	0x042d
+	syscall(0x042d)
 
 # int BFile_Write(int handle, const void *ram_buffer, int even_size)
 _BFile_Write:
-	mov.l	1f, r0
-	mov.l	syscall_table, r1
-	jmp	@r1
-	nop
-1:	.long	0x0435
+	syscall(0x0435)
 
 # int BFile_Read(int handle, void *ram_buffer, int size, int whence)
 _BFile_Read:
-	mov.l	1f, r0
-	mov.l	syscall_table, r1
-	jmp	@r1
-	nop
-1:	.long	0x0432
+	syscall(0x0432)
 
 syscall_table:
 	.long	0x80010070
@@ -117,11 +89,7 @@ syscall_table:
 /* OS version */
 
 ___os_version:
-	mov.l	syscall_table, r2
-	mov.l	1f, r0
-	jmp	@r2
-	nop
-1:	.long	0x1406
+	syscall(0x1406)
 
 /* Dynamic allocation */
 

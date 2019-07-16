@@ -1,5 +1,6 @@
 
 .global _topti_asm_text
+.section .pretext
 
 # REGISTER ALLOCATION:
 # r0: x or ~x
