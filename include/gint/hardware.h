@@ -11,8 +11,8 @@
 //	  else do_sh4();
 //---
 
-#ifndef GINT_PLATFORM
-#define GINT_PLATFORM
+#ifndef GINT_HARDWARE
+#define GINT_HARDWARE
 
 #include <gint/defs/types.h>
 
@@ -23,9 +23,10 @@
 #define HW_KEYS 16
 extern uint32_t gint[HW_KEYS];
 
-/* MPU detection macros, with a faster version on fx-CG 50 */
+/* MPU detection macros, with a faster version on fx-CG 50 and a generic
+   dual-platform version for libraries. */
 
-#ifdef FX9860G
+#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 #define isSH3() (gint[HWMPU] & 1)
 #define isSH4() (!isSH3())
 #endif
@@ -183,7 +184,7 @@ void hw_detect(void);
 /* The contrast address for this OS version is known. [fx9860g] */
 #define HWDD_CONTRAST  0x04
 /* Backlight management is supported. This is used both on fx9860g models with
-   backlit screen (although that very fact cannot be detected) and fxcg50. */
+   back-lit screen (although that very fact cannot be detected) and fxcg50. */
 #define HWDD_LIGHT     0x08
 
-#endif /* GINT_PLATFORM */
+#endif /* GINT_HARDWARE */
