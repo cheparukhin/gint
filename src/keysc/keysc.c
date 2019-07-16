@@ -148,12 +148,14 @@ key_event_t waitevent(volatile int *timeout)
 {
 	key_event_t none = { .type = KEYEV_NONE };
 
-	do {
+	while(1)
+	{
 		key_event_t ev = pollevent();
 		if(ev.type != KEYEV_NONE) return ev;
-		sleep();
 
-	} while(!(timeout && *timeout));
+		if(timeout && *timeout) break;
+		sleep();
+	}
 
 	return none;
 }
@@ -180,6 +182,9 @@ static void init(void)
 	/* TODO: The SH3 does not need to run fast, adjust user settings? */
 	int delay = 32768 / KEYBOARD_SCAN_FREQUENCY;
 	if(!delay) delay = 1;
+
+	/* Set the default repeat times (milliseconds) */
+	getkey_repeat(500, 125);
 
 	timer_setup(tid, delay, 0, callback, NULL);
 	timer_start(tid);

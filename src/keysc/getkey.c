@@ -9,13 +9,10 @@
 #include <gint/drivers/t6k11.h>
 #endif
 
-/* Atom for counting time in getkey() is 32768 Hz, 1ull << ATOM is a second */
-#define ATOM 15
-
-/* Delay between a key press and the first repeat, in 1/32768 seconds */
-static uint64_t rep_first;
-/* Delay between subsequent repeats, in 1/32768 seconds */
-static uint64_t rep_next;
+/* Delay between a key press and the first repeat, in scan intervals */
+static int rep_first = 64;
+/* Delay between subsequent repeats, in scan intervals */
+static int rep_next = 16;
 
 /* getkey() - wait for a pressed key */
 key_event_t getkey(void)
@@ -30,11 +27,11 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	int shift = 0, alpha = 0, key = 0;
 
 	/* Last pressed key (only this key may be repeated) */
-	int rep_key = 0;
+	static int rep_key = 0;
 	/* Number of repeats already emitted */
-	int rep_count = 0;
-	/* Time elapsed since last repeat emission (in atoms) */
-	uint64_t rep_time = 0;
+	static int rep_count = 0;
+	/* Scan intervals elapsed since last repeat */
+	static int rep_time = 0;
 
 	while(1) switch((ev = waitevent(timeout)).type)
 	{
@@ -89,10 +86,16 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	/* Return new events when a key is held (maybe) */
 	case KEYEV_HOLD:
 		if(ev.key != rep_key) break;
-		rep_time += (1ull << ATOM) / KEYBOARD_SCAN_FREQUENCY;
+
+		/* Check that this key can be repeated */
+		int arrow = (rep_key == KEY_LEFT || rep_key == KEY_RIGHT ||
+			rep_key == KEY_UP || rep_key == KEY_DOWN);
+
+		if(!(opt & GETKEY_REP_ALL) && !(opt & GETKEY_REP_ARROWS &&
+			arrow)) break;
 
 		/* If the key is key pressed long enough, create a new event */
-		if(rep_time < (rep_count ? rep_next : rep_first)) break;
+		if(++rep_time < (rep_count ? rep_next : rep_first)) break;
 
 		ev.mod = 1;
 		ev.shift = shift;
@@ -113,6 +116,6 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 /* getkey_repeat() - set repeat delays for getkey() */
 void getkey_repeat(int first, int next)
 {
-	rep_first = ((uint64_t)first << ATOM) / 1000;
-	rep_next = ((uint64_t)next << ATOM) / 1000;
+	rep_first = (first * KEYBOARD_SCAN_FREQUENCY) / 1000;
+	rep_next = (next * KEYBOARD_SCAN_FREQUENCY) / 1000;
 }

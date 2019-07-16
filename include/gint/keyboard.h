@@ -93,12 +93,12 @@ enum
 /* pollevent() - poll the next keyboard event
    This function returns the next yet-unpolled event from the keyboard buffer.
    If no event is available, it returns a dummy event with type = KEYEV_NONE.
-   This event has always mod = 0, shift = 0, alpha = 0. */
+   This function always returns events with mod=0. */
 key_event_t pollevent(void);
 
 /* waitevent() - wait for the next keyboard event
    This function works as pollevent() but waits if no event is available. When
-   timeout = NULL, it waits indefinitely. Otherwise, it waits until *timeout
+   timeout=NULL, it waits indefinitely. Otherwise, it waits until *timeout
    becomes non-zero. It is particularly suitable to set *timeout to 1 using a
    timer with [timer_timeout] as callback. See <gint/timer.h>. */
 key_event_t waitevent(volatile int *timeout);
@@ -123,18 +123,18 @@ key_event_t getkey(void);
 /* The following are the option bits for getkey_opt(). */
 enum {
 	/* Enable modifiers keys */
-	GETKEY_MOD_SHIFT	= 0x01,
-	GETKEY_MOD_ALPHA	= 0x02,
+	GETKEY_MOD_SHIFT   = 0x01,
+	GETKEY_MOD_ALPHA   = 0x02,
 	/* SHIFT + OPTN toggles backlight (requires GETKEY_MOD_SHIFT) */
-	GETKEY_BACKLIGHT	= 0x04,
+	GETKEY_BACKLIGHT   = 0x04,
 	/* MENU triggers a task switch and displays the main menu */
-	GETKEY_MENU		= 0x08,
+	GETKEY_MENU        = 0x08,
 	/* Repeat arrow keys, or even all keys */
-	GETKEY_REP_ARROWS	= 0x10,
-	GETKEY_REP_ALL		= 0x20,
+	GETKEY_REP_ARROWS  = 0x10,
+	GETKEY_REP_ALL     = 0x20,
 
 	/* Default settings of getkey() */
-	GETKEY_DEFAULT		= 0x1f,
+	GETKEY_DEFAULT     = 0x1f,
 };
 
 /* getkey_opt() - enhanced getkey()
@@ -148,7 +148,7 @@ enum {
    pointer [timeout]. If it's NULL, getkey_opt() waits indefinitely. Otherwise,
    it waits until *timeout becomes non-zero. It's up to you to change the
    value whenever you want to interrupt the call; using a timer with
-   [timer_timeout] as callback is suitable.
+   [timer_timeout] as callback is suitable. See <gint/timer.h>.
 
    @options  An or-combination of values from the GETKEY_* enumeration
    @timeout  Optional pointer to a timeout value
@@ -166,8 +166,8 @@ key_event_t getkey_opt(int options, volatile int *timeout);
    rounded to the closest feasible delays to ensure that repetitions are
    perfectly regular, rather than approximating the requested frequency.
 
-   The system default is (625 ms, 25 ms). With the 128 Hz setting, this default
-   will be approximated at (625 ms, 23.4375 ms).
+   The system default is (500 ms, 125 ms). With the 128 Hz setting, this
+   default is reached exactly without approximation.
 
    @first  Delay between key press and first repeat (no more than one hour)
    @next   Delay between subsequent repeats (no more than one hour) */
