@@ -10,8 +10,7 @@ void sleep_us(int tid, int us_delay)
 {
 	volatile int flag = 0;
 
-	timer_setup(tid, timer_delay(tid, us_delay), 0, timer_timeout,
-		(void *)&flag);
+	timer_setup(tid, timer_delay(tid, us_delay), 0, timer_timeout, &flag);
 	timer_start(tid);
 
 	while(!flag) sleep();

@@ -6,6 +6,7 @@
 #define GINT_TIMER
 
 #include <gint/defs/types.h>
+#include <gint/mpu/tmu.h>
 #include <gint/hardware.h>
 
 /* Timer identifiers
@@ -150,5 +151,17 @@ void timer_stop(int timer);
    argument pointer to 1 and halts the timer. The pointer must be of type
    int * and you must declare the variable as volatile int. */
 int timer_timeout(volatile void *arg);
+
+//---
+//	Low-level functions
+//---
+
+/* timer_address() - get the address of a timer structure
+   Returns a tmu_t if the id is 0, 1 or 2 and an etmu_t otherwise. The address
+   will be NULL if the requested timer does not exist.
+
+   @timer  Requested timer
+   @TSTR   If the requested timer is a TMU, set to the TSTR address */
+void *timer_address(int timer, volatile uint8_t **TSTR);
 
 #endif /* GINT_TIMER */
