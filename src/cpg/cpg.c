@@ -4,7 +4,6 @@
 
 #include <gint/drivers.h>
 #include <gint/clock.h>
-#include <core/std.h>
 
 #include <gint/hardware.h>
 #include <gint/mpu/cpg.h>
@@ -122,6 +121,8 @@ static void sh7305_probe(void)
 //---
 
 #ifdef GINT_BOOT_LOG
+
+#include <gint/std/stdio.h>
 
 static const char *cpg_status(void)
 {

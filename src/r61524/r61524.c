@@ -6,7 +6,6 @@
 #include <gint/hardware.h>
 #include <gint/drivers.h>
 #include <gint/dma.h>
-#include <core/std.h>
 
 #ifdef FXCG50
 
@@ -279,6 +278,8 @@ static void init(void)
 //---
 
 #ifdef GINT_BOOT_LOG
+
+#include <gint/std/stdio.h>
 
 /* r6524_status() - status string */
 static const char *r61524_status(void)

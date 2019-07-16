@@ -3,7 +3,7 @@
 //---
 
 #include <gint/gint.h>
-#include <core/std.h>
+#include <gint/std/string.h>
 #include <gint/hardware.h>
 #include <gint/mpu/intc.h>
 

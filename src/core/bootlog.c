@@ -3,7 +3,8 @@
 //---
 
 #include <gint/defs/types.h>
-#include <core/std.h>
+#include <gint/std/string.h>
+#include <gint/std/stdio.h>
 #include <core/mmu.h>
 
 #include <gint/hardware.h>

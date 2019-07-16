@@ -14,6 +14,8 @@
 
 /* Fixed-width types for bit fields are quite meaningless */
 typedef unsigned int uint;
+/* Signed size_t */
+typedef signed int ssize_t;
 
 //---
 //	Structure elements
