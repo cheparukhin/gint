@@ -15,7 +15,6 @@
 #include <gint/defs/util.h>
 
 #include <stdarg.h>
-#include <limits.h>
 
 //---
 //	kprint() definitions
@@ -565,7 +564,7 @@ GWEAK int sprintf(char *str, char const *format, ...)
 	va_list args;
 	va_start(args, format);
 
-	int count = kvsprint(str, INT_MAX, format, &args);
+	int count = kvsprint(str, 65536, format, &args);
 
 	va_end(args);
 	return count;
@@ -574,7 +573,7 @@ GWEAK int sprintf(char *str, char const *format, ...)
 /* vsprintf() */
 GWEAK int vsprintf(char *str, char const *format, va_list args)
 {
-	return kvsprint(str, INT_MAX, format, &args);
+	return kvsprint(str, 65536, format, &args);
 }
 
 /* snprintf() */
