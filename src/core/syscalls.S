@@ -9,14 +9,16 @@
 **	* File system, because it's a mess and we might ruin the ROM.
 */
 
-/* Dynamic allocation */
-.global ___malloc
-.global ___calloc
-.global ___free
-.global ___realloc
-/* OS version, for debugging purposes */
+/* OS version */
 .global ___os_version
-/* Bfile calls */
+
+/* Dynamic allocation */
+.global _malloc
+.global _free
+.global _calloc
+.global _realloc
+
+/* Bfile driver */
 .global	_BFile_Remove
 .global	_BFile_Create
 .global	_BFile_Open
@@ -25,6 +27,13 @@
 .global	_BFile_Read
 
 .section ".pretext"
+
+#define syscall(id)			\
+	mov.l	syscall_table, r2	;\
+	mov.l	1f, r0			;\
+	jmp	@r2			;\
+	nop				;\
+1:	.long	id
 
 #ifdef FX9860G
 
@@ -36,6 +45,17 @@ ___os_version:
 	jmp	@r2
 	nop
 1:	.long	0x02ee
+
+/* Dynamic allocation */
+
+_malloc:
+	syscall(0x0acd)
+_free:
+	syscall(0x0acc)
+_calloc:
+	syscall(0x0e6b)
+_realloc:
+	syscall(0x0e6d)
 
 /* BFile driver */
 
@@ -94,12 +114,25 @@ syscall_table:
 
 #ifdef FXCG50
 
+/* OS version */
+
 ___os_version:
 	mov.l	syscall_table, r2
 	mov.l	1f, r0
 	jmp	@r2
 	nop
 1:	.long	0x1406
+
+/* Dynamic allocation */
+
+_malloc:
+	syscall(0x1f44)
+_free:
+	syscall(0x1f42)
+_calloc:
+	syscall(0x1f40)
+_realloc:
+	syscall(0x1f46)
 
 syscall_table:
 	.long	0x80020070
