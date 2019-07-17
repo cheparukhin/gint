@@ -11,7 +11,8 @@ Tests to run.
 * bopti:     more sizes, gray
 * topti:     all charsets, colors
 
-Completeness elements on existing code.
+Complementary elements on existing code.
+* dma:       dma_memcpy() and dma_memset(), possibly requiring alignment
 * core:      use topti in the error message for missing mappings
 * core:      find the #ifdef FX9860G|FXCG50 that have a cross-platform def
 * topti:     support Unicode fonts

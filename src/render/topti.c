@@ -2,7 +2,7 @@
 #include <gint/display.h>
 #include <display/common.h>
 
-/* These parameters will eventually be specified by the font */
+/* TODO: These parameters will eventually be specified by the font */
 #define CHAR_SPACING 1
 #define PROP_SPACING 5
 

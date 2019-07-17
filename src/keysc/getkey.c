@@ -12,7 +12,7 @@
 /* Delay between a key press and the first repeat, in scan intervals */
 static int rep_first = 64;
 /* Delay between subsequent repeats, in scan intervals */
-static int rep_next = 16;
+static int rep_next = 8;
 
 /* getkey() - wait for a pressed key */
 key_event_t getkey(void)
@@ -95,7 +95,11 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 			arrow)) break;
 
 		/* If the key is key pressed long enough, create a new event */
-		if(++rep_time < (rep_count ? rep_next : rep_first)) break;
+		int target = (rep_count) ? rep_next : rep_first;
+		if(++rep_time < target) break;
+
+		rep_time -= target;
+		rep_count++;
 
 		ev.mod = 1;
 		ev.shift = shift;

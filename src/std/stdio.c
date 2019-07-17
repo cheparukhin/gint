@@ -547,7 +547,7 @@ static void kformat_fixed(KFORMAT_ARGS)
 
 	for(int i = g.content - 2; i >= 0; i--)
 	{
-		if(i == opt->precision) kprint_out('.');
+		if(i == opt->precision - 1) kprint_out('.');
 		kprint_out(digits[i]);
 	}
 

@@ -184,7 +184,7 @@ static void init(void)
 	if(!delay) delay = 1;
 
 	/* Set the default repeat times (milliseconds) */
-	getkey_repeat(500, 125);
+	getkey_repeat(400, 40);
 
 	timer_setup(tid, delay, 0, callback, NULL);
 	timer_start(tid);
