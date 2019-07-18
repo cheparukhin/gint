@@ -42,15 +42,15 @@ typedef struct
 /* This is the description of the structure on SH4. SH3-based fx9860g models,
    which are already very rare, will adapt the values in init functions */
 GDATA static timer_t timers[9] = {
-	{ .tmu = (void *)0xa4490008, .event = 0x400 },
-	{ .tmu = (void *)0xa4490014, .event = 0x420 },
-	{ .tmu = (void *)0xa4490020, .event = 0x440 },
-	{ .tmu = (void *)0xa44d0030, .event = 0x9e0 },
-	{ .tmu = (void *)0xa44d0050, .event = 0xc20 },
-	{ .tmu = (void *)0xa44d0070, .event = 0xc40 },
-	{ .tmu = (void *)0xa44d0090, .event = 0x900 },
-	{ .tmu = (void *)0xa44d00b0, .event = 0xd00 },
-	{ .tmu = (void *)0xa44d00d0, .event = 0xfa0 },
+	{ (void *)0xa4490008, NULL, 0x400 },
+	{ (void *)0xa4490014, NULL, 0x420 },
+	{ (void *)0xa4490020, NULL, 0x440 },
+	{ (void *)0xa44d0030, NULL, 0x9e0 },
+	{ (void *)0xa44d0050, NULL, 0xc20 },
+	{ (void *)0xa44d0070, NULL, 0xc40 },
+	{ (void *)0xa44d0090, NULL, 0x900 },
+	{ (void *)0xa44d00b0, NULL, 0xd00 },
+	{ (void *)0xa44d00d0, NULL, 0xfa0 },
 };
 
 /* TSTR register for standard timers */
@@ -61,33 +61,34 @@ GDATA static volatile uint8_t *TSTR = (void *)0xa4490004;
 //---
 
 /* timer_setup() - set up a timer */
-int timer_setup(int tid, uint32_t delay, timer_input_t clock,
+int timer_setup(int id, uint32_t delay, timer_input_t clock,
 	int (*callback)(volatile void *arg), volatile void *arg)
 {
 	/* We need to distinguish normal and extra timers */
-	if(tid < 3)
+	if(id < 3)
 	{
 		/* Refuse to setup timers that are already in use */
-		tmu_t *t = timers[tid].tmu;
+		tmu_t *t = timers[id].tmu;
 		if(t->TCR.UNIE) return -1;
 
 		/* Configure the registers of the target timer */
-		t->TCOR		= delay;
-		t->TCNT		= delay;
-		t->TCR.TPSC	= clock;
+		t->TCOR = delay;
+		t->TCNT = delay;
+		t->TCR.TPSC = clock;
 
 		/* Clear the interrupt flag */
 		do t->TCR.UNF = 0;
 		while(t->TCR.UNF);
 
-		t->TCR.UNIE	= 1;	/* Enable interrupt on underflow */
-		t->TCR.CKEG	= 0;	/* Count on rising edge (SH7705) */
+		/* Enable interrupt and count on rising edge (SH7705) */
+		t->TCR.UNIE = 1;
+		t->TCR.CKEG = 0;
 	}
 
 	/* Extra timers have a simpler structure */
 	else
 	{
-		etmu_t *t = timers[tid].tmu;
+		etmu_t *t = timers[id].tmu;
 		if(t->TCR.UNIE) return -1;
 
 		/* Clear the interrupt flag */
@@ -104,15 +105,15 @@ int timer_setup(int tid, uint32_t delay, timer_input_t clock,
 		t->TCR.UNIE = 1;
 	}
 
-	/* Register the callback and its argument (TMU-owned timers only) */
-	if(timers[tid].data)
+	/* Register the callback and its argument */
+	if(timers[id].data)
 	{
-		timers[tid].data->cb = callback;
-		timers[tid].data->arg = arg;
+		timers[id].data->cb = callback;
+		timers[id].data->arg = arg;
 	}
 
 	/* Return the timer id, since configuration was successful */
-	return tid;
+	return id;
 }
 
 /* timer_delay() - compute a delay constant from a duration in seconds */
@@ -134,44 +135,44 @@ uint32_t timer_delay(int tid, uint64_t delay_us)
 }
 
 /* timer_control() - start or stop a timer
-   @timer  Timer ID to configure
+   @id     Timer ID to configure
    @state  0 to start the timer, 1 to stop it (nothing else!) */
-static void timer_control(int tid, int state)
+static void timer_control(int id, int state)
 {
 	/* For standard timers, use the MPU's TSTR register */
-	if(tid < 3) *TSTR = (*TSTR | (1 << tid)) ^ (state << tid);
+	if(id < 3) *TSTR = (*TSTR | (1 << id)) ^ (state << id);
 	/* Extra timers all have their own TSTR register */
-	else ((etmu_t *)timers[tid].tmu)->TSTR = state ^ 1;
+	else ((etmu_t *)timers[id].tmu)->TSTR = state ^ 1;
 }
 
 /* timer_start() - start a configured timer */
-void timer_start(int tid)
+void timer_start(int id)
 {
-	timer_control(tid, 0);
+	timer_control(id, 0);
 }
 
 /* timer_reload() - change a timer's delay constant for next interrupts */
-void timer_reload(int tid, uint32_t delay)
+void timer_reload(int id, uint32_t delay)
 {
-	if(tid < 3) ((tmu_t *)timers[tid].tmu)->TCOR = delay;
-	else  ((etmu_t *)timers[tid].tmu)->TCOR = delay;
+	if(id < 3) ((tmu_t *)timers[id].tmu)->TCOR = delay;
+	else ((etmu_t *)timers[id].tmu)->TCOR = delay;
 }
 
 /* timer_pause() - stop a running timer */
-void timer_pause(int tid)
+void timer_pause(int id)
 {
-	timer_control(tid, 1);
+	timer_control(id, 1);
 }
 
 /* timer_stp() - stop and free a timer */
-void timer_stop(int tid)
+void timer_stop(int id)
 {
 	/* Stop the timer and disable UNIE to indicate that it's free */
-	timer_pause(tid);
+	timer_pause(id);
 
-	if(tid < 3)
+	if(id < 3)
 	{
-		tmu_t *t = timers[tid].tmu;
+		tmu_t *t = timers[id].tmu;
 		t->TCR.UNIE = 0;
 
 		/* Clear TCOR and TCNT */
@@ -180,7 +181,7 @@ void timer_stop(int tid)
 	}
 	else
 	{
-		etmu_t *t = timers[tid].tmu;
+		etmu_t *t = timers[id].tmu;
 		t->TCR.UNIE = 0;
 
 		/* Also clear TCOR and TCNT to avoid spurious interrupts */
@@ -236,13 +237,9 @@ void timer_clear(int timer, int stop)
 //	Driver initialization
 //---
 
-/* Interrupt handlers provided by tmu/inth.s for standard timers */
-extern void inth_tmu_0(void);
-extern void inth_tmu_1(void);
-extern void inth_tmu_2(void);
-extern void inth_tmu_storage(void);
-
-/* Interrupt handlers provided by tmu/inth.s for extra timers */
+/* Interrupt handlers for standard timers (4 gates) */
+extern void inth_tmu(void);
+/* Interrupt handlers for extra timers */
 extern void inth_etmu2(void);
 extern void inth_etmu_help(void);
 extern void inth_etmux(void);
@@ -264,18 +261,12 @@ static void driver_sh3(void)
 static void init(void)
 {
 	/* Install the standard's TMU interrupt handlers */
-	void *h2, *hs;
-	     gint_inthandler(0x400, inth_tmu_0, 32);
-	     gint_inthandler(0x420, inth_tmu_1, 32);
-	h2 = gint_inthandler(0x440, inth_tmu_2, 32);
-	hs = gint_inthandler(0x460, inth_tmu_storage, 32);
+	void *h = gint_inthandler(0x400, inth_tmu, 128);
 
 	/* User information in interrupt handlers */
-	timers[0].data = h2 + 20;
-	timers[1].data = hs + 8;
-	timers[2].data = hs + 20;
-	/* SH3: Override the address of TSTR in the interrupt handler helper */
-	if(isSH3()) *(volatile uint8_t **)(hs + 4) = TSTR;
+	timers[0].data = h + 84;
+	timers[1].data = h + 104;
+	timers[2].data = h + 116;
 
 	/* Stop all timers */
 	*TSTR = 0;
@@ -328,10 +319,10 @@ static void init(void)
 		void *handler = (i == 5) ? inth_etmu2 : inth_etmux;
 		void *h = gint_inthandler(timers[i].event, handler, 32);
 
-		timers[i].data = (i == 5) ? (h + 24) : (h + 20);
+		timers[i].data = h + 24;
 
 		if(i == 5) continue;
-		uint32_t *data_id = (h + 28);
+		uint32_t *data_id = (h + 20);
 		*data_id = i;
 	}
 
@@ -350,6 +341,9 @@ static void init(void)
 	}
 	else
 	{
+		/* Unmask the standard timers' interrupts */
+		SH7305_INTC.MSKCLR->IMR4 = 0x70;
+
 		gint_intlevel(36, 7);
 		gint_intlevel(25, 7);
 		gint_intlevel(26, 7);

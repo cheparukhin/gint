@@ -6,15 +6,12 @@
 */
 
 /* Gates for the standard Timer Unit (TMU) */
-.global _inth_tmu_0
-.global _inth_tmu_1
-.global _inth_tmu_2
-.global _inth_tmu_storage
+.global _inth_tmu         /* 128 bytes */
 
 /* Gates for the extra timers (informally called ETMU) */
-.global _inth_etmu2
-.global _inth_etmu_help
-.global _inth_etmux
+.global _inth_etmu2       /* 32 bytes */
+.global _inth_etmu_help   /* 32 bytes */
+.global _inth_etmux       /* 32 bytes */
 
 .section .gint.blocks, "ax"
 .align 4
@@ -35,6 +32,8 @@
    If the gates don't have the same relative location at runtime, the code will
    crash because we will have broken the references. This is why we can only do
    it with handlers that are mapped to consecutive event codes. */
+
+_inth_tmu:
 
 /* FIRST GATE - TMU0 entry, clear underflow flag and call back */
 _inth_tmu_0:
@@ -205,8 +204,8 @@ _inth_etmux:
 	   - 0x004 to skip its first instructions (the size is hardcoded) */
 1:	.long	0xe64
 
+.id_etmux:
+	.long	0		/* Timer ID */
 .storage_etmux:
 	.long	0		/* Callback: Configured dynamically */
 	.long	0		/* Argument: Configured dynamically */
-.id_etmux:
-	.long	0		/* Timer ID */

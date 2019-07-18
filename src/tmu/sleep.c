@@ -9,9 +9,11 @@
 void sleep_us(int tid, int us_delay)
 {
 	volatile int flag = 0;
+	uint32_t delay = timer_delay(tid, us_delay);
 
-	timer_setup(tid, timer_delay(tid, us_delay), 0, timer_timeout, &flag);
+	int free = timer_setup(tid, delay, 0, timer_timeout, &flag);
+	if(free < 0) return;
+
 	timer_start(tid);
-
 	while(!flag) sleep();
 }
