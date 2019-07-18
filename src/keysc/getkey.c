@@ -42,6 +42,7 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	/* Key press: handle modifiers or return an event */
 	case KEYEV_DOWN:
 		key = ev.key;
+		if(rep_key && key != rep_key) break;
 
 		/* Handle backlight on fx9860g */
 		#ifdef FX9860G
