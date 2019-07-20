@@ -81,18 +81,10 @@ static int topti_split(uint32_t const * glyph, int width, int height, int free,
  	return free - width;
 }
 
-/* topti_render(): Render a string on the VRAM
-   Combines glyph data onto VRAM operands and blits them efficiently onto the
-   VRAM. To write a single character, use a 2-byte string with a NUL.
-
-   @x @y    Target position on VRAM
-   @str     Text source
-   @f       Font
-   @asm_fg  Assembler function for text rendering
-   @asm_bg  Assembler function for background rendering */
+/* topti_render(): Render a string on the VRAM */
 GSECTION(".pretext")
 void topti_render(int x, int y, char const *str, font_t const *f,
-	asm_text_t *asm_fg, asm_text_t *asm_bg)
+	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2)
 {
 	/* Storage height and number of free bits in operators[] */
 	int height = f->data_height, free;
@@ -127,10 +119,10 @@ void topti_render(int x, int y, char const *str, font_t const *f,
 	/* Put an initial offset to the operators to honor the x coordinate */
 	free = 32 - (x & 31);
 	x >>= 5;
+
 	/* VRAM pointers */
-	/* TODO: topti: Support gray vrams */
-	uint32_t *v1 = vram + (y << 2) + x;
-	uint32_t *v2 = vram + (y << 2) + x;
+	v1 += (y << 2) + x;
+	v2 += (y << 2) + x;
 
 	/* Pull each character into the operator buffer */
 	while(*str)
@@ -183,13 +175,4 @@ void topti_render(int x, int y, char const *str, font_t const *f,
 		asm_bg(v1, v2, bg + vdisp, height - vdisp);
 		asm_fg(v1, v2, operators + vdisp, height - vdisp);
 	}
-}
-
-/* dtext() - display a string of text */
-GSECTION(".pretext")
-void dtext(int x, int y, char const *str, int fg, int bg)
-{
-	if((uint)fg >= 8 || (uint)bg >= 8) return;
-	topti_render(x, y, str, topti_font, topti_asm_text[fg],
-		topti_asm_text[bg]);
 }

@@ -59,16 +59,15 @@ enum {
 
    Since gint transfers data to the screen using the DMA, it is possible to run
    the application while the finished frame is being transferred. However,
-   writing to the VRAM during this period it is still begin read by the DMA.
-   Changing the contents of the VRAM too soon would alter the frame being sent.
+   writing to the VRAM during this period will cause display artifacts since
+   the VRAM it is still being read by the DMA.
 
    The solution to this is to use triple-buffering with the display and two
-   VRAMs that are alternately begin written to while the other is being
+   VRAMs that are alternately being written to while the other is being
    transferred. The VRAM switching is handled by dupdate() and is activated
    whenever two VRAMs are configured.
 
-   By default gint uses triple buffering with one VRAM in the user stack and
-   a second one in the system stack.
+   By default gint uses triple buffering with two VRAMs in the system stack.
 
    VRAMs must be contiguous, 32-aligned, (2*396*224)-byte buffers.
 

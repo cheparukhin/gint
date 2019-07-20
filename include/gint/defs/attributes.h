@@ -30,4 +30,8 @@
 /* Weak symbols */
 #define GWEAK		__attribute__((weak))
 
+/* Constructors */
+#define GCONSTRUCTOR	__attribute__((constructor))
+#define GDESTRUCTOR	__attribute__((destructor))
+
 #endif /* GINT_DEFS_ATTRIBUTES */

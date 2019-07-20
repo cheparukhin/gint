@@ -24,8 +24,10 @@ Complementary elements on existing code.
 * core:      use cmp/str for memchr()
 * timer:     try putting addresses in <gint/mpu/tmu.h>
 * r61524:    brightness control and clean the file
+* t6k11:     check if dupdate() can be done by the DMA
 
 Keep in mind.
+* core:      run destructors when a task-switch results in leaving the app
 * prizm:     don't hardcode stack address in fxcg50.ld
 * prizm:     detect P1 static RAM (stack) in TLB
 * core:      prove and use qdiv10() instead of __sdivsi3
@@ -33,6 +35,7 @@ Keep in mind.
 * core:      free heap when a task-switch results in leaving the app
 * core:      save and restore interrupt masks
 * timer:     make sure ETMU interrupts are disabled in ctx_restore()
+* timer:     look for ways to improve the code again
 * core:      document the SH7305 PFC in <gint/mpu/pfc.h>
 
 Future directions.

@@ -43,5 +43,4 @@ void bopti_render_clip(int x, int y, image_t const *img, int left, int top,
 void bopti_render_noclip(int x, int y, image_t const *img, int left, int top,
 	int w, int h);
 
-
 #endif /* DISPLAY_FX */

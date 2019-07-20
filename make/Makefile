@@ -45,10 +45,10 @@ src2obj = $(1:../src/%=src/%).o
 src2dep = $(1:../src/%=src/%).d
 
 # Source files
-prune-fx := "render-cg"
-prune-cg := "render-fx"
+prune-fx := -name render-cg -prune
+prune-cg := -name render-fx -prune -o -name gray -prune
 src      := $(shell find ../src \
-                    -name $(prune-$(CONFIG.TARGET)) -prune \
+                    $(prune-$(CONFIG.TARGET)) \
                     -o -name '*.[csS]' -print)
 src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 

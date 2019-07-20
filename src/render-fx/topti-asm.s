@@ -8,7 +8,7 @@
 # r2: dark  (except lighten/darken: swapped at some point with light)
 # r3: (tmp)
 # r4: vram (mono or light)
-# r5: vram (nothing or dark)
+# r5: vram (mono or dark)
 # r6: operators
 # r7: number of rows (r7>0, otherwise the font is clearly ill-formed)
 
@@ -24,16 +24,20 @@
 .align 4
 _topti_asm_white:
 	add	#-16, r4
-	nop
+	add	#-16, r5
 
 1:	mov.l	@r6+, r0
 	add	#16, r4
 	mov.l	@r4, r1
 	dt	r7
+	mov.l	@r5, r2
 	not	r0, r0
 	and	r0, r1
-	bf.s	1b
+	and	r0, r2
 	mov.l	r1, @r4
+	add	#16, r5
+	bf.s	1b
+	mov.l	r2, @r5
 
 	rts
 	nop
@@ -81,10 +85,14 @@ _topti_asm_black:
 	dt	r7
 	mov.l	@r4, r1
 	/* (bubble) */
-	or	r1, r0
-	mov.l	r0, @r4
-	bf.s	1b
+	or	r0, r1
+	mov.l	@r5, r2
+	or	r0, r2
+	mov.l	r1, @r4
 	add	#16, r4
+	mov.l	r2, @r5
+	bf.s	1b
+	add	#16, r5
 
 	rts
 	nop
@@ -169,4 +177,3 @@ _topti_asm_text:
 	.long	_topti_asm_invert
 	.long	_topti_asm_lighten
 	.long	_topti_asm_darken
-
