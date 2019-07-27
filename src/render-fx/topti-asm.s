@@ -24,7 +24,7 @@
 .align 4
 _topti_asm_white:
 	add	#-16, r4
-	add	#-16, r5
+	nop
 
 1:	mov.l	@r6+, r0
 	add	#16, r4
@@ -35,9 +35,9 @@ _topti_asm_white:
 	and	r0, r1
 	and	r0, r2
 	mov.l	r1, @r4
-	add	#16, r5
-	bf.s	1b
 	mov.l	r2, @r5
+	bf.s	1b
+	add	#16, r5
 
 	rts
 	nop
@@ -74,10 +74,13 @@ _topti_asm_dark:
 	mov.l	r2, @r5
 	and	r0, r1
 	/* (bubble) */
-	mov.l	r1, @r5
+	mov.l	r1, @r4
 	add	#16, r4
 	bf.s	1b
 	add	#16, r5
+
+	rts
+	nop
 
 .align 4
 _topti_asm_black:
@@ -107,10 +110,14 @@ _topti_asm_invert:
 1:	mov.l	@r6+, r0
 	dt	r7
 	mov.l	@r4, r1
-	xor	r1, r0
-	mov.l	r0, @r4
-	bf.s	1b
+	xor	r0, r1
+	mov.l	@r5, r2
+	xor	r0, r2
+	mov.l	r1, @r4
 	add	#16, r4
+	mov.l	r2, @r5
+	bf.s	1b
+	add	#16, r5
 
 	rts
 	nop
@@ -125,17 +132,17 @@ _topti_asm_lighten:
 	mov.l	@r5, r2
 	add	#16, r4
 	mov.l	@r4, r1
-	mov	r2, r3
+	mov	r1, r3
 	xor	r0, r3
 	not	r0, r0
-	or	r0, r2
-	and	r1, r2
-	mov.l	r2, @r1
-	dt	r7
 	or	r0, r1
-	and	r3, r1
+	and	r2, r1
 	mov.l	r1, @r5
+	dt	r7
+	or	r0, r2
+	and	r3, r2
 	bf.s	1b
+	mov.l	r2, @r4
 
 	rts
 	nop
@@ -150,17 +157,17 @@ _topti_asm_darken:
 	mov.l	@r5, r2
 	add	#16, r4
 	mov.l	@r4, r1
-	mov	r2, r3
+	mov	r1, r3
 	xor	r0, r3
-	and	r0, r2
-	or	r1, r2
-	dt	r7
-	mov.l	r2, @r4
 	and	r0, r1
-	or	r3, r1
-	/* (bubble) */
+	or	r2, r1
+	dt	r7
 	mov.l	r1, @r5
+	and	r0, r2
+	or	r3, r2
+	/* (bubble) */
 	bf.s	1b
+	mov.l	r2, @r4
 
 	rts
 	nop
