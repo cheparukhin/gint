@@ -6,7 +6,7 @@
    Remotely adapted from MonochromeLib code by Pierre "PerriotLL" Le Gall.
    Relies on platform-dependent dhline() and dvline() for optimized situations.
    @x1 @y1 @x2 @y2  Coordinates of endpoints of line (included)
-   @color           Any R5G6B5 color */
+   @color           Any color accepted by dpixel() on the platform */
 void dline(int x1, int y1, int x2, int y2, color_t color)
 {
 	/* Possible optimizations */
