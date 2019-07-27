@@ -91,6 +91,9 @@ void dimage(int x, int y, image_t const *image);
 
 /* Option values for dsubimage() */
 enum {
+	/* No option */
+	DIMAGE_NONE = 0x00,
+
 	/* Disable clipping, ie. adjustments to the specified subrectangle and
 	   screen location such that any part that overflows from the image or
 	   the screen is ignored. Slightly faster. */
@@ -104,7 +107,8 @@ enum {
    @x @y           Coordinates on screen of the rendered subrectangle
    @image          Pointer to image encoded with [fxconv]
    @left @top      Top-left coordinates of the subrectangle within [image]
-   @width @height  Subrectangle dimensions */
+   @width @height  Subrectangle dimensions
+   @flags          OR-combination of DIMAGE_* flags */
 void dsubimage(int x, int y, image_t const *image, int left, int top,
 	int width, int height, int flags);
 

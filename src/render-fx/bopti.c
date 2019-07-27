@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/defs/types.h>
 #include <gint/display.h>
 #include <display/fx.h>
@@ -19,14 +18,6 @@ struct rbox
 	int left, right;
 	/* Vertical bounds of the box in the image (inc-excluded, in pixels) */
 	int top, bottom;
-};
-
-/* List of rendering functions */
-void *bopti_asm[4] = {
-	bopti_asm_mono,		/* asm_mono_t */
-	bopti_asm_mono_alpha,	/* asm_mono_t */
-	bopti_asm_gray,		/* asm_gray_t */
-	bopti_asm_gray_alpha,	/* asm_gray_t */
 };
 
 /* struct command: A rendering command
@@ -55,6 +46,10 @@ struct command
 	/* Ignored elements between two rendered grid columns */
 	int data_stride;
 
+	/* Whether the image should be drawn on gray mode (this may be 1 even
+	   for images of the mono and mono_alpha profiles) */
+	int gray;
+
 	/* Assembly function, prototype depends on image type */
 	union {
 		void *asm_void;
@@ -63,7 +58,7 @@ struct command
 	};
 };
 
-void bopti_grid(void **layer, int rows, int gray, struct command *c)
+void bopti_grid(void **layer, int rows, struct command *c)
 {
 	/* Pointers to vram data */
 	uint32_t *v1 = c->v1, *v2 = c->v2;
@@ -77,7 +72,7 @@ void bopti_grid(void **layer, int rows, int gray, struct command *c)
 	quadr_t q, qret = { 0 };
 
 	/* Monochrome version */
-	if(!gray) while(rows--)
+	if(!c->gray) while(rows--)
 	{
 		p.r = pret.r = v1[offset & 0xff];
 
@@ -127,7 +122,7 @@ void bopti_grid(void **layer, int rows, int gray, struct command *c)
 			q.l2 = (c->x) ? qret.r2 : q.r2;
 			q.r2 = v2[(offset + 1) & 0xff];
 
-			qret = c->asm_gray(q, layer, c->masks+col+col, -c->x);
+			c->asm_gray(q, layer, c->masks+col+col, -c->x, &qret);
 
 			if(c->real_start + col)
 			{
@@ -149,7 +144,8 @@ void bopti_grid(void **layer, int rows, int gray, struct command *c)
 	}
 }
 
-void bopti_render(image_t const *img, struct rbox *rbox)
+void bopti_render(image_t const *img, struct rbox *rbox, uint32_t *v1,
+	uint32_t *v2, void *bopti_asm)
 {
 	/* Compute rendering masks */
 	uint32_t vm[4];
@@ -190,22 +186,23 @@ void bopti_render(image_t const *img, struct rbox *rbox)
 	/* Compute and execute the command for this parameters */
 	struct command c = {
 	  .x            = rbox->x & 31,
-	  /* TODO: bopti: Support gray rendering */
-	  .v1           = vram,
-	  .v2           = vram,
+	  .v1           = v1,
+	  .v2           = v2 ? v2 : v1,
 	  .offset       = (rbox->y << 2) + (rbox->x >> 5),
 	  .columns      = columns,
 	  .masks        = masks + 2 * left_origin,
 	  .real_start   = (left_origin > 0),
 	  .vram_stride  = 4 - columns,
 	  .data_stride  = (img_columns - columns) << 2,
-	  .asm_void     = bopti_asm[img->profile],
+	  .gray         = (v2 != NULL),
+	  .asm_void     = bopti_asm,
 	};
-	bopti_grid((void **)&layer, rbox->bottom - rbox->top, img->gray, &c);
+	bopti_grid((void **)&layer, rbox->bottom - rbox->top, &c);
 }
 
 void bopti_render_clip(int visual_x, int y, image_t const *img, int left,
-	int top, int width, int height)
+	int top, int width, int height, uint32_t *v1, uint32_t *v2,
+	void *bopti_asm)
 {
 	/* Left pixel of leftmost column */
 	int x = visual_x - (left & 31);
@@ -245,11 +242,12 @@ void bopti_render_clip(int visual_x, int y, image_t const *img, int left,
 
 	/* Finish with the standard bopti renderer */
 	struct rbox rbox = { x, visual_x, y, width, left, right, top, bottom };
-	bopti_render(img, &rbox);
+	bopti_render(img, &rbox, v1, v2, bopti_asm);
 }
 
 void bopti_render_noclip(int visual_x, int y, image_t const *img, int left,
-	int top, int width, int height)
+	int top, int width, int height, uint32_t *v1, uint32_t *v2,
+	void *bopti_asm)
 {
 	/* End row (excluded) */
 	int bottom = top + height;
@@ -264,5 +262,5 @@ void bopti_render_noclip(int visual_x, int y, image_t const *img, int left,
 
 	/* Finish with the standard bopti renderer */
 	struct rbox rbox = { x, visual_x, y, width, left, right, top, bottom };
-	bopti_render(img, &rbox);
+	bopti_render(img, &rbox, v1, v2, bopti_asm);
 }

@@ -1,8 +1,6 @@
 
 .global _bopti_asm_mono
 .global _bopti_asm_mono_alpha
-.global _bopti_asm_gray
-.global _bopti_asm_gray_alpha
 
 # REGISTER ALLOCATION:
 # r0: layer (left)
@@ -54,12 +52,11 @@ _bopti_asm_mono:
 # r4: vram (left)
 # r5: vram (right)
 # r6: layer pointer; f(x&31); mask (left); mask (right)
-# r7: masks pointer
+# r7: mask pointer
 # --
 # @r15: -(x&31)
 
 _bopti_asm_mono_alpha:
-
 	# Read data longwords and update the layer address pointer
 	mov.l	@r6, r2
 	mov.l	@r2+, r0
@@ -94,17 +91,3 @@ _bopti_asm_mono_alpha:
 	or	r2, r0
 	rts
 	or	r3, r1
-
-# REGISTER ALLOCATION
-# TODO: _bopti_asm_gray
-
-_bopti_asm_gray:
-	rts
-	nop
-
-# REGISTER ALLOCATION
-# TODO: _bopti_asm_gray_alpha
-
-_bopti_asm_gray_alpha:
-	rts
-	nop

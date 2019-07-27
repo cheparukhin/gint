@@ -20,9 +20,10 @@ typedef struct {
 } quadr_t;
 
 /* Signature of mono rendering functions */
-typedef pair_t  asm_mono_t(pair_t p,  void **layer, uint32_t *masks, int x);
+typedef pair_t asm_mono_t(pair_t p,  void **layer, uint32_t *masks, int x);
 /* Signature of gray rendering functions */
-typedef quadr_t asm_gray_t(quadr_t q, void **layer, uint32_t *masks, int x);
+typedef void asm_gray_t(quadr_t q, void **layer, uint32_t *masks, int x,
+	quadr_t *ret);
 
 /* Each of the following rendering functions:
    1. Takes VRAM data for two longword positions of the screen.
@@ -36,9 +37,14 @@ typedef quadr_t asm_gray_t(quadr_t q, void **layer, uint32_t *masks, int x);
 extern asm_mono_t bopti_asm_mono;
 /* bopti_asm_mono_alpha(): Rendering function for the "mono alpha" profile */
 extern asm_mono_t bopti_asm_mono_alpha;
+
+/* bopti_gasm_mono(): "mono" profile on gray VRAMs */
+extern asm_gray_t bopti_gasm_mono;
+/* bopti_gasm_mono_alpha(): "mono alpha" profile on gray VRAMs */
+extern asm_gray_t bopti_gasm_mono_alpha;
 /* bopti_asm_gray(): Rendering function for the "gray" profile */
-extern asm_gray_t bopti_asm_gray;
+extern asm_gray_t bopti_gasm_gray;
 /* bpoti_asm_gray_alpha(): Rendering function for the "gray alpha" profile */
-extern asm_gray_t bopti_asm_gray_alpha;
+extern asm_gray_t bopti_gasm_gray_alpha;
 
 #endif /* GINT_RENDERFX_BOPTIASM */

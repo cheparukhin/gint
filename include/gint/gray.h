@@ -68,6 +68,7 @@ void gray_stop(void);
 
      LIGHT    DARK    BLINKING     STRIPES       COLORS
      --------------------------------------------------
+       869    1097      medium        some    excellent
        869    1311      medium        none         good  [default]
        937    1425      medium        none         good
      --------------------------------------------------
@@ -142,6 +143,28 @@ void gline(int x1, int y1, int x2, int y2, color_t color);
    @fg     Foreground: white, light, dark, black, none, invert, lighten, darken
    @bg     Background, same colors as fg */
 void gtext(int x, int y, const char *str, int fg, int bg);
+
+//---
+//	Image rendering
+//---
+
+/* gimage(): Render a full image
+   This function is exactly like dimage(), but it draws gray image instead.
+
+   @x @y   Coordinates of the top-left corner of the image
+   @image  Pointer to gray image encoded with [fxconv] */
+void gimage(int x, int y, image_t const *image);
+
+/* gsubimage(): Render a section of an image
+   Like dsubimage() for gray images. Same options apply.
+
+   @x @y           Coordinates on screen of the rendered subrectangle
+   @image          Pointer to image encoded with [fxconv]
+   @left @top      Top-left coordinates of the subrectangle within [image]
+   @width @height  Subrectangle dimensions
+   @flags          OR-combination of DIMAGE_* flags */
+void gsubimage(int x, int y, image_t const *image, int left, int top,
+	int width, int height, int flags);
 
 //---
 //	VRAM management
