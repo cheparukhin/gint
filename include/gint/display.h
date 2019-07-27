@@ -154,8 +154,9 @@ typedef struct
    On fx9860g, the default font is a 5x7 font very close to the system's.
    On fxcg50, the default font is an original 8x9 font.
 
-   @font  Font to use for subsequent text rendering calls */
-void dfont(font_t const * font);
+   @font  Font to use for subsequent text rendering calls
+   Returns the previously configured font. */
+font_t const *dfont(font_t const * font);
 
 /* dsize() - get the width and height of rendered text
    This function computes the size that the given string would take up if

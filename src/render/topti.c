@@ -8,9 +8,12 @@
 
 /* dfont(): Set the default font for text rendering */
 GSECTION(".pretext")
-void dfont(font_t const * font)
+font_t const *dfont(font_t const * font)
 {
+	font_t const *old_font = topti_font;
+
 	topti_font = font ? font : gint_default_font;
+	return old_font;
 }
 
 /* charset_size(): Number of elements in each character set */
