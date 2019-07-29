@@ -68,8 +68,10 @@ void gray_stop(void);
 
      LIGHT    DARK    BLINKING     STRIPES       COLORS
      --------------------------------------------------
+       680    1078
+       762    1311         low        some     too light  [default]
        869    1097      medium        some    excellent
-       869    1311      medium        none         good  [default]
+       869    1311      medium        none         good
        937    1425      medium        none         good
      --------------------------------------------------
 

@@ -27,7 +27,7 @@ GDATA static volatile int st = 0;
 
 /* Whether the engine is running. Delays of light and dark frames. */
 GDATA static int runs = 0;
-GDATA static int delays[2] = { 869, 1311 };
+GDATA static int delays[2] = { 762, 1311 };
 
 /* Underlying timer */
 #define GRAY_TIMER 0
