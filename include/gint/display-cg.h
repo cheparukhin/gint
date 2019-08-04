@@ -42,6 +42,34 @@ enum {
 };
 
 //---
+//	Image rendering (bopti)
+//---
+
+/* image_t: Image files encoded for bopti
+   This format is created by the fxSDK's [fxconv] tool from standard images. */
+typedef struct
+{
+	/* Color profile (type of palette), could be extended into a bit field
+	   later on */
+	uint16_t profile;
+
+	/* Color code assigned to transparent pixels (unused in 16-bit) */
+	uint16_t alpha;
+
+	/* Full width and height, in pixels */
+	uint16_t width;
+	uint16_t height;
+
+	/* Color palette:
+	   * 16-bit and 16-bit alpha: none
+	   * 8-bit: 256 colors (total 512 bytes)
+	   * 4-bit: 16 colors (total 32 bytes)
+	   Then raw pixel data in row-major order. */
+	uint16_t data[];
+
+} GPACKED(4) image_t;
+
+//---
 //	Video RAM management
 //---
 
