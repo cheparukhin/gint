@@ -68,7 +68,7 @@ void bopti_grid(void **layer, int rows, struct command *c)
 	   optimized by GCC into a function returning into r0,r1 which will
 	   avoid some memory accesses. */
 	pair_t  p, pret = { 0 };
-	/* Same with two pairs for the gray version */
+	/* Same with two pairs for the gray version (no optimization here) */
 	quadr_t q, qret = { 0 };
 
 	/* Monochrome version */

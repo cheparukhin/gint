@@ -7,7 +7,7 @@
 .section .gint.blocks, "ax"
 .align 4
 
-/* DMA TRANSFER ENDED INTERRUPT HANDLER - BYTES */
+/* DMA TRANSFER ENDED INTERRUPT HANDLER - 28 BYTES */
 
 _inth_dma_dma0:
 	/* Clear the TE flag and DMA Enable in CHCR */
