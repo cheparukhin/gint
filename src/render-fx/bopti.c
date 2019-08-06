@@ -153,6 +153,7 @@ void bopti_render(image_t const *img, struct rbox *rbox, uint32_t *v1,
 
 	/* Number of layers per profile */
 	int layer_count[] = { 1, 2, 2, 3 };
+	int layers = layer_count[img->profile];
 
 	/* For each pair of consecutive VRAM elements involved, create a mask
 	   from the intersection of the standard vram mask with the shift-mask
@@ -180,7 +181,7 @@ void bopti_render(image_t const *img, struct rbox *rbox, uint32_t *v1,
 
 	/* Interwoven layer data. Skip left columns that are not rendered */
 	const uint32_t *layer = (void *)img->data;
-	layer += rbox->top * img_columns * layer_count[img->profile];
+	layer += rbox->top * img_columns * layers;
 	layer += rbox->left * layer_count[img->profile];
 
 	/* Number of grid columns */
@@ -196,7 +197,7 @@ void bopti_render(image_t const *img, struct rbox *rbox, uint32_t *v1,
 	  .masks        = masks + 2 * left_origin,
 	  .real_start   = (left_origin > 0),
 	  .vram_stride  = 4 - columns,
-	  .data_stride  = (img_columns - columns) << 2,
+	  .data_stride  = ((img_columns - columns) << 2) * layers,
 	  .gray         = (v2 != NULL),
 	  .asm_void     = bopti_asm,
 	};
