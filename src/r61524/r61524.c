@@ -226,12 +226,12 @@ void r61524_display(uint16_t *vram, int start, int height, int interrupts)
 	if(interrupts)
 	{
 		/* Usa a normal, interrupt-based transfer */
-		dma_transfer(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
+		dma_transfer(0, DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
 		/* Wait for it to finish */
 		/* TODO: Allow r61524_display() to return early */
-		dma_transfer_wait();
+		dma_transfer_wait(0);
 	}
-	else dma_transfer_noint(DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
+	else dma_transfer_noint(0, DMA_32B, blocks, src,DMA_INC,dst,DMA_FIXED);
 }
 
 //---

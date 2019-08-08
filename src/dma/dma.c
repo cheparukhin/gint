@@ -11,41 +11,57 @@
 #define INTC SH7305_INTC
 #define POWER SH7305_POWER
 
+typedef volatile sh7305_dma_channel_t channel_t;
+
+/* dma_channel(): returns address of the specified DMA channel */
+static channel_t *dma_channel(int channel)
+{
+	channel_t *addr[6] = {
+		&DMA.DMA0, &DMA.DMA1, &DMA.DMA2,
+		&DMA.DMA3, &DMA.DMA4, &DMA.DMA5,
+	};
+
+	return ((uint)channel >= 6 ? NULL : addr[channel]);
+}
+
 //---
 //	Driver interface
 //---
 
-/* dma_setup() - Setup the DMA in interrupt or no-interrupt mode.
+/* dma_setup(): Setup the DMA in interrupt or no-interrupt mode.
    The first parameters are as for dma_transfer() and dma_transfer_noint(). The
    last parameter indicates whether interrupts should be used.
    Returns non-zero if the DMA is busy or a configuration error occurs. */
-static int dma_setup(dma_size_t size, uint blocks,
+static int dma_setup(int channel, dma_size_t size, uint blocks,
 	void *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode,
 	int interrupts)
 {
-	/* Safety guard: only start a transfer if there's not one running */
-	if(DMA.DMA0.CHCR.DE) return 1;
+	channel_t *ch = dma_channel(channel);
+	if(!ch) return 1;
 
-	/* Disable DMA0 and disable the master DMA switch */
-	DMA.DMA0.CHCR.DE = 0;
+	/* Safety guard: only start a transfer if there's not one running */
+	if(ch->CHCR.DE) return 1;
+
+	/* Disable channel and disable the master DMA switch */
+	ch->CHCR.DE = 0;
 	DMA.OR.DME = 0;
 
 	/* Set DMA source and target address */
-	DMA.DMA0.SAR = (uint32_t)src & 0x1fffffff;
-	DMA.DMA0.DAR = (uint32_t)dst & 0x1fffffff;
+	ch->SAR = (uint32_t)src & 0x1fffffff;
+	ch->DAR = (uint32_t)dst & 0x1fffffff;
 
 	/* Set the number of blocks to be transferred */
-	DMA.DMA0.TCR = blocks;
+	ch->TCR = blocks;
 
 	/* Fill in CHCR. Set RS=0100 (auto-request) and the user-provided
 	   values for TS (transfer size), DM and SM (address modes) */
-	DMA.DMA0.CHCR.lword = 0x00000400;
-	DMA.DMA0.CHCR.TS_32 = (size >> 2);
-	DMA.DMA0.CHCR.TS_10 = (size & 3);
-	DMA.DMA0.CHCR.DM = dst_mode;
-	DMA.DMA0.CHCR.SM = src_mode;
-	DMA.DMA0.CHCR.IE = !!interrupts;
+	ch->CHCR.lword = 0x00000400;
+	ch->CHCR.TS_32 = (size >> 2);
+	ch->CHCR.TS_10 = (size & 3);
+	ch->CHCR.DM = dst_mode;
+	ch->CHCR.SM = src_mode;
+	ch->CHCR.IE = !!interrupts;
 
 	/* Prepare DMAOR by enabling the master switch and clearing the
 	   blocking flags. */
@@ -56,44 +72,50 @@ static int dma_setup(dma_size_t size, uint blocks,
 	return 0;
 }
 
-/* dma_transfer() - Perform a data transfer */
-void dma_transfer(dma_size_t size, uint blocks,
+/* dma_transfer(): Perform a data transfer */
+void dma_transfer(int channel, dma_size_t size, uint blocks,
 	void *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode)
 {
-	if(dma_setup(size, blocks, src, src_mode, dst, dst_mode, 1)) return;
+	if(dma_setup(channel, size, blocks, src, src_mode, dst, dst_mode, 1))
+		return;
 
-	/* Enable channel 0, starting the DMA transfer. */
-	DMA.DMA0.CHCR.DE = 1;
+	/* Enable channel, starting the DMA transfer. */
+	channel_t *ch = dma_channel(channel);
+	ch->CHCR.DE = 1;
 }
 
-/* dma_transfer_wait() - Wait for a transfer on channel 0 to finish */
-void dma_transfer_wait(void)
+/* dma_transfer_wait(): Wait for a transfer to finish */
+void dma_transfer_wait(int channel)
 {
-	/* The master switch is cut when the transfer ends */
-	while(DMA.OR.DME) sleep();
+	channel_t *ch = dma_channel(channel);
+	if(!ch) return;
+
+	/* Wait for the channel to be disabled by the interrupt handler */
+	while(ch->CHCR.DE) sleep();
 }
 
-/* dma_transfer_noint() - Perform a data transfer without interruptions */
-void dma_transfer_noint(dma_size_t size, uint blocks,
+/* dma_transfer_noint(): Perform a data transfer without interruptions */
+void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
 	void *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode)
 {
-	if(dma_setup(size, blocks, src, src_mode, dst, dst_mode, 0)) return;
+	if(dma_setup(channel, size, blocks, src, src_mode, dst, dst_mode, 0))
+		return;
 
-	/* Enable channel 0, starting the DMA transfer. */
-	DMA.DMA0.CHCR.DE = 1;
+	/* Enable channel, starting the DMA transfer. */
+	channel_t *ch = dma_channel(channel);
+	ch->CHCR.DE = 1;
 
 	/* Actively wait until the transfer is finished */
-	while(!DMA.DMA0.CHCR.TE);
+	while(!ch->CHCR.TE);
 
 	/* Disable the channel and clear the TE flag. Disable the channel first
 	   as clearing the TE flag will allow the transfer to restart */
-	DMA.DMA0.CHCR.DE = 0;
-	DMA.DMA0.CHCR.TE = 0;
+	ch->CHCR.DE = 0;
+	ch->CHCR.TE = 0;
 
-	/* Clear the AE and NMIF status flags and cut the master switch */
-	DMA.OR.DME = 0;
+	/* Clear the AE and NMIF status flags */
 	DMA.OR.AE = 0;
 	DMA.OR.NMIF = 0;
 }
@@ -108,16 +130,44 @@ static void init(void)
 	if(isSH3()) return;
 
 	/* Install the interrupt handler from dma/inth.s */
-	extern void inth_dma_dma0(void);
-	gint_inthandler(0x800, inth_dma_dma0, 32);
+	/* TODO: DMA0 error gate is 0xbc0 */
+	int codes[] = { 0x800, 0x820, 0x840, 0x860, 0xb80, 0xba0 };
+	extern void inth_dma_te(void);
 
-	/* Set interrupt priority to 3 */
+	for(int i = 0; i < 6; i++)
+	{
+		/* Install interrupt handler */
+		void *h = gint_inthandler(codes[i], inth_dma_te, 32);
+		channel_t *ch = dma_channel(i);
+
+		/* Set its CHCR address */
+		*(volatile uint32_t **)(h + 24) = &ch->CHCR.lword;
+		/* Clear the enable flag */
+		ch->CHCR.DE = 0;
+	}
+
+	/* Set interrupt priority to 3 (IPRE[15..12] for first three channels,
+	   IPRF[11..8] for last two and error gate */
 	gint_intlevel(16, 3);
+	gint_intlevel(21, 3);
 
-	/* Unmask the DMA0 interrupt */
-	INTC.MSKCLR->IMR1 = 0x01;
+	/* Unmask the channel interrupts */
+	/* TODO: DMA0 error gate is IMR5 & 0x40 */
+	INTC.MSKCLR->IMR1 = 0x0f;
+	INTC.MSKCLR->IMR5 = 0x30;
+
+	/* Clear blocking flags and enable the master switch */
+	DMA.OR.AE = 0;
+	DMA.OR.NMIF = 0;
+	DMA.OR.DME = 1;
 
 	gint[HWDMA] = HW_LOADED;
+}
+
+static void unload(void)
+{
+	/* Make sure any DMA transfer is finished before leaving the app */
+	for(int i = 0; i < 6; i++) dma_transfer_wait(i);
 }
 
 //---
@@ -126,7 +176,7 @@ static void init(void)
 
 typedef struct
 {
-	uint32_t SAR0, DAR0, TCR0, CHCR0;
+	channel_t ch[6];
 	uint16_t OR;
 	int clock;
 
@@ -139,10 +189,14 @@ static void ctx_save(void *buf)
 {
 	ctx_t *ctx = buf;
 
-	ctx->SAR0  = DMA.DMA0.SAR;
-	ctx->DAR0  = DMA.DMA0.DAR;
-	ctx->TCR0  = DMA.DMA0.TCR;
-	ctx->CHCR0 = DMA.DMA0.CHCR.lword;
+	for(int i = 0; i < 6; i++)
+	{
+		channel_t *ch = dma_channel(i);
+		ctx->ch[i].SAR        = ch->SAR;
+		ctx->ch[i].DAR        = ch->DAR;
+		ctx->ch[i].TCR        = ch->TCR;
+		ctx->ch[i].CHCR.lword = ch->CHCR.lword;
+	}
 
 	ctx->OR = DMA.OR.word;
 
@@ -154,10 +208,14 @@ static void ctx_restore(void *buf)
 {
 	ctx_t *ctx = buf;
 
-	DMA.DMA0.SAR = ctx->SAR0;
-	DMA.DMA0.DAR = ctx->DAR0;
-	DMA.DMA0.TCR = ctx->TCR0;
-	DMA.DMA0.CHCR.lword = ctx->CHCR0;
+	for(int i = 0; i < 6; i++)
+	{
+		channel_t *ch = dma_channel(i);
+		ch->SAR        = ctx->ch[i].SAR;
+		ch->DAR        = ctx->ch[i].DAR;
+		ch->TCR        = ctx->ch[i].TCR;
+		ch->CHCR.lword = ctx->ch[i].CHCR.lword;
+	}
 
 	DMA.OR.word = ctx->OR;
 
@@ -169,15 +227,14 @@ static void ctx_restore(void *buf)
 //	Driver structure definition
 //---
 
-gint_driver_t drv_dma = {
-	.name		= "DMA",
+gint_driver_t drv_dma0 = {
+	.name		= "DMA0",
 	.init		= init,
-	/* Make sure any DMA transfer is finished before leaving the app */
-	.unload		= dma_transfer_wait,
+	.unload		= unload,
 	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };
 
-GINT_DECLARE_DRIVER(2, drv_dma);
+GINT_DECLARE_DRIVER(2, drv_dma0);

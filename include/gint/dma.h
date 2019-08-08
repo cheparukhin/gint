@@ -47,22 +47,26 @@ typedef enum
    dma_transfer_wait() if you need to wait for the transfer to finish. Don't
    start a new transfer until the current one is finished!
 
+   @channel   DMA channel (0..5)
    @size      Transfer size
    @blocks    Number of blocks (transferred memory = size * blocks)
    @src       Source pointer, must be aligned with transfer size
    @src_mode  Source address mode
    @dst       Destination address, must be aligned with transfer size
    @dst_mode  Destination address mode */
-void dma_transfer(dma_size_t size, uint length,
+void dma_transfer(int channel, dma_size_t size, uint length,
 	void *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
 
 /* dma_transfer_wait() - Wait for a transfer on channel 0 to finish
+
    You should call this function when you need to transfer to be complete
    before continuing execution. If you are sure that the transfer is finished,
    this is not necessary (the only way to know is to look at the DMA registers
-   or record interrupts). */
-void dma_transfer_wait(void);
+   or record interrupts).
+
+   @channel   DMA channel (0..5) */
+void dma_transfer_wait(int channel);
 
 /* dma_transfer_noint() - Perform a data transfer without interrupts
    This function performs a transfer much like dma_transfer(), but doesn't use
@@ -71,7 +75,7 @@ void dma_transfer_wait(void);
 
    Not using interrupts is a bad design idea for a majority of programs, and is
    only ever needed to display panic messages inside exception handlers. */
-void dma_transfer_noint(dma_size_t size, uint blocks,
+void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
 	void *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
 

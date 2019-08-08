@@ -21,7 +21,7 @@
    Note that the many settings are only available on channels 0 to 3 (denoted
    by [0..3]) or on channels 0 and 1 (denoted by [0,1]).
    The documentation is apparently wrong about the placement is TS[3:2], the
-   neighbouring read-only bit must be swapped before TS[3:2]. */
+   neighboring read-only bit must be swapped before TS[3:2]. */
 typedef volatile struct
 {
 	uint32_t SAR;
