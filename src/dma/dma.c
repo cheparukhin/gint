@@ -13,7 +13,7 @@
 
 typedef volatile sh7305_dma_channel_t channel_t;
 
-/* dma_channel(): returns address of the specified DMA channel */
+/* dma_channel(): Get address of a DMA channel */
 static channel_t *dma_channel(int channel)
 {
 	channel_t *addr[6] = {
@@ -22,6 +22,36 @@ static channel_t *dma_channel(int channel)
 	};
 
 	return ((uint)channel >= 6 ? NULL : addr[channel]);
+}
+
+/* dma_translate(): Translate virtual address to DMA-suitable form */
+static uint32_t dma_translate(void const *address)
+{
+	uint32_t a = (uint32_t)address;
+
+	/* Preserve RS addresses (as of SH7724 Reference, 11.2.2) */
+	if(a >= 0xfd800000 && a < 0xfd800800)
+		return a;
+
+	/* Translate virtual addresses to IL memory to physical addresses; the
+	   same address is used (as of SH7724 Reference, 10.3.3) */
+	if(a >= 0xe5200000 && a < 0xe5204000)
+		return a;
+
+	/* First additional on-chip memory area (XRAM) */
+	if(a >= 0xe5007000 && a < 0xE5009000)
+		return a;
+
+	/* Second on-chip memory area (YRAM) */
+	if(a >= 0xe5017000 && a < 0xe5019000)
+		return a;
+
+	/* Translate P1 and P2 addresses to ROM and RAM to physical form */
+	if(a >= 0x80000000 && a < 0xc0000000)
+		return a & 0x1fffffff;
+
+	/* By default: I don't know what this is, let's preserve it */
+	return a;
 }
 
 //---
@@ -33,7 +63,7 @@ static channel_t *dma_channel(int channel)
    last parameter indicates whether interrupts should be used.
    Returns non-zero if the DMA is busy or a configuration error occurs. */
 static int dma_setup(int channel, dma_size_t size, uint blocks,
-	void *src, dma_address_t src_mode,
+	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode,
 	int interrupts)
 {
@@ -48,8 +78,8 @@ static int dma_setup(int channel, dma_size_t size, uint blocks,
 	DMA.OR.DME = 0;
 
 	/* Set DMA source and target address */
-	ch->SAR = (uint32_t)src & 0x1fffffff;
-	ch->DAR = (uint32_t)dst & 0x1fffffff;
+	ch->SAR = dma_translate(src);
+	ch->DAR = dma_translate(dst);
 
 	/* Set the number of blocks to be transferred */
 	ch->TCR = blocks;
@@ -74,7 +104,7 @@ static int dma_setup(int channel, dma_size_t size, uint blocks,
 
 /* dma_transfer(): Perform a data transfer */
 void dma_transfer(int channel, dma_size_t size, uint blocks,
-	void *src, dma_address_t src_mode,
+	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode)
 {
 	if(dma_setup(channel, size, blocks, src, src_mode, dst, dst_mode, 1))
@@ -97,7 +127,7 @@ void dma_transfer_wait(int channel)
 
 /* dma_transfer_noint(): Perform a data transfer without interruptions */
 void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
-	void *src, dma_address_t src_mode,
+	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode)
 {
 	if(dma_setup(channel, size, blocks, src, src_mode, dst, dst_mode, 0))
@@ -130,7 +160,6 @@ static void init(void)
 	if(isSH3()) return;
 
 	/* Install the interrupt handler from dma/inth.s */
-	/* TODO: DMA0 error gate is 0xbc0 */
 	int codes[] = { 0x800, 0x820, 0x840, 0x860, 0xb80, 0xba0 };
 	extern void inth_dma_te(void);
 
@@ -146,15 +175,18 @@ static void init(void)
 		ch->CHCR.DE = 0;
 	}
 
+	/* Install the address error gate */
+	extern void inth_dma_ae(void);
+	gint_inthandler(0xbc0, inth_dma_ae, 32);
+
 	/* Set interrupt priority to 3 (IPRE[15..12] for first three channels,
 	   IPRF[11..8] for last two and error gate */
 	gint_intlevel(16, 3);
 	gint_intlevel(21, 3);
 
-	/* Unmask the channel interrupts */
-	/* TODO: DMA0 error gate is IMR5 & 0x40 */
+	/* Unmask the channel interrupts and the address error */
 	INTC.MSKCLR->IMR1 = 0x0f;
-	INTC.MSKCLR->IMR5 = 0x30;
+	INTC.MSKCLR->IMR5 = 0x70;
 
 	/* Clear blocking flags and enable the master switch */
 	DMA.OR.AE = 0;

@@ -55,7 +55,7 @@ typedef enum
    @dst       Destination address, must be aligned with transfer size
    @dst_mode  Destination address mode */
 void dma_transfer(int channel, dma_size_t size, uint length,
-	void *src, dma_address_t src_mode,
+	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
 
 /* dma_transfer_wait() - Wait for a transfer on channel 0 to finish
@@ -76,7 +76,7 @@ void dma_transfer_wait(int channel);
    Not using interrupts is a bad design idea for a majority of programs, and is
    only ever needed to display panic messages inside exception handlers. */
 void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
-	void *src, dma_address_t src_mode,
+	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
 
 #endif /* GINT_DMA */

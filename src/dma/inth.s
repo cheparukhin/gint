@@ -4,6 +4,7 @@
 */
 
 .global _inth_dma_te
+.global _inth_dma_ae
 .section .gint.blocks, "ax"
 .align 4
 
@@ -29,3 +30,20 @@ _inth_dma_te:
 
 1:	.long 0			/* CHCR, set dynamically */
 2:	.long 0xfe008060	/* DMA.OR */
+
+/* DMA ADDRESS ERROR INTERRUPT HANDLER - 18 BYTES */
+
+_inth_dma_ae:
+	/* Call a fixed function */
+	sts.l	pr, @-r15
+	mov.l	1f, r1
+	jsr	@r1
+	nop
+	lds.l	@r15+, pr
+
+	rte
+	nop
+
+	.zero 14
+
+1:	.long _dma_address_error
