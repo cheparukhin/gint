@@ -200,6 +200,43 @@ void dsize(const char *str, font_t const * font, int *w, int *h);
 void dtext(int x, int y, const char *str, int fg, int bg);
 
 //---
+//	Image rendering (bopti)
+//---
+
+/* The image_t structure is platform-dependent. */
+
+/* dimage() - render a full image
+   This function blits an image on the VRAM using gint's special format. It is
+   a special case of dsubimage() where the full image is drawn with clipping.
+
+   @x @y   Coordinates of the top-left corner of the image
+   @image  Pointer to image encoded with [fxconv] */
+void dimage(int x, int y, image_t const *image);
+
+/* Option values for dsubimage() */
+enum {
+	/* No option */
+	DIMAGE_NONE = 0x00,
+
+	/* Disable clipping, ie. adjustments to the specified subrectangle and
+	   screen location such that any part that overflows from the image or
+	   the screen is ignored. Slightly faster. */
+	DIMAGE_NOCLIP = 0x01,
+};
+
+/* dsubimage() - render a section of an image
+   This function blits a subrectangle [left, top, width, height] of an image on
+   the VRAM. It is more general than dimage() and also provides a few options.
+
+   @x @y           Coordinates on screen of the rendered subrectangle
+   @image          Pointer to image encoded with [fxconv]
+   @left @top      Top-left coordinates of the subrectangle within [image]
+   @width @height  Subrectangle dimensions
+   @flags          OR-combination of DIMAGE_* flags */
+void dsubimage(int x, int y, image_t const *image, int left, int top,
+	int width, int height, int flags);
+
+//---
 //	Advanced functions
 //---
 
