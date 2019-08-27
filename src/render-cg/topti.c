@@ -83,10 +83,11 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 
 		/* Draw the space if background is opaque */
 		int prop_space = (c == ' ' && f->prop) ? 5 : 0;
-		if((active_space && bg >= 0) || prop_space)
+		if(active_space || prop_space)
 		{
 			active_space += prop_space;
-			drect(x, y, x + active_space - 1, y + height - 1, bg);
+			if(bg >= 0) drect(x, y, x + active_space - 1,
+				y + height - 1, bg);
 		}
 		x += active_space;
 		if(prop_space) { active_space = space; continue; }
