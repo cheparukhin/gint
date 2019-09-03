@@ -3,7 +3,7 @@
 #include <display/common.h>
 #include "topti-asm.h"
 
-/* dtext() - display a string of text */
+/* dtext(): Display a string of text */
 GSECTION(".pretext")
 void dtext(int x, int y, char const *str, int fg, int bg)
 {

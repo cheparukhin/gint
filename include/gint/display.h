@@ -28,7 +28,7 @@
 //	Video RAM management
 //---
 
-/* dupdate() - push the video RAM to the display driver
+/* dupdate(): Push the video RAM to the display driver
    This function makes the contents of the VRAM visible on the screen. It is
    the direct equivalent of Bdisp_PutDisp_DD().
 
@@ -41,7 +41,7 @@ void dupdate(void);
 //	Area rendering functions
 //---
 
-/* dclear() - fill the screen with a single color
+/* dclear(): Fill the screen with a single color
    This function clears the screen by painting all the pixels in a single
    color. It is optimized for opaque colors.
 
@@ -51,7 +51,7 @@ void dupdate(void);
            fxcg50:  Any R5G6B5 color */
 void dclear(color_t color);
 
-/* drect() - fill a rectangle of the screen
+/* drect(): Fill a rectangle of the screen
    This functions applies a color or an operator to a rectangle defined by two
    points (x1 y1) and (x2 y2). Both are included in the rectangle.
 
@@ -64,7 +64,7 @@ void drect(int x1, int y1, int x2, int y2, color_t color);
 //	Point drawing functions
 //---
 
-/* dpixel() - change a pixel's color
+/* dpixel(): Change a pixel's color
    Paints the selected pixel with an opaque color. Setting pixels individually
    is a slow method for rendering. Other functions that draw lines, rectangles,
    images or text will take advantage of possible optimizations to make the
@@ -78,7 +78,7 @@ void drect(int x1, int y1, int x2, int y2, color_t color);
            fxcg50:  Any R5G6B5 color */
 void dpixel(int x, int y, color_t color);
 
-/* dline() - render a straight line
+/* dline(): Render a straight line
    This function draws a line using a Bresenham-style algorithm. Please note
    that dline() may not render lines exactly like Bdisp_DrawLineVRAM().
 
@@ -147,7 +147,7 @@ typedef struct
 
 } GPACKED(4) font_t;
 
-/* dfont() - set the default font for text rendering
+/* dfont(): Set the default font for text rendering
    This font will be used by dtext() and sister functions. If [font = NULL],
    gint's default font is used.
 
@@ -158,7 +158,7 @@ typedef struct
    Returns the previously configured font. */
 font_t const *dfont(font_t const * font);
 
-/* dsize() - get the width and height of rendered text
+/* dsize(): Get the width and height of rendered text
    This function computes the size that the given string would take up if
    rendered with a certain font. If you specify a NULL font, the currently
    configured font will be used; this is different from dfont(), which uses
@@ -175,9 +175,9 @@ font_t const *dfont(font_t const * font);
    @str   String whose size must be evaluated
    @font  Font to use; if NULL, defaults to the current font
    @w @h  Set to the width and height of the rendered text, may be NULL */
-void dsize(const char *str, font_t const * font, int *w, int *h);
+void dsize(char const *str, font_t const * font, int *w, int *h);
 
-/* dtext() - display a string of text
+/* dtext(): Display a string of text
 
    Draws some text in the video RAM using the font set with dfont() (or gint's
    default if no such font was set).
@@ -197,7 +197,7 @@ void dsize(const char *str, font_t const * font, int *w, int *h);
    @bg     Background color
            fx9860g: white, black, none, invert
            fxcg50:  Any R5G6B5 color, or C_NONE */
-void dtext(int x, int y, const char *str, int fg, int bg);
+void dtext(int x, int y, char const *str, int fg, int bg);
 
 /* dprint(): Display a formatted string
    Much like dtext(), but accepts printf-like formats with arguments. See
@@ -210,7 +210,7 @@ void dprint(int x, int y, int fg, int bg, char const *format, ...);
 
 /* The image_t structure is platform-dependent. */
 
-/* dimage() - render a full image
+/* dimage(): Render a full image
    This function blits an image on the VRAM using gint's special format. It is
    a special case of dsubimage() where the full image is drawn with clipping.
 
@@ -229,7 +229,7 @@ enum {
 	DIMAGE_NOCLIP = 0x01,
 };
 
-/* dsubimage() - render a section of an image
+/* dsubimage(): Render a section of an image
    This function blits a subrectangle [left, top, width, height] of an image on
    the VRAM. It is more general than dimage() and also provides a few options.
 
@@ -245,7 +245,7 @@ void dsubimage(int x, int y, image_t const *image, int left, int top,
 //	Advanced functions
 //---
 
-/* dupdate_noint() - Push VRAM to the display without interrupts
+/* dupdate_noint(): Push VRAM to the display without interrupts
    This function does exactly as dupdate(), but does not use interrupts and
    always returns when the transfer is finished. It actively waits for the end
    of the transfer and is thus bad for any general-purpose use. In fact, it is

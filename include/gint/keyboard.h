@@ -92,7 +92,7 @@ enum
 
 /* pollevent() - poll the next keyboard event
    This function returns the next yet-unpolled event from the keyboard buffer.
-   If no event is available, it returns a dummy event with type = KEYEV_NONE.
+   If no event is available, it returns a dummy event with type=KEYEV_NONE.
    This function always returns events with mod=0. */
 key_event_t pollevent(void);
 
