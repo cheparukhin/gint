@@ -5,10 +5,10 @@
 **	blocks depending on its configuration.
 */
 
-.global _inth_entry_7305
+.global _gint_inth_7305
 
 #ifdef FX9860G
-.global _inth_entry_7705
+.global _gint_inth_7705
 #endif
 
 .section .gint.blocks, "ax"
@@ -36,7 +36,7 @@
 /* SH7305-TYPE DEBUG INTERRUPT HANDLER - 26 BYTES */
 
 #if 0
-_inth_entry_7305:
+_gint_inth_7305:
 	mov.l	1f, r0
 	mov.l	@r0, r4
 
@@ -56,7 +56,7 @@ _inth_entry_7305:
 
 /* SH7305-TYPE INTERRUPT HANDLER ENTRY - 20 BYTES */
 
-_inth_entry_7305:
+_gint_inth_7305:
 	/* Get the event code from the INTEVT register */
 	mov.l	1f, r0
 	mov.l	@r0, r0
@@ -78,7 +78,7 @@ _inth_entry_7305:
 
 /* SH7705-TYPE INTERRUT HANDLER ENTRY - 32 BYTES */
 
-_inth_entry_7705:
+_gint_inth_7705:
 	/* Get the event code from the INTEVT2 register */
 	mov.l	1f, r0
 	mov.l	@r0, r0		/* r0 = old_code */

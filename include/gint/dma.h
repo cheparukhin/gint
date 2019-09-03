@@ -79,4 +79,19 @@ void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
 	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
 
+//---
+//	DMA-based memory manipulation functions
+//---
+
+/* dma_memset(): Fast 32-aligned memset
+   This function is your typical memset, except that the destination and size
+   must be 32-aligned, and that the pattern is 4 bytes instead of one. It is
+   replicated to 32 bytes then used to fill the destination area. This 4-byte
+   fixed size may be lifted in future versions.
+
+   @dst      Destination address (32-aligned)
+   @pattern  4-byte pattern to fill @dst
+   @size     Sie of destination area (32-aligned) */
+void *dma_memset(void *dst, uint32_t pattern, size_t size);
+
 #endif /* GINT_DMA */

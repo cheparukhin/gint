@@ -1,7 +1,7 @@
 Crucial, missing things.
 ! core:      the four basic memory functions
-! core:      build an exception handler and a TLB miss handler
-! core:      gint_switch() (driver contexts on stack; arbitrary code?)
+! core:      gint_switch() with driver contexts on stack and arbitrary code
+! core:      use gint_switch() to handle TLB misses
 ! bopti:     fxcg50 version
 ! syscalls:  fxcg50 BFile calls
 
@@ -10,10 +10,11 @@ Tests to run.
 * topti:     all charsets
 
 Complementary elements on existing code.
+* gray:      find good values for more models than the Graph 35+E II
 * render:    get rid of GINT_NEED_VRAM and #define vram gint_vram if you need
 * dma:       dma_memcpy() and dma_memset(), possibly requiring alignment
-* core:      use topti in the error message for missing mappings
 * core:      find the #ifdef FX9860G|FXCG50 that have a cross-platform def
+* core:      try to leave add-in without reset in case of fatal exception
 * topti:     support Unicode fonts
 * hardware:  fill in the HWMEM_FITTLB flag
 * keyboard:  think of extended functions

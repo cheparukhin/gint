@@ -13,6 +13,8 @@
 extern char gint_vbr;
 /* System's VBR address */
 GBSS static uint32_t system_vbr;
+/* Size of exception and TLB handler */
+extern char gint_exch_tlbh_size;
 /* Driver table */
 extern gint_driver_t bdrv, edrv;
 
@@ -67,11 +69,13 @@ static void lock(void)
 void gint_install(void)
 {
 	/* VBR address, provided by the linker script */
-	uint32_t vbr = (uint32_t)&gint_vbr;
+	void *vbr = (void *)&gint_vbr;
 
 	/* Event handler entry points */
-	void *exch_entry;
-	void *inth_entry;
+	void *inth_entry = isSH3() ? gint_inth_7705 : gint_inth_7305;
+
+	/* Size of the exception and TLB handlers */
+	uint32_t exch_tlbh_size = (uint32_t)&gint_exch_tlbh_size;
 
 	/* First save the hardware configuration. This step is crucial because
 	   we don't want the system to find out about us directly manipulating
@@ -79,28 +83,12 @@ void gint_install(void)
 	gint_ctx_save(&sys_ctx);
 
 	/* Load the event handler entry points into memory */
-	/* TODO: Load an exception handler and a TLB miss handler */
-
-	if(isSH3())
-	{
-		extern void exch_entry_7705(void);
-		extern void inth_entry_7705(void);
-		exch_entry = exch_entry_7705;
-		inth_entry = inth_entry_7705;
-	}
-	else
-	{
-		extern void exch_entry_7305(void);
-		extern void inth_entry_7305(void);
-		exch_entry = exch_entry_7305;
-		inth_entry = inth_entry_7305;
-	}
-
-	memcpy((void *)(vbr + 0x100), exch_entry, 32);
-	memcpy((void *)(vbr + 0x600), inth_entry, 32);
+	memcpy(vbr + 0x100, gint_exch_tlbh, exch_tlbh_size);
+	memcpy(vbr + 0x400, gint_exch_tlbh, exch_tlbh_size);
+	memcpy(vbr + 0x600, inth_entry, 32);
 
 	/* Time to switch VBR and roll! */
-	system_vbr = gint_setvbr(vbr, lock);
+	system_vbr = gint_setvbr((uint32_t)vbr, lock);
 }
 
 /* unlock() - unlock interrupts, restoring system settings */

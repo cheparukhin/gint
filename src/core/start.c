@@ -9,6 +9,7 @@
 #include <gint/drivers.h>
 #include <gint/gint.h>
 #include <gint/hardware.h>
+#include <gint/exc.h>
 
 /* Symbols provided by the linker script. For sections:
    - l* represents the load address (source address in ROM)
@@ -135,7 +136,7 @@ int start(int isappli, int optnum)
 	/* Cancel add-in execution if not all pages are mapped */
 	if(rom < (uint32_t)&srom)
 	{
-		bootlog_unmapped(rom, (uint32_t)&srom);
+		gint_exc(0x1040);
 		while(1);
 		return 1;
 	}

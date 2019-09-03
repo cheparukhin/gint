@@ -11,12 +11,6 @@
    Called when RAM sections have been wiped and copied */
 void bootlog_loaded(void);
 
-/* bootlog_unmapped() - ROM mapping stage failed
-   Called if not enough ROM pages have been mapped.
-   @rom  Amount of mapped ROM, in bytes
-   @size Minimum mapping required */
-void bootlog_unmapped(int rom, int size);
-
 /* bootlog_mapped() - ROM mapping stage
    Called after all ROM pages have been traversed. All of them may not have
    been mapped.
@@ -37,7 +31,6 @@ void bootlog_driver_summary(void);
 /* All these functions are enabled only if GINT_BOOT_LOG is defined */
 #ifndef GINT_BOOT_LOG
   #define bootlog_loaded(...)
-  #define bootlog_unmapped(...)
   #define bootlog_mapped(...)
   #define bootlog_kernel(...)
   #define bootlog_driver(...)

@@ -117,14 +117,6 @@ void bootlog_mapped(int rom, GUNUSED int ram)
 	dupdate();
 }
 
-/* bootlog_unmapped() - ROM mapping stage failure */
-void bootlog_unmapped(int rom, int size)
-{
-	print(1, 6, "MMU: add-in too large");
-	print(1, 7, "%8x < %8x", rom, size);
-	dupdate();
-}
-
 /* bootlog_kernel() - gint loading stage */
 void bootlog_kernel(void)
 {

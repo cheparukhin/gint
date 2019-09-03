@@ -55,6 +55,10 @@ SECTIONS
 	} > rom
 
 	.text : {
+		_gint_exch_tlbh_start = . ;
+		*(.gint.exch_tlbh);
+		_gint_exch_tlbh_size = ABSOLUTE(. - _gint_exch_tlbh_start);
+
 		*(.text .text.*)
 		*(C P)
 	} > rom

@@ -46,4 +46,4 @@ _inth_dma_ae:
 
 	.zero 14
 
-1:	.long _dma_address_error
+1:	.long _gint_dma_ae

@@ -199,6 +199,11 @@ void dsize(const char *str, font_t const * font, int *w, int *h);
            fxcg50:  Any R5G6B5 color, or C_NONE */
 void dtext(int x, int y, const char *str, int fg, int bg);
 
+/* dprint(): Display a formatted string
+   Much like dtext(), but accepts printf-like formats with arguments. See
+   <gint/std/stdio.h> for a detailed view of what this format supports. */
+void dprint(int x, int y, int fg, int bg, char const *format, ...);
+
 //---
 //	Image rendering (bopti)
 //---
