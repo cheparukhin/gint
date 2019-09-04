@@ -105,12 +105,10 @@ typedef struct
    This macro makes its argument NULL on fxcg50, this way the named function
    can be defined under #ifdef FX9860G while keeping the structure clean. */
 
-#ifdef FX9860G
-#define GINT_DRIVER_SH3(name) name
-#endif
-
 #ifdef FXCG50
 #define GINT_DRIVER_SH3(name) NULL
+#else
+#define GINT_DRIVER_SH3(name) name
 #endif
 
 /* GINT_DRIVER_STATUS() - declare a function for status string generation

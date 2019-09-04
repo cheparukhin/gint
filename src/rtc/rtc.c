@@ -125,7 +125,7 @@ void rtc_stop_timer(void)
 //	Driver initialization
 //---
 
-#ifdef FX9860G
+#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 static void driver_sh3(void)
 {
 	/* Adjust the address of the RTC */

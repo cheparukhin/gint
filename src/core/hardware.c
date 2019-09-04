@@ -16,7 +16,7 @@ GBSS uint32_t gint[HW_KEYS];
 /* Product Register */
 #define PRR (*((volatile uint32_t *)0xff000044))
 
-#ifdef FX9860G
+#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 
 /* mpu_detect() - detect the underlying MPU
    Many thanks to Simon Lothar for relevant documentation.
@@ -90,7 +90,7 @@ void hw_detect(void)
 	gint[HWROM]  = (gint[HWCALC] == HWCALC_G35PE2) ? (4 << 20) : (8 << 20);
 }
 
-#endif /* FX9860G */
+#endif /* FX9860G and platform-agnostic */
 
 #ifdef FXCG50
 

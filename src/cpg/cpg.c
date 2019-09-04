@@ -25,7 +25,7 @@ const clock_frequency_t *clock_freq(void)
 //	SH7705 Clock signals
 //---
 
-#ifdef FX9860G
+#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 #define CPG SH7705_CPG
 
 static void sh7705_probe(void)
@@ -69,7 +69,7 @@ static void sh7705_probe(void)
 }
 
 #undef CPG
-#endif /* FX9860G */
+#endif /* FX9860G and platform-agnostic */
 
 //---
 //	SH7305 clock signals
@@ -144,7 +144,7 @@ static void init(void)
 
 	/* This avoids warnings about sh7705_probe() being undefined when
 	   building for fxcg50 */
-	#ifdef FX9860G
+	#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 	isSH3() ? sh7705_probe() :
 	#endif
 	sh7305_probe();

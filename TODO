@@ -10,10 +10,12 @@ Tests to run.
 * topti:     all charsets
 
 Complementary elements on existing code.
+* core:      make it possiblé to catch exceptions (gintctl's memory browser)
+* core:      check if -DX still works in GCC 9 and if not, put spaces
 * gray:      find good values for more models than the Graph 35+E II
 * render:    get rid of GINT_NEED_VRAM and #define vram gint_vram if you need
 * dma:       dma_memcpy() and dma_memset(), possibly requiring alignment
-* core:      find the #ifdef FX9860G|FXCG50 that have a cross-platform def
+* dma:       maybe relax the 4-byte size constraint for dma_memset()
 * core:      try to leave add-in without reset in case of fatal exception
 * topti:     support Unicode fonts
 * hardware:  fill in the HWMEM_FITTLB flag
