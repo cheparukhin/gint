@@ -3,8 +3,8 @@
 #include <gint/defs/util.h>
 #include <display/fx.h>
 
-/* dhline() - optimized drawing of a horizontal line using a rectangle mask */
-void dhline(int x1, int x2, int y, color_t color)
+/* gint_dhline(): Optimized horizontal line using a rectangle mask */
+void gint_dhline(int x1, int x2, int y, color_t color)
 {
 	if((uint)y >= 64) return;
 	if(x1 > x2) swap(x1, x2);
@@ -38,8 +38,8 @@ void dhline(int x1, int x2, int y, color_t color)
 	}
 }
 
-/* dvline() - optimized drawing of a vertical line */
-void dvline(int y1, int y2, int x, color_t color)
+/* gint_dvline(): Optimized vertical line */
+void gint_dvline(int y1, int y2, int x, color_t color)
 {
 	if((uint)x >= 128) return;
 	if(y1 > y2) swap(y1, y2);

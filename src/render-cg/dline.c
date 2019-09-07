@@ -2,8 +2,8 @@
 #include <gint/display.h>
 #include <gint/defs/util.h>
 
-/* dhline() - optimized drawing of a horizontal line */
-void dhline(int x1, int x2, int y, uint16_t color)
+/* gint_dhline(): Optimized horizontal line */
+void gint_dhline(int x1, int x2, int y, uint16_t color)
 {
 	/* Order and bounds */
 	if((uint)y >= 224) return;
@@ -30,8 +30,8 @@ void dhline(int x1, int x2, int y, uint16_t color)
 	while(end > start) *--end = op;
 }
 
-/* dvline() - optimized drawing of a vertical line */
-void dvline(int y1, int y2, int x, uint16_t color)
+/* gint_dvline(): Optimized vertical line */
+void gint_dvline(int y1, int y2, int x, uint16_t color)
 {
 	/* Order and bounds */
 	if((uint)x >= 395) return;

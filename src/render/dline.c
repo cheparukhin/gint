@@ -2,7 +2,7 @@
 #include <gint/defs/util.h>
 #include <display/common.h>
 
-/* dline() - Bresenham line drawing algorithm
+/* dline(): Bresenham line drawing algorithm
    Remotely adapted from MonochromeLib code by Pierre "PerriotLL" Le Gall.
    Relies on platform-dependent dhline() and dvline() for optimized situations.
    @x1 @y1 @x2 @y2  Coordinates of endpoints of line (included)
@@ -12,12 +12,12 @@ void dline(int x1, int y1, int x2, int y2, color_t color)
 	/* Possible optimizations */
 	if(y1 == y2)
 	{
-		dhline(x1, x2, y1, color);
+		gint_dhline(x1, x2, y1, color);
 		return;
 	}
 	if(x1 == x2)
 	{
-		dvline(y1, y2, x1, color);
+		gint_dvline(y1, y2, x1, color);
 		return;
 	}
 

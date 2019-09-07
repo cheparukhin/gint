@@ -7,15 +7,15 @@
 
 #include <gint/display.h>
 
-/* dhline() - optimized drawing of a horizontal line
+/* gint_dhline(): Optimized horizontal line
    @x1 @x2 @y  Coordinates of endpoints of line (both included)
    @color      Any color suitable for dline() */
-void dhline(int x1, int x2, int y, color_t color);
+void gint_dhline(int x1, int x2, int y, color_t color);
 
-/* dvline() - optimized drawing of a vertical line
+/* gint_dvline(): Optimized vertical line
    @y1 @y2 @x  Coordinates of endpoints of line (both included)
    @color      Any color suitable for dline() */
-void dvline(int y1, int y2, int x, color_t color);
+void gint_dvline(int y1, int y2, int x, color_t color);
 
 //---
 //	Font rendering (topti)

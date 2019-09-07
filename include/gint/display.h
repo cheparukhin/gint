@@ -95,6 +95,24 @@ void dpixel(int x, int y, color_t color);
                     fxcg50:  Any R5G6B5 color */
 void dline(int x1, int y1, int x2, int y2, color_t color);
 
+/* dhline(): Full-width horizontal line
+   This function draws a horizontal line from the left end of the screen to the
+   right end, much like the Basic command "Horizontal".
+
+   @y      Line number
+   @color  fx9860g: white, black, none, invert
+           fxcg50:  Any R5G6B5 color */
+void dhline(int y, color_t color);
+
+/* dvline(): Full-height vertical line
+   This function draws a vertical line from the top end of the screen to the
+   bottom end, much like the Basic command "Vertical".
+
+   @x      Column number
+   @color  fx9860g: white, black, none, invert
+           fxcg50:  Any R5G6B5 color */
+void dvline(int x, color_t color);
+
 //---
 //	Text rendering (topti)
 //---

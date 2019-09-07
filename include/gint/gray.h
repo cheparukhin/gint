@@ -130,6 +130,16 @@ void gpixel(int x, int y, color_t color);
    @color           white, light, dark, black, none, invert, lighten, darken */
 void gline(int x1, int y1, int x2, int y2, color_t color);
 
+/* ghline(): Full-width horizontal line
+   @y      Line number
+   @color  white, light, dark, black, none, invert, lighten, darken */
+void ghline(int y, color_t color);
+
+/* gvline(): Full-height vertical line
+   @x      Column number
+   @color  white, light, dark, black, none, invert, lighten, darken */
+void gvline(int x, color_t color);
+
 //---
 //	Text rendering
 //---
