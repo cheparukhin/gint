@@ -17,11 +17,12 @@ endif
 include $(CONFIG)
 
 # Machine flags, defaults are provided for common toolchains
+
 ifeq "$(CONFIG.TOOLCHAIN)" "sh3eb-elf"
-machine := -m3 -mb
+machine ?= -m3 -mb
 endif
 ifeq "$(CONFIG.TOOLCHAIN)" "sh4eb-elf"
-machine := -m4-nofpu -mb
+machine ?= -m4-nofpu -mb
 endif
 
 # Compiler flags, assembler flags, dependency generation, archiving
@@ -106,11 +107,13 @@ src/%.c.o: ../src/%.c src/%.c.d
 # Special files
 $(call src2obj,../src/font5x7.png): ../src/font5x7.png
 	@ mkdir -p $(dir $@)
-	$(call cmd_m,fxconv,font5x7.png)$(conv) -f $< -o $@ name:gint_font5x7 \
+	$(call cmd_m,fxconv,font5x7.png)$(conv) -f $< -o $@ \
+		--fx --toolchain=$(CONFIG.TOOLCHAIN) name:gint_font5x7 \
 		charset:ascii grid.size:5x7 grid.padding:1 grid.border:0
 $(call src2obj,../src/font8x9.png): ../src/font8x9.png
 	@ mkdir -p $(dir $@)
-	$(call cmd_m,fxconv,font8x9.png)$(conv) -f $< -o $@ name:gint_font8x9 \
+	$(call cmd_m,fxconv,font8x9.png)$(conv) -f $< -o $@ \
+		--cg --toolchain=$(CONFIG.TOOLCHAIN) name:gint_font8x9 \
 		charset:print grid.size:8x11 grid.padding:1 grid.border:0 \
 		proportional:true
 

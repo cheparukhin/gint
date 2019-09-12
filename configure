@@ -64,10 +64,6 @@ Size limits:
   --atexit-max=NUM     Number of exit handlers in atexit()'s array [16]
 
 Deprecated options (to be removed):
-  -extended-libc       Provide a few C99 headers (in the future, refer to the
-                       newlib port by Memallox's for the standard library)
-  -timer-slots=<n>     Number of virtual timer slots (this feature will be
-                       moved to an independent library) [16]
   -events-queue-size=<n>
                        Size of event queue (this mechanism is likely to
                        disappear in future versions) [64]
@@ -135,10 +131,6 @@ for arg; do case "$arg" in
     echo "error: '$arg' expects a value (see '$0 --help')";
     fail=true;;
 
-  -extended-libc)
-    echo "warning: support for '-extended-libc' has been removed";;
-  -timer-slots=*)
-    echo "warning: support for '-timer-slots' has been removed";;
   -events-queue-size=*)
     echo "warning: support for '-events-queue-size' has been removed";;
 
