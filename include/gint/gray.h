@@ -64,7 +64,7 @@ void gray_stop(void);
       1325    1607       heavy       light    excellent
      --------------------------------------------------
 
-  Here are values for this version of gint:
+  Here are values for this version of gint (for the Graph 35+E II only):
 
      LIGHT    DARK    BLINKING     STRIPES       COLORS
      --------------------------------------------------

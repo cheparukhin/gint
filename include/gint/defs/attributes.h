@@ -34,4 +34,7 @@
 #define GCONSTRUCTOR	__attribute__((constructor))
 #define GDESTRUCTOR	__attribute__((destructor))
 
+/* Functions that do not return */
+#define GNORETURN	__attribute__((noreturn))
+
 #endif /* GINT_DEFS_ATTRIBUTES */

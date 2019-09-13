@@ -38,6 +38,11 @@ enum {
 	C_DARK  = 0x5555,
 	C_BLACK = 0x0000,
 
+	/* Other colors */
+	C_RED   = 0xf800,
+	C_GREEN = 0x07e0,
+	C_BLUE  = 0x001f,
+
 	C_NONE = -1,
 };
 
