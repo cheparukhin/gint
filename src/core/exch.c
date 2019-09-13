@@ -1,13 +1,15 @@
 #define GINT_NEED_VRAM
-#include <gint/display.h>
 #include <gint/exc.h>
+#include <gint/display.h>
+#include <gint/clock.h>
+#include <gint/mpu/dma.h>
 #include <gint/defs/attributes.h>
 
 #define dprint(x, y, ...) dprint(x, y, C_BLACK, C_NONE, __VA_ARGS__)
 #define dtext(x, y, str)  dtext (x, y, str, C_BLACK, C_NONE)
 
-/* gint_exc(): Exception handler fatal error message */
-void gint_exc(GUNUSED uint32_t code)
+/* gint_panic_default(): Default panic handler */
+GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 {
 	uint32_t TEA = *(volatile uint32_t *)0xff00000c;
 	uint32_t TRA = *(volatile uint32_t *)0xff000020 >> 2;
@@ -82,17 +84,56 @@ void gint_exc(GUNUSED uint32_t code)
 	dtext(6, 95,  "An unrecoverable error ocurred in the add-in.");
 	dtext(6, 108, "Please press the RESET button to restart the");
 	dtext(6, 121, "calculator.");
+
+	/* DMA address error handler */
+	if(code == 0x1020)
+	{
+		#define DMA SH7305_DMA
+		dprint(6, 141, "SAR0: %08x   DAR0: %08x   TCR0: %08x",
+			DMA.DMA0.SAR, DMA.DMA0.DAR, DMA.DMA0.TCR);
+		dprint(6, 154, "CHCR0: %08x", DMA.DMA0.CHCR);
+		dprint(6, 167, "SAR1: %08x   DAR1: %08x   TCR1: %08x",
+			DMA.DMA1.SAR, DMA.DMA1.DAR, DMA.DMA1.TCR);
+		dprint(6, 180, "CHCR1: %08x", DMA.DMA1.CHCR);
+		dprint(6, 193, "DMAOR: %04x", DMA.OR);
+		#undef DMA
+	}
 	#endif
 
-	dupdate_noint();
+	dupdate();
+	while(1) sleep();
 }
 
-/* gint_exch_tlbh(): Exception and TLB miss handler */
-__attribute__((interrupt_handler)) GSECTION(".gint.exch_tlbh") GALIGNED(4)
-void gint_exch_tlbh(void)
-{
-	uint32_t EXPEVT = *(volatile uint32_t *)0xff000024;
+/* Panic handler */
+GDATA GNORETURN void (*gint_exc_panic)(uint32_t code) = gint_default_panic;
+/* Exception catcher */
+GDATA int (*gint_exc_catcher)(uint32_t code) = NULL;
 
-	gint_exc(EXPEVT);
-	while(1);
+/* gint_panic(): Panic handler function */
+void gint_panic(uint32_t code)
+{
+	gint_exc_panic(code);
+}
+
+/* gint_panic_set(): Change the panic handler function */
+void gint_panic_set(GNORETURN void (*panic)(uint32_t code))
+{
+	gint_exc_panic = panic;
+}
+
+/* gint_exc_catch(): Set a function to catch exceptions */
+void gint_exc_catch(int (*handler)(uint32_t code))
+{
+	gint_exc_catcher = handler;
+}
+
+/* gint_exc_skip(): Skip pending exception instructions */
+void gint_exc_skip(int instructions)
+{
+	uint32_t spc;
+
+	/* Increase SPC by 2 bytes per instruction */
+	__asm__("stc spc, %0" : "=r"(spc));
+	spc += 2 * instructions;
+	__asm__("ldc %0, spc" :: "r"(spc));
 }

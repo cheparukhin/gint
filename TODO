@@ -10,8 +10,7 @@ Tests to run.
 * topti:     all charsets
 
 Complementary elements on existing code.
-* core:      make it possiblé to catch exceptions (gintctl's memory browser)
-* core:      check if -DX still works in GCC 9 and if not, put spaces
+* topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
 * render:    get rid of GINT_NEED_VRAM and #define vram gint_vram if you need
 * dma:       dma_memcpy() and dma_memset(), possibly requiring alignment

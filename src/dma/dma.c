@@ -153,34 +153,6 @@ void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
 }
 
 //---
-//	Address error handler
-//---
-
-/* gint_dma_ae(): DMA Address Error handler */
-void gint_dma_ae(void)
-{
-	gint_exc(0x1020);
-
-	#ifdef FXCG50
-	dprint(6, 141, C_BLACK, C_NONE,
-		"SAR0: %08x   DAR0: %08x   TCR0: %08x",
-		DMA.DMA0.SAR, DMA.DMA0.DAR, DMA.DMA0.TCR);
-	dprint(6, 154, C_BLACK, C_NONE,
-		"CHCR0: %08x", DMA.DMA0.CHCR);
-	dprint(6, 167, C_BLACK, C_NONE,
-		"SAR1: %08x   DAR1: %08x   TCR1: %08x",
-		DMA.DMA1.SAR, DMA.DMA1.DAR, DMA.DMA1.TCR);
-	dprint(6, 180, C_BLACK, C_NONE,
-		"CHCR1: %08x", DMA.DMA1.CHCR);
-	dprint(6, 193, C_BLACK, C_NONE,
-		"DMAOR: %04x", DMA.OR);
-	dupdate_noint();
-	#endif
-
-	while(1);
-}
-
-//---
 //	Initialization
 //---
 

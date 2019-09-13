@@ -134,12 +134,7 @@ int start(int isappli, int optnum)
 	bootlog_mapped(rom, ram);
 
 	/* Cancel add-in execution if not all pages are mapped */
-	if(rom < (uint32_t)&srom)
-	{
-		gint_exc(0x1040);
-		while(1);
-		return 1;
-	}
+	if(rom < (uint32_t)&srom) gint_panic(0x1040);
 
 	/* Install gint and switch VBR */
 	gint_install();
