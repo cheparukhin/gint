@@ -11,8 +11,6 @@
 
 #include <gint/syscalls.h>
 
-#ifdef FX9860G
-
 //---
 //	Device specification sheet
 //---
@@ -261,5 +259,3 @@ gint_driver_t drv_t6k11 = {
 };
 
 GINT_DECLARE_DRIVER(5, drv_t6k11);
-
-#endif /* FX9860G */

@@ -46,8 +46,8 @@ src2obj = $(1:../src/%=src/%).o
 src2dep = $(1:../src/%=src/%).d
 
 # Source files
-prune-fx := -name render-cg -prune
-prune-cg := -name render-fx -prune -o -name gray -prune
+prune-fx := -name render-cg -prune -o -name dma  -prune -o -name r61524 -prune
+prune-cg := -name render-fx -prune -o -name gray -prune -o -name t6k11  -prune
 src      := $(shell find ../src \
                     $(prune-$(CONFIG.TARGET)) \
                     -o -name '*.[csS]' -print)

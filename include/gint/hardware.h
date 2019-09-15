@@ -124,7 +124,7 @@ void hw_detect(void);
 **  Direct Memory Access Controller
 */
 
-/* Nothing other than the HW_LOADED bit yet */
+/* Nothing other than the HW_LOADED bit yet. Only valid on fxcg50 */
 
 /*
 **  Timer Unit

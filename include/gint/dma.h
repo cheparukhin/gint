@@ -1,12 +1,11 @@
 //---
 //	gint:dma - Direct Memory Access for efficient data transfer
-//
-//	Currently this module is used only to transfer data to the display on
-//	fxcg50, but fast memcpy() is apparently possible as well.
 //---
 
 #ifndef GINT_DMA
 #define GINT_DMA
+
+#ifdef FXCG50
 
 #include <gint/defs/types.h>
 
@@ -93,5 +92,7 @@ void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
    @pattern  4-byte pattern to fill @dst
    @size     Sie of destination area (32-aligned) */
 void *dma_memset(void *dst, uint32_t pattern, size_t size);
+
+#endif /* FXCG50 */
 
 #endif /* GINT_DMA */

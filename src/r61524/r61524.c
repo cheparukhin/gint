@@ -7,8 +7,6 @@
 #include <gint/drivers.h>
 #include <gint/dma.h>
 
-#ifdef FXCG50
-
 #define DMA SH7305_DMA
 #define POWER SH7305_POWER
 
@@ -309,5 +307,3 @@ gint_driver_t drv_r61524 = {
 };
 
 GINT_DECLARE_DRIVER(5, drv_r61524);
-
-#endif /* FXCG50 */
