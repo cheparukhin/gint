@@ -15,19 +15,24 @@ MEMORY
 {
 	/* Userspace mapping of the add-in (0x200 B are for the G1A header).
 	   220k is the maximum amount of simultaneously-mappable code */
-	rom  (rx):	o = 0x00300200, l = 220k
+	rom   (rx):   o = 0x00300200, l = 220k
 	/* This is mapped to RAM; 8k on SH3, apparently 32k on SH4 */
-	ram  (rw):	o = 0x08100000, l = 8k
+	ram   (rw):   o = 0x08100000, l = 8k
 	/* gint's VBR space, mentioned here for completeness */
-	vbr  (rwx):	o = 0x8800e000, l = 5k
+	vbr   (rwx):  o = 0x8800e000, l = 5k
 	/* Some RAM region from P1 area; gint's data will reside here */
-	rram (rwx):	o = 0x8800f400, l = 3k
+	rram  (rwx):  o = 0x8800f400, l = 3k
+	/* On-chip IL memory */
+	ilram (rwx):  o = 0xe5200000, l = 4k
+	/* On-chip X and Y memory */
+	xram  (rwx):  o = 0xe5007000, l = 8k
+	yram  (rwx):  o = 0xe5017000, l = 8k
 }
 
 SECTIONS
 {
 	/*
-	**	ROM sections
+	**  ROM sections
 	*/
 
 	/* First address to be mapped to ROM (including G1A header) */
@@ -94,13 +99,16 @@ SECTIONS
 	   - Resources or assets from fxconv or similar converters
 	   - Data marked read-only by the compiler (.rodata and .rodata.*) */
 	.rodata : SUBALIGN(4) {
+		/* Put these first, they need to be 4-aligned */
+		*(.rodata.4)
+
 		*(.rodata .rodata.*)
 	} > rom
 
 
 
 	/*
-	**	RAM sections
+	**  RAM sections
 	*/
 
 	. = ORIGIN(ram);
@@ -142,12 +150,48 @@ SECTIONS
 
 	_sdata = SIZEOF(.data) + SIZEOF(.data.4);
 
+	/* On-chip memory sections: IL, X and Y memory */
+
+	. = ORIGIN(ilram);
+	.ilram ALIGN(4) : ALIGN(4) {
+		_lilram = LOADADDR(.ilram);
+		_rilram = . ;
+
+		*(.ilram)
+
+		. = ALIGN(16);
+	} > ilram AT> rom
+
+	. = ORIGIN(xram);
+	.xram ALIGN(4) : ALIGN(4) {
+		_lxram = LOADADDR(.xram);
+		_rxram = . ;
+
+		*(.xram)
+
+		. = ALIGN(16);
+	} > xram AT> rom
+
+	. = ORIGIN(yram);
+	.yram ALIGN(4) : ALIGN(4) {
+		_lyram = LOADADDR(.yram);
+		_ryram = . ;
+
+		*(.yram)
+
+		. = ALIGN(16);
+	} > yram AT> rom
+
+	_silram = SIZEOF(.ilram);
+	_sxram  = SIZEOF(.xram);
+	_syram  = SIZEOF(.yram);
+
 
 
 	/*
-	**	RRAM sections
-	**	8800e000:4k  VBR space
-	**	8800f000:4k  .gint.data and .gint.bss
+	**  RRAM sections
+	**  8800e000:4k  VBR space
+	**  8800f000:4k  .gint.data and .gint.bss
 	*/
 
 	/* VBR address: let's just start at the beginning of the RRAM area.
@@ -185,7 +229,7 @@ SECTIONS
 
 
 	/*
-	**	Other sections
+	**  Other sections
 	*/
 
 	/* Unwanted sections going to meet Dave Null:

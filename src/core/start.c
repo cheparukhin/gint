@@ -20,6 +20,9 @@ extern uint32_t
 	brom, srom,			/* Limits of ROM mappings */
 	lgdata, sgdata, rgdata,		/* gint's data section */
 	ldata,  sdata,  rdata,		/* User's data section */
+	lilram, silram, rilram,		/* IL memory section */
+	lxram,  sxram,  rxram,		/* X memory section */
+	lyram,  syram,  ryram,		/* Y memory section */
 	sbss, rbss,			/* User's BSS section */
 	btors, mtors, etors;		/* Constructor/destructor arrays */
 extern gint_driver_t
@@ -120,7 +123,10 @@ int start(int isappli, int optnum)
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
 	regcpy(lgdata, sgdata, rgdata);
-	regcpy(ldata, sdata, rdata);
+	regcpy(ldata,  sdata,  rdata);
+	regcpy(lilram, silram, rilram);
+	regcpy(lxram,  sxram,  rxram);
+	regcpy(lyram,  syram,  ryram);
 	regclr(rbss, sbss);
 	bootlog_loaded();
 
