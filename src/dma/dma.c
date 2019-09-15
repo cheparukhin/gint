@@ -41,7 +41,7 @@ static uint32_t dma_translate(void const *address)
 		return a;
 
 	/* First additional on-chip memory area (XRAM) */
-	if(a >= 0xe5007000 && a < 0xE5009000)
+	if(a >= 0xe5007000 && a < 0xe5009000)
 		return a;
 
 	/* Second on-chip memory area (YRAM) */
@@ -123,8 +123,18 @@ void dma_transfer_wait(int channel)
 	channel_t *ch = dma_channel(channel);
 	if(!ch) return;
 
-	/* Wait for the channel to be disabled by the interrupt handler */
-	while(ch->CHCR.DE) sleep();
+	/* Wait for the channel to be disabled by the interrupt handler.
+	   When the source or the destination of the transfer is X, Y or IL
+	   memory, refrain from sleeping as this also stops the transfer. */
+	int onchip = 0;
+
+	if(ch->SAR >= 0xe5007000 && ch->SAR < 0xe5204000) onchip = 1;
+	if(ch->DAR >= 0xe5007000 && ch->DAR < 0xe5204000) onchip = 1;
+
+	while(ch->CHCR.DE)
+	{
+		if(!onchip) sleep();
+	}
 }
 
 /* dma_transfer_noint(): Perform a data transfer without interruptions */

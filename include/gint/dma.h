@@ -57,7 +57,7 @@ void dma_transfer(int channel, dma_size_t size, uint length,
 	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
 
-/* dma_transfer_wait() - Wait for a transfer on channel 0 to finish
+/* dma_transfer_wait() - Wait for a transfer to finish
 
    You should call this function when you need to transfer to be complete
    before continuing execution. If you are sure that the transfer is finished,
