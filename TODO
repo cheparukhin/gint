@@ -13,13 +13,12 @@ Complementary elements on existing code.
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
 * render:    get rid of GINT_NEED_VRAM and #define vram gint_vram if you need
-* dma:       dma_memcpy() and dma_memset(), possibly requiring alignment
 * dma:       maybe relax the 4-byte size constraint for dma_memset()
-* core:      try to leave add-in without reset in case of fatal exception
+* core:      try to leave add-in without reset in case of panic
 * topti:     support Unicode fonts
 * hardware:  fill in the HWMEM_FITTLB flag
 * keyboard:  think of extended functions
-* keyboard:  add an intermediate-level API with some sort of IsKeyDown()
+* keyboard:  implement keydown() in an event-compliant way
 * cpg:       spread spectrum on fxcg50
 * bopti:     blending modes for monochrome bitmaps (use topti assembler)
 * display:   use more of topti's assembler in drect()

@@ -16,10 +16,13 @@ void *memset(void *dest, int byte, size_t n);
 /* strlen(): Length of a NUL-terminated string */
 size_t strlen(char const *str);
 
-/* strncpy(): Copy a string with a size limit*/
+/* strncpy(): Copy a string with a size limit */
 char *strncpy(char *dst, char const *src, size_t n);
 
-/* strcat(): Concatenation of src in dest*/
+/* strcat(): Concatenation a string to a pre-allocated space */
 char *strcat(char *dest, const char *src);
+
+/* strcmp(): Compare NUL-terminated strings */
+int strcmp(char const *s1, char const *s2);
 
 #endif /* GINT_STD_STRING */

@@ -10,7 +10,7 @@
 #include <gint/mpu/intc.h>
 
 /* VBR address, from the linker script */
-extern char gint_vbr;
+extern char gint_vbr[];
 /* System's VBR address */
 GBSS static uint32_t system_vbr;
 /* Size of exception and TLB handler */
