@@ -54,12 +54,12 @@ struct kprint_options
 	/* How much significant characters of data, meaning varies */
 	uint16_t precision;
 
-	/* Size specifier, may be one of:
-	   (b) 8-bit data (%o, %x)
-	   (w) 16-bit data (%o, %x)
-	   (l) 32-bit data (%o, %x) or long int type (%i, %d, %u)
-	   (q) 64-bit data (%o, %x) or long long int type (%i, %d, %u)
-	   (h) short int type (%i, %d, %u) */
+	/* Size specifier for integers (%o, %x, %i, %d, %u), may be one of:
+	   (0) char       (8-bit)
+	   (1) short     (16-bit)
+	   (2) int       (32-bit)
+	   (3) long      (32-bit)
+	   (4) long long (64-bit) */
 	uint8_t size;
 
 	/* (#) Alternative form: base prefixes, decimal point */
@@ -146,8 +146,9 @@ GINLINE static void kprint_outn(int byte, size_t n)
 /* kprint_opt(): Parse option strings */
 struct kprint_options kprint_opt(char const **options_ptr)
 {
-	/* No options enabled by default */
-	struct kprint_options opt = { 0 };
+	/* No options enabled by default, set the size to int */
+	struct kprint_options opt = { .size = 2 };
+
 	/* This function acts as a deterministic finite automaton */
 	enum {
 		basic,      /* Reading option characters */
@@ -159,8 +160,8 @@ struct kprint_options kprint_opt(char const **options_ptr)
 
 	for(int c; (c = *options); options++)
 	{
-		int c_lower = c | 0x20;
-		if(!c || (c_lower >= 'a' && c_lower < 'z')) break;
+		int c_low = c | 0x20;
+		if(c_low >= 'a' && c_low <= 'z' && c != 'h' && c != 'l') break;
 
 		if(c == '.')
 		{
@@ -192,8 +193,8 @@ struct kprint_options kprint_opt(char const **options_ptr)
 		}
 
 		/* Data size */
-		if(c == 'l') opt.size++;
 		if(c == 'h') opt.size--;
+		if(c == 'l') opt.size++;
 
 		if(c >= '1' && c <= '9') state = length, options--;
 	}
@@ -336,7 +337,7 @@ static void kformat_geometry(int spec, struct kprint_options *opt,
    Fills up the provided digit string from least significant to most
    significant digit, not adding zeros except if argument is zero. Returns the
    number of digits. No NUL terminator is added. */
-static int digits_10(char *str, uint n)
+static int digits_10(char *str, uint64_t n)
 {
 	int digits = 0;
 
@@ -350,7 +351,7 @@ static int digits_10(char *str, uint n)
 }
 
 /* digits_16(): Generate digits in base 16 */
-static int digits_16(char *str, int uppercase, uint32_t n)
+static int digits_16(char *str, int uppercase, uint64_t n)
 {
 	char *hex = uppercase ? "0123456789ABCDEF" : "0123456789abcdef";
 	int digits = 0;
@@ -364,7 +365,7 @@ static int digits_16(char *str, int uppercase, uint32_t n)
 }
 
 /* digits_8(): Generate digits in base 8 */
-static int digits_8(char *str, uint32_t n)
+static int digits_8(char *str, uint64_t n)
 {
 	int digits = 0;
 
@@ -374,6 +375,28 @@ static int digits_8(char *str, uint32_t n)
 		n >>= 3;
 	}
 	return digits;
+}
+
+//---
+//	Loading helpers
+//---
+
+static int64_t load_i(int size, va_list *args)
+{
+	/* All smaller types are promoeted to int so we can't read the
+	   explicitly. They have been converted and sign-extended we don't need
+	   to care what their size is, the result will remain the same */
+	if(size == 3) return va_arg(*args, long);
+	if(size == 4) return va_arg(*args, long long);
+	return va_arg(*args, int);
+}
+
+static uint64_t load_u(int size, va_list *args)
+{
+	/* Again, no need to care about small types */
+	if(size == 3) return va_arg(*args, unsigned long);
+	if(size == 4) return va_arg(*args, unsigned long long);
+	return va_arg(*args, unsigned int);
 }
 
 //---
@@ -430,7 +453,7 @@ static void kformat_str(KFORMAT_ARGS)
    {pre}  Forces a minimal number of digits, creating 0s (overrides '0') */
 static void kformat_int(KFORMAT_ARGS)
 {
-	int n = va_arg(*args, int);
+	int64_t n = load_i(opt->size, args);
 
 	/* Compute the sign and the absolute value */
 	struct geometry g = {
@@ -468,9 +491,9 @@ static void kformat_int(KFORMAT_ARGS)
    {pre}  Forces a minimal number of digits, creating 0s (overrides '0') */
 static void kformat_uint(KFORMAT_ARGS)
 {
-	uint n = va_arg(*args, uint);
+	uint64_t n = load_u(opt->size, args);
 
-	char digits[32];
+	char digits[48];
 	int pure = 0, total;
 	int specl = spec | 0x20;
 
@@ -525,7 +548,7 @@ static void kformat_ptr(KFORMAT_ARGS)
    {pre}  Number of digits after the decimal dot */
 static void kformat_fixed(KFORMAT_ARGS)
 {
-	int n = va_arg(*args, int);
+	int64_t n = load_i(opt->size, args);
 
 	/* Compute the sign and the absolute value */
 	struct geometry g = {
