@@ -5,43 +5,84 @@
 #ifndef GINT_KEYBOARD
 #define GINT_KEYBOARD
 
-/* Keyboard, key events and getkey()
+/* Keyboard, key events, keydown() and getkey()
 
    gint's keyboard driver regularly scans the keyboard matrix and produces *key
-   events*, the most primitive type of event exposed to the user. A key event
-   basically says that a key has been pressed, held, or released at some point
-   in time. They are suited for real-time applications like games.
+   events*. A key event basically says that a key has been pressed or released
+   at some point in time. Key events are a faithful description of everything
+   that happens on the keyboard.
 
-   - pollevent() fetches the next queued keyboard event, and returns an event
-     of type KEYEV_NONE if none is available.
-   - waitevent() fetches the next queued keyboard event and waits if none is
-     available. The timeout can be configured.
+   These key events are stored in the *event queue*, from where they can be
+   retrieved:
 
-   GUI programs like the system applications will prefer using a GetKey()-like
-   functions that return a single key press at a time, heeds for releases, for
-   SHIFT and ALPHA modifiers, handles backlight and return-to-menu.
+   * pollevent() fetches the next keyboard event waiting in the queue. Events
+     will always be returned in chronological order. If there is no keyboard
+     event pending (ie. if nothing happened since last time events were read),
+     this function returns a dummy event of type KEYEV_NONE.
+   * waitevent() fetches the next keyboard event waiting in the queue. If the
+     queue is empty, it waits until one becomes available or a timeout expires,
+     whichever comes first. The timeout can be configured.
 
-   - getkey_opt() is gint's enhanced GetKey()-like function, with support for
+   When events have been read, other functions can be read to check whether a
+   certain key (or set of keys) is pressed.
+
+   * keydown() checks if the specified key is currently pressed. (*)
+   * keydown_all() checks if all keys of a specified list are pressed. The list
+     should end with value 0.
+   * keydown_any() checks if any key of a specified list is pressed. The list
+     should end with value 0.
+
+   (*) The keydown() functions do not report the absolute current state of the
+       key, but rather the state of the key according to the events that have
+       been retrieved so far. If the queue contains {KEY_A, KEYEV_DOWN} and
+       {KEY_A, KEYEV_UP}, the following sequence of events will happen:
+
+         keydown(KEY_A)   -> 0
+         pollevent()      -> {KEY_A, KEYEV_DOWN}
+         keydown(KEY_A)   -> 1
+         pollevent()      -> {KEY_A, KEYEV_UP}
+         keydown(KEY_A)   -> 0
+
+       Synchronizing keydown() and the events increases the accuracy of
+       keyboard information for fast programs and its reliability for slow
+       programs.
+
+       When all events have been read from the queue, keydown() returns the
+       absolute current key state, which is what will happen 90% of the time.
+
+   Applications that are not interested in event contents but only in pressed
+   keys can automatically read all events from the queue before they start
+   using keydown():
+
+   * clearevents() reads all pending events from the input queue.
+
+   The previous functions are quite low-level. GUI programs that look like the
+   system applications will prefer using a GetKey()-like functions that return
+   a single key press at a time, heeds for releases, for SHIFT and ALPHA
+   modifiers, handles repeats, backlight and return-to-menu.
+
+   * getkey_opt() is gint's enhanced GetKey()-like function, with support for
      custom repetition and many fine-tunable options.
-   - getkey() is a specific call to getkey_opt(), that imitates GetKey(). */
+   * getkey() is a specific call to getkey_opt(), that imitates GetKey().
+
+   These functions introduce a new type of key event called KEYEV_HOLD which
+   represents a key repeat. */
 
 #include <gint/defs/types.h>
 #include <gint/keycodes.h>
 
-/* key_event_t - any keyboard event
-   This structure represents an event that occurs on the keyboard. This is a
-   low-level structure that is produced by the keyboard scanner. It reports key
-   presses, key releases, and key repeats.
+/* key_event_t: Low-level or high-level keyboard event
 
-   These events are detected and reported each time the keyboard is scanned,
-   which is 128 Hz by default, so you'll get 128 repeat events by second if a
-   key is kept pressed. We could filter the events to emit one only every
-   second, for example, but it's difficult to do it for all keys at the same
-   time. Thus the control of repeat delays is left to getkey().
+   This structure represents an event that occurs on the keyboard. It is first
+   produced by the keyboard scanner with limited information, then possibly
+   enriched by getkey(). Events are produced each time the keyboard is scanned,
+   which is 128 Hz by default. Hence, a key press and release occuring in less
+   than 8 ms might not be detected.
 
-   When [mod = 1], attributes [shift] and [alpha] indicate whether the key has
-   been modified. Only key press events returned by getkey() have [mod = 1].
-   Note that you can't have, e.g. [key=KEY_SHIFT] and [mod=1] at the same time.
+   getkey() returns enriched events with [mod=1], in whic ase [shift] and
+   [alpha] indicate whether the key has been modified. Only key press events
+   returned by getkey() have [mod=1]. Note that you can't have, e.g.
+   [key=KEY_SHIFT] and [mod=1] at the same time.
 
    The [time] attribute indicates when the event occurred. It is a snapshot of
    a time counter that increases at each keyboard scan and *wraps around every
@@ -64,7 +105,7 @@ typedef struct
 
 } GPACKED(4) key_event_t;
 
-/* Keyboard event types, as in the type field of key_event_t */
+/* Keyboard event types, as in the [type] field of key_event_t */
 enum
 {
 	KEYEV_NONE = 0,		/* No event available (poll() only) */
@@ -87,23 +128,50 @@ enum
 #endif
 
 //---
-//	Keyboard functions
+//	Event-level functions
 //---
 
-/* pollevent() - poll the next keyboard event
-   This function returns the next yet-unpolled event from the keyboard buffer.
-   If no event is available, it returns a dummy event with type=KEYEV_NONE.
-   This function always returns events with mod=0. */
+/* pollevent(): Poll the next keyboard event
+   This function returns the next event from the event queue, chronologically.
+   If no event is available, it returns a dummy event with type=KEYEV_NONE
+   and time set to the current driver time. This function always returns events
+   with mod=0. */
 key_event_t pollevent(void);
 
-/* waitevent() - wait for the next keyboard event
+/* waitevent(): Wait for the next keyboard event
    This function works as pollevent() but waits if no event is available. When
    timeout=NULL, it waits indefinitely. Otherwise, it waits until *timeout
    becomes non-zero. It is particularly suitable to set *timeout to 1 using a
    timer with [timer_timeout] as callback. See <gint/timer.h>. */
 key_event_t waitevent(volatile int *timeout);
 
-/* getkey() - wait for a pressed key
+/* clearevents(): Read all events waiting in the queue */
+void clearevents(void);
+
+//---
+//	Key state functions
+//---
+
+/* keydown(): Current key state
+   This function returns zero if the specified key is currently up (according
+   to the last events that have been processed) and non-zero if it is down. */
+int keydown(int key);
+
+/* keydown_all(): Check a set of keys for simultaneous input
+   Returns non-zero if all provided keys are down. The list should end with a 0
+   as terminator. */
+int keydown_all(int key1, ...);
+
+/* keydown_any(): Check a set of keys for any input
+   Returns nonzero if any one of the specified keys is currently pressed. The
+   sequence should be terminated by a 0 integer. */
+int keydown_any(int key1, ...);
+
+//---
+//	High-level functions
+//---
+
+/* getkey(): Wait for a key press
 
    This function mimics the behavior of the fxlib GetKey(). It returns a
    key_event_t object where [mod=1], and where [shift] and [alpha] indicate
@@ -133,16 +201,18 @@ enum {
 	GETKEY_REP_ARROWS  = 0x10,
 	GETKEY_REP_ALL     = 0x20,
 
+	/* No modifiers */
+	GETKEY_NONE        = 0x00,
 	/* Default settings of getkey() */
 	GETKEY_DEFAULT     = 0x1f,
 };
 
-/* getkey_opt() - enhanced getkey()
+/* getkey_opt(): Enhanced getkey()
 
    This function enhances getkey() with more general features. An
    or-combination of option flags (see above) must be supplied as first
-   argument; 0 stands for no option. getkey_opt() returns the same kind of
-   values as getkey().
+   argument; GETKEY_NONE stands for no option. getkey_opt() returns the same
+   kind of events as getkey().
 
    getkey_opt() supports a generic timeout function in the form of a volatile
    pointer [timeout]. If it's NULL, getkey_opt() waits indefinitely. Otherwise,
@@ -155,7 +225,7 @@ enum {
    Returns a key event of type KEYEV_DOWN or KEYEV_HOLD with [mod=1]. */
 key_event_t getkey_opt(int options, volatile int *timeout);
 
-/* getkey_repeat() - set repeat delays for getkey()
+/* getkey_repeat(): Set repeat delays for getkey()
 
    This function updates the repeat delays of getkey() and getkey_opt(). The
    unit of the argument is in milliseconds, but the granularity of the delay is

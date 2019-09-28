@@ -30,15 +30,11 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	static int rep_key = 0;
 	/* Number of repeats already emitted */
 	static int rep_count = 0;
-	/* Scan intervals elapsed since last repeat */
+	/* Keyboard time when the key was pressed */
 	static int rep_time = 0;
 
-	while(1) switch((ev = waitevent(timeout)).type)
+	while(1) switch((ev = pollevent()).type)
 	{
-	/* Timeout has expired, return KEYEV_NONE */
-	case KEYEV_NONE:
-		return ev;
-
 	/* Key press: handle modifiers or return an event */
 	case KEYEV_DOWN:
 		key = ev.key;
@@ -75,45 +71,52 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		}
 
 		/* Return current event */
-		rep_key   = key;
+		rep_key = key;
 		rep_count = 0;
-		rep_time  = 0;
+		rep_time = ev.time;
 
 		ev.mod = 1;
 		ev.shift = shift;
 		ev.alpha = alpha;
 		return ev;
 
-	/* Return new events when a key is held (maybe) */
-	case KEYEV_HOLD:
-		if(ev.key != rep_key) break;
+	/* If nothing happens, stop or wait for a repeat to occur */
+	case KEYEV_NONE:
+		/* Timeout has expired, return KEYEV_NONE */
+		if(timeout && *timeout) return ev;
 
-		/* Check that this key can be repeated */
+		/* Check that the last pressed key can be repeated */
 		int arrow = (rep_key == KEY_LEFT || rep_key == KEY_RIGHT ||
-			rep_key == KEY_UP || rep_key == KEY_DOWN);
+		             rep_key == KEY_UP   || rep_key == KEY_DOWN);
 
-		if(!(opt & GETKEY_REP_ALL) && !(opt & GETKEY_REP_ARROWS &&
-			arrow)) break;
+		if(!rep_key || !(
+			(opt & GETKEY_REP_ALL) ||
+			(opt & GETKEY_REP_ARROWS && arrow)
+		)) break;
 
 		/* If the key is key pressed long enough, create a new event */
-		int target = (rep_count) ? rep_next : rep_first;
-		if(++rep_time < target) break;
+		int duration = (int16_t)(ev.time - rep_time);
 
-		rep_time -= target;
+		int target = (rep_count) ? rep_next : rep_first;
+		if(duration < target) break;
+
+		rep_time += target;
 		rep_count++;
 
 		ev.mod = 1;
 		ev.shift = shift;
 		ev.alpha = alpha;
+		ev.type = KEYEV_HOLD;
+		ev.key = rep_key;
 		return ev;
 
 	/* Reset repeating information if the repeated key is released */
 	case KEYEV_UP:
 		if(ev.key != rep_key) break;
 
-		rep_key   = 0;
+		rep_key = 0;
 		rep_count = 0;
-		rep_time  = 0;
+		rep_time = 0;
 		break;
 	}
 }

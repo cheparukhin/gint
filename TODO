@@ -18,7 +18,6 @@ Complementary elements on existing code.
 * topti:     support Unicode fonts
 * hardware:  fill in the HWMEM_FITTLB flag
 * keyboard:  think of extended functions
-* keyboard:  implement keydown() in an event-compliant way
 * cpg:       spread spectrum on fxcg50
 * bopti:     blending modes for monochrome bitmaps (use topti assembler)
 * display:   use more of topti's assembler in drect()
