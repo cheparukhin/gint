@@ -12,10 +12,8 @@ Tests to run.
 Complementary elements on existing code.
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
-* render:    get rid of GINT_NEED_VRAM and #define vram gint_vram if you need
 * dma:       maybe relax the 4-byte size constraint for dma_memset()
 * core:      try to leave add-in without reset in case of panic
-* topti:     support Unicode fonts
 * hardware:  fill in the HWMEM_FITTLB flag
 * keyboard:  think of extended functions
 * cpg:       spread spectrum on fxcg50

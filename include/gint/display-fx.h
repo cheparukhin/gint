@@ -13,14 +13,12 @@
 
 #include <gint/defs/types.h>
 
-/* Expose the VRAM variable if GINT_NEED_VRAM is defined. It must always point
-   to a 4-aligned buffer of size 1024. Any function can use it freely to:
+/* gint VRAM address. This value must always point to a 4-aligned buffer of
+   size 1024. Any function can use it freely to:
    - Use another video ram area (triple buffering or more, gray engine);
    - Implement additional drawing functions;
    - Store data when not drawing. */
-#ifdef GINT_NEED_VRAM
-extern uint32_t *vram;
-#endif
+extern uint32_t *gint_vram;
 
 /* color_t - colors available for drawing
    The following colors are defined by the library:

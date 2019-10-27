@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
 #include <gint/display.h>

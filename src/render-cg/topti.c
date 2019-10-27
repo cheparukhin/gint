@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
 #include <gint/display.h>
@@ -67,7 +66,7 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	if(y < 0) top = -y, height += y, y = 0;
 
 	/* Move to top row */
-	uint16_t *target = vram + 396 * y;
+	uint16_t *target = gint_vram + 396 * y;
 
 	/* Character spacing and space waiting to be drawn */
 	int space = 1;

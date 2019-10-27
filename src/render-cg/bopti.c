@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/defs/types.h>
 #include <gint/display.h>
 #include "bopti-asm.h"
@@ -22,7 +21,7 @@ enum {
 void bopti_render(image_t const *img, struct box *box)
 {
 	/* Offset in video RAM and output stride */
-	uint16_t *target = vram + (396 * box->y + box->x);
+	uint16_t *target = gint_vram + (396 * box->y + box->x);
 	int out = 2 * (396 - box->w);
 
 	int profile = img->profile;

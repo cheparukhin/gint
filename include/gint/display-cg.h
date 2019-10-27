@@ -15,16 +15,14 @@
 
 #include <gint/defs/types.h>
 
-/* Expose the VRAM variable if GINT_NEED_VRAM is defined. It must always point
-   to a 32-aligned buffer of size 177408. Any function can use it freely to
-   perform rendering or store data when not drawing. Triple buffering is
-   already implemented in gint, see the dvram() function below.
+/* gint VRAM address. This value must always point to a 32-aligned bufer of
+   size 177408. Any function can use it freely to perform rendering or store
+   data when not drawing. Triple buffering is already implemented in gint, see
+   the dvram() function below.
 
-   In this module, colors are in the 16-bit R5G6B5 format, as it is the format
-   used by the display controller. */
-#ifdef GINT_NEED_VRAM
-extern uint16_t *vram;
-#endif
+   In this module, colors are in the 16-bit big-endian R5G6B5 format, as it is
+   the format used by the display controller. */
+extern uint16_t *gint_vram;
 
 /* Provide a platform-agnostic definition of color_t.
    Some functions also support transparency, in which case they take an [int]

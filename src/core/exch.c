@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/exc.h>
 #include <gint/display.h>
 #include <gint/clock.h>
@@ -22,7 +21,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 
 	#ifdef FX9860G
 	dtext(1, 0, "Exception! (SysERROR)");
-	for(int i = 0; i < 32; i++) vram[i] = ~vram[i];
+	for(int i = 0; i < 32; i++) gint_vram[i] = ~gint_vram[i];
 
 	char const *name = "";
 	if(code == 0x040) name = "TLB miss read";
@@ -51,7 +50,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	#ifdef FXCG50
 	dtext(6, 3, "An exception occured! (System ERROR)");
 
-	uint32_t *long_vram = (void *)vram;
+	uint32_t *long_vram = (void *)gint_vram;
 	for(int i = 0; i < 198 * 16; i++) long_vram[i] = ~long_vram[i];
 
 	char const *name = "";

@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/defs/util.h>
 #include <gint/display.h>
 
@@ -18,7 +17,7 @@ void drect(int x1, int y1, int x2, int y2, uint16_t color)
 	/* The method is exactly like dhline(). I first handle odd endpoints,
 	   then write longwords for the longest section */
 
-	uint16_t *base = vram + 396 * y1;
+	uint16_t *base = gint_vram + 396 * y1;
 	int height = y2 - y1 + 1;
 
 	/* Now copy everything that's left as longwords */

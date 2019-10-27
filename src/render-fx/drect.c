@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/defs/util.h>
 #include <gint/display.h>
 #include <display/fx.h>
@@ -20,8 +19,8 @@ void drect(int x1, int y1, int x2, int y2, color_t color)
 	uint32_t m[4];
 	masks(x1, x2, m);
 
-	uint32_t *base	= vram + (y1 << 2);
-	uint32_t *lword	= vram + (y2 << 2) + 4;
+	uint32_t *base	= gint_vram + (y1 << 2);
+	uint32_t *lword	= gint_vram + (y2 << 2) + 4;
 
 	if(color == C_WHITE) while(lword > base)
 	{

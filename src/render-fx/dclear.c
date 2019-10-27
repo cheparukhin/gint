@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/display.h>
 
 /* dclear() - fill the screen with a single color */
@@ -11,9 +10,9 @@ void dclear(color_t color)
 	if(color != C_WHITE && color != C_BLACK) return;
 	uint32_t fill = -(color >> 1);
 
-	uint32_t *index = vram + 256;
+	uint32_t *index = gint_vram + 256;
 
-	while(index > vram)
+	while(index > gint_vram)
 	{
 		/* Do it by batches to avoid losing cycles on loop tests */
 		*--index = fill;

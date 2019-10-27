@@ -2,8 +2,6 @@
 //	gint:gray:engine - Core gray engine
 //---
 
-#define GINT_NEED_VRAM
-
 #include <gint/defs/types.h>
 #include <gint/std/stdlib.h>
 
@@ -39,8 +37,8 @@ GDATA static int delays[2] = { 762, 1311 };
 /* gray_init(): Engine setup */
 GCONSTRUCTOR static void gray_init(void)
 {
-	/* Here [vram] refers to the standard, monochrome VRAM */
-	vrams[0] = vram;
+	/* Here [gint_vram] refers to the standard, monochrome VRAM */
+	vrams[0] = gint_vram;
 
 	#ifdef GINT_STATIC_GRAY
 	vrams[1] = gvrams[0];

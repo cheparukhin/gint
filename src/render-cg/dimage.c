@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/display.h>
 #include "bopti-asm.h"
 

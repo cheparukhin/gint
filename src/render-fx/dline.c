@@ -1,4 +1,3 @@
-#define GINT_NEED_VRAM
 #include <gint/display.h>
 #include <gint/defs/util.h>
 #include <display/fx.h>
@@ -13,7 +12,7 @@ void gint_dhline(int x1, int x2, int y, color_t color)
 	uint32_t m[4];
 	masks(x1, x2, m);
 
-	uint32_t *data = vram + (y << 2);
+	uint32_t *data = gint_vram + (y << 2);
 
 	if(color == C_WHITE)
 	{
@@ -44,7 +43,7 @@ void gint_dvline(int y1, int y2, int x, color_t color)
 	if((uint)x >= 128) return;
 	if(y1 > y2) swap(y1, y2);
 
-	uint32_t *base = vram + (y1 << 2) + (x >> 5);
+	uint32_t *base = gint_vram + (y1 << 2) + (x >> 5);
 	uint32_t *lword = base + ((y2 - y1 + 1) << 2);
 	uint32_t mask = 1 << (~x & 31);
 
