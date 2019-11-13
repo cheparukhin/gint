@@ -42,6 +42,7 @@ or both. There are a few dependencies:
 
 * A suitable GCC toolchain in the `PATH`. You can absolutely *not* build gint
   with your system compiler!
+  * The tutorial on Planète Casio builds an `sh-elf` that works everywhere
   * For fx-9860G II, `sh3eb-elf` is strongly advised
   * For fx-CG 50, `sh4eb-elf` (with `-m4-nofpu`) is slightly better but
     `sh3eb-elf` is completely fine

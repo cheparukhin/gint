@@ -41,11 +41,11 @@ Target selection:
 
   fx9860g covers all fx-9860G II-like monochromes models that support add-ins
   or can be flashed with an OS that does. This includes SH3 and SH4 machines.
-  Default toolchain is 'sh3eb-elf'.
+  Default toolchain is 'sh-elf'.
 
   fxcg50 covers just the fx-CG 50; there is some unofficial compatibility with
   fx-CG 10/20. All of these are SH4-only.
-  Default toolchain is 'sh4eb-elf'.
+  Default toolchain is 'sh-elf'.
 
 Build options:
   --toolchain=TRIPLET  Build with a different toolchain
@@ -95,10 +95,10 @@ for arg; do case "$arg" in
     case ${arg#*=} in
       "fx9860g")
         target=fx9860g
-        toolchain=${toolchain:-sh3eb-elf};;
+        toolchain=${toolchain:-sh-elf};;
       "fxcg50")
         target=fxcg50
-        toolchain=${toolchain:-sh4eb-elf};;
+        toolchain=${toolchain:-sh-elf};;
       *)
         echo "error: invalid target '$target'"
         fail=true
