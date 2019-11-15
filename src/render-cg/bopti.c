@@ -25,17 +25,17 @@ void bopti_render(image_t const *img, struct box *box)
 	int out = 2 * (396 - box->w);
 
 	int profile = img->profile;
+	void const *data = img->data;
+
+	int w = box->w;
+	int h = box->h;
 
 	if(profile == PX_R5G6B5 || profile == PX_R5G6B5A)
 	{
-		uint16_t const *data = img->data;
-		int w = box->w;
-		int h = box->h;
-
-		data += img->width * box->top + box->left;
-
 		/* Input stride */
 		int in = 2 * (img->width - w);
+
+		data += 2 * (img->width * box->top + box->left);
 
 		if(profile == PX_R5G6B5)
 			bopti_r5g6b5(data, target, w, h, in, out);
@@ -44,11 +44,29 @@ void bopti_render(image_t const *img, struct box *box)
 	}
 	else if(profile == PX_P8)
 	{
-		#warning TODO: PX_P8
+		/* Palette has 0x100 entries of 2 bytes each */
+		uint16_t const *palette = data;
+		data += 512;
+
+		int in = img->width - w;
+		data += img->width * box->top + box->left;
+
+		bopti_p8(data, target, w, h, in, out, palette, img->alpha);
 	}
 	else if(profile == PX_P4)
 	{
-		#warning TODO: PX_P4
+		/* Palette has 0x10 entries of 2 bytes each */
+		uint16_t const *palette = data;
+		data += 32;
+
+		/* Due to nibble alignment being a hassle, in this function the
+		   input stride is expressed in pixels. */
+		int in = img->width - w;
+		/* Also we don't move pointers, we just use pixel offsets. */
+		int offset = img->width * box->top + box->left;
+
+		bopti_p4(data, target, w, h, in, out, palette, img->alpha,
+			offset);
 	}
 }
 

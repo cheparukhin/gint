@@ -10,6 +10,7 @@ Tests to run.
 * topti:     all charsets
 
 Complementary elements on existing code.
+*            make fx9860g projects work out of the box on fxcg50
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
 * dma:       maybe relax the 4-byte size constraint for dma_memset()

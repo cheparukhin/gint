@@ -22,6 +22,24 @@ void bopti_r5g6b5(uint16_t const *data, uint16_t *target, int width,
 void bopti_r5g6b5a(uint16_t const *data, uint16_t *target, int width,
 	int height, int in_stride, int out_stride, uint16_t alpha);
 
+/* bopti_p8(): 8-bit palette rendering with alpha
+   @data @target @width @height @in_stride @out_stride
+            As in bopti_r5g6b5().
+   @palette Pointer to image palette (256 colors)
+   @alpha   Palette index for transparency, if >= 256 no alpha is used */
+void bopti_p8(uint8_t const *data, uint16_t *target, int width, int height,
+	int in_stride, int out_stride, uint16_t const *palette, int alpha);
+
+/* bopti_p4(): 4-bit palette rendering with alpha
+   @data @target @width @height @in_stride @out_stride
+            As in bopti_r5g6b5().
+   @palette Pointer to image palette (16 colors)
+   @alpha   Palette index for transparency, if >= 16 no alpha is used
+   @offset  Initial offset within [data], in number of pixels */
+void bopti_p4(uint8_t const *data, uint16_t *target, int width, int height,
+	int in_stride, int out_stride, uint16_t const *palette, int alpha,
+	int offset);
+
 /* bopti_render_clip(): Render with clipping
    Same parameters as dsubimage(), except for flags. */
 void bopti_render_clip(int x, int y, image_t const *img, int left, int top,
