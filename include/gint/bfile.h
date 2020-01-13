@@ -84,4 +84,41 @@ int BFile_Write(int fd, void const *data, int even_size);
    Returns a BFile error code. */
 int BFile_Read(int handle, void *data, int size, int whence);
 
+/* BFile_FindFirst(): Search a directory for file with matching name.
+   Doesn't work on Main memory.
+   Only four search handle can be opened, you need to close them to be able to reuse them.
+   Search is NOT case sensitive and * can be used to match any string.
+
+   @search      FONTCHARACTER file path to match
+   @shandle     Search handle to pass to BFile_FindNext or BFile_FindClose
+   @founfile    FONTCHARACTER found file path
+   @fileinfo    Structure containing a lot of information on the found file
+   Return 0 on success, -1 if no file found, or negative value on error. */
+typedef struct tag_FILE_INFO
+{
+    unsigned short id;       //file index
+    unsigned short type;     //file type
+    unsigned long  fsize;    //file size
+    unsigned long  dsize;    //date size (file - header)
+    unsigned int   property; //if 0 file complete
+    unsigned long  adress;   //top adress of data (direct access is unadvised)
+} FILE_INFO;
+int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile, FILE_INFO *fileinfo);
+
+/* BFile_FindNext(): Continue a search a directory for file with matching name.
+   Only four search handle can be opened, u need to close them to be able to reuse them.
+
+   @shandle     Search handle from BFile_FindFirst
+   @founfile    FONTCHARACTER found file path
+   @fileinfo    Structure containing a lot of information on the found file
+   Return 0 on success, -1 if no file found, or negative value on error. */
+int BFile_FindNext(int shandle, uint16_t *foundfile, FILE_INFO *fileinfo);
+
+/* BFile_FindClose(): Close the specified search handle
+   Only four search handle can be opened, u need to close them to be able to reuse them.
+
+   @shandle     Search handle from BFile_FindFirst
+   Return 0 on success or negative value on error. */
+int BFile_FindClose(int shandle);
+
 #endif /* GINT_BFILE */

@@ -26,6 +26,9 @@
 .global	_BFile_Size
 .global	_BFile_Write
 .global	_BFile_Read
+.global	_BFile_FindFirst
+.global	_BFile_FindNext
+.global	_BFile_FindClose
 
 .section ".pretext"
 
@@ -83,6 +86,18 @@ _BFile_Write:
 # int BFile_Read(int handle, void *ram_buffer, int size, int whence)
 _BFile_Read:
 	syscall(0x0432)
+
+# int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile, FILE_INFO *fileinfo)
+_BFile_FindFirst:
+    syscall(0x043b)
+
+# int BFile_FindNext(int shandle, uint16_t *foundfile, FILE_INFO *fileinfo)
+_BFile_FindNext:
+    syscall(0x043c)
+
+# int BFile_FindClose(int shandle)
+_BFile_FindClose:
+    syscall(0x043d)
 
 syscall_table:
 	.long	0x80010070
