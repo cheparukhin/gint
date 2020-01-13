@@ -23,6 +23,7 @@
 .global	_BFile_Create
 .global	_BFile_Open
 .global	_BFile_Close
+.global	_BFile_Size
 .global	_BFile_Write
 .global	_BFile_Read
 
@@ -70,6 +71,10 @@ _BFile_Open:
 # int BFile_Close(int handle)
 _BFile_Close:
 	syscall(0x042d)
+
+# int BFile_Size(int handle)
+_BFile_Size:
+	syscall(0x042f)
 
 # int BFile_Write(int handle, const void *ram_buffer, int even_size)
 _BFile_Write:

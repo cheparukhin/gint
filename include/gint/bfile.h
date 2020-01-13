@@ -52,6 +52,12 @@ int BFile_Open(uint16_t const *file, enum BFile_OpenMode mode);
    Returns a BFile error code. */
 int BFile_Close(int fd);
 
+/* BFile_Size(): Retrieve size of an open file
+
+   @fd  File descriptor
+   Returns the file size in bytes, or a negative BFile error code*/
+int BFile_Size(int fd);
+
 /* BFile_Write(): Write data to an open file
    Second and third argument specify the data and length to write.
 
