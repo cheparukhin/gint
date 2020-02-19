@@ -87,11 +87,13 @@ _BFile_Write:
 _BFile_Read:
 	syscall(0x0432)
 
-# int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile, FILE_INFO *fileinfo)
+# int BFile_FindFirst(uint16_t const *search, int *shandle,
+# uint16_t *foundfile, struct BFile_FileInfo *fileinfo)
 _BFile_FindFirst:
     syscall(0x043b)
 
-# int BFile_FindNext(int shandle, uint16_t *foundfile, FILE_INFO *fileinfo)
+# int BFile_FindNext(int shandle, uint16_t *foundfile,
+# struct BFile_FileInfo *fileinfo)
 _BFile_FindNext:
     syscall(0x043c)
 

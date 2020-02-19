@@ -53,8 +53,7 @@ int BFile_Open(uint16_t const *file, enum BFile_OpenMode mode);
 int BFile_Close(int fd);
 
 /* BFile_Size(): Retrieve size of an open file
-
-   @fd  File descriptor
+   @fd  Open file descriptor
    Returns the file size in bytes, or a negative BFile error code*/
 int BFile_Size(int fd);
 
@@ -84,40 +83,42 @@ int BFile_Write(int fd, void const *data, int even_size);
    Returns a BFile error code. */
 int BFile_Read(int handle, void *data, int size, int whence);
 
-/* BFile_FindFirst(): Search a directory for file with matching name.
-   Doesn't work on Main memory.
-   Only four search handle can be opened, you need to close them to be able to reuse them.
-   Search is NOT case sensitive and * can be used to match any string.
+/* BFile_FindFirst(): Search a directory for file with matching name
+   Doesn't work on Main memory. Only four search handle can be opened, you need
+   to close them to be able to reuse them. Search is NOT case sensitive and *
+   can be used as a wildcard.
 
-   @search      FONTCHARACTER file path to match
-   @shandle     Search handle to pass to BFile_FindNext or BFile_FindClose
-   @founfile    FONTCHARACTER found file path
-   @fileinfo    Structure containing a lot of information on the found file
-   Return 0 on success, -1 if no file found, or negative value on error. */
-typedef struct tag_FILE_INFO
+   @search    FONTCHARACTER file path to match
+   @shandle   Search handle to pass to BFile_FindNext or BFile_FindClose
+   @founfile  FONTCHARACTER found file path
+   @fileinfo  Structure containing a lot of information on the found file
+   Returns 0 on success, -1 if no file found, or negative value on error. */
+struct BFile_FileInfo
 {
-    unsigned short id;       //file index
-    unsigned short type;     //file type
-    unsigned long  fsize;    //file size
-    unsigned long  dsize;    //date size (file - header)
-    unsigned int   property; //if 0 file complete
-    unsigned long  adress;   //top adress of data (direct access is unadvised)
-} FILE_INFO;
-int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile, FILE_INFO *fileinfo);
+	uint16_t index;
+	uint16_t type;
+	uint32_t file_size;
+	/* Data size (file size minus the header) */
+	uint32_t data_size;
+	/* Is 0 if the file is complete */
+	uint32_t property;
+	/* Address of first fragmented (do not use directly) */
+	uint32_t address;
+};
+int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile,
+	struct BFile_FileInfo *fileinfo);
 
-/* BFile_FindNext(): Continue a search a directory for file with matching name.
-   Only four search handle can be opened, u need to close them to be able to reuse them.
+/* BFile_FindNext(): Continue a search a directory for file with matching name
 
-   @shandle     Search handle from BFile_FindFirst
-   @founfile    FONTCHARACTER found file path
-   @fileinfo    Structure containing a lot of information on the found file
-   Return 0 on success, -1 if no file found, or negative value on error. */
-int BFile_FindNext(int shandle, uint16_t *foundfile, FILE_INFO *fileinfo);
+   @shandle   Search handle from BFile_FindFirst
+   @founfile  FONTCHARACTER found file path
+   @fileinfo  Structure containing a lot of information on the found file
+   Returns 0 on success, -1 if end is reached, or negative value on error. */
+int BFile_FindNext(int shandle, uint16_t *foundfile,
+	struct BFile_FileInfo *fileinfo);
 
 /* BFile_FindClose(): Close the specified search handle
-   Only four search handle can be opened, u need to close them to be able to reuse them.
-
-   @shandle     Search handle from BFile_FindFirst
+   @shandle  Search handle from BFile_FindFirst
    Return 0 on success or negative value on error. */
 int BFile_FindClose(int shandle);
 
