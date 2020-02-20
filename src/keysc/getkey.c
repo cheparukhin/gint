@@ -33,6 +33,15 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	/* Keyboard time when the key was pressed */
 	static int rep_time = 0;
 
+	/* Reset the state if the repeated key went up due to different
+	   graphical primitives being used */
+	if(rep_key && !keydown(rep_key))
+	{
+		rep_key = 0;
+		rep_count = 0;
+		rep_time = 0;
+	}
+
 	while(1) switch((ev = pollevent()).type)
 	{
 	/* Key press: handle modifiers or return an event */
