@@ -117,7 +117,7 @@ void gint_panic(uint32_t code)
 /* gint_panic_set(): Change the panic handler function */
 void gint_panic_set(GNORETURN void (*panic)(uint32_t code))
 {
-	gint_exc_panic = panic;
+	gint_exc_panic = panic ? panic : gint_default_panic;
 }
 
 /* gint_exc_catch(): Set a function to catch exceptions */

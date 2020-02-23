@@ -190,8 +190,8 @@ SECTIONS
 
 	/*
 	**  RRAM sections
-	**  8800e000:4k  VBR space
-	**  8800f000:4k  .gint.data and .gint.bss
+	**  8800e000:5k  VBR space
+	**  8800f400:3k  .gint.data and .gint.bss
 	*/
 
 	/* VBR address: let's just start at the beginning of the RRAM area.

@@ -80,7 +80,7 @@ int gint_intlevel(int intid, int level);
    When an interrupt request is accepted, the hardware jumps to a specific
    interrupt handler at an address that depends on the interrupt source.
 
-   For safety, interrupt handlers should avoir referring to data from other
+   For safety, interrupt handlers should avoid referring to data from other
    blocks because the arrangement of blocks at runtime depends on event codes.
    The assembler program will assume that consecutive blocks in the source code
    will be consecutive in memory, which is not always true. Avoiding cross-
@@ -90,11 +90,11 @@ int gint_intlevel(int intid, int level);
    This function allows anyone to replace any interrupt handler so make sure
    you're not interfering with usual interrupt assignments.
 
-   The first parameter 'event_code' represents the event_code associated with
-   the interrupt. If it's not a multiple of 0x20 then you're doing something
-   wrong. The codes are normally platform-dependent, but gint always uses
-   SH7305 codes: SH3 platforms have a translation table. See the documentation
-   for a list of event codes and their associated interrupts.
+   The first parameter event_code represents the event code associated with the
+   interrupt. If it's not a multiple of 0x20 then you're doing something wrong.
+   The codes are normally platform-dependent, but gint always uses SH7305
+   codes: SH3 platforms have a translation table. See the documentation for a
+   list of event codes and their associated interrupts.
 
    The handler function must be an interrupt handler: it must not raise
    exceptions, must end with 'rte', and it will use the kernel register bank.

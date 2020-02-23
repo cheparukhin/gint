@@ -15,6 +15,10 @@
 
 #include <gint/defs/types.h>
 
+/* Dimensions of the VRAM */
+#define DWIDTH 396
+#define DHEIGHT 224
+
 /* gint VRAM address. This value must always point to a 32-aligned bufer of
    size 177408. Any function can use it freely to perform rendering or store
    data when not drawing. Triple buffering is already implemented in gint, see
@@ -43,6 +47,10 @@ enum {
 
 	C_NONE = -1,
 };
+
+/* RGB color maker. Takes three channels of value 0..31 each (the extra bit of
+   green is not used). */
+#define C_RGB(r,g,b) (((r) << 11) | ((g) << 6) | (b))
 
 //---
 //	Image rendering (bopti)

@@ -65,6 +65,20 @@ void hw_detect(void)
 		gint[HWCPUPR] = PRR;
 	}
 
+	gint[HWCALC] = HWCALC_FX9860G_SH4;
+	if(gint[HWMPU] == HWMPU_SH7337 || gint[HWMPU] == HWMPU_SH7355)
+	{
+		gint[HWCALC] = HWCALC_FX9860G_SH3;
+	}
+
+	/* Tell Graph 35+E II from OS version (this is accurate unless someone
+	   tweaks an OS file enough to de-correlate the version of the OS and
+	   the version of the display and storage memory drivers, which, let's
+	   be real, is enough for now.
+	   TODO: Try to detect Graph 35+E II from amount of ROM in BSC? */
+	char *version = (void *)0x80010020;
+	if(version[1] == '3') gint[HWCALC] = HWCALC_G35PE2;
+
 	/* Detect RAM by checking if 8804'0000 is the same as 8800'0000. */
 
 	volatile uint8_t *R4 = (void *)0x88040000;

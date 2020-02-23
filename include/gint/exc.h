@@ -42,7 +42,7 @@ void gint_panic_set(GNORETURN void (*panic)(uint32_t code));
 
    Please be aware that many exceptions are of re-execution type. When
    execution restarts after such an exception is handled, the offending
-   instruction if re-executed. This can cause the exception handling mechanism
+   instruction is re-executed. This can cause the exception handling mechanism
    to loop. Use gint_exc_skip() to skip over the offending instruction when
    needed. Whether an exception is of re-execution type depends on the
    exception code. */

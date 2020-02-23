@@ -5,6 +5,7 @@
 #ifndef GINT_DMA
 #define GINT_DMA
 
+/* TODO: Enable DMA on fx-9860G */
 #ifdef FXCG50
 
 #include <gint/defs/types.h>

@@ -15,7 +15,13 @@
 //	Device specification sheet
 //---
 
-/* Screen registers. Registers 8..11 and 13..15 must not be used! */
+/* This version number is 1 for the old T6K11 everyone knows, and 2 for the
+   newer one found in the Graph 35+E II. Documentation is available only for
+   version 1. Dumps of Bdisp_PutDisp_DD() are used to driver version 2. */
+static int t6k11_version = 1;
+
+/* Screen registers on the original T6K11. Registers 8..11 and 13..15 are test
+   registers and must not be used! */
 enum {
 	reg_display	= 0,
 	reg_counter	= 1,
@@ -52,15 +58,6 @@ GDATA static volatile uint8_t *sel = (void *)0xb4000000;
 /* RS = 1: Command data or vram data */
 GDATA static volatile uint8_t *cmd = (void *)0xb4010000;
 
-/* variant() - check for the T6K11 variant that equips the Graph 35+E II
-   TODO: At least detect some piece of Graph 35+E II hardware. */
-static int variant(void)
-{
-	char os[11];
-	__os_version(os);
-	return (os[1] == '3');
-}
-
 /* command() - send a command to set the value of a register
    @reg   Register number
    @data  Value to set in reg */
@@ -80,8 +77,6 @@ GINLINE static uint8_t status(void)
    @buf  Buffer to take data from */
 GINLINE static void write_row(const uint8_t *buf)
 {
-	*sel = variant() ? 10 : reg_data;
-
 	/* Unroll the loop for more speed */
 	*cmd = *buf++;
 	*cmd = *buf++;
@@ -109,32 +104,39 @@ GINLINE static void write_row(const uint8_t *buf)
 //---
 
 /* t6k11_display() - send vram data to the LCD device */
-void t6k11_display(const void *vram, int y1, int y2, size_t stride)
+void t6k11_display_v1(const void *vram, int y1, int y2, size_t stride)
 {
 	for(int y = y1; y < y2; y++)
 	{
-		if(variant())
-		{
-			command(8, y | 0x80);
-			command(8, 4);
-		}
-
-		else
-		{
-			/* Set the X-address register for this row */
-			command(reg_xaddr, y | 0xc0);
-
-			/* Use Y-Up mode */
-			command(reg_counter, cnt_yup);
-
-			/* Start counting Y from 0 */
-			command(reg_yaddr, 0);
-		}
+		/* Set the X-address register for this row */
+		command(reg_xaddr, y | 0xc0);
+		/* Use Y-Up mode */
+		command(reg_counter, cnt_yup);
+		/* Start counting Y from 0 */
+		command(reg_yaddr, 0);
 
 		/* Send the row's data to the device */
+		*sel = reg_data;
 		write_row(vram);
 		vram += stride;
 	}
+}
+void t6k11_display_v2(const void *vram, int y1, int y2, size_t stride)
+{
+	for(int y = y1; y < y2; y++)
+	{
+		command(8, y | 0x80);
+		command(8, 4);
+
+		*sel = 10;
+		write_row(vram);
+		vram += stride;
+	}
+}
+void t6k11_display(const void *vram, int y1, int y2, size_t stride)
+{
+	if(t6k11_version == 1) t6k11_display_v1(vram, y1, y2, stride);
+	if(t6k11_version == 2) t6k11_display_v2(vram, y1, y2, stride);
 }
 
 /* t6k11_contrast() - change the contrast setting */
@@ -199,7 +201,7 @@ GBSS static ctx_t sys_ctx;
 
 static void ctx_save(void *buf)
 {
-	if(variant()) return;
+	if(gint[HWCALC] == HWCALC_G35PE2) return;
 
 	ctx_t *ctx = buf;
 	ctx->strd = status();
@@ -207,7 +209,7 @@ static void ctx_save(void *buf)
 
 static void ctx_restore(void *buf)
 {
-	if(variant()) return;
+	if(gint[HWCALC] == HWCALC_G35PE2) return;
 
 	ctx_t *ctx = buf;
 
@@ -227,6 +229,8 @@ static void ctx_restore(void *buf)
 static void init(void)
 {
 	gint[HWDD] = HW_LOADED | HWDD_LIGHT;
+
+	if(gint[HWCALC] == HWCALC_G35PE2) t6k11_version = 2;
 }
 
 //---

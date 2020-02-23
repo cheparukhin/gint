@@ -383,9 +383,8 @@ static int digits_8(char *str, uint64_t n)
 
 static int64_t load_i(int size, va_list *args)
 {
-	/* All smaller types are promoeted to int so we can't read the
-	   explicitly. They have been converted and sign-extended we don't need
-	   to care what their size is, the result will remain the same */
+	/* All smaller types are promoted to int wth sign extension, so we
+	   don't need to care about them. */
 	if(size == 3) return va_arg(*args, long);
 	if(size == 4) return va_arg(*args, long long);
 	return va_arg(*args, int);

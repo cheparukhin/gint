@@ -20,7 +20,7 @@ typedef struct
 	uint8_t month_day;	/* Day of month (1..31) */
 	uint8_t hours;		/* Hour (0..23) */
 	uint8_t minutes;	/* Minute (0..59) */
-	uint8_t seconds;	// Second (0..59) */
+	uint8_t seconds;	/* Second (0..59) */
 
 } rtc_time_t;
 

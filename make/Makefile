@@ -46,10 +46,10 @@ src2obj = $(1:../src/%=src/%).o
 src2dep = $(1:../src/%=src/%).d
 
 # Source files
+# TODO: Enable the DMA on fx-9860G
 prune-fx := -name render-cg -prune -o -name dma  -prune -o -name r61524 -prune
 prune-cg := -name render-fx -prune -o -name gray -prune -o -name t6k11  -prune
-src      := $(shell find ../src \
-                    $(prune-$(CONFIG.TARGET)) \
+src      := $(shell find ../src $(prune-$(CONFIG.TARGET)) \
                     -o -name '*.[csS]' -print)
 src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 
@@ -71,7 +71,6 @@ as	= $(CONFIG.TOOLCHAIN)-as
 ld	= $(CONFIG.TOOLCHAIN)-ld
 ar	= $(CONFIG.TOOLCHAIN)-ar
 objcopy	= $(CONFIG.TOOLCHAIN)-objcopy
-conv	= fxconv
 
 
 #
@@ -107,12 +106,12 @@ src/%.c.o: ../src/%.c src/%.c.d
 # Special files
 $(call src2obj,../src/font5x7.png): ../src/font5x7.png
 	@ mkdir -p $(dir $@)
-	$(call cmd_m,fxconv,font5x7.png)$(conv) -f $< -o $@ \
+	$(call cmd_m,fxconv,font5x7.png) fxconv -f $< -o $@ \
 		--fx --toolchain=$(CONFIG.TOOLCHAIN) name:gint_font5x7 \
 		charset:ascii grid.size:5x7 grid.padding:1 grid.border:0
 $(call src2obj,../src/font8x9.png): ../src/font8x9.png
 	@ mkdir -p $(dir $@)
-	$(call cmd_m,fxconv,font8x9.png)$(conv) -f $< -o $@ \
+	$(call cmd_m,fxconv,font8x9.png) fxconv -f $< -o $@ \
 		--cg --toolchain=$(CONFIG.TOOLCHAIN) name:gint_font8x9 \
 		charset:print grid.size:8x11 grid.padding:1 grid.border:0 \
 		proportional:true

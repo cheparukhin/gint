@@ -237,7 +237,8 @@ key_event_t getkey_opt(int options, volatile int *timeout);
    perfectly regular, rather than approximating the requested frequency.
 
    The system default is (500 ms, 125 ms). With the 128 Hz setting, this
-   default is reached exactly without approximation.
+   default is reached exactly without approximation. gint's default is (400 ms,
+   40 ms) for more reactivity.
 
    @first  Delay between key press and first repeat (no more than one hour)
    @next   Delay between subsequent repeats (no more than one hour) */

@@ -250,8 +250,8 @@ static void driver_sh3(void)
 	timers[0].tmu = (void *)0xfffffe94;
 	timers[1].tmu = (void *)0xfffffea0;
 	timers[2].tmu = (void *)0xfffffeac;
-	/* We don't need to change the event code of ETMU0 since it's
-	   translated to the SH4 code by the interrupt handler */
+	/* We must not change the event code of ETMU0 since it's translated to
+	   its SH4 counterpart by the interrupt handler */
 	timers[3].tmu = (void *)0xa44c0030;
 
 	TSTR = (void *)0xfffffe92;
@@ -260,7 +260,7 @@ static void driver_sh3(void)
 
 static void init(void)
 {
-	/* Install the standard's TMU interrupt handlers */
+	/* Install the standard TMU's interrupt handlers */
 	void *h = gint_inthandler(0x400, inth_tmu, 128);
 
 	/* User information in interrupt handlers */

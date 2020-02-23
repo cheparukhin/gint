@@ -125,7 +125,7 @@ void dma_transfer_wait(int channel)
 
 	/* Wait for the channel to be disabled by the interrupt handler.
 	   When the source or the destination of the transfer is X, Y or IL
-	   memory, refrain from sleeping as this also stops the transfer. */
+	   memory, refrain from sleeping as this also stops the transfer! */
 	int onchip = 0;
 
 	if(ch->SAR >= 0xe5007000 && ch->SAR < 0xe5204000) onchip = 1;

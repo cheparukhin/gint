@@ -38,7 +38,7 @@
 typedef struct
 {
 	/* Driver name */
-	const char *name;
+	char const *name;
 
 	/* driver_sh3() - rectify driver initialization on SH3 platforms
 	   This function is called during driver initialization on SH3. It may
@@ -66,6 +66,10 @@ typedef struct
 	   macro of <defs/attributes.h> if it doesn't need to be initialized */
 	void *sys_ctx;
 
+	/* Stack context. This is a gint *internal* pointer used when switching
+	   in and out of the driver. Ignore it. */
+	void *_stack_ctx;
+
 	/* ctx_save() - save the driver's hardware support
 	   This function is provided by the driver to save the state of its
 	   hardware support (memory-mapped MPU registers, port state, etc).
@@ -84,7 +88,7 @@ typedef struct
 	   expected to be a short (max 21 bytes) string because only a few
 	   lines are available for all drivers.
 	   Returns a pointer to a string; a static buffer is suitable. */
-	const char * (*status)(void);
+	char const * (*status)(void);
 
 } GPACKED(4) gint_driver_t;
 

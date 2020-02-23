@@ -27,8 +27,7 @@ GBSS struct {
 //	Time management
 //---
 
-/* int8(), int16()
-   Converts BCD values to integers */
+/* int8(), int16() - convert BCD to integer */
 static int int8(uint8_t bcd)
 {
 	return (bcd & 0x0f) + 10 * (bcd >> 4);
@@ -39,9 +38,8 @@ static int int16(uint16_t bcd)
 		+ 1000 * (bcd >> 12);
 }
 
-/* bcd8(), bcd16()
-   Converts integer values to BCD
-   TODO: Use some kind of qdiv() for bcd8() and bcd16()? */
+/* bcd8(), bcd16() - convert integer to BCD
+   TODO: Use some kind of qdiv() for bcd8() and bcd16() */
 static uint8_t bcd8(int integer)
 {
 	integer %= 100;

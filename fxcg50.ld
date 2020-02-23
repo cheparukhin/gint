@@ -16,10 +16,10 @@ MEMORY
 	rom   (rx):   o = 0x00300000, l = 220k
 	/* Static RAM; stack grows down from the end of this region.
 	   The first 0x2000 bytes are reserved by gint, see below */
-	ram   (rw):   o = 0x08102000, l = 512k
-	/* gint's VBR space, mentioned here for completeness */
+	ram   (rw):   o = 0x08102000, l = 504k
+	/* gint's VBR space, at the start of the user stack */
 	vbr   (rwx):  o = 0x8c160000, l = 5k
-	/* Some RAM region from P1 area; gint's data will reside here */
+	/* gint's data resides in these few kilobytes before the user area */
 	rram  (rwx):  o = 0x8c161400, l = 3k
 	/* On-chip IL memory */
 	ilram (rwx):  o = 0xe5200000, l = 4k
@@ -117,7 +117,7 @@ SECTIONS
 
 	_sbss = SIZEOF(.bss);
 
-	/* Read-write data sextions going to RAM (.data and .data.*) */
+	/* Read-write data sections going to RAM (.data and .data.*) */
 	.data ALIGN(4) : ALIGN(4) {
 		_ldata = LOADADDR(.data);
 		_rdata = . ;
@@ -175,8 +175,8 @@ SECTIONS
 
 	/*
 	**  gint-related sections
-	**  8c160000:4k  VBR space
-	**  8c161000:4k  .gint.data and .gint.bss
+	**  8c160000:5k  VBR space
+	**  8c161400:3k  .gint.data and .gint.bss
 	*/
 
 	/* VBR address: let's just start at the beginning of the RAM area.

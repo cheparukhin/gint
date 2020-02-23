@@ -7,18 +7,24 @@ Crucial, missing things.
 
 Tests to run.
 * core:      run the alignment/size automated tests for memory functions
-* topti:     all charsets
+
+Issues.
+* #3         make drawing functions parameterized
+* #5         add decent random number generation (TinyMT)
+* #8         support fx-CG Manager
+* #9         add libimg
+* #10        support fx-CG 20
 
 Complementary elements on existing code.
 *            make fx9860g projects work out of the box on fxcg50
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
 * dma:       maybe relax the 4-byte size constraint for dma_memset()
+* dma:       fx9860g support (need to switch it on)
 * core:      try to leave add-in without reset in case of panic
 * hardware:  fill in the HWMEM_FITTLB flag
 * keyboard:  think of extended functions
 * cpg:       spread spectrum on fxcg50
-* bopti:     blending modes for monochrome bitmaps (use topti assembler)
 * display:   use more of topti's assembler in drect()
 * core:      use cmp/str for memchr()
 * timer:     try putting addresses in <gint/mpu/tmu.h>
@@ -26,10 +32,12 @@ Complementary elements on existing code.
 * t6k11:     check if dupdate() can be done by the DMA
 
 Keep in mind.
+* build:     make the build system simpler (two targets are enough by default)
 * core:      run destructors when a task-switch results in leaving the app
+* core:      invoke main menu instead of returning after main() ends
 * prizm:     don't hardcode stack address in fxcg50.ld
 * prizm:     detect P1 static RAM (stack) in TLB
-* core:      prove and use qdiv10() instead of __sdivsi3
+* core rtc:  use qdiv10 to massively improve division performance
 * setjmp:    more registers may need to be saved
 * core:      free heap when a task-switch results in leaving the app
 * core:      save and restore interrupt masks

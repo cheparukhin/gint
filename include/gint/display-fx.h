@@ -13,6 +13,10 @@
 
 #include <gint/defs/types.h>
 
+/* Dimensions of the VRAM */
+#define DWIDTH 128
+#define DHEIGHT 64
+
 /* gint VRAM address. This value must always point to a 4-aligned buffer of
    size 1024. Any function can use it freely to:
    - Use another video ram area (triple buffering or more, gray engine);

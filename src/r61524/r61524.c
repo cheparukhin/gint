@@ -223,11 +223,13 @@ void r61524_display(uint16_t *vram, int start, int height, int interrupts)
 	/* Now roll! */
 	if(interrupts)
 	{
+		/* If the previous transfer is still running, wait for it */
+		dma_transfer_wait(0);
 		/* Usa a normal, interrupt-based transfer */
 		dma_transfer(0, DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
-		/* Wait for it to finish */
-		/* TODO: Allow r61524_display() to return early */
-		dma_transfer_wait(0);
+
+		/* Function returns early so that rendering can continue on
+		   another VRAM while the transfer is still being done */
 	}
 	else dma_transfer_noint(0, DMA_32B, blocks, src,DMA_INC,dst,DMA_FIXED);
 }

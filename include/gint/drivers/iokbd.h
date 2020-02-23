@@ -1,7 +1,7 @@
 //---
 //	gint:drivers:iokbd - I/O ports-driven keyboard scanner
 //
-//	This is for SH3 only. It reads key pressed from ports A/B/M.
+//	This is for SH3 only. It reads key presses from ports A/B/M.
 //---
 
 #ifndef GINT_DRIVERS_IOKBD

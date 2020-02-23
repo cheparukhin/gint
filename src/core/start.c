@@ -163,7 +163,7 @@ int start(int isappli, int optnum)
 		if(drv->init) drv->init();
 
 		#ifdef GINT_BOOT_LOG
-		const char *status = drv->status ? drv->status() : NULL;
+		char const *status = drv->status ? drv->status() : NULL;
 		bootlog_driver(drv->name, status);
 		#endif
 	}
