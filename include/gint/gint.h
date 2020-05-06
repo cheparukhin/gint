@@ -97,21 +97,24 @@ int gint_intlevel(int intid, int level);
    list of event codes and their associated interrupts.
 
    The handler function must be an interrupt handler: it must not raise
-   exceptions, must end with 'rte', and it will use the kernel register bank.
+   exceptions, must end with 'rts', and it will use the kernel register bank.
+   You read that right, it must end with rts because gint's main handler saves
+   registers besides the automated r0..r7. Do *not* use 'rte' in the handler.
    For convenience I allow any block size to be loaded as an interrupt handler,
    but it should really be a multiple of 0x20 bytes and not override other
    handlers. If it's not written in assembler, then you're likely doing
-   something wrong, even with __attribute__((interrupt_handler)).
+   something wrong, especially with __attribute__((interrupt_handler)) which
+   uses rte.
 
    It is common for interrupt handlers to have a few bytes of data, such as the
    address of a callback function. gint often stores this data in the last
-   bytes of the block. This function returns the VBR address of the block to
-   allow the caller to edit the parameters.
+   bytes of the block. This function returns the VBR address of the block which
+   has just been installed, to allow the caller to edit the parameters later.
 
    @event_code  Identifier of the interrupt block
    @handler     Address of handler function
    @size        How many bytes to copy
    Returns the VBR address where the handlers was installed. */
-void *gint_inthandler(int event_code, const void *handler, size_t size);
+void *gint_inthandler(int event_code, void const *handler, size_t size);
 
 #endif /* GINT_GINT */

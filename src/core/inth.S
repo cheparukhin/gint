@@ -54,9 +54,16 @@ _gint_inth_7305:
 1:	.long	0xff000028
 #endif
 
-/* SH7305-TYPE INTERRUPT HANDLER ENTRY - 20 BYTES */
+/* SH7305-TYPE INTERRUPT HANDLER ENTRY - 40 BYTES */
 
 _gint_inth_7305:
+	/* Save caller-saved registers which might currently be in use by the
+	   interrupted function, as we don't know what the callback will do */
+	sts.l	pr, @-r15
+	stc.l	gbr, @-r15
+	sts.l	mach, @-r15
+	sts.l	macl, @-r15
+
 	/* Get the event code from the INTEVT register */
 	mov.l	1f, r0
 	mov.l	@r0, r0
@@ -66,19 +73,34 @@ _gint_inth_7305:
 	shll8	r1
 	sub	r1, r0
 
-	/* Add the distance to the first entry and jump */
-	add	#16, r0
-	braf	r0
+	/* Add the distance to the first entry and jump as a subroutine */
+	add	#40, r0
+	bsrf	r0
 	nop
 
-	.zero	12
+	/* Restore caller-saved registers */
+	lds.l	@r15+, macl
+	lds.l	@r15+, mach
+	ldc.l	@r15+, gbr
+	lds.l	@r15+, pr
+
+	rte
+	nop
+
+	.zero	24
 1:	.long	0xff000028
 
 #ifdef FX9860G
 
-/* SH7705-TYPE INTERRUT HANDLER ENTRY - 32 BYTES */
+/* SH7705-TYPE INTERRUT HANDLER ENTRY - 52 BYTES */
 
 _gint_inth_7705:
+	/* Save caller-saved registers as before */
+	sts.l	pr, @-r15
+	stc.l	gbr, @-r15
+	sts.l	mach, @-r15
+	sts.l	macl, @-r15
+
 	/* Get the event code from the INTEVT2 register */
 	mov.l	1f, r0
 	mov.l	@r0, r0		/* r0 = old_code */
@@ -93,10 +115,20 @@ _gint_inth_7705:
 	shld	r3, r0		/* r0 = new_code - 0x400 */
 
 	/* Add the distance between nop and the first entry, and jump */
-	add	#8, r0
-	braf	r0
+	add	#32, r0
+	bsrf	r0
 	nop
 
+	/* Restore saved registers */
+	lds.l	@r15+, mach
+	lds.l	@r15+, macl
+	ldc.l	@r15+, gbr
+	lds.l	@r15+, pr
+
+	rte
+	nop
+
+	.zero 12
 1:	.long	0xa4000000	/* INTEVT2 register */
 2:	.long	_inth_remap
 

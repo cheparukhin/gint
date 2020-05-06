@@ -3,6 +3,7 @@
 #include <gint/clock.h>
 #include <gint/mpu/dma.h>
 #include <gint/defs/attributes.h>
+#include <gint/hardware.h>
 
 #define dprint(x, y, ...) dprint(x, y, C_BLACK, C_NONE, __VA_ARGS__)
 #define dtext(x, y, str)  dtext (x, y, str, C_BLACK, C_NONE)
@@ -15,6 +16,9 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 
 	uint32_t PC;
 	__asm__("stc spc, %0" : "=r"(PC));
+
+	uint32_t SGR = 0xffffffff;
+	if(isSH4()) __asm__("stc sgr, %0" : "=r"(SGR));
 
 	dfont(NULL);
 	dclear(C_WHITE);
@@ -42,6 +46,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	dprint(1, 17, " PC :%08x", PC);
 	dprint(1, 25, "TEA :%08x", TEA);
 	dprint(1, 33, "TRA :%08x", TRA);
+	if(isSH4()) dprint(1, 41, "SGR :%08x", SGR);
 
 	dtext(1, 49, "The add-in crashed.");
 	dtext(1, 57, "Please reset the calc");

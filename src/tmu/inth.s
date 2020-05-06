@@ -81,7 +81,7 @@ _inth_tmu_1:
 
 .end:
 	lds.l	@r15+, pr
-	rte
+	rts
 	nop
 
 	.zero	12
@@ -176,7 +176,7 @@ _inth_etmu_help:
 	nop
 
 	lds.l	@r15+, pr
-	rte
+	rts
 	nop
 
 	.zero	18
@@ -199,10 +199,10 @@ _inth_etmux:
 
 	/* Offset from VBR where extra timer 2 is located:
 	   - 0x600 to reach the interrupt handlers
-	   - 0x020 to jump over the entry gate
+	   - 0x040 to jump over the entry gate
 	   - 0x840 to reach the handler of ETMU2
 	   - 0x004 to skip its first instructions (the size is hardcoded) */
-1:	.long	0xe64
+1:	.long	0xe84
 
 .id_etmux:
 	.long	0		/* Timer ID */

@@ -54,7 +54,7 @@ _inth_rtc_pri_helper:
 
 .end:
 	lds.l	@r15+, pr
-	rte
+	rts
 	nop
 
 	.zero 8

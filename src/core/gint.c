@@ -58,6 +58,6 @@ void *gint_inthandler(int event_code, const void *handler, size_t size)
 	/* Prevent overriding the entry gate */
 	if(event_code < 0) return NULL;
 
-	void *dest = (void *)&gint_vbr + event_code + 0x620;
+	void *dest = (void *)&gint_vbr + event_code + 0x640;
 	return memcpy(dest, handler, size);
 }

@@ -25,7 +25,7 @@ _inth_dma_te:
 	and	r2, r0
 	mov.w	r0, @r1
 
-	rte
+	rts
 	nop
 
 1:	.long 0			/* CHCR, set dynamically */

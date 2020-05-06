@@ -85,7 +85,7 @@ void gint_install(void)
 	/* Load the event handler entry points into memory */
 	memcpy(vbr + 0x100, gint_exch_tlbh, exch_tlbh_size);
 	memcpy(vbr + 0x400, gint_exch_tlbh, exch_tlbh_size);
-	memcpy(vbr + 0x600, inth_entry, 32);
+	memcpy(vbr + 0x600, inth_entry, 64);
 
 	/* Time to switch VBR and roll! */
 	system_vbr = gint_setvbr((uint32_t)vbr, lock);
