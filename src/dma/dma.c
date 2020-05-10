@@ -238,8 +238,6 @@ GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(void *buf)
 {
-	dma_transfer_wait(-1);
-
 	ctx_t *ctx = buf;
 
 	for(int i = 0; i < 6; i++)
