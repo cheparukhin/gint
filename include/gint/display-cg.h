@@ -19,7 +19,7 @@
 #define DWIDTH 396
 #define DHEIGHT 224
 
-/* gint VRAM address. This value must always point to a 32-aligned bufer of
+/* gint VRAM address. This value must always point to a 32-aligned buffer of
    size 177408. Any function can use it freely to perform rendering or store
    data when not drawing. Triple buffering is already implemented in gint, see
    the dvram() function below.
@@ -84,7 +84,7 @@ typedef struct
 //	Video RAM management
 //---
 
-/* dvram() - Control video RAM address and triple buffering
+/* dsetvram() - Control video RAM address and triple buffering
 
    Normal rendering under gint uses double-buffering: there is one image
    displayed on the screen and one in memory, in a region called the video RAM
@@ -112,7 +112,11 @@ typedef struct
 
    @main       Main VRAM area, used alone if [secondary] is NULL
    @secondary  Additional VRAM area, enables triple buffering if non-NULL */
-void dvram(uint16_t *main, uint16_t *secondary);
+void dsetvram(uint16_t *main, uint16_t *secondary);
+
+/* dgetvram() - Get VRAM addresses
+   Returns the VRAM buffer addresses used to render on fx-CG 50. */
+void dgetvram(uint16_t **main, uint16_t **secondary);
 
 #endif /* FXCG50 */
 

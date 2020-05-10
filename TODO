@@ -2,6 +2,7 @@ For the 2.0.0 release:
 * bopti:     remove image_t, leaving only bopti_image_t
 * project:   remove the compat branch
 * gray:      remove g*() functions
+* core:      remove the boot log
 
 Crucial, missing things.
 ! core:      the four basic memory functions (with automated tests)
