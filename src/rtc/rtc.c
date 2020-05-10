@@ -162,7 +162,7 @@ typedef struct
 	uint8_t RCR2;
 } ctx_t;
 
-GBSS static ctx_t sys_ctx;
+GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(void *buf)
 {
@@ -174,8 +174,8 @@ static void ctx_save(void *buf)
 static void ctx_restore(void *buf)
 {
 	ctx_t *ctx = buf;
-	ctx->RCR1 = RTC->RCR1.byte;
-	ctx->RCR2 = RTC->RCR2.byte;
+	RTC->RCR1.byte = ctx->RCR1;
+	RTC->RCR2.byte = ctx->RCR2;
 }
 
 //---
@@ -186,8 +186,8 @@ gint_driver_t drv_rtc = {
 	.name		= "RTC",
 	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
 	.init		= init,
-	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
+	.gint_ctx	= &gint_ctx,
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };

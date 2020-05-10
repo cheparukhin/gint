@@ -24,7 +24,7 @@
    Events can be seen as a delta-encoding of the keyboard state over time.
 
    To ensure that adding pending events to the last-read state always gives the
-   internal driger state, this array is not updated if the generation of an
+   internal driver state, this array is not updated if the generation of an
    event fails. (Most likely the even will be regenerated at the next scan.) */
 GDATA static volatile uint8_t state[12] = { 0 };
 
@@ -34,13 +34,13 @@ GDATA static volatile uint8_t state[12] = { 0 };
    user's view of the keyboard. */
 GDATA static uint8_t current[12] = { 0 };
 
-/* A driver event, which is a change in a full row instead of a single key. */
+/* A driver event, which is a common change in a full row */
 typedef struct
 {
 	uint16_t time;    /* Locally unique time identifier */
 	uint8_t row;      /* Row number */
 	uint8_t changed;  /* Keys that changed state */
-	uint8_t state;    /* Key state for the new row */
+	uint8_t kind;     /* Type of change, either KEYEV_DOWN or KEYEV_UP */
 
 } driver_event_t;
 
@@ -93,22 +93,26 @@ static void keysc_frame(void)
 		for(int i = 0; i < 6; i++) array[i] = KEYSC[i];
 	}
 
+	/* Compare new data with the internal state. Push releases before
+	   presses so that a key change occuring within a single analysis frame
+	   can be performed. This happens all the time when going back to the
+	   main MENU via gint_osmenu() on a keybind. */
 	for(int row = 0; row < 12; row++)
 	{
-		/* Compare new data with the internal state. */
-		int old = state[row];
-		int new = scan[row];
-		if(old == new) continue;
-
-		driver_event_t ev = {
-			.time    = time,
-			.row     = row,
-			.changed = old ^ new,
-			.state   = new,
-		};
+		int diff = ~scan[row] & state[row];
+		if(!diff) continue;
 
 		/* Update internal status if the event could be pushed */
-		if(!buffer_push(ev)) state[row] = new;
+		driver_event_t ev = { time, row, diff, KEYEV_UP };
+		if(!buffer_push(ev)) state[row] &= scan[row];
+	}
+	for(int row = 0; row < 12; row++)
+	{
+		int diff = scan[row] & ~state[row];
+		if(!diff) continue;
+
+		driver_event_t ev = { time, row, diff, KEYEV_DOWN };
+		if(!buffer_push(ev)) state[row] |= scan[row];
 	}
 }
 
@@ -149,22 +153,18 @@ key_event_t pollevent(void)
 
 	/* Generate new key events and return the first of them*/
 	int changed = ev.changed;
-	int state = ev.state;
-
 	for(int code = ((ev.row ^ 1) << 4) | 0x7; code & 0x7; code--)
 	{
 		if(changed & 1)
 		{
 			key_event_t keyev = {
 				.time = ev.time,
-				.type = 2 - (state & 1),
+				.type = ev.kind,
 				.key = code,
 			};
 			events[events_pending++] = keyev;
 		}
-
 		changed >>= 1;
-		state >>= 1;
 	}
 
 	/* Call recursively to avoid duplicating the event emission code */
@@ -263,7 +263,6 @@ static void init(void)
 	/* Configure the timer to do 128 keyboard scans per second. This
 	   frequency *must* be high for the KEYSC interface to work! */
 	/* Note: the supporting timer always runs at 32768 Hz. */
-	/* TODO: The SH3 does not need to run fast, adjust user settings? */
 	int delay = 32768 / KEYBOARD_SCAN_FREQUENCY;
 	if(!delay) delay = 1;
 
@@ -305,10 +304,6 @@ gint_driver_t drv_keysc = {
 	.init		= init,
 	.status		= GINT_DRIVER_STATUS(keysc_status),
 	.unload		= unload,
-	.ctx_size	= 0,
-	.sys_ctx	= NULL,
-	.ctx_save	= NULL,
-	.ctx_restore	= NULL,
 };
 
 GINT_DECLARE_DRIVER(4, drv_keysc);

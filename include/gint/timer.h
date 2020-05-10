@@ -19,9 +19,8 @@
      SH4-based: 9 timers, ids 0..8  [SH7305]
 
    You should be aware that some of these timers are used by default by gint:
-   - Timer 1 is used by the gray engine on fx9860g.
-   - Timer 3 is used by the keyboard, unless GINT_RTC_KEYBOARD is defined. This
-     macro is controlled by the -rtc-keyboard switch when gint is compiled.
+   - Timer 0 is used by the gray engine on fx9860g.
+   - Timer 3/8 is used by the keyboard on SH3/SH4.
 
    timer_setup() will fail if you try to use a timer that's already running.
    Always check the return value of timer_setup()! Using a timer id that has
@@ -151,17 +150,5 @@ void timer_stop(int timer);
    argument pointer to 1 and halts the timer. The pointer must be of type
    int * and you must declare the variable as volatile int. */
 int timer_timeout(volatile void *arg);
-
-//---
-//	Low-level functions
-//---
-
-/* timer_address() - get the address of a timer structure
-   Returns a tmu_t if the id is 0, 1 or 2 and an etmu_t otherwise. The address
-   will be NULL if the requested timer does not exist.
-
-   @timer  Requested timer
-   @TSTR   If the requested timer is a TMU, set to the TSTR address */
-void *timer_address(int timer, volatile uint8_t **TSTR);
 
 #endif /* GINT_TIMER */

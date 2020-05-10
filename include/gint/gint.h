@@ -29,11 +29,26 @@ void gint_install(void);
 /* gint_unload() - unload gint and give back control to the system
    This function restores the runtime environment saved by gint_install(). It
    is only called when the add-in terminates. To temporarily leave gint during
-   execution, use gint_pause(). When possible, use syscalls without leaving
+   execution, use gint_switch(). When possible, use syscalls without leaving
    gint for better performance. */
 void gint_unload(void);
 
-/* gint_pause() - return to main menu, with possibility of coming back
+/* gint_switch() - temporarily switch out of gint
+
+   This function can be used to leave gint, restore the system's driver
+   context, and execute code there before returning to gint. By doing this one
+   can effectively interleave gint with the standard OS execution. The
+   limitations are quite extreme though, so unless you know precisely why
+   you're calling this function, you're likely doing it wrong.
+
+   This switch is used to get back to the main menu and to answer TLB misses.
+   To go back to the menu, use getkey(), or getkey_opt() with the GETKEY_MENU
+   flag set, or call gint_osmenu() for an immediate return.
+
+   @function  Function to call in OS mode */
+void gint_switch(void (*function)(void));
+
+/* gint_osmenu() - switch out of gint and call the calculator's main menu
 
    This function safely invokes the calculator's main menu by unloading gint.
    If the user selects the gint application again in the menu, this function
@@ -42,7 +57,7 @@ void gint_unload(void);
 
    This function is typically called when the [MENU] key is pressed during a
    getkey() call. */
-void gint_pause(void);
+void gint_osmenu(void);
 
 //---
 //	Public functions

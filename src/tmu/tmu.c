@@ -14,9 +14,8 @@
 #include <gint/defs/types.h>
 
 //---
-//	Timer structures
+//	Driver storage
 //---
-
 
 /* inth_data_t - data storage inside interrupt handlers */
 typedef struct
@@ -27,34 +26,14 @@ typedef struct
 
 } GPACKED(4) inth_data_t;
 
-/* timer_t - all data required to run a single timer */
-typedef struct
-{
-	void *tmu;			/* Address of timer structure */
-	inth_data_t *data;		/* Interrupt handler data */
-	uint16_t event;			/* Interrupt event code */
-} timer_t;
+/* This array references the storage areas of all timer handlers */
+GDATA static inth_data_t *timers[9] = { NULL };
 
-//---
-//	Driver storage
-//---
-
-/* This is the description of the structure on SH4. SH3-based fx9860g models,
-   which are already very rare, will adapt the values in init functions */
-GDATA static timer_t timers[9] = {
-	{ (void *)0xa4490008, NULL, 0x400 },
-	{ (void *)0xa4490014, NULL, 0x420 },
-	{ (void *)0xa4490020, NULL, 0x440 },
-	{ (void *)0xa44d0030, NULL, 0x9e0 },
-	{ (void *)0xa44d0050, NULL, 0xc20 },
-	{ (void *)0xa44d0070, NULL, 0xc40 },
-	{ (void *)0xa44d0090, NULL, 0x900 },
-	{ (void *)0xa44d00b0, NULL, 0xd00 },
-	{ (void *)0xa44d00d0, NULL, 0xfa0 },
-};
-
+/* Arrays of standard and extra timers */
+GDATA static tmu_t *TMU = SH7305_TMU.TMU;
+GDATA static etmu_t *ETMU = SH7305_ETMU;
 /* TSTR register for standard timers */
-GDATA static volatile uint8_t *TSTR = (void *)0xa4490004;
+GDATA static volatile uint8_t *TSTR = &SH7305_TMU.TSTR;
 
 //---
 //	Timer API
@@ -64,60 +43,52 @@ GDATA static volatile uint8_t *TSTR = (void *)0xa4490004;
 int timer_setup(int id, uint32_t delay, timer_input_t clock,
 	int (*callback)(volatile void *arg), volatile void *arg)
 {
-	/* We need to distinguish normal and extra timers */
+	/* Timer is not installed (TCR address is really required) */
+	if(!timers[id]) return -1;
+
 	if(id < 3)
 	{
 		/* Refuse to setup timers that are already in use */
-		tmu_t *t = timers[id].tmu;
-		if(t->TCR.UNIE) return -1;
+		tmu_t *T = &TMU[id];
+		if(T->TCR.UNIE || *TSTR & (1 << id)) return -1;
 
-		/* Configure the registers of the target timer */
-		t->TCOR = delay;
-		t->TCNT = delay;
-		t->TCR.TPSC = clock;
-
-		/* Clear the interrupt flag */
-		do t->TCR.UNF = 0;
-		while(t->TCR.UNF);
+		/* Configure the counter, clear interrupt flag*/
+		T->TCOR = delay;
+		T->TCNT = delay;
+		T->TCR.TPSC = clock;
+		do T->TCR.UNF = 0;
+		while(T->TCR.UNF);
 
 		/* Enable interrupt and count on rising edge (SH7705) */
-		t->TCR.UNIE = 1;
-		t->TCR.CKEG = 0;
+		T->TCR.UNIE = 1;
+		T->TCR.CKEG = 0;
 	}
-
-	/* Extra timers have a simpler structure */
 	else
 	{
-		etmu_t *t = timers[id].tmu;
-		if(t->TCR.UNIE) return -1;
+		etmu_t *T = &ETMU[id-3];
+		if(T->TCR.UNIE) return -1;
 
-		/* Clear the interrupt flag */
-		do t->TCR.UNF = 0;
-		while(t->TCR.UNF);
+		/* No clock input and clock edge here. But TCR and TCNT need a
+		   delay to retain the value */
+		do T->TCR.UNF = 0;
+		while(T->TCR.UNF);
 
-		/* There is no clock input and no clock edge settings */
-		t->TCOR = delay;
+		do T->TCOR = delay;
+		while(T->TCOR != delay);
 
-		/* TODO: FXCG50: does not always work on first try */
-		do t->TCNT = delay;
-		while(t->TCNT != delay);
+		do T->TCNT = delay;
+		while(T->TCNT != delay);
 
-		t->TCR.UNIE = 1;
+		T->TCR.UNIE = 1;
 	}
 
-	/* Register the callback and its argument */
-	if(timers[id].data)
-	{
-		timers[id].data->cb = callback;
-		timers[id].data->arg = arg;
-	}
-
-	/* Return the timer id, since configuration was successful */
+	timers[id]->cb = callback;
+	timers[id]->arg = arg;
 	return id;
 }
 
 /* timer_delay() - compute a delay constant from a duration in seconds */
-uint32_t timer_delay(int tid, uint64_t delay_us)
+uint32_t timer_delay(int id, uint64_t delay_us)
 {
 	/* TODO: Proper timer_delay() */
 	const clock_frequency_t *clock = clock_freq();
@@ -128,7 +99,7 @@ uint32_t timer_delay(int tid, uint64_t delay_us)
 	// uint64_t freq = 29020000 >> 2;
 
 	/* Extra timers all run at 32768 Hz */
-	if(tid >= 3) freq = 32768;
+	if(id >= 3) freq = 32768;
 
 	uint64_t product = freq * delay_us;
 	return product / 1000000;
@@ -139,10 +110,8 @@ uint32_t timer_delay(int tid, uint64_t delay_us)
    @state  0 to start the timer, 1 to stop it (nothing else!) */
 static void timer_control(int id, int state)
 {
-	/* For standard timers, use the MPU's TSTR register */
 	if(id < 3) *TSTR = (*TSTR | (1 << id)) ^ (state << id);
-	/* Extra timers all have their own TSTR register */
-	else ((etmu_t *)timers[id].tmu)->TSTR = state ^ 1;
+	else ETMU[id-3].TSTR = state ^ 1;
 }
 
 /* timer_start() - start a configured timer */
@@ -154,8 +123,8 @@ void timer_start(int id)
 /* timer_reload() - change a timer's delay constant for next interrupts */
 void timer_reload(int id, uint32_t delay)
 {
-	if(id < 3) ((tmu_t *)timers[id].tmu)->TCOR = delay;
-	else ((etmu_t *)timers[id].tmu)->TCOR = delay;
+	if(id < 3) TMU[id].TCOR = delay;
+	else ETMU[id-3].TCOR = delay;
 }
 
 /* timer_pause() - stop a running timer */
@@ -164,7 +133,7 @@ void timer_pause(int id)
 	timer_control(id, 1);
 }
 
-/* timer_stp() - stop and free a timer */
+/* timer_stop() - stop and free a timer */
 void timer_stop(int id)
 {
 	/* Stop the timer and disable UNIE to indicate that it's free */
@@ -172,27 +141,24 @@ void timer_stop(int id)
 
 	if(id < 3)
 	{
-		tmu_t *t = timers[id].tmu;
-		t->TCR.UNIE = 0;
-
-		/* Clear TCOR and TCNT */
-		t->TCOR = 0xffffffff;
-		t->TCNT = 0xffffffff;
+		TMU[id].TCR.UNIE = 0;
+		TMU[id].TCOR = 0xffffffff;
+		TMU[id].TCNT = 0xffffffff;
 	}
 	else
 	{
-		etmu_t *t = timers[id].tmu;
-		t->TCR.UNIE = 0;
+		etmu_t *T = &ETMU[id-3];
+		T->TCR.UNIE = 0;
 
 		/* Also clear TCOR and TCNT to avoid spurious interrupts */
-		t->TCOR = 0xffffffff;
+		do T->TCOR = 0xffffffff;
+		while(T->TCOR + 1);
 
-		/* TODO: FXCG50: Again */
-		do t->TCNT = 0xffffffff;
-		while(t->TCNT + 1);
+		do T->TCNT = 0xffffffff;
+		while(T->TCNT + 1);
 
-		do t->TCR.UNF = 0;
-		while(t->TCR.UNF);
+		do T->TCR.UNF = 0;
+		while(T->TCR.UNF);
 	}
 }
 
@@ -205,8 +171,6 @@ int timer_timeout(volatile void *arg)
 {
 	volatile int *x = arg;
 	(*x)++;
-
-	/* Always stop after firing once */
 	return 1;
 }
 
@@ -214,23 +178,15 @@ int timer_timeout(volatile void *arg)
 //	Low-level functions
 //---
 
-/* timer_address() - get the address of a timer structure */
-void *timer_address(int timer, volatile uint8_t **TSTR_arg)
-{
-	if((uint)timer < 2 && TSTR_arg) *TSTR_arg = TSTR;
-	return (uint)timer < timer_count() ? timers[timer].tmu : NULL;
-}
-
 /* timer_clear() - clear an ETMU flag and possibly stop the timer
    @timer  Timer ID, must be an ETMU
    @stop   Non-zero to stop the timer */
-void timer_clear(int timer, int stop)
+void timer_clear(int id, int stop)
 {
-	etmu_t *t = timers[timer].tmu;
-	do t->TCR.UNF = 0;
-	while(t->TCR.UNF);
+	do ETMU[id-3].TCR.UNF = 0;
+	while(ETMU[id-3].TCR.UNF);
 
-	if(stop) timer_stop(timer);
+	if(stop) timer_stop(id);
 }
 
 //---
@@ -247,79 +203,63 @@ extern void inth_etmux(void);
 #ifdef FX9860G
 static void driver_sh3(void)
 {
-	timers[0].tmu = (void *)0xfffffe94;
-	timers[1].tmu = (void *)0xfffffea0;
-	timers[2].tmu = (void *)0xfffffeac;
-	/* We must not change the event code of ETMU0 since it's translated to
-	   its SH4 counterpart by the interrupt handler */
-	timers[3].tmu = (void *)0xa44c0030;
-
-	TSTR = (void *)0xfffffe92;
+	TMU = SH7705_TMU.TMU;
+	ETMU = SH7705_ETMU;
+	TSTR = &SH7705_TMU.TSTR;
 }
 #endif /* FX9860G */
 
 static void init(void)
 {
-	/* Install the standard TMU's interrupt handlers */
-	void *h = gint_inthandler(0x400, inth_tmu, 128);
-
-	/* User information in interrupt handlers */
-	timers[0].data = h + 84;
-	timers[1].data = h + 104;
-	timers[2].data = h + 116;
-
-	/* Stop all timers */
+	uint16_t etmu_event[6] = { 0x9e0, 0xc20, 0xc40, 0x900, 0xd00, 0xfa0 };
 	*TSTR = 0;
 
-	/* This driver uses the UNIE (UNderflow Interrupt Enable) bit of the
-	   TCR register to indicate which timers are being used; reset them */
-	for(int i = 0; i < 3; i++)
+	/* Install the standard TMU's interrupt handlers */
+	void *h = gint_inthandler(0x400, inth_tmu, 128);
+	timers[0] = h + 84;
+	timers[1] = h + 104;
+	timers[2] = h + 116;
+
+	/* Clear every timer to avoid surprises */
+	for(int id = 0; id < 3; id++)
 	{
-		tmu_t *t = timers[i].tmu;
+		TMU[id].TCOR = 0xffffffff;
+		TMU[id].TCNT = 0xffffffff;
 
-		t->TCOR = 0xffffffff;
-		t->TCNT = 0xffffffff;
-
-		do t->TCR.word = 0;
-		while(t->TCR.word);
+		do TMU[id].TCR.word = 0;
+		while(TMU[id].TCR.word);
 
 		/* Standard timers: TCR is provided to the interrupt handler */
-		timers[i].data->TCR = &t->TCR;
+		timers[id]->TCR = &TMU[id].TCR;
 	}
-
-	/* Clear the extra timers */
-	for(int i = 3; i < timer_count(); i++)
+	for(int id = 0; id < timer_count()-3; id++)
 	{
-		etmu_t *t = timers[i].tmu;
+		etmu_t *T = &ETMU[id];
 
 		/* Extra timers seem to generate interrupts as long as TCNT=0,
 		   regardless of TSTR. I'm not entirely sure about this weird
-		   behaviour, but for safety I'll set TCOR/TCNT to non-zero.
-		   This may be related to difficulties when setting TCNT. */
+		   behaviour, but for safety I'll set TCOR/TCNT to non-zero. */
+		T->TSTR = 0;
+		do T->TCOR = 0xffffffff;
+		while(T->TCOR + 1);
 
-		t->TSTR = 0;
-		t->TCOR = 0xffffffff;
-
-		/* TODO: FXCG50: Safety */
-		do t->TCNT = 0xffffffff;
-		while(t->TCNT + 1);
-
-		/* Clear interrupts */
-		do t->TCR.byte = 0;
-		while(t->TCR.byte);
+		/* Also TCNT and TCR take some time to record changes */
+		do T->TCNT = 0xffffffff;
+		while(T->TCNT + 1);
+		do T->TCR.byte = 0;
+		while(T->TCR.byte);
 	}
 
-	/* Install the extra timers. We need three extra timers for the
-	   interrupt handlers to work, so install 3 on SH3, even if only one
-	   actually exists */
+	/* Install the extra timers. The interrupt handler takes 3 gates, so we
+	   install 3 even on SH3 where there's only one */
 	int limit = isSH3() ? 6 : 9;
 
 	for(int i = 3; i < limit; i++)
 	{
 		void *handler = (i == 5) ? inth_etmu2 : inth_etmux;
-		void *h = gint_inthandler(timers[i].event, handler, 32);
+		void *h = gint_inthandler(etmu_event[i-3], handler, 32);
 
-		timers[i].data = h + 24;
+		timers[i] = h + 24;
 
 		if(i == 5) continue;
 		uint32_t *data_id = (h + 20);
@@ -330,15 +270,12 @@ static void init(void)
 	gint_inthandler(0xc60, inth_etmu_help, 32);
 
 	/* Enable TMU0 at level 13, TMU1 at level 11, TMU2 at level 9 */
-	gint_intlevel(0, 13);
+	gint_intlevel(0, 7);
 	gint_intlevel(1, 11);
 	gint_intlevel(2, 9);
 
 	/* Enable the extra TMUs at level 7 */
-	if(isSH3())
-	{
-		gint_intlevel(23, 7);
-	}
+	if(isSH3()) gint_intlevel(23, 7);
 	else
 	{
 		/* Unmask the standard timers' interrupts */
@@ -363,15 +300,15 @@ static void init(void)
 	gint[HWTMU]  = HW_LOADED;
 	gint[HWETMU] = HW_LOADED | (isSH3() ? HWETMU_1 : HWETMU_6);
 
-	for(int i = 3; i < timer_count(); i++)
+	for(int i = 0; i < timer_count() - 3; i++)
 	{
-		etmu_t *t = timers[i].tmu;
-		int v = !(t->TCOR + 1)
-		     && !(t->TCNT + 1)
-		     && !(t->TSTR)
-		     && !(t->TCR.UNF)
-		     && !(t->TCR.UNIE);
-		gint[HWETMU] |= v << (i - 1);
+		etmu_t *T = &ETMU[i];
+		int v = !(T->TCOR + 1)
+		     && !(T->TCNT + 1)
+		     && !(T->TSTR)
+		     && !(T->TCR.UNF)
+		     && !(T->TCR.UNIE);
+		gint[HWETMU] |= v << (i + 2);
 	}
 }
 
@@ -380,7 +317,6 @@ static void init(void)
 //---
 
 #ifdef GINT_BOOT_LOG
-
 /* tmu_status() - status string of extra TMUs for the boot log
    The status string has a two-character code for each of the extra timers.
 
@@ -401,13 +337,13 @@ static const char *tmu_status(void)
 	static char status[18] = "ETMU ";
 
 	int j = 5;
-	for(int i = 3; i < timer_count(); i++)
+	for(int i = 0; i < timer_count()-3; i++)
 	{
-		etmu_t *t = timers[i].tmu;
-		int v1 = (!(t->TCOR + 1))
-		       | (!(t->TCNT + 1) << 1)
-		       | (!(t->TSTR) << 2);
-		int v2 = (t->TCR.UNF << 1) | (t->TCR.UNIE);
+		etmu_t *T = &ETMU[i];
+		int v1 = (!(T->TCOR + 1))
+		       | (!(T->TCNT + 1) << 1)
+		       | (!(T->TSTR) << 2);
+		int v2 = (T->TCR.UNF << 1) | (T->TCR.UNIE);
 
 		status[j++] = '0' + v1;
 		status[j++] = "DLH!"[v2];
@@ -416,7 +352,6 @@ static const char *tmu_status(void)
 
 	return status;
 }
-
 #endif /* GINT_BOOT_LOG */
 
 //---
@@ -428,63 +363,63 @@ typedef struct
 	tmu_t std[3];
 	etmu_t extra[6];
 	uint8_t TSTR;
-
-} GPACKED(4) ctx_t;
+} ctx_t;
 
 /* Allocate a system buffer in gint's BSS area */
-GBSS static ctx_t sys_ctx;
+GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(void *buf)
 {
 	ctx_t *ctx = buf;
+	ctx->TSTR = *TSTR;
 
 	for(int i = 0; i < 3; i++)
 	{
-		tmu_t *t = timers[i].tmu;
-		ctx->std[i].TCOR	= t->TCOR;
-		ctx->std[i].TCNT	= t->TCNT;
-		ctx->std[i].TCR.word	= t->TCR.word;
+		tmu_t *c = &ctx->std[i];
+		c->TCOR = TMU[i].TCOR;
+		c->TCNT = TMU[i].TCNT;
+		c->TCR.word = TMU[i].TCR.word;
 	}
-
-	ctx->TSTR = *TSTR;
-
 	for(int i = 0; i < timer_count() - 3; i++)
 	{
-		etmu_t *t = timers[i + 3].tmu;
-		ctx->extra[i].TCOR	= t->TCOR;
-		ctx->extra[i].TCNT	= t->TCNT;
-		ctx->extra[i].TCR.byte	= t->TCR.byte;
-		ctx->extra[i].TSTR	= t->TSTR;
+		etmu_t *T = &ETMU[i], *c = &ctx->extra[i];
+
+		/* Don't snapshot an interrupt state, because the timer state
+		   is sometimes garbage protected by a masked interrupt. */
+		c->TCOR = T->TCOR ? T->TCOR : 0xffffffff;
+		c->TCNT = T->TCNT ? T->TCNT : c->TCOR;
+		c->TCR.byte = T->TCR.byte & 0xd;
+		c->TSTR	= T->TSTR;
 	}
 }
 
 static void ctx_restore(void *buf)
 {
 	ctx_t *ctx = buf;
+	*TSTR = ctx->TSTR;
 
 	for(int i = 0; i < 3; i++)
 	{
-		tmu_t *t = timers[i].tmu;
-		t->TCNT		= ctx->std[i].TCNT;
-		t->TCOR		= ctx->std[i].TCOR;
-		t->TCR.word	= ctx->std[i].TCR.word;
+		tmu_t *c = &ctx->std[i];
+		TMU[i].TCNT = c->TCNT;
+		TMU[i].TCOR = c->TCOR;
+		TMU[i].TCR.word = c->TCR.word;
 	}
-
-	*TSTR = ctx->TSTR;
-
 	for(int i = 0; i < timer_count() - 3; i++)
 	{
-		etmu_t *t = timers[i + 3].tmu;
+		etmu_t *T = &ETMU[i], *c = &ctx->extra[i];
 
-		/* This thing is being unloaded while interrupts are disabled,
-		   so we don't have to heed for ctx->extra[i].TCNT = 0, which
-		   can generate interrupts. I tried to do t->TCNT = 0xffffffff
-		   then restore ctx->extra[i], but it causes hangs on SH3 when
-		   the overclock level is too high. */
-		t->TCNT		= ctx->extra[i].TCNT;
-		t->TCOR		= ctx->extra[i].TCOR;
-		t->TCR.byte	= ctx->extra[i].TCR.byte;
-		t->TSTR		= ctx->extra[i].TSTR;
+		do T->TCOR = c->TCOR;
+		while(T->TCOR != c->TCOR);
+
+		T->TSTR = c->TSTR;
+
+		/* Remember that TCNT and TCR take time to write to */
+		do T->TCNT = c->TCNT;
+		while(T->TCNT != c->TCNT);
+
+		do T->TCR.byte = c->TCR.byte;
+		while(T->TCR.byte != c->TCR.byte);
 	}
 }
 
@@ -497,8 +432,8 @@ gint_driver_t drv_tmu = {
 	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
 	.init		= init,
 	.status		= GINT_DRIVER_STATUS(tmu_status),
-	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
+	.gint_ctx	= &gint_ctx,
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };

@@ -9,15 +9,13 @@
 #include <gint/defs/types.h>
 #include <gint/hardware.h>
 
-#include <gint/syscalls.h>
-
 //---
 //	Device specification sheet
 //---
 
 /* This version number is 1 for the old T6K11 everyone knows, and 2 for the
    newer one found in the Graph 35+E II. Documentation is available only for
-   version 1. Dumps of Bdisp_PutDisp_DD() are used to driver version 2. */
+   version 1. Dumps of Bdisp_PutDisp_DD() are used to drive version 2. */
 static int t6k11_version = 1;
 
 /* Screen registers on the original T6K11. Registers 8..11 and 13..15 are test
@@ -197,7 +195,7 @@ typedef struct
 } GPACKED(1) ctx_t;
 
 /* Pre-allocate a context in gint's uninitialized section */
-GBSS static ctx_t sys_ctx;
+GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(void *buf)
 {
@@ -256,8 +254,8 @@ gint_driver_t drv_t6k11 = {
 	.name		= "T6K11",
 	.init		= init,
 	.status		= GINT_DRIVER_STATUS(t6k11_status),
-	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
+	.gint_ctx	= &gint_ctx,
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };

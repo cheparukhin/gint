@@ -5,6 +5,9 @@
 #ifndef GINT_DEFS_UTIL
 #define GINT_DEFS_UTIL
 
+/* synco instruction (in a form compatible with sh3eb-elf) */
+#define synco() __asm__ volatile (".word 0x00ab":::"memory")
+
 /* min(), max() (without double evaluation) */
 #define	min(a, b) ({			\
 	__auto_type _a = (a);		\

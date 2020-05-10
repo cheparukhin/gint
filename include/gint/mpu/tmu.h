@@ -46,8 +46,9 @@ typedef volatile struct
 		uint8_t UNF	:1;	/* Underflow flag */
 		uint8_t UNIE	:1;	/* Underflow interrupt enable */
 	);
+	pad(19);
 
-} GPACKED(4) etmu_t;
+} GPACKED(0x10) etmu_t;
 
 //---
 //	SH7705 Timer Unit. Refer to:
@@ -67,7 +68,14 @@ typedef volatile struct
 
 } GPACKED(4) sh7705_tmu_t;
 
-#define SH7705_TMU (*((sh7705_tmu_t *)0xfffffe90))
+#define SH7705_TMU (*(sh7705_tmu_t *)0xfffffe90)
+
+//---
+//	SH7705 Extra Timer Unit. No official documentation exists.
+//---
+
+typedef volatile etmu_t sh7705_etmu_t[1];
+#define SH7705_ETMU (*(sh7705_etmu_t *)0xa44c0030)
 
 //---
 //	SH7305 Timer Unit. Refer to:
@@ -85,5 +93,12 @@ typedef volatile struct
 } GPACKED(4) sh7305_tmu_t;
 
 #define SH7305_TMU (*((sh7305_tmu_t *)0xa4490004))
+
+//---
+//	SH7305 Extra Timer Unit. No official documentation exists.
+//---
+
+typedef volatile etmu_t sh7305_etmu_t[6];
+#define SH7305_ETMU (*(sh7305_etmu_t *)0xa44d0030)
 
 #endif /* GINT_MPU_TMU */

@@ -8,6 +8,8 @@
 #include <core/setup.h>
 #include <gint/hardware.h>
 #include <gint/mpu/intc.h>
+#include <gint/defs/util.h>
+#include <gint/display.h>
 
 /* VBR address, from the linker script */
 extern char gint_vbr[];
@@ -25,6 +27,7 @@ extern gint_driver_t bdrv, edrv;
 typedef struct
 {
 	uint16_t iprs[12];
+	uint8_t masks[13];
 
 } GPACKED(2) gint_core_ctx;
 
@@ -32,20 +35,45 @@ typedef struct
    @arg  ctx	gint core context object */
 static void gint_ctx_save(gint_core_ctx *ctx)
 {
-	if(isSH3()) for(int i = 0; i < 8; i++)
-		ctx->iprs[i] = *(SH7705_INTC.IPRS[i]);
-	else for(int i = 0; i < 12; i++)
-		ctx->iprs[i] = SH7305_INTC.IPRS[2 * i];
+	if(isSH3())
+	{
+		for(int i = 0; i < 8; i++)
+			ctx->iprs[i] = *(SH7705_INTC.IPRS[i]);
+	}
+	else
+	{
+		for(int i = 0; i < 12; i++)
+			ctx->iprs[i] = SH7305_INTC.IPRS[2 * i];
+
+		uint8_t *IMR = (void *)SH7305_INTC.MSK;
+		for(int i = 0; i < 13; i++, IMR += 4)
+			ctx->masks[i] = *IMR;
+	}
 }
 
 /* gint_ctx_restore() - restore interrupt controller configuration
    @arg  ctx	gint core context object */
 static void gint_ctx_restore(gint_core_ctx *ctx)
 {
-	if(isSH3()) for(int i = 0; i < 8; i++)
-		*(SH7705_INTC.IPRS[i]) = ctx->iprs[i];
-	else for(int i = 0; i < 12; i++)
-		SH7305_INTC.IPRS[2 * i] = ctx->iprs[i];
+	if(isSH3())
+	{
+		for(int i = 0; i < 8; i++)
+			*(SH7705_INTC.IPRS[i]) = ctx->iprs[i];
+	}
+	else
+	{
+		for(int i = 0; i < 12; i++)
+			SH7305_INTC.IPRS[2 * i] = ctx->iprs[i];
+
+		/* Setting masks it a bit more involved than reading them */
+		uint8_t *IMCR = (void *)SH7305_INTC.MSKCLR;
+		uint8_t *IMR  = (void *)SH7305_INTC.MSK;
+		for(int i = 0; i < 13; i++, IMR += 4, IMCR += 4)
+		{
+			*IMCR = 0xff;
+			*IMR = ctx->masks[i];
+		}
+	}
 }
 
 //---
@@ -94,8 +122,6 @@ void gint_install(void)
 /* unlock() - unlock interrupts, restoring system settings */
 static void unlock(void)
 {
-	gint_ctx_restore(&sys_ctx);
-
 	/* Restore all driver settings, but do it in reverse order of loading
 	   to honor the dependency system */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -103,10 +129,109 @@ static void unlock(void)
 		if(drv->unload) drv->unload();
 		if(drv->ctx_restore) drv->ctx_restore(drv->sys_ctx);
 	}
+
+	gint_ctx_restore(&sys_ctx);
 }
 
 /* gint_unload() - unload gint and give back control to the system */
 void gint_unload(void)
 {
 	gint_setvbr(system_vbr, unlock);
+}
+
+//---
+//	Hot switching to operating system
+//---
+
+static gint_core_ctx gint_ctx;
+extern gint_driver_t bdrv, edrv;
+
+static void gint_switch_out(void)
+{
+	/* Save all drivers in reverse order */
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
+	{
+		if(!drv->ctx_save || !drv->ctx_restore) continue;
+		drv->ctx_save(drv->gint_ctx);
+	}
+	gint_ctx_save(&gint_ctx);
+
+	/* Restore the system context */
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
+	{
+		if(!drv->ctx_save || !drv->ctx_restore) continue;
+		drv->ctx_restore(drv->sys_ctx);
+	}
+	gint_ctx_restore(&sys_ctx);
+}
+
+static void gint_switch_in(void)
+{
+	/* Save system state again */
+	for(gint_driver_t *drv = &bdrv; drv < &edrv; drv++)
+	{
+		if(!drv->ctx_save || !drv->ctx_restore) continue;
+		drv->ctx_save(drv->sys_ctx);
+	}
+	gint_ctx_save(&sys_ctx);
+
+	/* Restore all drivers to their gint state */
+	for(gint_driver_t *drv = &bdrv; drv < &edrv; drv++)
+	{
+		if(!drv->ctx_save || !drv->ctx_restore) continue;
+		drv->ctx_restore(drv->gint_ctx);
+	}
+	gint_ctx_restore(&gint_ctx);
+}
+
+/* gint_switch() - temporarily switch out of gint */
+void gint_switch(void (*function)(void))
+{
+	gint_setvbr(system_vbr, gint_switch_out);
+	if(function) function();
+	gint_setvbr((uint32_t)&gint_vbr, gint_switch_in);
+}
+
+int   __Timer_Install(int id, void (*handler)(void), int delay);
+int   __Timer_Start(int id);
+int   __Timer_Stop(int id);
+int   __Timer_Deinstall(int id);
+int   __PutKeyCode(short *matrixcode);
+int   __GetKeyWait(int *col,int *row,int type,int time,int menu,uint16_t *key);
+void  __ClearKeyBuffer(void); /* ? */
+void *__GetVRAMAddress(void);
+
+static int __osmenu_id;
+
+static void __osmenu_handler(void)
+{
+	short matrixcode = 0x0308;
+	__PutKeyCode(&matrixcode);
+
+	__Timer_Stop(__osmenu_id);
+	__Timer_Deinstall(__osmenu_id);
+}
+
+static void __osmenu(void)
+{
+	__ClearKeyBuffer();
+	memcpy(__GetVRAMAddress(), gint_vram, 1024);
+
+	__osmenu_id = __Timer_Install(0, __osmenu_handler, 0 /* ms */);
+	if(__osmenu_id <= 0) return;
+
+	__Timer_Start(__osmenu_id);
+
+	int column, row;
+	unsigned short keycode;
+	__GetKeyWait(&column, &row, 0, 0 /* s */, 0, &keycode);
+}
+
+/* gint_osmenu() - switch out of gint and call the calculator's main menu */
+void gint_osmenu(void)
+{
+	/* TODO: return to menu on fxcg50 */
+	#ifdef FX9860G
+	gint_switch(__osmenu);
+	#endif
 }

@@ -33,8 +33,8 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	/* Keyboard time when the key was pressed */
 	static int rep_time = 0;
 
-	/* Reset the state if the repeated key went up due to different
-	   graphical primitives being used */
+	/* Reset the state if the repeated key went up while getkey() was not
+	   aware (this happens when different keyboard primitives are used) */
 	if(rep_key && !keydown(rep_key))
 	{
 		rep_key = 0;
@@ -59,9 +59,10 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		}
 		#endif
 
-		/* Return to menu. TODO: use gint_switch() in getkey_opt() */
+		/* Return to menu */
 		if(opt & GETKEY_MENU && key == KEY_MENU && !(alpha || shift))
 		{
+			gint_osmenu();
 			continue;
 		}
 

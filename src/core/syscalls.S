@@ -9,9 +9,6 @@
 **	* File system, because it's a mess and we might ruin the ROM.
 */
 
-/* OS version */
-.global ___os_version
-
 /* Dynamic allocation */
 .global _malloc
 .global _free
@@ -30,6 +27,16 @@
 .global	_BFile_FindNext
 .global	_BFile_FindClose
 
+/* Return to menu */
+.global ___Timer_Install
+.global ___Timer_Start
+.global ___Timer_Stop
+.global ___Timer_Deinstall
+.global ___PutKeyCode
+.global ___GetKeyWait
+.global ___ClearKeyBuffer
+.global ___GetVRAMAddress
+
 .section ".pretext"
 
 #define syscall(id)			\
@@ -40,11 +47,6 @@
 1:	.long	id
 
 #ifdef FX9860G
-
-/* OS version */
-
-___os_version:
-	syscall(0x02ee)
 
 /* Dynamic allocation */
 
@@ -101,17 +103,31 @@ _BFile_FindNext:
 _BFile_FindClose:
     syscall(0x043d)
 
+/* Return to menu */
+
+___Timer_Install:
+	syscall(0x118)
+___Timer_Start:
+	syscall(0x11a)
+___Timer_Stop:
+	syscall(0x11b)
+___Timer_Deinstall:
+	syscall(0x119)
+___PutKeyCode:
+	syscall(0x24f)
+___GetKeyWait:
+	syscall(0x247)
+___ClearKeyBuffer:
+	syscall(0x241)
+___GetVRAMAddress:
+	syscall(0x135)
+
 syscall_table:
 	.long	0x80010070
 
 #endif /* FX9860G */
 
 #ifdef FXCG50
-
-/* OS version */
-
-___os_version:
-	syscall(0x1406)
 
 /* Dynamic allocation */
 

@@ -154,10 +154,6 @@ gint_driver_t drv_cpg = {
 	.name		= "CPG",
 	.init		= init,
 	.status		= GINT_DRIVER_STATUS(cpg_status),
-	.ctx_size	= 0,
-	.sys_ctx	= NULL,
-	.ctx_save	= NULL,
-	.ctx_restore	= NULL,
 };
 
 GINT_DECLARE_DRIVER(1, drv_cpg);

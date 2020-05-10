@@ -11,7 +11,7 @@ static void memcpy4(uint32_t * restrict d, const void * restrict src, size_t n)
 	if(!modulo)
 	{
 		const uint32_t *s = src;
-		while(n--) *d++ = *s++;
+		for(; n; n-=4) *d++ = *s++;
 	}
 
 #if 0
@@ -41,7 +41,7 @@ static void memcpy4(uint32_t * restrict d, const void * restrict src, size_t n)
 		const uint16_t *s = src;
 		uint16_t * restrict dst = (void *)d;
 
-		while(n--)
+		for(; n; n-=2)
 		{
 			*dst++ = *s++;
 			*dst++ = *s++;
@@ -74,7 +74,7 @@ void *memcpy(void * restrict dst, const void * restrict src, size_t n)
 	while((uintptr_t)d & 3) *d++ = *s++, n--;
 
 	/* Perform the big, efficient copy */
-	memcpy4((void *)d, s, (n >> 2));
+	memcpy4((void *)d, s, n & ~3);
 
 	size_t m = n & 3;
 	d += (n - m);

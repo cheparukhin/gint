@@ -12,7 +12,6 @@
 
 #include <gint/gint.h>
 #include <gint/display.h>
-#include <gint/syscalls.h>
 #include <gint/clock.h>
 
 #ifdef GINT_BOOT_LOG
@@ -87,9 +86,12 @@ void bootlog_loaded(void)
 	print(8, 2, "---");
 	#endif
 
-	char os[11];
-	__os_version(os);
+	#ifdef FX9860G
+	char const *osversion = (void *)0x80010020;
+	char os[11] = { 0 };
+	for(int i = 0; i < 10; i++) os[i] = osversion[i];
 	print(12, 2, "OS%2s%2s%4s", os, os+3, os+6);
+	#endif
 
 	print(1, 3, "ROM%4dk RAM%3d+%1dk ??",
 		(rom_size  + 0x3ff) >> 10,

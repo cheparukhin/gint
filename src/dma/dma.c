@@ -120,6 +120,13 @@ void dma_transfer(int channel, dma_size_t size, uint blocks,
 /* dma_transfer_wait(): Wait for a transfer to finish */
 void dma_transfer_wait(int channel)
 {
+	if(channel < 0)
+	{
+		for(int channel = 0; channel < 6; channel++)
+			dma_transfer_wait(channel);
+		return;
+	}
+
 	channel_t *ch = dma_channel(channel);
 	if(!ch) return;
 
@@ -211,7 +218,7 @@ static void init(void)
 static void unload(void)
 {
 	/* Make sure any DMA transfer is finished before leaving the app */
-	for(int i = 0; i < 6; i++) dma_transfer_wait(i);
+	dma_transfer_wait(-1);
 }
 
 //---
@@ -227,10 +234,12 @@ typedef struct
 } GPACKED(4) ctx_t;
 
 /* One buffer for the system state will go in gint's .bss section */
-GBSS static ctx_t sys_ctx;
+GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(void *buf)
 {
+	dma_transfer_wait(-1);
+
 	ctx_t *ctx = buf;
 
 	for(int i = 0; i < 6; i++)
@@ -250,7 +259,15 @@ static void ctx_save(void *buf)
 
 static void ctx_restore(void *buf)
 {
+	dma_transfer_wait(-1);
+
 	ctx_t *ctx = buf;
+
+	/* Restore the supply status of the DMA0 clock first. If the DMA was
+	   originally on standby, the context is basically trash so we don't
+	   want to write that back. If it was originally running, we need to
+	   power it up again for the writes to registers to have any effect */
+	POWER.MSTPCR0.DMAC0 = ctx->clock;
 
 	for(int i = 0; i < 6; i++)
 	{
@@ -262,9 +279,6 @@ static void ctx_restore(void *buf)
 	}
 
 	DMA.OR.word = ctx->OR;
-
-	/* Restore the supply status of the DMA0 clock */
-	POWER.MSTPCR0.DMAC0 = ctx->clock;
 }
 
 //---
@@ -275,8 +289,8 @@ gint_driver_t drv_dma0 = {
 	.name		= "DMA0",
 	.init		= init,
 	.unload		= unload,
-	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
+	.gint_ctx	= &gint_ctx,
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };

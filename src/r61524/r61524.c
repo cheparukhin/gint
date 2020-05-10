@@ -3,6 +3,7 @@
 //---
 
 #include <gint/defs/types.h>
+#include <gint/defs/util.h>
 #include <gint/hardware.h>
 #include <gint/drivers.h>
 #include <gint/dma.h>
@@ -51,8 +52,6 @@ typedef word_union(entry_mode_t,
 //---
 //	Device communication primitives
 //---
-
-#define synco() __asm__ volatile (".word 0x00ab":::"memory")
 
 /* Interface with the controller */
 GDATA static volatile uint16_t *intf = (void *)0xb4000000;
@@ -246,7 +245,7 @@ typedef struct
 } GPACKED(2) ctx_t;
 
 /* Allocate one buffer in gint's storage section */
-GBSS static ctx_t sys_ctx;
+GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(void *buf)
 {
@@ -302,8 +301,8 @@ gint_driver_t drv_r61524 = {
 	.name		= "R61524",
 	.init		= init,
 	.status		= GINT_DRIVER_STATUS(r61524_status),
-	.ctx_size	= sizeof(ctx_t),
 	.sys_ctx	= &sys_ctx,
+	.gint_ctx	= &gint_ctx,
 	.ctx_save	= ctx_save,
 	.ctx_restore	= ctx_restore,
 };

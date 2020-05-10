@@ -13,8 +13,14 @@
 //---
 
 /* gray_start(): Start the gray engine
+
    The control of the screen is transferred to the engine; you should not use
-   dupdate() after this function, only gupdate(). */
+   dupdate() after this function, only gupdate().
+
+   The engine uses timer number GRAY_TIMER (equal to 0 by default) to run. If
+   the timer is unavailable, this function will fail. Otherwise, the gray
+   engine is started and any attempt to use timer 0 while it is running will be
+   denied by the timer module. */
 void gray_start(void);
 
 /* gray_stop(): Stop the gray engine

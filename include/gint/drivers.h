@@ -57,18 +57,13 @@ typedef struct
 	   If there is no unload function, the field may be set to NULL */
 	void (*unload)(void);
 
-	/* Size of a context object for the driver */
-	uint ctx_size;
-
-	/* System context. The driver has to allocate a buffer of size at least
-	   ctx_size, where gint stores the system's configuration. It is
-	   advised to place this buffer in the .gint_bss section using the GBSS
-	   macro of <defs/attributes.h> if it doesn't need to be initialized */
+	/* System's context and gint's context. These should point to enough
+	   memory to store a full driver state each. These are used when
+	   switching from the system to gint and back to the main menu. If they
+	   don't need to be initialized, put them in gint's uninitialized BSS
+	   section using the GBSS macro of <gint/defs/attributes.h>. */
 	void *sys_ctx;
-
-	/* Stack context. This is a gint *internal* pointer used when switching
-	   in and out of the driver. Ignore it. */
-	void *_stack_ctx;
+	void *gint_ctx;
 
 	/* ctx_save() - save the driver's hardware support
 	   This function is provided by the driver to save the state of its

@@ -2,6 +2,7 @@ Crucial, missing things.
 ! core:      the four basic memory functions
 ! core:      gint_switch() with driver contexts on stack and arbitrary code
 ! core:      use gint_switch() to handle TLB misses
+! core:      return to menu on fxcg50
 ! bopti:     fxcg50 version
 ! syscalls:  fxcg50 BFile calls
 
@@ -12,10 +13,11 @@ Issues.
 * #3         make drawing functions parameterized
 * #5         add decent random number generation (TinyMT)
 * #8         support fx-CG Manager
-* #9         add libimg
 * #10        support fx-CG 20
 
 Complementary elements on existing code.
+* gray:      double-buffer gray settings and unify d* with g*
+* display:   deprecate image_t and rename it bopti_image_t
 *            make fx9860g projects work out of the box on fxcg50
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
