@@ -183,13 +183,13 @@ static void ctx_restore(void *buf)
 //---
 
 gint_driver_t drv_rtc = {
-	.name		= "RTC",
-	.driver_sh3	= GINT_DRIVER_SH3(driver_sh3),
-	.init		= init,
-	.sys_ctx	= &sys_ctx,
-	.gint_ctx	= &gint_ctx,
-	.ctx_save	= ctx_save,
-	.ctx_restore	= ctx_restore,
+	.name         = "RTC",
+	.driver_sh3   = GINT_DRIVER_SH3(driver_sh3),
+	.init         = init,
+	.sys_ctx      = &sys_ctx,
+	.gint_ctx     = &gint_ctx,
+	.ctx_save     = ctx_save,
+	.ctx_restore  = ctx_restore,
 };
 
 GINT_DECLARE_DRIVER(2, drv_rtc);

@@ -151,9 +151,9 @@ static void init(void)
 }
 
 gint_driver_t drv_cpg = {
-	.name		= "CPG",
-	.init		= init,
-	.status		= GINT_DRIVER_STATUS(cpg_status),
+	.name    = "CPG",
+	.init    = init,
+	.status  = GINT_DRIVER_STATUS(cpg_status),
 };
 
 GINT_DECLARE_DRIVER(1, drv_cpg);

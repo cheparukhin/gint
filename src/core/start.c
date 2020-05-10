@@ -184,11 +184,6 @@ int start(int isappli, int optnum)
 
 	/* Unload gint and give back control to the system. Driver settings
 	   will be restored while interrupts are disabled */
-	#ifdef FXCG50
-	/* TODO: Put that in the driver model, stupid! */
-	/* TODO: Also do it in gint_switch()! */
-	dma_transfer_wait(-1);
-	#endif
 	gint_unload();
 
 	/* TODO: Invoke main menu instead of returning? */

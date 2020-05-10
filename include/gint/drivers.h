@@ -13,25 +13,31 @@
 //
 //	Drivers are initialized in priority order, and in linking order within
 //	the same priority level (pretty much undefined). Make sure every
-//	driver's priority level is higher than those of its dependencies.
+//	driver's priority level is higher than those of its dependencies. In
+//	the description below, every function can be NULL.
 //
 //	At initialization, the following functions are called:
-//	1. driver_sh3()            [if not NULL, SH3 fx9860g only]
-//	2. ctx_save(sys_ctx)       [if not NULL]
-//	3. init()                  [if not NULL]
+//	1. driver_sh3() [on SH3-based fx9860g only]
+//	2. ctx_save(sys_ctx)
+//	3. init()
 //
 //	Then, if the on-screen boot log is enabled, the status() function is
 //	called and the returned string is displayed (21 characters max).
-//	4. status()                [if not NULL, if GINT_BOOT_LOG is defined]
+//	4. status() [only if GINT_BOOT_LOG is defined]
 //
 //	If the gint_switch() function is called to temporarily give back
 //	control to the operating system, the state of each driver is saved to
 //	the stack, then restored from there.
-//	5. ctx_save(stack)         [if not NULL]
-//	6. ctx_restore(stack)      [if not NULL]
+//	5. wait()
+//	6. ctx_save(gint_ctx)
+//	7. ctx_restore(sys_ctx)
+//	(stuff happening outside of gint)
+//	8. ctx_save(sys_ctx)
+//	9. ctx_restore(gint_ctx)
 //
 //	When finally the driver is unloaded, the system context is restored.
-//	7. ctx_restore(sys_ctx)    [if not NULL]
+//	10. wait()
+//	11. ctx_restore(sys_ctx)
 //---
 
 /* gint_driver_t - driver meta-information used by gint */
@@ -40,49 +46,43 @@ typedef struct
 	/* Driver name */
 	char const *name;
 
-	/* driver_sh3() - rectify driver initialization on SH3 platforms
-	   This function is called during driver initialization on SH3. It may
-	   be NULL. */
+	/* SH3-specific preinitializaton; called before init() when running on
+	   SH3. May be NULL. */
 	void (*driver_sh3)(void);
 
-	/* init() - initialize the driver
-	   This function is called after ctx_save() and needs not save the
-	   system setting. It is typically used to initialize registers to
-	   suitable values on startup. If there is no init function, this field
-	   may be set to NULL */
+	/* Must initialize the hardware so that the driver can start working.
+	   This is called only once when the add-in starts, and should not save
+	   hardware state (ctx_save() is called before). May be NULL. */
 	void (*init)(void);
 
-	/* unload() - deinitialize the driver
-	   This function is called before ctx_restore() when gint is unloaded.
-	   If there is no unload function, the field may be set to NULL */
-	void (*unload)(void);
+	/* This function can be used to enforce a waiting period before the
+	   driver is unloaded. It is called before returning to the OS in
+	   gint_switch() and if the add-in exits. May be NULL. */
+	void (*wait)(void);
 
 	/* System's context and gint's context. These should point to enough
 	   memory to store a full driver state each. These are used when
 	   switching from the system to gint and back to the main menu. If they
 	   don't need to be initialized, put them in gint's uninitialized BSS
-	   section using the GBSS macro of <gint/defs/attributes.h>. */
+	   section using the GBSS macro of <gint/defs/attributes.h>. May be
+	   NULL only if both ctx_save() and ctx_restore() are NULL. */
 	void *sys_ctx;
 	void *gint_ctx;
 
-	/* ctx_save() - save the driver's hardware support
-	   This function is provided by the driver to save the state of its
-	   hardware support (memory-mapped MPU registers, port state, etc).
-	   @ctx  A buffer of size ctx_size */
+	/* Must save the state of as much driver-controlled hardware as
+	   possible (memory-mapped MPU registers, port state, etc). This
+	   function is called to save the system's hardware state and gint's
+	   hardware state when moving from one into the other. The parameter
+	   [ctx] is always either [sys_ctx] or [gint_ctx]. */
 	void (*ctx_save)(void *ctx);
 
-	/* ctx_restore() - restore a saved context
-	   This function is provided by the driver to restore the state saved
-	   by ctx_save(). It can alter the contents of the buffer freely.
-	   @ctx  A context buffer filled by ctx_save() */
+	/* Must restore the state of the driver as saved by ctx_save(). */
 	void (*ctx_restore)(void *ctx);
 
-	/* status() - status string generation
-	   When the boot log is defined, this function is called to print
-	   information returned by the driver, for debugging purposes. This is
-	   expected to be a short (max 21 bytes) string because only a few
-	   lines are available for all drivers.
-	   Returns a pointer to a string; a static buffer is suitable. */
+	/* This function may generate a status string to display on the boot
+	   log for debugging purposes. It should be a short (max 21 bytes)
+	   string because all drivers' strings must fit on a few lines. May
+	   return a pointer to a static buffer. May be NULL. */
 	char const * (*status)(void);
 
 } GPACKED(4) gint_driver_t;
@@ -100,7 +100,7 @@ typedef struct
 #define GINT_DECLARE_DRIVER(level, name) \
 	GSECTION(".gint.drivers." #level) extern gint_driver_t name;
 
-/* GINT_DRIVER_SH3() - declare a function for SH3-rectification
+/* GINT_DRIVER_SH3() - declare a function for SH3 preinitialization
    This macro makes its argument NULL on fxcg50, this way the named function
    can be defined under #ifdef FX9860G while keeping the structure clean. */
 
@@ -111,7 +111,7 @@ typedef struct
 #endif
 
 /* GINT_DRIVER_STATUS() - declare a function for status string generation
-   This macro makes its argument NULL when GINT_BOOT_LOG is defuned, this way
+   This macro makes its argument NULL when GINT_BOOT_LOG is undefined, this way
    the named function can be defined under #ifdef GINT_BOOT_LOG while keeping
    the structure clean. */
 

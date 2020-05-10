@@ -215,7 +215,7 @@ static void init(void)
 	gint[HWDMA] = HW_LOADED;
 }
 
-static void unload(void)
+static void wait(void)
 {
 	/* Make sure any DMA transfer is finished before leaving the app */
 	dma_transfer_wait(-1);
@@ -286,13 +286,13 @@ static void ctx_restore(void *buf)
 //---
 
 gint_driver_t drv_dma0 = {
-	.name		= "DMA0",
-	.init		= init,
-	.unload		= unload,
-	.sys_ctx	= &sys_ctx,
-	.gint_ctx	= &gint_ctx,
-	.ctx_save	= ctx_save,
-	.ctx_restore	= ctx_restore,
+	.name         = "DMA0",
+	.init         = init,
+	.wait         = wait,
+	.sys_ctx      = &sys_ctx,
+	.gint_ctx     = &gint_ctx,
+	.ctx_save     = ctx_save,
+	.ctx_restore  = ctx_restore,
 };
 
 GINT_DECLARE_DRIVER(2, drv_dma0);

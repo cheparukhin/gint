@@ -126,7 +126,6 @@ static void unlock(void)
 	   to honor the dependency system */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
 	{
-		if(drv->unload) drv->unload();
 		if(drv->ctx_restore) drv->ctx_restore(drv->sys_ctx);
 	}
 
@@ -136,6 +135,12 @@ static void unlock(void)
 /* gint_unload() - unload gint and give back control to the system */
 void gint_unload(void)
 {
+	/* First wait for all the drivers to finish their current jobs */
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
+	{
+		if(drv->wait) drv->wait();
+	}
+
 	gint_setvbr(system_vbr, unlock);
 }
 
@@ -187,6 +192,12 @@ static void gint_switch_in(void)
 /* gint_switch() - temporarily switch out of gint */
 void gint_switch(void (*function)(void))
 {
+	/* Wait for all the drivers to finish their current jobs */
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
+	{
+		if(drv->wait) drv->wait();
+	}
+
 	gint_setvbr(system_vbr, gint_switch_out);
 	if(function) function();
 	gint_setvbr((uint32_t)&gint_vbr, gint_switch_in);

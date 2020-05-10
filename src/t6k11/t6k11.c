@@ -251,13 +251,13 @@ static const char *t6k11_status(void)
 //---
 
 gint_driver_t drv_t6k11 = {
-	.name		= "T6K11",
-	.init		= init,
-	.status		= GINT_DRIVER_STATUS(t6k11_status),
-	.sys_ctx	= &sys_ctx,
-	.gint_ctx	= &gint_ctx,
-	.ctx_save	= ctx_save,
-	.ctx_restore	= ctx_restore,
+	.name         = "T6K11",
+	.init         = init,
+	.status       = GINT_DRIVER_STATUS(t6k11_status),
+	.sys_ctx      = &sys_ctx,
+	.gint_ctx     = &gint_ctx,
+	.ctx_save     = ctx_save,
+	.ctx_restore  = ctx_restore,
 };
 
 GINT_DECLARE_DRIVER(5, drv_t6k11);

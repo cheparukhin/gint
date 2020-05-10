@@ -298,13 +298,13 @@ static const char *r61524_status(void)
 //---
 
 gint_driver_t drv_r61524 = {
-	.name		= "R61524",
-	.init		= init,
-	.status		= GINT_DRIVER_STATUS(r61524_status),
-	.sys_ctx	= &sys_ctx,
-	.gint_ctx	= &gint_ctx,
-	.ctx_save	= ctx_save,
-	.ctx_restore	= ctx_restore,
+	.name         = "R61524",
+	.init         = init,
+	.status       = GINT_DRIVER_STATUS(r61524_status),
+	.sys_ctx      = &sys_ctx,
+	.gint_ctx     = &gint_ctx,
+	.ctx_save     = ctx_save,
+	.ctx_restore  = ctx_restore,
 };
 
 GINT_DECLARE_DRIVER(5, drv_r61524);

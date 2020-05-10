@@ -3,6 +3,7 @@
 //---
 
 #include <gint/keyboard.h>
+#include <gint/gint.h>
 #include <gint/defs/types.h>
 
 #ifdef FX9860G

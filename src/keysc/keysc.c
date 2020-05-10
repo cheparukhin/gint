@@ -269,18 +269,12 @@ static void init(void)
 	/* Set the default repeat times (milliseconds) */
 	getkey_repeat(400, 40);
 
+	/* The timer will be stopped when the timer driver is unloaded */
 	timer_setup(tid, delay, 0, callback, NULL);
 	timer_start(tid);
 
 	gint[HWKBD] = HW_LOADED | (isSH3() ? HWKBD_IO : HWKBD_KSI);
 	gint[HWKBDSF] = KEYBOARD_SCAN_FREQUENCY;
-}
-
-/* unload() - stop the support timer */
-static void unload(void)
-{
-	int tid = isSH3() ? 3 : 8;
-	timer_stop(tid);
 }
 
 #ifdef GINT_BOOT_LOG
@@ -300,10 +294,9 @@ static const char *keysc_status(void)
 //---
 
 gint_driver_t drv_keysc = {
-	.name		= "KEYSC",
-	.init		= init,
-	.status		= GINT_DRIVER_STATUS(keysc_status),
-	.unload		= unload,
+	.name    = "KEYSC",
+	.init    = init,
+	.status  = GINT_DRIVER_STATUS(keysc_status),
 };
 
 GINT_DECLARE_DRIVER(4, drv_keysc);
