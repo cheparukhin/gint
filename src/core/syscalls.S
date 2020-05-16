@@ -36,6 +36,7 @@
 .global ___GetKeyWait
 .global ___ClearKeyBuffer
 .global ___GetVRAMAddress
+.global ___ConfigureStatusArea
 
 .section ".pretext"
 
@@ -114,7 +115,7 @@ ___Timer_Stop:
 ___Timer_Deinstall:
 	syscall(0x119)
 ___PutKeyCode:
-	syscall(0x24f)
+	syscall(0x248)
 ___GetKeyWait:
 	syscall(0x247)
 ___ClearKeyBuffer:
@@ -139,6 +140,29 @@ _calloc:
 	syscall(0x1f40)
 _realloc:
 	syscall(0x1f46)
+
+___Timer_Install:
+	syscall(0x8d9)
+___Timer_Start:
+	syscall(0x8db)
+___Timer_Stop:
+	syscall(0x8dc)
+___Timer_Deinstall:
+	syscall(0x8da)
+___PutKeyCode:
+	syscall(0x12c6)
+___GetKeyWait:
+	syscall(0x12bf)
+___ClearKeyBuffer:
+	syscall(0x12c7)
+___GetVRAMAddress:
+	syscall(0x1e6)
+___ConfigureStatusArea:
+	syscall(0x2b7)
+
+.global ___SpecialMatrixCodeProcessing
+___SpecialMatrixCodeProcessing:
+	syscall(0x1e60)
 
 syscall_table:
 	.long	0x80020070
