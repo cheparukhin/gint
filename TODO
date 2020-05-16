@@ -7,8 +7,7 @@ For the 2.0.0 release:
 Crucial, missing things.
 ! core:      the four basic memory functions (with automated tests)
 ! core:      use gint_switch() to handle TLB misses
-! core:      return to menu on fxcg50
-! syscalls:  fxcg50 BFile calls
+! bfile:     solve stability issues
 
 Issues.
 * #3         make drawing functions parameterized

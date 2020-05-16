@@ -24,7 +24,7 @@ int BFile_Remove(uint16_t const *file);
 
    @file  FONTCHARACTER file path
    @type  Entry type
-   @size  Pointer to file size if [type = BFile_File], ignored otherwise
+   @size  Pointer to file size if [type = BFile_File], use NULL otherwise
    Returns a BFile error code. */
 enum BFile_EntryType
 {
@@ -102,8 +102,8 @@ struct BFile_FileInfo
 	uint32_t data_size;
 	/* Is 0 if the file is complete */
 	uint32_t property;
-	/* Address of first fragmented (do not use directly) */
-	uint32_t address;
+	/* Address of first fragment (do not use directly) */
+	void *address;
 };
 int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile,
 	struct BFile_FileInfo *fileinfo);

@@ -62,45 +62,24 @@ _realloc:
 
 /* BFile driver */
 
-# int BFile_Remove(const uint16_t *file)
 _BFile_Remove:
 	syscall(0x0439)
-
-# int BFile_Create(uint16_t *file, enum { file = 1, folder = 5 }, int *size)
 _BFile_Create:
 	syscall(0x0434)
-
-# int BFile_Open(const uint16_t *file, int mode)
 _BFile_Open:
 	syscall(0x042c)
-
-# int BFile_Close(int handle)
 _BFile_Close:
 	syscall(0x042d)
-
-# int BFile_Size(int handle)
 _BFile_Size:
 	syscall(0x042f)
-
-# int BFile_Write(int handle, const void *ram_buffer, int even_size)
 _BFile_Write:
 	syscall(0x0435)
-
-# int BFile_Read(int handle, void *ram_buffer, int size, int whence)
 _BFile_Read:
 	syscall(0x0432)
-
-# int BFile_FindFirst(uint16_t const *search, int *shandle,
-# uint16_t *foundfile, struct BFile_FileInfo *fileinfo)
 _BFile_FindFirst:
     syscall(0x043b)
-
-# int BFile_FindNext(int shandle, uint16_t *foundfile,
-# struct BFile_FileInfo *fileinfo)
 _BFile_FindNext:
     syscall(0x043c)
-
-# int BFile_FindClose(int shandle)
 _BFile_FindClose:
     syscall(0x043d)
 
@@ -140,6 +119,31 @@ _calloc:
 	syscall(0x1f40)
 _realloc:
 	syscall(0x1f46)
+
+/* BFile driver */
+
+_BFile_Remove:
+	syscall(0x1db4)
+_BFile_Create:
+	syscall(0x1dae)
+_BFile_Open:
+	syscall(0x1da3)
+_BFile_Close:
+	syscall(0x1da4)
+_BFile_Size:
+	syscall(0x1da6)
+_BFile_Write:
+	syscall(0x1daf)
+_BFile_Read:
+	syscall(0x1dac)
+_BFile_FindFirst:
+	syscall(0x1db7)
+_BFile_FindNext:
+	syscall(0x1db9)
+_BFile_FindClose:
+	syscall(0x1dba)
+
+/* Return to menu */
 
 ___Timer_Install:
 	syscall(0x8d9)
