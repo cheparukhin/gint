@@ -52,8 +52,10 @@ or both. There are a few dependencies:
   default.
 
 fx-CG 50 developers probably want a g3a wrapper as well; the reference
-implementation is tari's [mkg3a](https://www.taricorp.net/projects/mkg3a/).
-This is only necessary when creating g3a files, not to use gint.
+implementation is tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
+needed at the very last compilation step to create the g3a file. On Arch Linux,
+you can use the [AUR/mkg3a](https://aur.archlinux.org/packages/mkg3a) package
+maintained directly by Tari.
 
 The build process is detailed below for both platforms, the principle is the
 same. You can build both targets at the same time by reading the two sections.
