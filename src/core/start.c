@@ -156,6 +156,9 @@ int start(int isappli, int optnum)
 	/* Initialize all drivers by saving the system settings */
 	for(drv = &bdrv; drv < &edrv; drv++)
 	{
+		/* Wait for hardware availability */
+		if(drv->wait) drv->wait();
+
 		/* Hook for old SH3 fx9860g machines */
 		if(isSH3() && drv->driver_sh3) drv->driver_sh3();
 

@@ -45,6 +45,7 @@
 	mov.l	1f, r0			;\
 	jmp	@r2			;\
 	nop				;\
+.align 4				;\
 1:	.long	id
 
 #ifdef FX9860G
@@ -123,10 +124,12 @@ _realloc:
 /* BFile driver */
 
 _BFile_Remove:
+	mov #0, r5
 	syscall(0x1db4)
 _BFile_Create:
 	syscall(0x1dae)
 _BFile_Open:
+	mov #0, r6
 	syscall(0x1da3)
 _BFile_Close:
 	syscall(0x1da4)

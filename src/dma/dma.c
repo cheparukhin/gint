@@ -138,9 +138,10 @@ void dma_transfer_wait(int channel)
 	if(ch->SAR >= 0xe5007000 && ch->SAR < 0xe5204000) onchip = 1;
 	if(ch->DAR >= 0xe5007000 && ch->DAR < 0xe5204000) onchip = 1;
 
-	while(ch->CHCR.DE)
+	while(ch->CHCR.DE && !ch->CHCR.TE)
 	{
-		if(!onchip) sleep();
+		/* Sleep only if the interrupt is enabled to wake us up */
+		if(!onchip && ch->CHCR.IE) sleep();
 	}
 }
 
@@ -228,8 +229,8 @@ static void wait(void)
 typedef struct
 {
 	channel_t ch[6];
-	uint16_t OR;
 	int clock;
+	uint16_t OR;
 
 } GPACKED(4) ctx_t;
 
@@ -257,8 +258,6 @@ static void ctx_save(void *buf)
 
 static void ctx_restore(void *buf)
 {
-	dma_transfer_wait(-1);
-
 	ctx_t *ctx = buf;
 
 	/* Restore the supply status of the DMA0 clock first. If the DMA was
@@ -266,6 +265,9 @@ static void ctx_restore(void *buf)
 	   want to write that back. If it was originally running, we need to
 	   power it up again for the writes to registers to have any effect */
 	POWER.MSTPCR0.DMAC0 = ctx->clock;
+
+	/* Disable the DMA while editing */
+	DMA.OR.DME = 0;
 
 	for(int i = 0; i < 6; i++)
 	{
@@ -275,7 +277,6 @@ static void ctx_restore(void *buf)
 		ch->TCR        = ctx->ch[i].TCR;
 		ch->CHCR.lword = ctx->ch[i].CHCR.lword;
 	}
-
 	DMA.OR.word = ctx->OR;
 }
 

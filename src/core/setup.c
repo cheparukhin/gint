@@ -162,18 +162,18 @@ static void gint_switch_out(void)
 	gint_ctx_save(&gint_ctx);
 
 	/* Restore the system context */
-	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
+	gint_ctx_restore(&sys_ctx);
+	for(gint_driver_t *drv = &bdrv; drv < &edrv; drv++)
 	{
 		if(!drv->ctx_save || !drv->ctx_restore) continue;
 		drv->ctx_restore(drv->sys_ctx);
 	}
-	gint_ctx_restore(&sys_ctx);
 }
 
 static void gint_switch_in(void)
 {
 	/* Save system state again */
-	for(gint_driver_t *drv = &bdrv; drv < &edrv; drv++)
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
 	{
 		if(!drv->ctx_save || !drv->ctx_restore) continue;
 		drv->ctx_save(drv->sys_ctx);
@@ -181,12 +181,12 @@ static void gint_switch_in(void)
 	gint_ctx_save(&sys_ctx);
 
 	/* Restore all drivers to their gint state */
+	gint_ctx_restore(&gint_ctx);
 	for(gint_driver_t *drv = &bdrv; drv < &edrv; drv++)
 	{
 		if(!drv->ctx_save || !drv->ctx_restore) continue;
 		drv->ctx_restore(drv->gint_ctx);
 	}
-	gint_ctx_restore(&gint_ctx);
 }
 
 /* gint_switch() - temporarily switch out of gint */
@@ -200,6 +200,24 @@ void gint_switch(void (*function)(void))
 
 	gint_setvbr(system_vbr, gint_switch_out);
 	if(function) function();
+
+	/* Remap all of the ROM */
+	extern uint32_t brom, srom;
+	volatile void *b = &brom;
+	int32_t s = (int32_t)&srom;
+	GUNUSED uint8_t x;
+	while(s > 0)
+	{
+		x = *(volatile uint8_t *)b;
+		b += 1024;
+		s -= 1024;
+	}
+
+	/* Wait for the OS to finish working */
+	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
+	{
+		if(drv->wait) drv->wait();
+	}
 	gint_setvbr((uint32_t)&gint_vbr, gint_switch_in);
 }
 

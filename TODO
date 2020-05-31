@@ -7,7 +7,7 @@ For the 2.0.0 release:
 Crucial, missing things.
 ! core:      the four basic memory functions (with automated tests)
 ! core:      use gint_switch() to handle TLB misses
-! bfile:     solve stability issues
+! core:      recheck SH3 compatibility
 
 Issues.
 * #3         make drawing functions parameterized
@@ -16,6 +16,7 @@ Issues.
 * #10        support fx-CG 20
 
 Complementary elements on existing code.
+* gray:      add gprint()
 * gray:      double-buffer gray settings and unify d* with g*
 * display:   deprecate image_t and rename it bopti_image_t
 * topti:     support unicode fonts
