@@ -15,6 +15,13 @@ This is free software: you may use it for any purpose, share it, and modify it
 as long as you share your changes. Credit is not required, but please let me
 know!
 
+gint also includes third-party code that is distributed under its own license.
+Currently, this only includes:
+
+* A stripped-down version of the [TinyMT random number generator](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/TINYMT/index.html)
+  ([GitHub repository](https://github.com/MersenneTwister-Lab/TinyMT)) by
+  Mutsuo Saito and Makoto Matsumoto. See `src/std/tinymt32/LICENSE.txt`.
+
 ## Programming interface
 
 Because of its free-standing design, gint's API provides direct and efficient
@@ -52,7 +59,7 @@ or both. There are a few dependencies:
   default.
 
 fx-CG 50 developers probably want a g3a wrapper as well; the reference
-implementation is tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
+implementation is Tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
 needed at the very last compilation step to create the g3a file. On Arch Linux,
 you can use the [AUR/mkg3a](https://aur.archlinux.org/packages/mkg3a) package
 maintained directly by Tari.
@@ -64,7 +71,8 @@ By default gint will be installed in the appropriate compiler folder, which
 is `$PREFIX/` for libraries and linker scripts, and `$PREFIX/include/gint/` for
 headers, where `PREFIX` is obtained by running
 `${toolchain}-gcc --print-search-dirs` and reading the line that starts with
-`install:`. You can change this with the `--prefix` configure option.
+`install:`. You can change this with the `--prefix` configure option, but
+normally you don't need to.
 
 ### Building for fx-9860G II
 

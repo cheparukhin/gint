@@ -19,4 +19,10 @@ void *calloc(size_t nmemb, size_t size);
 /* realloc(): Reallocate dynamic memory */
 void *realloc(void *ptr, size_t size);
 
+/* srand(): Seed the PRNG */
+void srand(unsigned int seed);
+
+/* rand(): Generate a pseudo-random number */
+int rand(void);
+
 #endif /* GINT_STD_STDLIB */

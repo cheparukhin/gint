@@ -67,9 +67,9 @@ static void regclr(uint32_t *r, int32_t s)
 #define regclr(r, s) regclr(&r, (int32_t)&s)
 
 /* explore() - read data from a memory region to get it mapped by the system
-   This function accesses all the 1k-blocks between b and b + s. This
-   corresponds to region [b; b+s) when b and s are 1k-aligned.
-   @b  Base pointer: first address checked
+   This function accesses all the 1k-blocks between b and b+s. This corresponds
+   to the region [b; b+s) when b and s are 1k-aligned.
+   @b  Base pointer (first address checked)
    @s  Size of region */
 GSECTION(".pretext")
 static void explore(volatile void *b, int32_t s)
