@@ -11,8 +11,18 @@
 /* gint_panic_default(): Default panic handler */
 GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 {
-	uint32_t TEA = *(volatile uint32_t *)0xff00000c;
-	uint32_t TRA = *(volatile uint32_t *)0xff000020 >> 2;
+	uint32_t TEA, TRA;
+
+	if(isSH3())
+	{
+		TEA = *(volatile uint32_t *)0xfffffffc;
+		TRA = *(volatile uint32_t *)0xffffffd0 >> 2;
+	}
+	else
+	{
+		TEA = *(volatile uint32_t *)0xff00000c;
+		TRA = *(volatile uint32_t *)0xff000020 >> 2;
+	}
 
 	uint32_t PC;
 	__asm__("stc spc, %0" : "=r"(PC));

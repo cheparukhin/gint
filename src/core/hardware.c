@@ -101,7 +101,7 @@ void hw_detect(void)
 	/* Will be detected later on */
 	gint[HWURAM] = -1;
 	/* Traditionally 4 MiB, Graph 35+E II has 8 MiB */
-	gint[HWROM]  = (gint[HWCALC] == HWCALC_G35PE2) ? (4 << 20) : (8 << 20);
+	gint[HWROM]  = (gint[HWCALC] == HWCALC_G35PE2) ? (8 << 20) : (4 << 20);
 }
 
 #endif /* FX9860G and platform-agnostic */

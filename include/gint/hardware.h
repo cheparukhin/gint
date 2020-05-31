@@ -24,7 +24,8 @@
 extern uint32_t gint[HW_KEYS];
 
 /* MPU detection macros, with a faster version on fx-CG 50 and a generic
-   dual-platform version for libraries. */
+   dual-platform version for libraries.
+   Warning: this macro is also used hardcoded in exch.s. */
 
 #if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 #define isSH3() (gint[HWMPU] & 1)
@@ -75,7 +76,7 @@ void hw_detect(void);
 #define HWMPU_UNKNOWN  0
 /* Used on original fx-9860G, SH-3-based */
 #define HWMPU_SH7337   1
-/* Used on recent fx-9860G derivates such as the fx-9750G II, and also on the
+/* Used on recent fx-9860G derivatives such as the fx-9750G II, and also on the
    fx-CG 10/20/50. SH-4A-based */
 #define HWMPU_SH7305   2
 /* Used on the fx-9860G II, SH-3-based */
