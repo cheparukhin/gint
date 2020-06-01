@@ -1,27 +1,21 @@
-For the 2.0.0 release:
-* bopti:     remove image_t, leaving only bopti_image_t
+For the 2.1.0 release:
+* core:      use gint_switch() to handle TLB misses
+* core:      the four basic memory functions (with automated tests)
+* bopti:     remove the deprecated image_t definition
 * project:   remove the compat branch
 * gray:      remove g*() functions
 * core:      remove the boot log
 
-Crucial, missing things.
-! core:      the four basic memory functions (with automated tests)
-! core:      use gint_switch() to handle TLB misses
-! core:      recheck SH3 compatibility
-
-Issues.
+Issues:
 * #3         make drawing functions parameterized
-* #5         add decent random number generation (TinyMT)
 * #8         support fx-CG Manager
 * #10        support fx-CG 20
 
-Complementary elements on existing code.
+Extensions on existing code:
 * gray:      add gprint()
 * gray:      double-buffer gray settings and unify d* with g*
-* display:   deprecate image_t and rename it bopti_image_t
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
-* dma:       maybe relax the 4-byte size constraint for dma_memset()
 * dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic
 * hardware:  fill in the HWMEM_FITTLB flag
@@ -31,24 +25,19 @@ Complementary elements on existing code.
 * core:      use cmp/str for memchr()
 * r61524:    brightness control and clean the file
 * t6k11:     check if dupdate() can be done by the DMA
-
-Keep in mind.
+* core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
 * build:     make the build system simpler (two targets are enough by default)
 * core:      run destructors when a task-switch results in leaving the app
 * core:      invoke main menu instead of returning after main() ends
-* prizm:     don't hardcode stack address in fxcg50.ld
+* prizm:     don't hardcode stack address in fxcg50.ld (if possible)
 * prizm:     detect P1 static RAM (stack) in TLB
 * core rtc:  use qdiv10 to massively improve division performance
-* setjmp:    more registers may need to be saved
-* core:      free heap when a task-switch results in leaving the app
-* core:      save and restore interrupt masks
-* timer:     make sure ETMU interrupts are disabled in ctx_restore()
 * core:      document the SH7305 PFC in <gint/mpu/pfc.h>
 
 Future directions.
 * A complete file system abstraction
 * Integrate overclock management
-* Audio playback using Martin Poupe's method
-* Serial communication [SCIF] [SCIFA]
-* USB communication [USB]
+* Audio playback using TSWilliamson's libsnd method
+* Serial communication
+* USB communication, using Yatis' reverse-engineering of the module
 * Make fx9860g projects work out of the box on fxcg50

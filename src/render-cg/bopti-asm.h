@@ -42,14 +42,14 @@ void bopti_p4(uint8_t const *data, uint16_t *target, int width, int height,
 
 /* bopti_render_clip(): Render with clipping
    Same parameters as dsubimage(), except for flags. */
-void bopti_render_clip(int x, int y, image_t const *img, int left, int top,
-	int width, int height);
+void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
+	int top, int width, int height);
 
 /* bopti_render_clip(): Render without clipping
    Behaviour is not defined if (left,top)+(width,height) is not included in the
    source image or (x,y)+(width,height) is not included in the VRAM area.
    Same parameters as dsubimage(), except for flags. */
-void bopti_render_noclip(int x, int y, image_t const *img, int left, int top,
-	int width, int height);
+void bopti_render_noclip(int x, int y, bopti_image_t const *img, int left,
+	int top, int width, int height);
 
 #endif /* GINT_RENDERCG_BOPTIASM */

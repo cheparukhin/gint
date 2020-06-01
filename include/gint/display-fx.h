@@ -61,7 +61,7 @@ typedef enum
 //	Image rendering (bopti)
 //---
 
-/* image_t - image files encoded for bopti
+/* bopti_image_t - image files encoded for bopti
    This format is the result of encoding images for bopti with the fxSDK's
    [fxconv] tool. The bopti routines can render it extremely fast, which makes
    it preferable over plain bitmaps if the images are never edited. */
@@ -81,7 +81,11 @@ typedef struct
 	/* Raw layer data */
 	uint8_t data[];
 
-} GPACKED(4) image_t;
+} GPACKED(4) bopti_image_t;
+
+/* Old alias to image_t, now deprecated because of libimg */
+typedef bopti_image_t image_t __attribute__((deprecated(
+	"image_t has been renamed to bopti_image_t")));
 
 #endif /* FX9860G */
 

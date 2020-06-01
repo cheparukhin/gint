@@ -56,7 +56,7 @@ enum {
 //	Image rendering (bopti)
 //---
 
-/* image_t: Image files encoded for bopti
+/* bopti_image_t: Image files encoded for bopti
    This format is created by the fxSDK's [fxconv] tool from standard images. */
 typedef struct
 {
@@ -78,7 +78,11 @@ typedef struct
 	   Then raw pixel data in row-major order. */
 	uint16_t data[];
 
-} GPACKED(4) image_t;
+} GPACKED(4) bopti_image_t;
+
+/* Old alias to image_t, now deprecated because of libimg */
+typedef bopti_image_t image_t __attribute__((deprecated(
+	"image_t has been renamed to bopti_image_t")));
 
 //---
 //	Video RAM management

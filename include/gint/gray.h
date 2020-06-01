@@ -171,7 +171,7 @@ void gtext(int x, int y, const char *str, int fg, int bg);
 
    @x @y   Coordinates of the top-left corner of the image
    @image  Pointer to gray image encoded with [fxconv] */
-void gimage(int x, int y, image_t const *image);
+void gimage(int x, int y, bopti_image_t const *image);
 
 /* gsubimage(): Render a section of an image
    Like dsubimage() for gray images. Same options apply.
@@ -181,7 +181,7 @@ void gimage(int x, int y, image_t const *image);
    @left @top      Top-left coordinates of the subrectangle within [image]
    @width @height  Subrectangle dimensions
    @flags          OR-combination of DIMAGE_* flags */
-void gsubimage(int x, int y, image_t const *image, int left, int top,
+void gsubimage(int x, int y, bopti_image_t const *image, int left, int top,
 	int width, int height, int flags);
 
 //---

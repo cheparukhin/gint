@@ -9,7 +9,7 @@ static void *bopti_asm[] = {
 };
 
 /* dimage() - render a full image */
-void dimage(int x, int y, image_t const *img)
+void dimage(int x, int y, bopti_image_t const *img)
 {
 	if(img->gray) return;
 	bopti_render_clip(x, y, img, 0, 0, img->width, img->height, gint_vram,
@@ -17,7 +17,7 @@ void dimage(int x, int y, image_t const *img)
 }
 
 /* dsubimage() - render a section of an image */
-void dsubimage(int x, int y, image_t const *img, int left, int top,
+void dsubimage(int x, int y, bopti_image_t const *img, int left, int top,
 	int width, int height, int flags)
 {
 	if(img->gray) return;

@@ -18,7 +18,7 @@ enum {
 	PX_P4      = 3,
 };
 
-void bopti_render(image_t const *img, struct box *box)
+void bopti_render(bopti_image_t const *img, struct box *box)
 {
 	/* Offset in video RAM and output stride */
 	uint16_t *target = gint_vram + (396 * box->y + box->x);
@@ -70,8 +70,8 @@ void bopti_render(image_t const *img, struct box *box)
 	}
 }
 
-void bopti_render_clip(int x, int y, image_t const *img, int left, int top,
-	int width, int height)
+void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
+	int top, int width, int height)
 {
 	/* Adjust the bounding box of the input image */
 	if(left < 0) width  += left, x -= left, left = 0;
@@ -94,8 +94,8 @@ void bopti_render_clip(int x, int y, image_t const *img, int left, int top,
 	bopti_render(img, &box);
 }
 
-void bopti_render_noclip(int x, int y, image_t const *img, int left, int top,
-	int width, int height)
+void bopti_render_noclip(int x, int y, bopti_image_t const *img, int left,
+	int top, int width, int height)
 {
 	struct box box = { x, y, width, height, left, top };
 	bopti_render(img, &box);

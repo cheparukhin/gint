@@ -144,7 +144,7 @@ void bopti_grid(void **layer, int rows, struct command *c)
 	}
 }
 
-void bopti_render(image_t const *img, struct rbox *rbox, uint32_t *v1,
+void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
 	uint32_t *v2, void *bopti_asm)
 {
 	/* Compute rendering masks */
@@ -204,7 +204,7 @@ void bopti_render(image_t const *img, struct rbox *rbox, uint32_t *v1,
 	bopti_grid((void **)&layer, rbox->bottom - rbox->top, &c);
 }
 
-void bopti_render_clip(int visual_x, int y, image_t const *img, int left,
+void bopti_render_clip(int visual_x, int y, bopti_image_t const *img, int left,
 	int top, int width, int height, uint32_t *v1, uint32_t *v2,
 	void *bopti_asm)
 {
@@ -249,8 +249,8 @@ void bopti_render_clip(int visual_x, int y, image_t const *img, int left,
 	bopti_render(img, &rbox, v1, v2, bopti_asm);
 }
 
-void bopti_render_noclip(int visual_x, int y, image_t const *img, int left,
-	int top, int width, int height, uint32_t *v1, uint32_t *v2,
+void bopti_render_noclip(int visual_x, int y, bopti_image_t const *img,
+	int left, int top, int width, int height, uint32_t *v1, uint32_t *v2,
 	void *bopti_asm)
 {
 	/* End row (excluded) */

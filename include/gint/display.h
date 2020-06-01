@@ -226,7 +226,7 @@ void dprint(int x, int y, int fg, int bg, char const *format, ...);
 //	Image rendering (bopti)
 //---
 
-/* The image_t structure is platform-dependent. */
+/* The bopti_image_t structure is platform-dependent. */
 
 /* dimage(): Render a full image
    This function blits an image on the VRAM using gint's special format. It is
@@ -234,7 +234,7 @@ void dprint(int x, int y, int fg, int bg, char const *format, ...);
 
    @x @y   Coordinates of the top-left corner of the image
    @image  Pointer to image encoded with [fxconv] */
-void dimage(int x, int y, image_t const *image);
+void dimage(int x, int y, bopti_image_t const *image);
 
 /* Option values for dsubimage() */
 enum {
@@ -256,7 +256,7 @@ enum {
    @left @top      Top-left coordinates of the subrectangle within [image]
    @width @height  Subrectangle dimensions
    @flags          OR-combination of DIMAGE_* flags */
-void dsubimage(int x, int y, image_t const *image, int left, int top,
+void dsubimage(int x, int y, bopti_image_t const *image, int left, int top,
 	int width, int height, int flags);
 
 //---
