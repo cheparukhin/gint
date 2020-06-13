@@ -7,6 +7,7 @@ void gint_dhline(int x1, int x2, int y, uint16_t color)
 	/* Order and bounds */
 	if((uint)y >= 224) return;
 	if(x1 > x2) swap(x1, x2);
+	if(x1 >= 396 || x2 < 0) return;
 	if(x1 < 0) x1 = 0;
 	if(x2 >= 396) x2 = 395;
 
