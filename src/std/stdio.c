@@ -227,6 +227,7 @@ void kprint(char const *format, va_list *args)
 		if(c == '%')
 		{
 			kprint_out('%');
+			format++;
 			continue;
 		}
 
