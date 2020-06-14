@@ -2,7 +2,7 @@
 //	gint:core:mmu - MMU-related definitions
 //---
 
-#include <core/mmu.h>
+#include <gint/mmu.h>
 #include <gint/hardware.h>
 
 //---

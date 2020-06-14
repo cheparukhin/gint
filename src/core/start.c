@@ -5,7 +5,7 @@
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 #include <core/bootlog.h>
-#include <core/mmu.h>
+#include <gint/mmu.h>
 #include <gint/drivers.h>
 #include <gint/gint.h>
 #include <gint/hardware.h>
@@ -140,7 +140,7 @@ int start(int isappli, int optnum)
 	bootlog_mapped(rom, ram);
 
 	/* Cancel add-in execution if not all pages are mapped */
-	if(rom < (uint32_t)&srom) gint_panic(0x1040);
+//	if(rom < (uint32_t)&srom) gint_panic(0x1040);
 
 	/* Install gint and switch VBR */
 	gint_install();

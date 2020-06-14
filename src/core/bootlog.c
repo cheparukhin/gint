@@ -5,7 +5,7 @@
 #include <gint/defs/types.h>
 #include <gint/std/string.h>
 #include <gint/std/stdio.h>
-#include <core/mmu.h>
+#include <gint/mmu.h>
 
 #include <gint/hardware.h>
 #include <gint/mpu/intc.h>

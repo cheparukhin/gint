@@ -9,6 +9,9 @@
 **	* File system, because it's a mess and we might ruin the ROM.
 */
 
+/* TLB management */
+.global ___TLB_LoadPTEH
+
 /* Dynamic allocation */
 .global _malloc
 .global _free
@@ -49,6 +52,11 @@
 1:	.long	id
 
 #ifdef FX9860G
+
+/* TLB Management */
+
+___TLB_LoadPTEH:
+	syscall(0x0003)
 
 /* Dynamic allocation */
 
@@ -109,6 +117,11 @@ syscall_table:
 #endif /* FX9860G */
 
 #ifdef FXCG50
+
+/* TLB Management */
+
+___TLB_LoadPTEH:
+	syscall(0x000c)
 
 /* Dynamic allocation */
 

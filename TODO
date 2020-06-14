@@ -41,3 +41,4 @@ Future directions.
 * Serial communication
 * USB communication, using Yatis' reverse-engineering of the module
 * Make fx9860g projects work out of the box on fxcg50
+* Use the DSP to enhance parallel computation

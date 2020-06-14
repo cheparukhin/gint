@@ -14,7 +14,7 @@
 /* VBR address, from the linker script */
 extern char gint_vbr[];
 /* System's VBR address */
-GBSS static uint32_t system_vbr;
+GBSS uint32_t system_vbr;
 /* Size of exception and TLB handler */
 extern char gint_exch_tlbh_size;
 /* Driver table */

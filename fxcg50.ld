@@ -13,7 +13,7 @@ ENTRY(_start)
 MEMORY
 {
 	/* Userspace mapping of the add-in (without G3A header) */
-	rom   (rx):   o = 0x00300000, l = 220k
+	rom   (rx):   o = 0x00300000, l = 2M
 	/* Static RAM; stack grows down from the end of this region.
 	   The first 0x2000 bytes are reserved by gint, see below */
 	ram   (rw):   o = 0x08102000, l = 504k

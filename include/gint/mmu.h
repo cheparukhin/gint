@@ -1,59 +1,27 @@
 //---
-//	core:mmu - MMU-related definitions
-//
-//	gint does not touch the MMU because the risk of permanently wreaking
-//	the system is deemed too high. However, to ensure that the add-in runs
-//	properly, checks using read-only accesses to the MMU are performed.
+//	gint:mmu - Memory Management Unit
 //---
 
-#ifndef GINT_CORE_MMU
-#define GINT_CORE_MMU
+#ifndef GINT_MMU
+#define GINT_MMU
 
-#include <gint/defs/attributes.h>
-#include <gint/defs/types.h>
+#include <gint/mpu/mmu.h>
 
 //---
 //	SH7705 TLB
 //---
 
-/* tlb_addr_t - address part of a TLB entry */
-typedef struct
-{
-	uint VPN	:22;
-	uint		:1;
-	uint V		:1;
-	uint ASID	:8;
-
-} GPACKED(4) tlb_addr_t;
-
-/* tlb_data_t - data part of a TLB entry */
-typedef struct
-{
-	uint		:3;
-	uint PPN	:19;
-	uint		:1;
-	uint V		:1;
-	uint		:1;
-	uint PR		:2;
-	uint SZ		:1;
-	uint C		:1;
-	uint D		:1;
-	uint SH		:1;
-	uint		:1;
-
-} GPACKED(4) tlb_data_t;
-
 /* tlb_addr() - get the P4 address of a TLB address entry
    @way  TLB way (0..3)
    @E    Entry number (0..31)
    Returns a pointer to the entry. */
-const tlb_addr_t *tlb_addr(uint way, uint E);
+tlb_addr_t const *tlb_addr(uint way, uint E);
 
 /* tlb_data() - get the P4 address of a TLB data entry
    @way  TLB way (0..3)
    @E    Entry number (0..31)
    Returns a pointer to the entry. */
-const tlb_data_t *tlb_data(uint way, uint E);
+tlb_data_t const *tlb_data(uint way, uint E);
 
 /* tlb_mapped_memory() - count amount of mapped memory
    This function returns the amount of mapped text and data segment memory, in
@@ -70,42 +38,15 @@ void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram);
 //	SH7305 Unified TLB
 //---
 
-/* utlb_addr_t - address part of a UTLB entry */
-typedef struct
-{
-	uint VPN	:22;
-	uint D		:1;
-	uint V		:1;
-	uint ASID	:8;
-
-} GPACKED(4) utlb_addr_t;
-
 /* utlb_addr() - get the P4 address of a UTLB address entry
    @E  Entry number (should be in range 0..63)
    Returns a pointer to the entry. */
 const utlb_addr_t *utlb_addr(uint E);
 
-/* utlb_data_t - data part of a UTLB entry */
-typedef struct
-{
-	uint		:3;
-	uint PPN	:19;
-	uint		:1;
-	uint V		:1;
-	uint SZ1	:1;
-	uint PR		:2;
-	uint SZ2	:1;
-	uint C		:1;
-	uint D		:1;
-	uint SH		:1;
-	uint WT		:1;
-
-} GPACKED(4) utlb_data_t;
-
 /* utlb_data() - get the P4 address of a UTLB data entry
    @E  Entry number (should be in range 0..63)
    Returns a pointer to the entry. */
-const utlb_data_t *utlb_data(uint E);
+utlb_data_t const *utlb_data(uint E);
 
 /* utlb_mapped_memory() - count amount of mapped memory
    This function returns the amount of mapped text and data segment memory, in
@@ -118,4 +59,4 @@ const utlb_data_t *utlb_data(uint E);
    @ram  Pointer to amount of mapped RAM */
 void utlb_mapped_memory(uint32_t *rom, uint32_t *ram);
 
-#endif /* GINT_CORE_MMU */
+#endif /* GINT_MMU */
