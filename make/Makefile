@@ -33,6 +33,13 @@ sflags  := $(CONFIG.MACROS)
 dflags   = -MMD -MT $@ -MF $(@:.o=.d) -MP
 arflags :=
 
+# Git file with current hash
+ifeq "$(shell git branch --show-current)" ""
+gitfile := ../.git/HEAD
+else
+gitfile := ../.git/refs/heads/$(shell git branch --show-current)
+endif
+
 
 #
 #  File listings
@@ -118,7 +125,7 @@ $(call src2obj,../src/font8x9.png): ../src/font8x9.png
 
 # Version symbol. ld generates a .stack section for unknown reasons; I remove
 # it in the linker script.
-version.o: ../.git/HEAD
+version.o: $(gitfile)
 	@ mkdir -p $(dir $@)
 	@ echo "_GINT_VERSION = $(version_hash);" > $@.txt
 	$(call cmd_b,ld,$@) $(ld) -r -R $@.txt -o $@
