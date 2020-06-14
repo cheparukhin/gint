@@ -41,9 +41,7 @@
 .global ___GetVRAMAddress
 .global ___ConfigureStatusArea
 
-.section ".pretext"
-
-#define syscall(id)			\
+#define syscall_(id, syscall_table)	\
 	mov.l	syscall_table, r2	;\
 	mov.l	1f, r0			;\
 	jmp	@r2			;\
@@ -51,12 +49,29 @@
 .align 4				;\
 1:	.long	id
 
+#define syscall(id) syscall_(id, syscall_table)
+
+/*** Special syscalls in ILRAM ***/
+
+.section .ilram
+
 #ifdef FX9860G
-
-/* TLB Management */
-
 ___TLB_LoadPTEH:
-	syscall(0x0003)
+	syscall_(0x0003, 2f)
+2:	.long 0x80010070
+#endif
+
+#ifdef FXCG50
+___TLB_LoadPTEH:
+	syscall_(0x000c, 2f)
+2:	.long 0x80020070
+#endif
+
+/*** Normal syscalls in ROM ***/
+
+.section .pretext
+
+#ifdef FX9860G
 
 /* Dynamic allocation */
 
@@ -118,12 +133,9 @@ syscall_table:
 
 #ifdef FXCG50
 
-/* TLB Management */
-
-___TLB_LoadPTEH:
-	syscall(0x000c)
-
 /* Dynamic allocation */
+
+.section .pretext
 
 _malloc:
 	syscall(0x1f44)

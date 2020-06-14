@@ -54,9 +54,13 @@ SECTIONS
 		*(.dtors .dtors.*)
 		_etors = . ;
 
-		_gint_exch_tlbh_start = . ;
-		*(.gint.exch_tlbh);
-		_gint_exch_tlbh_size = ABSOLUTE(. - _gint_exch_tlbh_start);
+		_gint_exch_start = . ;
+		*(.gint.exch)
+		_gint_exch_size = ABSOLUTE(. - _gint_exch_start);
+
+		_gint_tlbh_start = . ;
+		*(.gint.tlbh)
+		_gint_tlbh_size = ABSOLUTE(. - _gint_tlbh_start);
 
 		*(.text .text.*)
 	} > rom

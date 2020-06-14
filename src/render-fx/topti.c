@@ -24,7 +24,6 @@ font_t const * topti_font = &gint_font5x7;
    0, call topti_draw() and reset the operators. If it's negative, call
    topti_draw() then do another pass of topti_split() to recover the missing
    information. */
-GSECTION(".pretext")
 static int topti_split(uint32_t const * glyph, int width, int height, int free,
 	uint32_t *operators)
 {
@@ -81,7 +80,6 @@ static int topti_split(uint32_t const * glyph, int width, int height, int free,
 }
 
 /* topti_render(): Render a string on the VRAM */
-GSECTION(".pretext")
 void topti_render(int x, int y, char const *str, font_t const *f,
 	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2)
 {

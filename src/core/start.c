@@ -66,25 +66,6 @@ static void regclr(uint32_t *r, int32_t s)
 }
 #define regclr(r, s) regclr(&r, (int32_t)&s)
 
-/* explore() - read data from a memory region to get it mapped by the system
-   This function accesses all the 1k-blocks between b and b+s. This corresponds
-   to the region [b; b+s) when b and s are 1k-aligned.
-   @b  Base pointer (first address checked)
-   @s  Size of region */
-GSECTION(".pretext")
-static void explore(volatile void *b, int32_t s)
-{
-	GUNUSED uint8_t x;
-
-	while(s > 0)
-	{
-		x = *(volatile uint8_t *)b;
-		b += 1024;
-		s -= 1024;
-	}
-}
-#define explore(b, s) explore(&b, (int32_t)&s)
-
 /* acall() - call an array of functions (constructors or destructors)
    @f  First element of array
    @l  First element outside of the array */
@@ -129,18 +110,6 @@ int start(int isappli, int optnum)
 	regcpy(lyram,  syram,  ryram);
 	regclr(rbss, sbss);
 	bootlog_loaded();
-
-	/* Traverse all ROM pages */
-	explore(brom, srom);
-
-	/* Count how much memory got mapped from this process */
-	uint32_t rom, ram;
-	isSH3() ? tlb_mapped_memory(&rom, &ram)
-		: utlb_mapped_memory(&rom, &ram);
-	bootlog_mapped(rom, ram);
-
-	/* Cancel add-in execution if not all pages are mapped */
-//	if(rom < (uint32_t)&srom) gint_panic(0x1040);
 
 	/* Install gint and switch VBR */
 	gint_install();

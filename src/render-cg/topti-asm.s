@@ -1,7 +1,7 @@
 .global _topti_glyph_fg_bg
 .global _topti_glyph_fg
 .global _topti_glyph_bg
-.section .pretext
+.text
 
 # Glyph rendering functions.
 # These are pretty naive, using only word accesses to index the VRAM and

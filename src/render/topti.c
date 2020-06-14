@@ -7,7 +7,6 @@
 #define PROP_SPACING 5
 
 /* dfont(): Set the default font for text rendering */
-GSECTION(".pretext")
 font_t const *dfont(font_t const * font)
 {
 	font_t const *old_font = topti_font;
@@ -17,7 +16,6 @@ font_t const *dfont(font_t const * font)
 }
 
 /* charset_size(): Number of elements in each character set */
-GSECTION(".pretext")
 int charset_size(enum topti_charset set)
 {
 	int size[] = { 10, 26, 52, 62, 95, 128 };
@@ -25,7 +23,6 @@ int charset_size(enum topti_charset set)
 }
 
 /* charset_decode(): Translate ASCII into reduced character sets */
-GSECTION(".pretext")
 int charset_decode(enum topti_charset set, uint c)
 {
 	int x, y;
@@ -59,7 +56,6 @@ int charset_decode(enum topti_charset set, uint c)
 }
 
 /* topti_offset(): Use a font index to find the location of a glyph */
-GSECTION(".pretext")
 int topti_offset(font_t const *f, uint glyph)
 {
 	/* Non-proportional fonts don't need an index */

@@ -16,7 +16,8 @@ extern char gint_vbr[];
 /* System's VBR address */
 GBSS uint32_t system_vbr;
 /* Size of exception and TLB handler */
-extern char gint_exch_tlbh_size;
+extern char gint_exch_size;
+extern char gint_tlbh_size;
 /* Driver table */
 extern gint_driver_t bdrv, edrv;
 
@@ -33,7 +34,7 @@ typedef struct
 
 /* gint_ctx_save() - save interrupt controller configuration
    @arg  ctx	gint core context object */
-static void gint_ctx_save(gint_core_ctx *ctx)
+GMAPPED static void gint_ctx_save(gint_core_ctx *ctx)
 {
 	if(isSH3())
 	{
@@ -53,7 +54,7 @@ static void gint_ctx_save(gint_core_ctx *ctx)
 
 /* gint_ctx_restore() - restore interrupt controller configuration
    @arg  ctx	gint core context object */
-static void gint_ctx_restore(gint_core_ctx *ctx)
+GMAPPED static void gint_ctx_restore(gint_core_ctx *ctx)
 {
 	if(isSH3())
 	{
@@ -84,7 +85,7 @@ static void gint_ctx_restore(gint_core_ctx *ctx)
 GBSS static gint_core_ctx sys_ctx;
 
 /* lock() - lock interrupts to avoid receiving unsupported signals */
-static void lock(void)
+GMAPPED static void lock(void)
 {
 	/* Just disable everything, drivers will enable what they support */
 	if(isSH3()) for(int i = 0; i < 8; i++)
@@ -94,7 +95,7 @@ static void lock(void)
 }
 
 /* gint_install() - install and start gint */
-void gint_install(void)
+GMAPPED void gint_install(void)
 {
 	/* VBR address, provided by the linker script */
 	void *vbr = (void *)&gint_vbr;
@@ -103,7 +104,8 @@ void gint_install(void)
 	void *inth_entry = isSH3() ? gint_inth_7705 : gint_inth_7305;
 
 	/* Size of the exception and TLB handlers */
-	uint32_t exch_tlbh_size = (uint32_t)&gint_exch_tlbh_size;
+	uint32_t exch_size = (uint32_t)&gint_exch_size;
+	uint32_t tlbh_size = (uint32_t)&gint_tlbh_size;
 
 	/* First save the hardware configuration. This step is crucial because
 	   we don't want the system to find out about us directly manipulating
@@ -111,8 +113,8 @@ void gint_install(void)
 	gint_ctx_save(&sys_ctx);
 
 	/* Load the event handler entry points into memory */
-	memcpy(vbr + 0x100, gint_exch_tlbh, exch_tlbh_size);
-	memcpy(vbr + 0x400, gint_exch_tlbh, exch_tlbh_size);
+	memcpy(vbr + 0x100, gint_exch, exch_size);
+	memcpy(vbr + 0x400, gint_tlbh, tlbh_size);
 	memcpy(vbr + 0x600, inth_entry, 64);
 
 	/* Time to switch VBR and roll! */
@@ -120,7 +122,7 @@ void gint_install(void)
 }
 
 /* unlock() - unlock interrupts, restoring system settings */
-static void unlock(void)
+GMAPPED static void unlock(void)
 {
 	/* Restore all driver settings, but do it in reverse order of loading
 	   to honor the dependency system */
@@ -133,7 +135,7 @@ static void unlock(void)
 }
 
 /* gint_unload() - unload gint and give back control to the system */
-void gint_unload(void)
+GMAPPED void gint_unload(void)
 {
 	/* First wait for all the drivers to finish their current jobs */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -151,7 +153,7 @@ void gint_unload(void)
 static gint_core_ctx gint_ctx;
 extern gint_driver_t bdrv, edrv;
 
-static void gint_switch_out(void)
+GMAPPED static void gint_switch_out(void)
 {
 	/* Save all drivers in reverse order */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -170,7 +172,7 @@ static void gint_switch_out(void)
 	}
 }
 
-static void gint_switch_in(void)
+GMAPPED static void gint_switch_in(void)
 {
 	/* Save system state again */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -190,7 +192,7 @@ static void gint_switch_in(void)
 }
 
 /* gint_switch() - temporarily switch out of gint */
-void gint_switch(void (*function)(void))
+GMAPPED void gint_switch(void (*function)(void))
 {
 	/* Wait for all the drivers to finish their current jobs */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -233,7 +235,7 @@ void  __ConfigureStatusArea(int mode);
 
 static int __osmenu_id;
 
-static void __osmenu_handler(void)
+GMAPPED static void __osmenu_handler(void)
 {
 	__PutKeyCode(0x04, 0x09, 0);
 
@@ -241,7 +243,7 @@ static void __osmenu_handler(void)
 	__Timer_Deinstall(__osmenu_id);
 }
 
-static void __osmenu(void)
+GMAPPED static void __osmenu(void)
 {
 	__ClearKeyBuffer();
 
@@ -286,7 +288,7 @@ static void __osmenu(void)
 }
 
 /* gint_osmenu() - switch out of gint and call the calculator's main menu */
-void gint_osmenu(void)
+GMAPPED void gint_osmenu(void)
 {
 	gint_switch(__osmenu);
 }

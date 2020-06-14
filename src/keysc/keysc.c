@@ -57,7 +57,7 @@ GDATA static uint time = 0;
 
 /* buffer_push(): Add an event in the keyboard buffer
    Returns non-zero if the event cannot be pushed. */
-static int buffer_push(driver_event_t ev)
+GMAPPED static int buffer_push(driver_event_t ev)
 {
 	int next = (buffer_end + 1) % KEYBOARD_QUEUE_SIZE;
 	if(next == buffer_start) return 1;
@@ -79,7 +79,7 @@ static int buffer_poll(driver_event_t *ev)
 }
 
 /* keysc_frame(): Generate driver events from KEYSC state */
-static void keysc_frame(void)
+GMAPPED static void keysc_frame(void)
 {
 	GALIGNED(2) uint8_t scan[12] = { 0 };
 
@@ -94,9 +94,9 @@ static void keysc_frame(void)
 	}
 
 	/* Compare new data with the internal state. Push releases before
-	   presses so that a key change occuring within a single analysis frame
-	   can be performed. This happens all the time when going back to the
-	   main MENU via gint_osmenu() on a keybind. */
+	   presses so that a key change occurring within a single analysis
+	   frame can be performed. This happens all the time when going back to
+	   the main MENU via gint_osmenu() on a keybind. */
 	for(int row = 0; row < 12; row++)
 	{
 		int diff = ~scan[row] & state[row];
@@ -248,7 +248,7 @@ int keydown_any(int key, ...)
 //	Driver initialization and status
 //---
 
-static int callback(GUNUSED volatile void *arg)
+GMAPPED static int callback(GUNUSED volatile void *arg)
 {
 	keysc_frame();
 	time++;

@@ -25,7 +25,6 @@ font_t const * topti_font = &gint_font8x9;
    @height  Subglyph height
    @dataw   Glyph width
    @fg @bg  Foreground and background colors */
-GSECTION(".pretext")
 static void topti_glyph(uint16_t *vram, uint32_t const * data, int left,
 	int top, int width, int height, int dataw, int fg, int bg)
 {
@@ -42,7 +41,6 @@ static void topti_glyph(uint16_t *vram, uint32_t const * data, int left,
 		dataw - width, index);
 }
 
-GSECTION(".pretext")
 void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	int fg, int bg)
 {
@@ -119,7 +117,6 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 }
 
 /* dtext() - display a string of text */
-GSECTION(".pretext")
 void dtext(int x, int y, char const *str, int fg, int bg)
 {
 	topti_render(x, y, str, strlen(str), topti_font, fg, bg);

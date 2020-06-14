@@ -17,6 +17,8 @@
 #define GILRAM		__attribute__((section(".ilram")))
 #define GXRAM		__attribute__((section(".xram")))
 #define GYRAM		__attribute__((section(".yram")))
+/* Objects that must remain mapped */
+#define GMAPPED		GILRAM
 
 /* Unused parameters or variables */
 #define GUNUSED		__attribute__((unused))

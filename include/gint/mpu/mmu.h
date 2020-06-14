@@ -14,7 +14,7 @@
 //---
 //	SH7705 TLB. Refer to:
 //	  "Renesas SH7705 Group Hardware Manual"
-//	  Section 3: "Memory Manaegement Unit (MMU)"
+//	  Section 3: "Memory Management Unit (MMU)"
 //---
 
 /* tlb_addr_t - address part of a TLB entry */

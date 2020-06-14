@@ -9,7 +9,7 @@
 #define dtext(x, y, str)  dtext (x, y, str, C_BLACK, C_NONE)
 
 /* gint_panic_default(): Default panic handler */
-GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
+GNORETURN GMAPPED static void gint_default_panic(GUNUSED uint32_t code)
 {
 	uint32_t TEA, TRA;
 
@@ -124,7 +124,7 @@ GDATA GNORETURN void (*gint_exc_panic)(uint32_t code) = gint_default_panic;
 GDATA int (*gint_exc_catcher)(uint32_t code) = NULL;
 
 /* gint_panic(): Panic handler function */
-void gint_panic(uint32_t code)
+GMAPPED void gint_panic(uint32_t code)
 {
 	gint_exc_panic(code);
 }
@@ -142,7 +142,7 @@ void gint_exc_catch(int (*handler)(uint32_t code))
 }
 
 /* gint_exc_skip(): Skip pending exception instructions */
-void gint_exc_skip(int instructions)
+GMAPPED void gint_exc_skip(int instructions)
 {
 	uint32_t spc;
 

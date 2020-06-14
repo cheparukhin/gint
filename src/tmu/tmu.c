@@ -134,7 +134,7 @@ void timer_pause(int id)
 }
 
 /* timer_stop() - stop and free a timer */
-void timer_stop(int id)
+GMAPPED void timer_stop(int id)
 {
 	/* Stop the timer and disable UNIE to indicate that it's free */
 	timer_pause(id);
@@ -167,7 +167,7 @@ void timer_stop(int id)
 //---
 
 /* timer_timeout() - callback that sets a flag and halts the timer */
-int timer_timeout(volatile void *arg)
+GMAPPED int timer_timeout(volatile void *arg)
 {
 	volatile int *x = arg;
 	(*x)++;
@@ -181,7 +181,7 @@ int timer_timeout(volatile void *arg)
 /* timer_clear() - clear an ETMU flag and possibly stop the timer
    @timer  Timer ID, must be an ETMU
    @stop   Non-zero to stop the timer */
-void timer_clear(int id, int stop)
+GMAPPED void timer_clear(int id, int stop)
 {
 	do ETMU[id-3].TCR.UNF = 0;
 	while(ETMU[id-3].TCR.UNF);

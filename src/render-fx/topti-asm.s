@@ -1,6 +1,5 @@
 
 .global _topti_asm_text
-.section .pretext
 
 # REGISTER ALLOCATION:
 # r0: x or ~x
@@ -12,7 +11,7 @@
 # r6: operators
 # r7: number of rows (r7>0, otherwise the font is clearly ill-formed)
 
-# Mind that there are pipeline optimisation efforts in this file:
+# Mind that there are pipeline optimization efforts in this file:
 # * Doing memory accesses on 4-aligned instructions to avoid contention between
 #   IF and MA (1 cycle);
 # * Avoid using an operand just after it is fetched from memory because of the

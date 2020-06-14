@@ -20,8 +20,10 @@
    Returns the previous VBR address. */
 uint32_t gint_setvbr(uint32_t vbr, void (*configure)(void));
 
-/* gint_exch_tlbh(): Exception and TLB miss handler */
-void gint_exch_tlbh(void);
+/* gint_exch(): Exception handler */
+void gint_exch(void);
+/* gint_tlbh(): TLB miss handler */
+void gint_tlbh(void);
 
 /* gint_inth_7705(): SH7705 exception handler */
 void gint_inth_7705(void);

@@ -1,8 +1,8 @@
-.global _gint_exch_tlbh
-.section .gint.exch_tlbh
+.global _gint_exch
+.section .gint.exch
 .align 4
 
-_gint_exch_tlbh:
+_gint_exch:
 	sts.l	pr, @-r15
 	stc.l	gbr, @-r15
 	sts.l	mach, @-r15
