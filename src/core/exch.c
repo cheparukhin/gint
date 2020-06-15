@@ -9,7 +9,7 @@
 #define dtext(x, y, str)  dtext (x, y, str, C_BLACK, C_NONE)
 
 /* gint_panic_default(): Default panic handler */
-GNORETURN GMAPPED static void gint_default_panic(GUNUSED uint32_t code)
+GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 {
 	uint32_t TEA, TRA;
 
@@ -95,7 +95,7 @@ GNORETURN GMAPPED static void gint_default_panic(GUNUSED uint32_t code)
 	dprint(38, 75, "= %#x", TRA);
 	dtext(281, 75, "(Trap number)");
 
-	dtext(6, 95,  "An unrecoverable error ocurred in the add-in.");
+	dtext(6, 95,  "An unrecoverable error occurred in the add-in.");
 	dtext(6, 108, "Please press the RESET button to restart the");
 	dtext(6, 121, "calculator.");
 
@@ -124,7 +124,7 @@ GDATA GNORETURN void (*gint_exc_panic)(uint32_t code) = gint_default_panic;
 GDATA int (*gint_exc_catcher)(uint32_t code) = NULL;
 
 /* gint_panic(): Panic handler function */
-GMAPPED void gint_panic(uint32_t code)
+void gint_panic(uint32_t code)
 {
 	gint_exc_panic(code);
 }

@@ -93,10 +93,11 @@ int start(int isappli, int optnum)
 	   redirecting interrupts and reimplementing drivers, so we can't rely
 	   too much on the system. Ladies and gentlemen, let's have fun! ;D */
 
-	/* For now, we use the system's memory mapper for ROM. RAM is always
+	/* For now, we use the system's memory mapper for ROM. We'll still do
+	   it from our TLB miss handler once we're installed. RAM is always
 	   fully mapped, but we need to initialize it. We also need to do some
 	   hardware detection because old fx9860g models have a different
-	   processor with some incompatible features */
+	   processor with some incompatible features. */
 
 	/* Detect architecture - this will tell SH3 from SH4 on fx9860g */
 	hw_detect();
@@ -118,7 +119,7 @@ int start(int isappli, int optnum)
 	/* We are now running on our own in kernel mode. Since we have taken
 	   control of interrupts, pretty much any interaction with the system
 	   will break it. We'll limit our use of syscalls and do device driving
-	   ourselves. (Hopefully we can add cool features in the process.) */
+	   ourselves. (Hopefully we can add cool features in the process!) */
 
 	gint_driver_t *drv;
 

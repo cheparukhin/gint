@@ -13,9 +13,8 @@ ENTRY(_start)
 
 MEMORY
 {
-	/* Userspace mapping of the add-in (0x200 B are for the G1A header).
-	   220k is the maximum amount of simultaneously-mappable code */
-	rom   (rx):   o = 0x00300200, l = 220k
+	/* Userspace mapping of the add-in (G1A header takes 0x200 bytes) */
+	rom   (rx):   o = 0x00300200, l = 500k
 	/* This is mapped to RAM; 8k on SH3, apparently 32k on SH4 */
 	ram   (rw):   o = 0x08100000, l = 8k
 	/* gint's VBR space, mentioned here for completeness */
@@ -60,9 +59,13 @@ SECTIONS
 	} > rom
 
 	.text : {
-		_gint_exch_tlbh_start = . ;
-		*(.gint.exch_tlbh);
-		_gint_exch_tlbh_size = ABSOLUTE(. - _gint_exch_tlbh_start);
+		_gint_exch_start = . ;
+		*(.gint.exch)
+		_gint_exch_size = ABSOLUTE(. - _gint_exch_start);
+
+		_gint_tlbh_start = . ;
+		*(.gint.tlbh)
+		_gint_tlbh_size = ABSOLUTE(. - _gint_tlbh_start);
 
 		*(.text .text.*)
 		*(C P)
@@ -210,6 +213,9 @@ SECTIONS
 
 		*(.gint.data .gint.data.*)
 
+		/* Also code that must remain permanently mapped! */
+		*(.gint.mapped)
+
 		. = ALIGN(16);
 	} > rram AT> rom
 
@@ -234,7 +240,7 @@ SECTIONS
 
 	/* Unwanted sections going to meet Dave Null:
 	   - Debug sections, often come out of libgcc
-	   - Java classes registration (why are there even here?)
+	   - Java classes registration (why is there any of this here?)
 	   - Asynchronous unwind tables: no C++ exception handling for now ^^
 	   - Comments or anything the compiler might put in its assembler
 	   - A stack section sometimes generated for build/version.o */

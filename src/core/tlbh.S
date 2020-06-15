@@ -17,14 +17,17 @@ _gint_tlbh:
 	mov.l	.tea_sh3, r0
 
 test_tea:
-	# Check TEA to see if we want to map a page or raise a SysERROR
+	/* Check TEA to see if we want to map a page or raise a SysERROR */
 	mov.l	@r0, r0
 	mov.l	.max_mapped_rom, r1
 	cmp/ge	r1, r0
 	bt	panic
+	mov.l	.min_mapped_rom, r1
+	cmp/ge	r1, r0
+	bf	panic
 
 map:
-	# If TEA is mappable, map a page and return
+	/* If TEA is mappable, map a page and return */
 	mov.l	.TLB_LoadPTEH, r0
 	jsr	@r0
 	nop
@@ -37,8 +40,8 @@ map:
 	nop
 
 panic:
-	# Otherwise, panic by defaulting to the exception handler (the TLB miss
-	# may still be resolved by a panic handler)
+	/* Otherwise, panic by defaulting to the exception handler (the TLB
+	   miss may still be resolved by a panic handler) */
 	lds.l	@r15+, macl
 	lds.l	@r15+, mach
 	ldc.l	@r15+, gbr
@@ -59,6 +62,8 @@ panic:
 	.long	0xff00000c
 .tea_sh3:
 	.long	0xfffffffc
+.min_mapped_rom:
+	.long	0x00300000
 .max_mapped_rom:
 	.long	0x00300000 + _srom
 .TLB_LoadPTEH:

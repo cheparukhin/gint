@@ -147,6 +147,8 @@ SECTIONS
 		_rilram = . ;
 
 		*(.ilram)
+		/* Code that must remain mapped is placed here */
+		*(.gint.mapped)
 
 		. = ALIGN(16);
 	} > ilram AT> rom
@@ -224,7 +226,7 @@ SECTIONS
 	/* Unwanted sections going to meet Dave Null:
 	   - SH3-only data sections
 	   - Debug sections, often come out of libgcc
-	   - Java classes registration (why are there even here?)
+	   - Java classes registration (why is there any of this here?)
 	   - Asynchronous unwind tables: no C++ exception handling for now ^^
 	   - Comments or anything the compiler might put in its assembler */
 	/DISCARD/ : {

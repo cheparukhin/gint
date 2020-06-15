@@ -2,9 +2,8 @@
 **	gint:core:vbr - Assembler-level VBR management
 */
 
-	.global	_gint_setvbr
-	.text
-	.align 2
+.global	_gint_setvbr
+.section .gint.mapped
 
 /* gint_setvbr()
    Changes the VBR address and the calls the configuration function while

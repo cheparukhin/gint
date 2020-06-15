@@ -14,7 +14,7 @@
 /* VBR address, from the linker script */
 extern char gint_vbr[];
 /* System's VBR address */
-GBSS uint32_t system_vbr;
+GBSS static uint32_t system_vbr;
 /* Size of exception and TLB handler */
 extern char gint_exch_size;
 extern char gint_tlbh_size;
@@ -95,7 +95,7 @@ GMAPPED static void lock(void)
 }
 
 /* gint_install() - install and start gint */
-GMAPPED void gint_install(void)
+void gint_install(void)
 {
 	/* VBR address, provided by the linker script */
 	void *vbr = (void *)&gint_vbr;
@@ -135,7 +135,7 @@ GMAPPED static void unlock(void)
 }
 
 /* gint_unload() - unload gint and give back control to the system */
-GMAPPED void gint_unload(void)
+void gint_unload(void)
 {
 	/* First wait for all the drivers to finish their current jobs */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -192,7 +192,7 @@ GMAPPED static void gint_switch_in(void)
 }
 
 /* gint_switch() - temporarily switch out of gint */
-GMAPPED void gint_switch(void (*function)(void))
+void gint_switch(void (*function)(void))
 {
 	/* Wait for all the drivers to finish their current jobs */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -202,18 +202,6 @@ GMAPPED void gint_switch(void (*function)(void))
 
 	gint_setvbr(system_vbr, gint_switch_out);
 	if(function) function();
-
-	/* Remap all of the ROM */
-	extern uint32_t brom, srom;
-	volatile void *b = &brom;
-	int32_t s = (int32_t)&srom;
-	GUNUSED uint8_t x;
-	while(s > 0)
-	{
-		x = *(volatile uint8_t *)b;
-		b += 1024;
-		s -= 1024;
-	}
 
 	/* Wait for the OS to finish working */
 	for(gint_driver_t *drv = &edrv; (--drv) >= &bdrv;)
@@ -235,7 +223,7 @@ void  __ConfigureStatusArea(int mode);
 
 static int __osmenu_id;
 
-GMAPPED static void __osmenu_handler(void)
+static void __osmenu_handler(void)
 {
 	__PutKeyCode(0x04, 0x09, 0);
 
@@ -243,7 +231,7 @@ GMAPPED static void __osmenu_handler(void)
 	__Timer_Deinstall(__osmenu_id);
 }
 
-GMAPPED static void __osmenu(void)
+static void __osmenu(void)
 {
 	__ClearKeyBuffer();
 
@@ -288,7 +276,7 @@ GMAPPED static void __osmenu(void)
 }
 
 /* gint_osmenu() - switch out of gint and call the calculator's main menu */
-GMAPPED void gint_osmenu(void)
+void gint_osmenu(void)
 {
 	gint_switch(__osmenu);
 }

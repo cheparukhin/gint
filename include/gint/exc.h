@@ -27,13 +27,17 @@ void gint_panic_set(GNORETURN void (*panic)(uint32_t code));
 /* gint_exc_catch(): Set a function to catch exceptions
 
    Sets up an exception-catching function. If an exception occurs, before a
-   panic is raised, the exception-catching function is executed in interrupt
+   panic is raised, the exception-catching function is executed with interrupt
    mode and is given a chance to handle the exception. Passing NULL disables
    this feature.
 
    The exception-catching function can do anything that does not use interrupts
-   or causes an exception, such as logging the exception or any other useful
-   mechanism.
+   or cause an exception, such as logging the exception or any other useful
+   mechanism. TLB misses count as exceptions and are disabled, so this function
+   must absolutely be mapped *before* it runs! The only real way to ensure this
+   is to have it mapped at all times using the GMAPPED attribute. Note that
+   GMAPPED puts the function in a generally small memory region so you should
+   defer as much handling as possible until after the exception is caught.
 
    What happens next depends on the return value:
    * If it returns 0, the exception is considered handled and execution
@@ -58,7 +62,7 @@ void gint_exc_catch(int (*handler)(uint32_t code));
    When an exception-catching function records an exception without solving it,
    this re-execution will fail again and the exception handling process will
    loop. In such a situation, gint_exc_skip() can be used to manually skip the
-   offending instruction.
+   offending instruction, if this is an acceptable resolution.
 
    @instructions  Number of instructions to skip (usually only one) */
 void gint_exc_skip(int instructions);

@@ -51,9 +51,9 @@
 
 #define syscall(id) syscall_(id, syscall_table)
 
-/*** Special syscalls in ILRAM ***/
+/*** Special syscalls that must remain mapped ***/
 
-.section .ilram
+.section .gint.mapped
 
 #ifdef FX9860G
 ___TLB_LoadPTEH:
