@@ -4,7 +4,7 @@
 void masks(int x1, int x2, uint32_t *masks)
 {
 	if(x1 < 0) x1 = 0;
-	if(x2 < 0) x2 = 0;
+	if(x2 >= 128) x2 = 127;
 
 	/* Indexes of the first and last non-empty longs */
 	size_t l1 = x1 >> 5;

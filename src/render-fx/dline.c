@@ -7,6 +7,7 @@ void gint_dhline(int x1, int x2, int y, color_t color)
 {
 	if((uint)y >= 64) return;
 	if(x1 > x2) swap(x1, x2);
+	if(x1 >= 128 || x2 < 0) return;
 
 	/* Get the masks for the [x1, x2] range */
 	uint32_t m[4];
@@ -42,6 +43,7 @@ void gint_dvline(int y1, int y2, int x, color_t color)
 {
 	if((uint)x >= 128) return;
 	if(y1 > y2) swap(y1, y2);
+	if(y1 >= 64 || y2 < 0) return;
 
 	uint32_t *base = gint_vram + (y1 << 2) + (x >> 5);
 	uint32_t *lword = base + ((y2 - y1 + 1) << 2);
