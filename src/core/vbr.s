@@ -11,8 +11,8 @@
    priority registers or the interrupt masks, and make sure that all the
    interrupts that it leaves enabled are handled by the new VBR handlers.
 
-   @arg  vbr		New VBR address (uint32_t)
-   @arg  configure	Configuration function (void -> void)
+   @r4  vbr        New VBR address (uint32_t)
+   @r5  configure  Configuration function (void -> void)
    Returns the previous VBR address. */
 _gint_setvbr:
 	mov.l	r9, @-r15

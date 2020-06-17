@@ -40,9 +40,8 @@ _inth_tmu_0:
 	mova	.storage0, r0
 	mov	#0, r1
 
-	/*** This is the first shared section ***/
-
-.clearflag:
+/*** This is the first shared section ***/
+.shared1:
 	sts.l	pr, @-r15
 	mov.l	r1, @-r15
 
@@ -54,32 +53,31 @@ _inth_tmu_0:
 	mov.w	r2, @r1
 
 	/* Invoke the callback function and pass the argument */
-	mov.l	@r0, r1
+	mov.l	.gint_inth_callback_1, r1
+	mov.l	@r0, r4
 	jsr	@r1
-	mov.l	@(4, r0), r4
+	mov.l	@(4, r0), r5
 
-	/* Prepare stopping the timer and jump to second section */
+	/* Jump to second section */
+	mov.l	.timer_stop_1, r1
+	bra	.shared2
 	mov.l	@r15+, r4
-	mov.l	.timer_stop, r1
-	bra	.stoptimer
-	nop
 
 /* SECOND GATE - TMU1 entry and stop timer */
 _inth_tmu_1:
 	mova	.storage1, r0
-	bra	.clearflag
+	bra	.shared1
 	mov	#1, r1
 
-	/*** This is the second shared section ***/
-
-.stoptimer:
+/*** This is the second shared section ***/
+.shared2:
 	/* Stop the timer if the return value is not zero */
 	tst	r0, r0
-	bt	.end
+	bt	.shared3
 	jsr	@r1
 	nop
 
-.end:
+.shared3:
 	lds.l	@r15+, pr
 	rts
 	nop
@@ -89,10 +87,13 @@ _inth_tmu_1:
 /* THIRD GATE - TMU2 entry and storage for TMU0 */
 _inth_tmu_2:
 	mova	.storage2, r0
-	bra	.clearflag
+	bra	.shared1
 	mov	#2, r1
 
-	.zero	14
+	.zero	10
+
+.gint_inth_callback_1:
+	.long	_gint_inth_callback
 
 .storage0:
 	.long	0		 /* Callback: Configured dynamically */
@@ -104,8 +105,8 @@ _inth_tmu_storage:
 
 .mask:
 	.long	0x0000feff
-.timer_stop:
-	.long	_timer_stop	/* gint's function from <gint/timer.h> */
+.timer_stop_1:
+	.long	_timer_stop
 
 .storage1:
 	.long	0 		/* Callback: Configured dynamically */
@@ -142,27 +143,24 @@ _inth_tmu_storage:
 
 /* FIRST GATE - ETMU2 entry, invoke callback and prepare clear flag */
 _inth_etmu2:
-	/* Warning: the size of the following section (4 bytes) is hardcoded in
-	   the jump in _inth_etmux */
 	mova	.storage_etmu2, r0
 	mov	#5, r1
 
-.extra_callback:
+.shared4:
 	sts.l	pr, @-r15
-	mov.l	r1, @-r15
+	mov.l	r0, @-r15
 
-	/* Invoke the callback function */
-	mov.l	@r0, r1
-	jsr	@r1
-	mov.l	@(4, r0), r4
+	/* Clear interrupt flag */
+	mov.l	.timer_clear, r2
+	jsr	@r2
+	mov	r1, r4
 
-	/* Load timer ID and forward the callback's return value */
-	mov.l	.timer_clear, r1
-	mov.l	@r15+, r4
+	/* Prepare invoking the callback function */
+	mov.l	@r15+, r0
+	mov.l	.gint_inth_callback_2, r1
+	mov.l	@r0, r4
 	bra	_inth_etmu_help
-	mov	r0, r5
-
-	nop
+	mov.l	@(4, r0), r5
 
 .storage_etmu2:
 	.long	0		/* Callback: Configured dynamically */
@@ -171,18 +169,28 @@ _inth_etmu2:
 /* SECOND GATE - Helper entry, invoke callback and stop timer if requested */
 _inth_etmu_help:
 
-	/* Clear the flag and possibly stop the timer */
+	/* Invoke callback; if return value is non-zero, stop timer */
+	jsr	@r1
+	nop
+	tst	r0, r0
+	bt	.shared5
+	mov.l	.timer_stop_2, r1
 	jsr	@r1
 	nop
 
+	/* Clear the flag and possibly stop the timer */
+
+.shared5:
 	lds.l	@r15+, pr
 	rts
 	nop
 
-	.zero	18
-
+.gint_inth_callback_2:
+	.long	_gint_inth_callback
 .timer_clear:
-	.long	_timer_clear	/* gint's function from src/tmu/tmu.c */
+	.long	_timer_clear
+.timer_stop_2:
+	.long	_timer_stop
 
 /* THIRD GATE - All other ETMU entries, deferred to the previous ones */
 _inth_etmux:
@@ -198,11 +206,11 @@ _inth_etmux:
 	nop
 
 	/* Offset from VBR where extra timer 2 is located:
-	   - 0x600 to reach the interrupt handlers
-	   - 0x040 to jump over the entry gate
-	   - 0x840 to reach the handler of ETMU2
-	   - 0x004 to skip its first instructions (the size is hardcoded) */
-1:	.long	0xe84
+	   * 0x600 to reach the interrupt handlers
+	   * 0x040 to jump over the entry gate
+	   * 0x840 to reach the handler of ETMU2
+	   * Skip over the first instructions */
+1:	.long	0xe80 + (.shared4 - _inth_etmu2)
 
 .id_etmux:
 	.long	0		/* Timer ID */

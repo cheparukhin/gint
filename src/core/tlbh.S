@@ -28,8 +28,15 @@ test_tea:
 
 map:
 	/* If TEA is mappable, map a page and return */
-	mov.l	.TLB_LoadPTEH, r0
-	jsr	@r0
+	#ifdef FX9860G
+	mov	#3, r0
+	#endif
+	#ifdef FXCG50
+	mov	#12, r0
+	#endif
+
+	mov.l	.syscall, r2
+	jsr	@r2
 	nop
 
 	lds.l	@r15+, macl
@@ -66,5 +73,12 @@ panic:
 	.long	0x00300000
 .max_mapped_rom:
 	.long	0x00300000 + _srom
-.TLB_LoadPTEH:
-	.long	___TLB_LoadPTEH
+
+#ifdef FX9860G
+.syscall:
+	.long	0x80010070
+#endif
+#ifdef FXCG50
+.syscall:
+	.long	0x80020070
+#endif

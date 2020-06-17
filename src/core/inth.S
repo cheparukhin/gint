@@ -11,6 +11,8 @@
 .global _gint_inth_7705
 #endif
 
+.global _gint_inth_callback
+
 .section .gint.blocks, "ax"
 .align 4
 
@@ -152,3 +154,70 @@ _inth_remap:
 	.byte	0x2f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 
 #endif
+
+/* CALLBACK HELPER
+   This function implements the callback with context saving. It is a general
+   function and does not need to reside in VBR space which is block-structured.
+   This function saves registers r0_bank...r7_bank, enables interrupts,
+   switches back to user bank and executes the callback. It does not save other
+   registers (pr/mach/macl/gbr) which are managed by the handler entry. */
+
+.section .gint.mapped
+
+/* gint_inth_callback()
+   Calls the specified function with the given argument after saving the user
+   context, enabling interrupts and going to user bank.
+
+   @r4  Callback function (volatile void * -> int)
+   @r5  Argument (volatile void *)
+   Returns the return value of the callback (int). */
+_gint_inth_callback:
+	stc.l	r0_bank, @-r15
+	stc.l	r1_bank, @-r15
+	stc.l	r2_bank, @-r15
+	stc.l	r3_bank, @-r15
+	stc.l	r4_bank, @-r15
+	stc.l	r5_bank, @-r15
+	stc.l	r6_bank, @-r15
+	stc.l	r7_bank, @-r15
+	stc.l	spc, @-r15
+	stc.l	ssr, @-r15
+	stc.l	sr, @-r15
+
+	/* Enable interrupts and go back to user bank. SR.IMASK is already set
+	   to the level of the current interrupt, which makes sure we can only
+	   be re-interrupted by something with a higher priority. */
+	mov.l	.SR_clear_RB_BL, r1
+	stc	sr, r0
+	and	r1, r0
+	ldc	r0, sr
+
+	/* We are now in the user bank, but we can still use r0..r7 as the
+	   important values have been saved on the stack. Call back. */
+	stc	r4_bank, r0
+	sts.l	pr, @-r15
+	jsr	@r0
+	stc	r5_bank, r4
+	lds.l	@r15+, pr
+
+	/* We want to forward the return value to the system bank */
+	ldc	r0, r0_bank
+
+	/* Restore the previous status register and the registers of the
+	   interrupted procedure. */
+	ldc.l	@r15+, sr
+	ldc.l	@r15+, ssr
+	ldc.l	@r15+, spc
+	ldc.l	@r15+, r7_bank
+	ldc.l	@r15+, r6_bank
+	ldc.l	@r15+, r5_bank
+	ldc.l	@r15+, r4_bank
+	ldc.l	@r15+, r3_bank
+	ldc.l	@r15+, r2_bank
+	ldc.l	@r15+, r1_bank
+	rts
+	ldc.l	@r15+, r0_bank
+
+.align 4
+.SR_clear_RB_BL:
+	.long	~((1 << 29) | (1 << 28))

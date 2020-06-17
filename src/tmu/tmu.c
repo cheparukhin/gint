@@ -162,6 +162,22 @@ GMAPPED void timer_stop(int id)
 	}
 }
 
+/* timer_wait() - wait until a timer is stopped */
+void timer_wait(int id)
+{
+	if(id < 3)
+	{
+		tmu_t *T = &TMU[id];
+		/* Sleep if an interruption will wake us up */
+		while(*TSTR & (1 << id)) if(T->TCR.UNIE) sleep();
+	}
+	else
+	{
+		etmu_t *T = &ETMU[id];
+		while(T->TSTR) if(T->TCR.UNIE) sleep();
+	}
+}
+
 //---
 //	Predefined timer callbacks
 //---
@@ -178,15 +194,12 @@ GMAPPED int timer_timeout(volatile void *arg)
 //	Low-level functions
 //---
 
-/* timer_clear() - clear an ETMU flag and possibly stop the timer
-   @timer  Timer ID, must be an ETMU
-   @stop   Non-zero to stop the timer */
-GMAPPED void timer_clear(int id, int stop)
+/* timer_clear() - clear an ETMU flag
+   @timer  Timer ID, must be an ETMU */
+GMAPPED void timer_clear(int id)
 {
 	do ETMU[id-3].TCR.UNF = 0;
 	while(ETMU[id-3].TCR.UNF);
-
-	if(stop) timer_stop(id);
 }
 
 //---
@@ -270,7 +283,7 @@ static void init(void)
 	gint_inthandler(0xc60, inth_etmu_help, 32);
 
 	/* Enable TMU0 at level 13, TMU1 at level 11, TMU2 at level 9 */
-	gint_intlevel(0, 7);
+	gint_intlevel(0, 13);
 	gint_intlevel(1, 11);
 	gint_intlevel(2, 9);
 

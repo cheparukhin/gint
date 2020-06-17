@@ -9,8 +9,7 @@
 **	* File system, because it's a mess and we might ruin the ROM.
 */
 
-/* TLB management */
-.global ___TLB_LoadPTEH
+.section .pretext
 
 /* Dynamic allocation */
 .global _malloc
@@ -50,26 +49,6 @@
 1:	.long	id
 
 #define syscall(id) syscall_(id, syscall_table)
-
-/*** Special syscalls that must remain mapped ***/
-
-.section .gint.mapped
-
-#ifdef FX9860G
-___TLB_LoadPTEH:
-	syscall_(0x0003, 2f)
-2:	.long 0x80010070
-#endif
-
-#ifdef FXCG50
-___TLB_LoadPTEH:
-	syscall_(0x000c, 2f)
-2:	.long 0x80020070
-#endif
-
-/*** Normal syscalls in ROM ***/
-
-.section .pretext
 
 #ifdef FX9860G
 

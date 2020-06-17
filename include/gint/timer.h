@@ -141,6 +141,12 @@ void timer_pause(int timer);
    @timer  Timer id, as returned by timer_setup() */
 void timer_stop(int timer);
 
+/* timer_wait() - wait for a timer to stop
+   Waits until the specified timer stops running. If the timer is not running,
+   returns immediately. The timer might not be free if it has just been paused
+   instead of stopped entirely. */
+void timer_wait(int timer);
+
 //---
 //	Predefined timer callbacks
 //---

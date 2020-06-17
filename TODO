@@ -1,5 +1,4 @@
 For the 2.1.0 release:
-* core:      use gint_switch() to handle TLB misses
 * core:      the four basic memory functions (with automated tests)
 * bopti:     remove the deprecated image_t definition
 * project:   remove the compat branch
@@ -12,6 +11,7 @@ Issues:
 * #10        support fx-CG 20
 
 Extensions on existing code:
+* bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
 * gray:      add gprint()
 * gray:      double-buffer gray settings and unify d* with g*
 * topti:     support unicode fonts
