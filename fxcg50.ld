@@ -16,11 +16,13 @@ MEMORY
 	rom   (rx):   o = 0x00300000, l = 2M
 	/* Static RAM; stack grows down from the end of this region.
 	   The first 0x2000 bytes are reserved by gint, see below */
-	ram   (rw):   o = 0x08102000, l = 504k
-	/* gint's VBR space, at the start of the user stack */
-	vbr   (rwx):  o = 0x8c160000, l = 5k
-	/* gint's data resides in these few kilobytes before the user area */
-	rram  (rwx):  o = 0x8c161400, l = 3k
+	ram   (rw):   o = 0x08101400, l = 507k
+	/* gint's VBR space at the start of the user stack on fx-CG 50 and on
+	   fx-CG 20. This address needs not be determined now because VBR code
+	   is position-independent and stored in ROM so the linker doesn't even
+	   need to know the value */
+	vbr50 (rwx):  o = 0x8c160000, l = 5k
+	vbr20 (rwx):  o = 0x88160000, l = 5k
 	/* On-chip IL memory */
 	ilram (rwx):  o = 0xe5200000, l = 4k
 	/* On-chip X and Y memory */
@@ -189,9 +191,10 @@ SECTIONS
 	   There's an unused 0x100-byte gap at the start of the VBR space.
 	   The VBR space is already a large block (> 2 kiB), so I'm cutting off
 	   the gap to spare some memory */
-	_gint_vbr = ORIGIN(vbr) - 0x100;
+	_gint_vbr_fxcg50 = ORIGIN(vbr50) - 0x100;
+	_gint_vbr_fxcg20 = ORIGIN(vbr20) - 0x100;
 
-	. = ORIGIN(rram);
+	. = ORIGIN(ram) + _sbss + _sdata;
 
 	/* gint's data section, going to static RAM. This section contains many
 	   small objects from the library (static/global variables, etc) */
@@ -202,7 +205,7 @@ SECTIONS
 		*(.gint.data .gint.data.*)
 
 		. = ALIGN(16);
-	} > rram AT> rom
+	} > ram AT> rom
 
 	_sgdata = SIZEOF(.gint.data);
 
@@ -213,7 +216,7 @@ SECTIONS
 		*(.gint.bss .gint.bss.*)
 
 		. = ALIGN(16);
-	} > rram :NONE
+	} > ram :NONE
 
 	_sgbss = SIZEOF(.gint.bss);
 

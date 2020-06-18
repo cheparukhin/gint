@@ -12,8 +12,16 @@
 #include <gint/display.h>
 
 /* VBR address, from the linker script */
-extern char gint_vbr[];
-/* System's VBR address */
+#ifdef FX9860G
+extern char gint_vbr_fx9860g[];
+#endif
+#ifdef FXCG50
+extern char gint_vbr_fxcg50[];
+extern char gint_vbr_fxcg20[];
+#endif
+
+/* VBR addresses for gint and the system */
+GBSS uint32_t gint_vbr;
 GBSS static uint32_t system_vbr;
 /* Size of exception and TLB handler */
 extern char gint_exch_size;
@@ -98,7 +106,14 @@ GMAPPED static void lock(void)
 void gint_install(void)
 {
 	/* VBR address, provided by the linker script */
-	void *vbr = (void *)&gint_vbr;
+	#ifdef FX9860G
+	gint_vbr = (uint32_t)&gint_vbr_fx9860g;
+	#endif
+	#ifdef FXCG50
+	gint_vbr = (gint[HWCALC] == HWCALC_FXCG50)
+		? (uint32_t)&gint_vbr_fxcg50
+		: (uint32_t)&gint_vbr_fxcg20;
+	#endif
 
 	/* Event handler entry points */
 	void *inth_entry = isSH3() ? gint_inth_7705 : gint_inth_7305;
@@ -113,12 +128,13 @@ void gint_install(void)
 	gint_ctx_save(&sys_ctx);
 
 	/* Load the event handler entry points into memory */
+	void *vbr = (void *)gint_vbr;
 	memcpy(vbr + 0x100, gint_exch, exch_size);
 	memcpy(vbr + 0x400, gint_tlbh, tlbh_size);
 	memcpy(vbr + 0x600, inth_entry, 64);
 
 	/* Time to switch VBR and roll! */
-	system_vbr = gint_setvbr((uint32_t)vbr, lock);
+	system_vbr = gint_setvbr(gint_vbr, lock);
 }
 
 /* unlock() - unlock interrupts, restoring system settings */

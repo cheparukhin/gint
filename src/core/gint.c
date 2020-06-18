@@ -49,7 +49,7 @@ int gint_intlevel(int intid, int level)
 /* gint_inthandler() - configure interrupt handlers */
 void *gint_inthandler(int event_code, const void *handler, size_t size)
 {
-	extern char gint_vbr;
+	extern uint32_t gint_vbr;
 
 	/* Normalize the event code */
 	event_code -= 0x400;
@@ -58,6 +58,6 @@ void *gint_inthandler(int event_code, const void *handler, size_t size)
 	/* Prevent overriding the entry gate */
 	if(event_code < 0) return NULL;
 
-	void *dest = (void *)&gint_vbr + event_code + 0x640;
+	void *dest = (void *)gint_vbr + event_code + 0x640;
 	return memcpy(dest, handler, size);
 }
