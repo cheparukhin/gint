@@ -224,7 +224,7 @@ void gint_switch(void (*function)(void))
 	{
 		if(drv->wait) drv->wait();
 	}
-	gint_setvbr((uint32_t)&gint_vbr, gint_switch_in);
+	gint_setvbr(gint_vbr, gint_switch_in);
 }
 
 int   __Timer_Install(int id, void (*handler)(void), int delay);
