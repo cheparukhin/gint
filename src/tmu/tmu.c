@@ -173,7 +173,7 @@ void timer_wait(int id)
 	}
 	else
 	{
-		etmu_t *T = &ETMU[id];
+		etmu_t *T = &ETMU[id-3];
 		while(T->TSTR) if(T->TCR.UNIE) sleep();
 	}
 }

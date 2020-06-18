@@ -147,6 +147,7 @@ _inth_etmu2:
 	mov	#5, r1
 
 .shared4:
+	mov.l	r1, @-r15
 	sts.l	pr, @-r15
 	mov.l	r0, @-r15
 
@@ -158,9 +159,8 @@ _inth_etmu2:
 	/* Prepare invoking the callback function */
 	mov.l	@r15+, r0
 	mov.l	.gint_inth_callback_2, r1
-	mov.l	@r0, r4
 	bra	_inth_etmu_help
-	mov.l	@(4, r0), r5
+	mov.l	@r0, r4
 
 .storage_etmu2:
 	.long	0		/* Callback: Configured dynamically */
@@ -171,19 +171,19 @@ _inth_etmu_help:
 
 	/* Invoke callback; if return value is non-zero, stop timer */
 	jsr	@r1
-	nop
+	mov.l	@(4, r0), r5
 	tst	r0, r0
 	bt	.shared5
 	mov.l	.timer_stop_2, r1
 	jsr	@r1
-	nop
+	mov.l	@(4, r15), r4
 
 	/* Clear the flag and possibly stop the timer */
 
 .shared5:
 	lds.l	@r15+, pr
 	rts
-	nop
+	add	#4, r15
 
 .gint_inth_callback_2:
 	.long	_gint_inth_callback
