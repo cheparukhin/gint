@@ -60,6 +60,12 @@ void dclear(color_t color);
                     fxcg50:  Any R5G6B5 color */
 void drect(int x1, int y1, int x2, int y2, color_t color);
 
+/* drect_border(): Rectangle with border
+   This function draws a rectangle with an inner border. The border width must
+   be smaller than half the width and half the height. */
+void drect_border(int x1, int y1, int x2, int y2, int fill_color,
+	int border_width, int border_color);
+
 //---
 //	Point drawing functions
 //---
