@@ -116,8 +116,26 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	}
 }
 
-/* dtext() - display a string of text */
-void dtext(int x, int y, char const *str, int fg, int bg)
+/* dtext_opt(): Display a string of text */
+void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
+	char const *str)
 {
+	if(halign != DTEXT_LEFT || valign != DTEXT_TOP)
+	{
+		int w, h;
+		dsize(str, topti_font, &w, &h);
+
+		if(halign == DTEXT_RIGHT)  x -= w;
+		if(halign == DTEXT_CENTER) x -= ((w+1) >> 1);
+		if(valign == DTEXT_BOTTOM) y -= h;
+		if(valign == DTEXT_MIDDLE) y -= ((h+1) >> 1);
+	}
+
 	topti_render(x, y, str, strlen(str), topti_font, fg, bg);
+}
+
+/* dtext(): Simple version of dtext_opt() with defaults */
+void dtext(int x, int y, int fg, char const *str)
+{
+	dtext_opt(x, y, fg, C_NONE, DTEXT_LEFT, DTEXT_TOP, str);
 }

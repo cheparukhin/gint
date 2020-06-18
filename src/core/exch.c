@@ -5,8 +5,8 @@
 #include <gint/defs/attributes.h>
 #include <gint/hardware.h>
 
-#define dprint(x, y, ...) dprint(x, y, C_BLACK, C_NONE, __VA_ARGS__)
-#define dtext(x, y, str)  dtext (x, y, str, C_BLACK, C_NONE)
+#define dprint(x, y, ...) dprint(x, y, C_BLACK, __VA_ARGS__)
+#define dtext(x, y, str)  dtext (x, y, C_BLACK, str)
 
 /* gint_panic_default(): Default panic handler */
 GNORETURN static void gint_default_panic(GUNUSED uint32_t code)

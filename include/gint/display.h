@@ -201,32 +201,61 @@ font_t const *dfont(font_t const * font);
    @w @h  Set to the width and height of the rendered text, may be NULL */
 void dsize(char const *str, font_t const * font, int *w, int *h);
 
-/* dtext(): Display a string of text
+/* Alignment settings for dtext_opt() and dprint_opt(). Combining a vertical
+   and a horizontal alignment option specifies where a given point (x,y) should
+   be relative to the rendered string. */
+enum {
+	/* Horizontal settings: default in dtext() is DTEXT_LEFT */
+	DTEXT_LEFT   = 0,
+	DTEXT_CENTER = 1,
+	DTEXT_RIGHT  = 2,
+	/* Vertical settings: default in dtext() is DTEXT_TOP */
+	DTEXT_TOP    = 0,
+	DTEXT_MIDDLE = 1,
+	DTEXT_BOTTOM = 2,
+};
+
+/* dtext_opt(): Display a string of text
 
    Draws some text in the video RAM using the font set with dfont() (or gint's
-   default if no such font was set).
+   default if no such font was set). This function has a lot of parameters,
+   see dtext() for a simpler version.
 
    On fx9860g, due to the particular design of topti, this function performs
    drastic rendering optimizations using the line structure of the VRAM and is
    able to render several characters at once.
 
    This is not a printf()-family function so [str] cannot contain formats like
-   "%d" and you cannot pass additional arguments.
+   "%d" and you cannot pass additional arguments. See dprint_opt() and dprint()
+   for that.
 
-   @x @y   Coordinates of top-left corner of the rendered string
-   @str    String to display
-   @fg     Text color
-           fx9860g: white, black, none, invert
-           fxcg50:  Any R5G6B6 color, or C_NONE
-   @bg     Background color
-           fx9860g: white, black, none, invert
-           fxcg50:  Any R5G6B5 color, or C_NONE */
-void dtext(int x, int y, char const *str, int fg, int bg);
+   @x @y    Coordinates of top-left corner of the rendered string
+   @fg      Text color
+            fx9860g: white, black, none, invert
+            fxcg50:  Any R5G6B6 color, or C_NONE
+   @bg      Background color
+            fx9860g: white, black, none, invert
+            fxcg50:  Any R5G6B5 color, or C_NONE
+   @halign  Where x should be relative to the rendered string (see above enum)
+   @valign  Where y should be relative to the rendered string (see above enum)
+   @str     String to display */
+void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
+	char const *str);
 
-/* dprint(): Display a formatted string
-   Much like dtext(), but accepts printf-like formats with arguments. See
+/* dtext(): Simple version of dtext_opt() with defaults
+   This is exactly dtext_opt() with bg=C_NONE, halign=DTEXT_LEFT and
+   valign=DTEXT_TOP. */
+void dtext(int x, int y, int fg, char const *str);
+
+/* dprint_opt(): Display a formatted string
+   Much like dtext_opt(), but accepts printf-like formats with arguments. See
    <gint/std/stdio.h> for a detailed view of what this format supports. */
-void dprint(int x, int y, int fg, int bg, char const *format, ...);
+void dprint_opt(int x, int y, int fg, int bg, int halign, int valign,
+	char const *format, ...);
+
+/* dprint(): Simple version of dprint_op() with defaults
+   Like dtext() with formatted printing. */
+void dprint(int x, int y, int fg, char const *format, ...);
 
 //---
 //	Image rendering (bopti)
