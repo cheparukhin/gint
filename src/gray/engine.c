@@ -25,7 +25,7 @@ GDATA static volatile int st = 0;
 
 /* Whether the engine is running. Delays of light and dark frames. */
 GDATA static int runs = 0;
-GDATA static int delays[2] = { 762, 1311 };
+GBSS static int delays[2];
 
 /* Underlying timer */
 #define GRAY_TIMER 0
@@ -49,6 +49,18 @@ GCONSTRUCTOR static void gray_init(void)
 	vrams[2] = malloc(1024);
 	vrams[3] = malloc(1024);
 	#endif /* GINT_STATIC_GRAY */
+
+	/* Default delays from Graph 35+E II are different from other models */
+	if(gint[HWCALC] == HWCALC_G35PE2)
+	{
+		delays[0] = 762;
+		delays[1] = 1311;
+	}
+	else
+	{
+		delays[0] = 898;
+		delays[1] = 1350;
+	}
 }
 
 /* gray_quit(): Engine deinitialization() */
