@@ -28,11 +28,12 @@
 
 /* Aligned variables */
 #define GALIGNED(x)	__attribute__((aligned(x)))
-
 /* Packed structures. I require explicit alignment because if it's unspecified,
    GCC cannot optimize access size, and reads to memory-mapped I/O with invalid
    access sizes silently fail - honestly you don't want this to happen */
 #define GPACKED(x)	__attribute__((packed, aligned(x)))
+/* Transparent unions */
+#define GTRANSPARENT	__attribute__((transparent_union))
 
 /* Weak symbols */
 #define GWEAK		__attribute__((weak))

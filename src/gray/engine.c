@@ -74,13 +74,13 @@ GDESTRUCTOR static void gray_quit(void)
 }
 
 /* gray_int(): Interrupt handler */
-int gray_int(GUNUSED volatile void *arg)
+int gray_int(void)
 {
 	t6k11_display(vrams[st ^ 2], 0, 64, 16);
 	timer_reload(GRAY_TIMER, delays[(st ^ 3) & 1]);
 	st ^= 1;
 
-	return 0;
+	return TIMER_CONTINUE;
 }
 
 /* gray_start(): Start the gray engine */
@@ -92,9 +92,8 @@ void gray_start(void)
 
 	if(runs) return;
 
-	int free = timer_setup(GRAY_TIMER, delays[0], timer_Po_64, gray_int,
-		NULL);
-	if(free != GRAY_TIMER) return;
+	int timer = timer_setup(GRAY_TIMER|TIMER_Pphi_64, delays[0], gray_int);
+	if(timer != GRAY_TIMER) return;
 
 	timer_start(GRAY_TIMER);
 	st = 0;

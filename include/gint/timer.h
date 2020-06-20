@@ -9,114 +9,203 @@
 #include <gint/mpu/tmu.h>
 #include <gint/hardware.h>
 
-/* Timer identifiers
+/* Timer types and numbers
 
-   Hardware timers are numbered with integers starting from 0. You can freely
-   access all the available timers by using their number once you have
-   configured them with timer_setup(). The number of timers depends on the MPU:
+   If you're new to timers, read this comment and then check timer_setup() and
+   timer_start(): most of the time you only need these.
 
-     SH3-based: 4 timers, ids 0..3  [SH7355, SH7337]
-     SH4-based: 9 timers, ids 0..8  [SH7305]
+   There are two types of timers on the calculator: normal timers called TMU,
+   and extra timers added by Casio called ETMU. The main difference is that TMU
+   are very precise (about 4 MHz; the resolution is about 250 ns) while ETMU
+   are much less precise (32 kHz; the resolution is about 30 µs).
 
-   You should be aware that some of these timers are used by default by gint:
-   - Timer 0 is used by the gray engine on fx9860g.
-   - Timer 3/8 is used by the keyboard on SH3/SH4.
+   The number of available timers also depends on the platform:
+   * SH3-based fx9860g have 3 TMU (ID 0,1,2) and 1 ETMU (ID 3)
+   * SH4-based fx9860g and fxcg50 have 3 TMU (ID 0,1,2) and 6 ETMU (ID 3..8)
 
-   timer_setup() will fail if you try to use a timer that's already running.
-   Always check the return value of timer_setup()! Using a timer id that has
-   not been validated by timer_setup() will work, but do *something else* than
-   what you intended. */
+   You can request "a" timer with timer_setup(), and gint will choose an
+   available timer depending on the precision you requested. Or, if you want
+   one specifically, you ask for an ID of your choice.
 
-/* timer_count() - tells how many timers are available on the platform */
+   gint uses 1 to 2 timers by default:
+   * One for the keyboard on all calculators, always an ETMU
+   * The gray engine on fx9860g uses TMU0 for interrupt priority reasons; TMU0
+     is normally available for it unless you've used all TMUs at the same time
+   libprof also uses a TMU.
+
+   Most of the time you can just use timer_setup() and specify TIMER_ANY. If
+   you want to be sure that you have a TMU or an ETMU, you can do so by
+   specifying TIMER_TMU or TIMER_ETMU. If you further want to have a specific
+   timer with specific settings, then you can:
+
+   * Set a specific ID in timer_setup(), in which case the delay is no longer
+     interpreter as count of µs, but as a TCOR value.
+   * If this ID is a TMU, you can further add (with + or |) a prescaler
+     specification, one of TIMER_Po_{4,16,64,256}.
+   * Regardless of how the timer was obtained, you can use timer_reload() to
+     replace the value of TCOR.
+   * Also note that TMU0, TMU1, TMU2 and the ETMU have respective interrupt
+     priority levels of 13, 11, 9, and 7. The gray engine uses TMU0 to
+     guarantee maximum visual stability in the presence of interrupts.
+
+   In this module, timers are manipulated through their ID. timer_setup()
+   returns the ID of a timer which was allocated to you. You can check it to
+   determine whether your timer is a TMU (0,1,2) or an ETMU (3 or more). */
+
+/* timer_count(): Number of timers available on the platform */
 #define timer_count() (isSH3() ? 4 : 9)
 
 /* Clock input
 
-   Timers count down when their input clock ticks, and fire when their counter
-   reach 0. The choice of the input clock influences the resolution of the
-   timer, but if the clock is too fast, the 32-bit counter might not be able to
-   represent long delays.
+   Standard TMU can count at different speeds. A fast speed offers more
+   precision but a slower speed offers longer delays. gint automatically
+   selects suitable speed by default.
 
-   Several input clocks are available. The peripheral clock (Po) can be divided
-   by 4, 16, 64 or 256; as an alternative the external clock TCLK can be used
-   for counting. I suspect TCLK runs at a fixed frequency of 32768 Hz, but this
-   has yet to be verified.
+   If you want something very particular, you can add (with + or |) a prescaler
+   value to a chosen ID in timer_setup() to request that specific value. The
+   default prescaler if the ID is fixed is TIMER_Pphi_4. */
+enum {
+	TIMER_Pphi_4   = 0x00,
+	TIMER_Pphi_16  = 0x10,
+	TIMER_Pphi_64  = 0x20,
+	TIMER_Pphi_256 = 0x30,
+};
 
-   You don't really need to choose an input clock unless you are doing
-   something very specific. In most practical cases you can use timer_default
-   which is 0. See the timer_delay() function for more information. */
-typedef enum
+/* Timer selection; see timer_setup() */
+enum {
+	TIMER_ANY  = -1,
+	TIMER_TMU  = -2,
+	TIMER_ETMU = -3,
+};
+
+/* Type of callback functions
+
+   This module used to require callbacks of type int (*)(volatile void *), but
+   callbacks are rarely this generic. Now timer_setup() accepts functions of
+   any of the types below. */
+typedef union
 {
-	timer_Po_4	= 0,
-	timer_Po_16	= 1,
-	timer_Po_64	= 2,
-	timer_Po_256	= 3,
-	timer_TCLK	= 5,
+	/* No argument, returns either TIMER_CONTINUE or TIMER_STOP */
+	int (*v)(void);
+	/* Single integer argument */
+	int (*i)(int);
+	/* Single pointer argument, cv-qualified as needed */
+	int (*pv)  (void *);
+	int (*pVv) (volatile void *);
+	int (*pCv) (const void *);
+	int (*pCVv)(volatile const void *);
 
-	timer_default	= timer_Po_4,
+} GTRANSPARENT timer_callback_t;
 
-} timer_input_t;
+/* Return value for timer callbacks, indicating whether the timer should
+   continue running and fire again, or stop now */
+enum {
+	TIMER_CONTINUE = 0,
+	TIMER_STOP     = 1,
+};
 
 //---
 //	Timer functions
 //---
 
-/* timer_setup() - set up a timer
+/* timer_setup(): Reserve and configure a timer
 
-   This function configures the requested timer without starting it. On
-   success, it returns the first argument "timer", which is used as a timer
-   identifier in all other timer functions. If the requested timer is already
-   in use, this function fails and returns a negative number.
+   This function finds and configures a timer (without starting it). On
+   success, it returns the ID of the configured timer, which is used in all
+   other timer functions. If no timer matching the requested settings is
+   available, this function returns -1.
 
-   This function sets the timer delay, the clock source, and registers a
-   callback function to be called when the timer fires. An argument can be
-   supplied to the callback function in the form of a pointer.
+   When started, the configured timer will run for the requested delay and call
+   the supplied callback function at the end of this delay. The callback
+   function can then decide whether to leave the timer running (and be called
+   again after the same delay) or stop the timer.
 
-   When the timer fires, the callback function is called with the provided
-   argument pointer. The callback decides whether the timer should continue
-   running (by returning 0) or stop (by returning nonzero). In the latter case,
-   events accumulated while the callback was running are dropped.
+   The first argument specifies what kind of timer you want.
+   * TIMER_ANY will let timer_setup() choose any available timer. timer_setup()
+     will only use an ETMU if the delay is more than 0.1 ms to avoid resolution
+     issues. Most of the time this is what you need.
+   * TIMER_TMU or TIMER_ETMU will let timer_setup() choose an available TMU or
+     ETMU, respectively.
+   * Specifying an ID (0..8) will request exactly that timer. In this case, and
+     if the ID is a TMU (0,1,2), you may add (with + or |) a prescaler value to
+     specify the clock input. Otherwise the clock is set to Pphi/4.
+   If no timer matching the supplied settings is available, timer_setup()
+   returns -1.
 
-   It is sometimes difficult to choose a timer constant and a clock source
-   given a wished delay in seconds, especially when overclock is used. The
-   timer_delay() function is provided for this purpose.
+   The second argument is the delay. With TIMER_ANY, TIMER_TMU and TIMER_ETMU,
+   the delay is interpreted as a number of µs. With an explicit ID, the delay
+   is interpreted as a value of TCOR; see timer_delay() in this case. Note that
+   TCOR values are sensitive to the overclock level!
 
-   @timer     Requested timer id
-   @delay     Delay between each event (the unit depends on the clock source)
-   @clock     Clock source used by the timer for counting down
-   @callback  Callback function (called when the timer fires)
-   @arg       Passed as argument to the callback function */
-int timer_setup(int timer, uint32_t delay, timer_input_t clock,
-	int (*callback)(volatile void *arg), volatile void *arg);
+   The third argument is a function to be called when the timer expires. It may
+   have a single 4-byte argument (int or pointer), in which case you should
+   provide the value to call it with as an optional argument (you can only use
+   a single argument). It must return an int equal to either TIMER_CONTINUE or
+   TIMER_STOP to control the subsequent operation of the timer. See the
+   definition of timer_callback_t above for the possible function types. If
+   this argument is NULL, a default function that stops the timer will be used.
 
-/* timer_delay() - compute a delay constant from a duration in seconds
+   On success, the configured timer becomes reserved; it can no longer be
+   returned by timer_setup() until:
+   * Either timer_stop() is called,
+   * Or the callback returns TIMER_STOP (which also stops the timer).
+   Remember than the returned timer is not started yet; see timer_start().
 
-   This function can used as a facility to calculate the [delay] argument to
-   the timer_setup() function. It takes a microsecond delay as an argument and
-   returns the corresponding timer constant. A typical use to start a timer
-   with a 25 ms interval would be:
+   @timer     Requested timer; TIMER_{ANY,TMU,ETMU} or an ID with prescaler
+   @delay     Delay between each event, in µs unless first argument is an ID
+   @callback  Function to be called when the timer fires
+   @...       If the callback takes an argument, specify that value here */
+int timer_setup(int timer, uint64_t delay_us, timer_callback_t callback, ...);
 
-     timer_setup(0, timer_delay(0, 25 * 1000), 0, callback, arg);
+/* Makes sure an argument is always provided, for va_arg() */
+#define timer_setup(...) timer_setup(__VA_ARGS__, 0)
 
-   WARNING: Only timers 0 to 2 can count microseconds! Other timers have a
-   resolution of around 30 us. Counting in ms is safe for all timers, though.
-
-   For standard timers (0 to 2) it uses Po / 4 as clock input, which is very
-   precise and can represent up to 3 minutes' time; for extra timers (3 and
-   above) the clock is fixed to 32768 Hz.
-
-   @timer     The timer you are planning to use
-   @delay_us  Requested delay in microseconds */
-uint32_t timer_delay(int timer, uint64_t delay_us);
-
-/* timer_start() - start a configured timer
-   The specified timer will start counting down and fire callbacks at regular
-   intervals.
-
-   @timer  Timer id, as returned by timer_setup() */
+/* timer_start(): Start a configured timer
+   The specified timer will start counting down and call its callback function
+   at regular intervals until it is paused or stopped. */
 void timer_start(int timer);
 
-/* timer_reload() - change a timer's delay constant for next interrupts
+/* timer_pause(): Pause a timer without freeing it
+   Pauses the specified timer will be paused. The timer stops counting but is
+   not freed and can be resumed by calling timer_start(). */
+void timer_pause(int timer);
+
+/* timer_stop(): Stop and free a timer
+   Stops and frees a timer, making it available to timer_setup(). This timer
+   should no longer be used unless it is returned again by timer_setup(). */
+void timer_stop(int timer);
+
+/* timer_wait(): Wait for a timer to stop
+   Waits until the timer pauses or stops. If the timer is not running, returns
+   immediately. Even after timer_wait(), the timer may not be available since
+   it may have only paused. If the timer never stops, you're in trouble. */
+void timer_wait(int timer);
+
+//---
+//	Low-level functions
+//---
+
+/* timer_delay(): Compute a timer constant from a duration in seconds
+
+   This function calculates the timer constant for a given delay. timer_setup()
+   does this computation when TIMER_ANY, TIMER_TMU or TIMER_ETMU is provided,
+   but expects you to provide the exact constant when an explicit timer ID is
+   requested. timer_reload() also expects the constant.
+
+   For TMU the clock can be Pphi/4, Pphi/16, Pphi/64 and Pphi/256, which can
+   respectively count up to about 350 seconds, 23 minutes, 95 minutes and 381
+   minutes.
+
+   For ETMU the clock is TCLK at 32768 Hz, which can count up to 36 hours. Any
+   longer delay should probably be managed by the RTC (which counts even when
+   the calculator is off).
+
+   @timer     The timer you are planning to use
+   @delay_us  Requested delay in microseconds
+   @clock     The clock value, irrelevant if timer >= 3 */
+uint32_t timer_delay(int timer, uint64_t delay_us, int clock);
+
+/* timer_reload(): Change a timer's delay constant for next interrupts
 
    Changes the delay constant of the given timer. Nothing will happen until the
    next callback; then the timer will update its delay to reflect the new
@@ -126,35 +215,14 @@ void timer_start(int timer);
    @delay  New delay (unit depends on the clock source) */
 void timer_reload(int timer, uint32_t delay);
 
-/* timer_pause() - stop a running timer
-   The specified timer will be paused; its counter will not be reset. A stopped
-   timer can be resumed anytime by calling timer_start(). If you want to also
-   reset the counter, use timer_reload().
-
-  @timer  Timer id, as returned by timer_setup() */
-void timer_pause(int timer);
-
-/* timer_stop() - stop and free a timer
-   Stops and destroys a timer, making its id free for re-use. The id must not
-   be used anymore until it is returned by a further call to timer_setup().
-
-   @timer  Timer id, as returned by timer_setup() */
-void timer_stop(int timer);
-
-/* timer_wait() - wait for a timer to stop
-   Waits until the specified timer stops running. If the timer is not running,
-   returns immediately. The timer might not be free if it has just been paused
-   instead of stopped entirely. */
-void timer_wait(int timer);
-
 //---
 //	Predefined timer callbacks
 //---
 
-/* timer_timeout() - callback that sets a flag and halts the timer
-   This predefined callback may be used when a timeout is required. It sets its
-   argument pointer to 1 and halts the timer. The pointer must be of type
-   int * and you must declare the variable as volatile int. */
+/* timer_timeout(): Callback that sets a flag and halts the timer
+   This predefined callback may be used when a timeout is required. It takes a
+   single argument which must be a pointer to int (or other integer type of 4
+   bytes) and increments it. */
 int timer_timeout(volatile void *arg);
 
 #endif /* GINT_TIMER */

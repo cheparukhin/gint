@@ -5,15 +5,14 @@
 #include <gint/clock.h>
 #include <gint/timer.h>
 
-/* sleep_us() - sleep for a definite duration in microseconds */
-void sleep_us(int tid, int us_delay)
+/* sleep_us(): Sleep for a fixed duration in microseconds */
+void sleep_us(uint64_t delay_us)
 {
 	volatile int flag = 0;
-	uint32_t delay = timer_delay(tid, us_delay);
 
-	int free = timer_setup(tid, delay, 0, timer_timeout, &flag);
-	if(free < 0) return;
+	int timer = timer_setup(TIMER_ANY, delay_us, timer_timeout, &flag);
+	if(timer < 0) return;
 
-	timer_start(tid);
-	while(!flag) sleep();
+	timer_start(timer);
+	timer_wait(timer);
 }

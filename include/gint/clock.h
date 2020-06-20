@@ -5,6 +5,8 @@
 #ifndef GINT_CLOCK
 #define GINT_CLOCK
 
+#include <gint/defs/types.h>
+
 //---
 //	Clock signals
 //---
@@ -59,22 +61,13 @@ const clock_frequency_t *clock_freq(void);
    add-in is idle, for instance while waiting for keyboard input. */
 #define sleep() __asm__("sleep")
 
-/* sleep_us() - sleep for a definite duration in microseconds
+/* sleep_us(): Sleep for a fixed duration in microseconds
+   Stops the processor until the specified delay in microseconds has elapsed.
+   (The processor will still wake up occasionally to handle interrupts.) This
+   function selects a timer with timer_setup() called with TIMER_ANY. */
+void sleep_us(uint64_t delay_us);
 
-   Stops the processor until [delay_us] microseconds have elapsed. Interrupts
-   may occur during that time (especially timers firing), in which case the
-   events will be treated as usual. The processor will resume sleeping after
-   handling them.
-
-   The user may choose the timer used to time out the sleep. Remember that only
-   timers 0 to 2 have microsecond-level resolution; other timers count in units
-   of about 30 us.
-
-   @timer     Which timer to use to time out the sleep
-   @us_delay  How long to sleep (in microseconds) */
-void sleep_us(int timer, int us_delay);
-
-/* sleep_ms() - sleep for a definite duration in milliseconds */
-#define sleep_ms(timer, ms_delay) sleep_us(timer, (ms_delay) * 1000)
+/* sleep_ms(): Sleep for a fixed duration in milliseconds */
+#define sleep_ms(delay_ms) sleep_us((delay_ms) * 1000ull)
 
 #endif /* GINT_CLOCK */

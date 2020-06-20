@@ -248,7 +248,7 @@ int keydown_any(int key, ...)
 //	Driver initialization
 //---
 
-static int callback(GUNUSED volatile void *arg)
+static int callback(void)
 {
 	keysc_frame();
 	time++;
@@ -258,20 +258,18 @@ static int callback(GUNUSED volatile void *arg)
 /* init() - setup the support timer */
 static void init(void)
 {
-	int tid = isSH3() ? 3 : 8;
-
 	/* Configure the timer to do 128 keyboard scans per second. This
 	   frequency *must* be high for the KEYSC interface to work! */
 	/* Note: the supporting timer always runs at 32768 Hz. */
-	int delay = 32768 / KEYBOARD_SCAN_FREQUENCY;
+	int delay = 1000000 / KEYBOARD_SCAN_FREQUENCY;
 	if(!delay) delay = 1;
 
 	/* Set the default repeat times (milliseconds) */
 	getkey_repeat(400, 40);
 
 	/* The timer will be stopped when the timer driver is unloaded */
-	timer_setup(tid, delay, 0, callback, NULL);
-	timer_start(tid);
+	int tid = timer_setup(TIMER_ANY, delay, callback);
+	if(tid >= 0) timer_start(tid);
 
 	gint[HWKBD] = HW_LOADED | (isSH3() ? HWKBD_IO : HWKBD_KSI);
 	gint[HWKBDSF] = KEYBOARD_SCAN_FREQUENCY;

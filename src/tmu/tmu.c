@@ -7,12 +7,11 @@
 #include <gint/gint.h>
 #include <gint/clock.h>
 #include <gint/intc.h>
-
-#include <gint/mpu/intc.h>
 #include <gint/mpu/tmu.h>
 
-#include <gint/defs/attributes.h>
-#include <gint/defs/types.h>
+#include <stdarg.h>
+
+#undef timer_setup
 
 //---
 //	Driver storage
@@ -21,9 +20,9 @@
 /* inth_data_t - data storage inside interrupt handlers */
 typedef struct
 {
-	int (*cb)(volatile void *arg);	/* User-provided callback */
-	volatile void *arg;		/* Argument for [callback] */
-	volatile void *TCR;		/* TCR address for TMU */
+	void *function;		/* User-provided callback */
+	uint32_t arg;		/* Argument for function */
+	volatile void *TCR;	/* TCR address for TMU */
 
 } GPACKED(4) inth_data_t;
 
@@ -37,21 +36,17 @@ GDATA static etmu_t *ETMU = SH7305_ETMU;
 GDATA static volatile uint8_t *TSTR = &SH7305_TMU.TSTR;
 
 //---
-//	Timer API
+//	Local functions
 //---
 
-/* timer_setup() - set up a timer */
-int timer_setup(int id, uint32_t delay, timer_input_t clock,
-	int (*callback)(volatile void *arg), volatile void *arg)
+/* configure(): Configure a fixed timer */
+static void configure(int id, uint32_t delay, int clock, void *f, uint32_t arg)
 {
-	/* Timer is not installed (TCR address is really required) */
-	if(!timers[id]) return -1;
-
 	if(id < 3)
 	{
 		/* Refuse to setup timers that are already in use */
 		tmu_t *T = &TMU[id];
-		if(T->TCR.UNIE || *TSTR & (1 << id)) return -1;
+		if(T->TCR.UNIE || *TSTR & (1 << id)) return;
 
 		/* Configure the counter, clear interrupt flag*/
 		T->TCOR = delay;
@@ -67,10 +62,10 @@ int timer_setup(int id, uint32_t delay, timer_input_t clock,
 	else
 	{
 		etmu_t *T = &ETMU[id-3];
-		if(T->TCR.UNIE) return -1;
+		if(T->TCR.UNIE) return;
 
-		/* No clock input and clock edge here. But TCR and TCNT need a
-		   delay to retain the value */
+		/* No clock input and clock edge here. But TCR and TCNT need
+		   some time to execute the write */
 		do T->TCR.UNF = 0;
 		while(T->TCR.UNF);
 
@@ -83,24 +78,127 @@ int timer_setup(int id, uint32_t delay, timer_input_t clock,
 		T->TCR.UNIE = 1;
 	}
 
-	timers[id]->cb = callback;
+	timers[id]->function = f;
 	timers[id]->arg = arg;
-	return id;
+}
+
+/* matches(): Check if a timer matches the provided specification and delay */
+static int matches(int id, int spec, uint32_t delay)
+{
+	/* A specific idea only matches the exact timer */
+	if(spec >= 0) return id == (spec & 0xf);
+	/* TIMER_ANY always matches ETMU only for delays at least 100 µs */
+	if(spec == TIMER_ANY) return (id < 3 || delay >= 100);
+	/* TIMER_TMU and TIMER_ETMU match as you'd expect */
+	if(spec == TIMER_TMU) return (id < 3);
+	if(spec == TIMER_ETMU) return (id >= 3);
+	/* Default is not matching */
+	return 0;
+}
+
+/* available(): Check if a timer is available (UNIE cleared, not running) */
+static int available(int id)
+{
+	/* The timer should also be installed... */
+	if(!timers[id]) return 0;
+
+	if(id < 3)
+	{
+		tmu_t *T = &TMU[id];
+		return !T->TCR.UNIE && !(*TSTR & (1 << id));
+	}
+	else
+	{
+		etmu_t *T = &ETMU[id-3];
+		return !T->TCR.UNIE && !T->TSTR;
+	}
+}
+
+/* stop_callback(): Empty callback that stops the timer */
+static int stop_callback(void)
+{
+	return TIMER_STOP;
+}
+
+//---
+//	Timer API
+//---
+
+/* timer_setup(): Reserve and configure a timer */
+int timer_setup(int spec, uint64_t delay, timer_callback_t function, ...)
+{
+	int clock = 0;
+
+	/* Get the optional argument */
+	va_list va;
+	va_start(va, function);
+	uint32_t arg = va_arg(va, uint32_t);
+	va_end(va);
+
+	/* Default value for the callback */
+	if(!function.v) function.v = stop_callback;
+
+	/* Find a matching timer, starting from the slowest timers with the
+	   smallest interrupt priorities all the way up to TMU0 */
+	for(int id = timer_count() - 1; id >= 0; id--)
+	{
+		if(!matches(id, spec, delay) || !available(id)) continue;
+
+		/* If ID is a TMU, choose a timer prescaler. Assuming the worst
+		   running Pphi of ~48 MHz, select the finest resolution that
+		   allows the requested delay to be represented. */
+		if(id < 3 && spec >= 0)
+		{
+			/* Explicit timers with clock in the specification */
+			clock = (spec >> 4) & 0xf;
+		}
+		else if(id < 3)
+		{
+			uint64_t sec = 1000000;
+
+			/* Pphi/4 until 350 seconds */
+			if(delay <= 350 * sec) clock = TIMER_Pphi_4;
+			/* Pphi/16 until 1430 seconds */
+			else if(delay <= 1430 * sec) clock = TIMER_Pphi_16;
+			/* Pphi/64 until 5720 seconds */
+			else if(delay <= 5720 * sec) clock = TIMER_Pphi_64;
+			/* Pphi/256 otherwise */
+			else clock = TIMER_Pphi_256;
+		}
+
+		/* Find the delay constant for that timer and clock */
+		if(spec < 0) delay = timer_delay(id, delay, clock);
+
+		configure(id, delay, clock, function.v, arg);
+		return id;
+	}
+
+	return -1;
 }
 
 /* timer_delay() - compute a delay constant from a duration in seconds */
-uint32_t timer_delay(int id, uint64_t delay_us)
+uint32_t timer_delay(int id, uint64_t delay_us, int clock)
 {
-	/* TODO: Proper timer_delay() */
-	const clock_frequency_t *clock = clock_freq();
-	uint64_t freq = clock->Pphi_f >> 2;
+	uint64_t freq;
+
+	if(id < 3)
+	{
+		const clock_frequency_t *cpg = clock_freq();
+		freq = cpg->Pphi_f;
+		if(clock == TIMER_Pphi_4)   freq >>= 2;
+		if(clock == TIMER_Pphi_16)  freq >>= 4;
+		if(clock == TIMER_Pphi_64)  freq >>= 6;
+		if(clock == TIMER_Pphi_256) freq >>= 8;
+	}
+	else
+	{
+		/* ETMU all run on TCLK at 32768 Hz */
+		freq = 32768;
+	}
 
 	/* fxcg50: Calculated = 29491200 but it's too low */
 	/* TODO: Account for down spread spectrum in the CPG */
 	// uint64_t freq = 29020000 >> 2;
-
-	/* Extra timers all run at 32768 Hz */
-	if(id >= 3) freq = 32768;
 
 	uint64_t product = freq * delay_us;
 	return product / 1000000;
@@ -184,11 +282,11 @@ void timer_wait(int id)
 //---
 
 /* timer_timeout() - callback that sets a flag and halts the timer */
-int timer_timeout(volatile void *arg)
+int timer_timeout(void volatile *arg)
 {
-	volatile int *x = arg;
-	(*x)++;
-	return 1;
+	int volatile *x = arg;
+	if(x) (*x)++;
+	return TIMER_STOP;
 }
 
 //---
