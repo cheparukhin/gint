@@ -105,7 +105,7 @@ typedef struct
 	/* All interrupt priority registers */
 	union {
 		sh7705_intc_ipc_t	_;
-		volatile uint16_t	*IPRS[8];
+		volatile uint16_t	*IPR[8];
 	} GPACKED(4);
 
 	/* Control registers */
@@ -276,7 +276,7 @@ typedef struct
 	/* Interrupt priority registers */
 	union {
 		sh7305_intc_ipc_t	*_;
-		volatile uint16_t	*IPRS;
+		volatile uint16_t	*IPR;
 	};
 
 	/* Interrupt mask & mask clear registers */

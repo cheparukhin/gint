@@ -42,23 +42,22 @@ SECTIONS
 	      + SIZEOF(.gint.drivers) + SIZEOF(.gint.blocks);
 
 	/* Machine code going to ROM:
-	   - Initialization sections (.pretext.entry and .pretext)
+	   - Entry function (.text.entry)
 	   - Compiler-provided constructors (.ctors) and destructors (.dtors)
 	   - All text from .text and .text.* (including user code)
 	   - Code sections from fxlib, named "C" and "P" */
 
-	.pretext : {
-		*(.pretext.entry)
-		*(.pretext)
-
-		_btors = . ;
-		*(.ctors .ctors.*)
-		_mtors = . ;
-		*(.dtors .dtors.*)
-		_etors = . ;
-	} > rom
-
 	.text : {
+		*(.text.entry)
+
+		_bctors = . ;
+		*(.ctors .ctors.*)
+		_ectors = . ;
+
+		_bdtors = . ;
+		*(.dtors .dtors.*)
+		_edtors = . ;
+
 		_gint_exch_start = . ;
 		*(.gint.exch)
 		_gint_exch_size = ABSOLUTE(. - _gint_exch_start);

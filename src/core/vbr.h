@@ -16,9 +16,6 @@ extern char gint_vbr_fxcg50[];
 extern char gint_vbr_fxcg20[];
 #endif
 
-/* gint's VBR address as determined at runtime; not valid before kinit() */
-extern uint32_t gint_vbr;
-
 /* The kernel's interrupt and exception handlers' entry points */
 void gint_exch(void);
 void gint_tlbh(void);

@@ -43,18 +43,19 @@ SECTIONS
 	      + SIZEOF(.gint.drivers) + SIZEOF(.gint.blocks);
 
 	/* Machine code going to ROM:
-	   - Initialization sections (.pretext.entry and .pretext)
+	   - Entry function (.text.entry)
 	   - Compiler-provided constructors (.ctors) and destructors (.dtors)
 	   - All text from .text and .text.* (including user code) */
 	.text : {
-		*(.pretext.entry)
-		*(.pretext)
+		*(.text.entry)
 
-		_btors = . ;
+		_bctors = . ;
 		*(.ctors .ctors.*)
-		_mtors = . ;
+		_ectors = . ;
+
+		_bdtors = . ;
 		*(.dtors .dtors.*)
-		_etors = . ;
+		_edtors = . ;
 
 		_gint_exch_start = . ;
 		*(.gint.exch)

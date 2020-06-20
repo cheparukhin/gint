@@ -9,7 +9,7 @@
 **	* File system, because it's a mess and we might ruin the ROM.
 */
 
-.section .pretext
+.text
 
 /* Dynamic allocation */
 .global _malloc
@@ -113,8 +113,6 @@ syscall_table:
 #ifdef FXCG50
 
 /* Dynamic allocation */
-
-.section .pretext
 
 _malloc:
 	syscall(0x1f44)

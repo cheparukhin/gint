@@ -10,85 +10,40 @@
 /* GINT_VERSION - the library version number
 
    gint is versioned from its repository commits on the master branch. The
-   GINT_VERSION integer contains the short commit hash.
+   GINT_VERSION integer contains the short commit hash with 7 digits.
 
    For instance, 0x03f7c0a0 means commit 3f7c0a0. */
 extern char GINT_VERSION;
 #define GINT_VERSION ((uint32_t)&GINT_VERSION)
 
-//---
-//	Library management
-//---
-
-/* gint_install() - install and start gint
-   This function installs event handlers, masks interrupts and switches VBR.
-   Unless you are doing experimental runtime switching and you know how this
-   function is implemented, you should not call it. */
-void gint_install(void);
-
-/* gint_unload() - unload gint and give back control to the system
-   This function restores the runtime environment saved by gint_install(). It
-   is only called when the add-in terminates. To temporarily leave gint during
-   execution, use gint_switch(). When possible, use syscalls without leaving
-   gint for better performance. */
-void gint_unload(void);
-
-/* gint_switch() - temporarily switch out of gint
+/* gint_switch(): Switch out of gint to execute a function
 
    This function can be used to leave gint, restore the system's driver
    context, and execute code there before returning to gint. By doing this one
    can effectively interleave gint with the standard OS execution. The
-   limitations are quite extreme though, so unless you know precisely why
-   you're calling this function, you're likely doing it wrong.
+   limitations are quite extreme though, so unless you know precisely what
+   you're doing that requires getting out of gint (eg. BFile), be careful.
 
-   This switch is used to get back to the main menu and to answer TLB misses.
-   To go back to the menu, use getkey(), or getkey_opt() with the GETKEY_MENU
-   flag set, or call gint_osmenu() for an immediate return.
+   This main uses for this switch are going back to the main menu and using
+   BFile function. You can go back to the main menu easily by calling getkey()
+   (or getkey_opt() with the GETKEY_MENU flag set) and pressing the MENU key,
+   or by calling gint_osmenu() below which uses this switch.
 
    @function  Function to call in OS mode */
 void gint_switch(void (*function)(void));
 
-/* gint_osmenu() - switch out of gint and call the calculator's main menu
+/* gint_osmenu(): Call the calculator's main menu
 
-   This function safely invokes the calculator's main menu by unloading gint.
+   This function safely invokes the calculator's main menu with gint_switch().
    If the user selects the gint application again in the menu, this function
    reloads gint and returns. Otherwise, the add-in is fully unloaded by the
    system and the application terminates.
 
    This function is typically called when the [MENU] key is pressed during a
-   getkey() call. */
+   call to getkey(), but can also be called manually. */
 void gint_osmenu(void);
 
-//---
-//	Public functions
-//---
-
-/* gint_intlevel() - configure the level of interrupts
-
-   This function changes the interrupt level of the requested interrupt. Make
-   sure you are aware of interrupt assignments to avoid breaking other code.
-   This function is mainly used by drivers to enable the interrupts that they
-   support.
-
-   The first parameter 'intid' identifies an interrupt by its position in the
-   sequence:
-
-     IPRA & 0xf000 ; IPRA & 0x0f00 .. IPRA & 0x000f ; IPRB & 0xf000 ..
-
-   For instance ID 7 refers to the low nibble of IPRB. These IDs and the range
-   for which there are valid is heavily platform-dependent and any call to this
-   function should be wrapped inside an MPU type check. This function will
-   crash if the provided interrupt ID is invalid.
-
-   The interrupt level should be in the range 0 (disabled) .. 15 (highest
-   priority).
-
-   @intid  Interrupt ID of the targeted interrupt
-   @level  Requested interrupt level
-   Returns the interrupt level that was assigned before the call. */
-int gint_intlevel(int intid, int level);
-
-/* gint_inthandler() - configure interrupt handlers
+/* gint_inthandler(): Install interrupt handlers
 
    This function installs (copies) interrupt handlers in the VBR space of the
    application. Each handler is a 32-byte block aligned on a 32-byte boundary.
@@ -100,24 +55,27 @@ int gint_intlevel(int intid, int level);
    The assembler program will assume that consecutive blocks in the source code
    will be consecutive in memory, which is not always true. Avoiding cross-
    references is a practical rule to avoid problems. (gint breaks this rule
-   very often but does it carefully... I guess?)
+   quite often but does it safely.)
 
    This function allows anyone to replace any interrupt handler so make sure
-   you're not interfering with usual interrupt assignments.
+   you're not interfering with interrupt assignments from gint or a library.
 
    The first parameter event_code represents the event code associated with the
    interrupt. If it's not a multiple of 0x20 then you're doing something wrong.
    The codes are normally platform-dependent, but gint always uses SH7305
    codes: SH3 platforms have a translation table. See the documentation for a
-   list of event codes and their associated interrupts.
+   list of event codes and their associated interrupts. Also check the
+   translation table in gint's source in src/core/inth.S for SH3 support.
 
-   The handler function must be an interrupt handler: it must not raise
-   exceptions, must end with 'rts', and it will use the kernel register bank.
-   You read that right, it must end with rts because gint's main handler saves
-   registers besides the automated r0..r7. Do *not* use 'rte' in the handler.
-   For convenience I allow any block size to be loaded as an interrupt handler,
-   but it should really be a multiple of 0x20 bytes and not override other
-   handlers. If it's not written in assembler, then you're likely doing
+   The handler function is run in the kernel register bank with interrupts
+   disabled and must end with 'rts' (not 'rte') as the main interrupt handler
+   saves some registers for you. By default, user bank registers are not saved
+   except for gbr/mach/macl; if you want to call back to arbitrary code safely,
+   use gint_inth_callback() in your handler.
+
+   For convenience gint allows any block size to be loaded as an interrupt
+   handler, but it should really be a multiple of 0x20 bytes and not override
+   other handlers. If it's not written in assembler, then you're likely doing
    something wrong, especially with __attribute__((interrupt_handler)) which
    uses rte.
 
@@ -129,7 +87,23 @@ int gint_intlevel(int intid, int level);
    @event_code  Identifier of the interrupt block
    @handler     Address of handler function
    @size        How many bytes to copy
-   Returns the VBR address where the handlers was installed. */
+   Returns the VBR address where the handler was installed. */
 void *gint_inthandler(int event_code, void const *handler, size_t size);
+
+/* gint_inth_callback(): Call back arbitrary code from an interrupt handler
+
+   Calls the specified function with the given argument after saving the user
+   context, enabling interrupts and going to user bank. This function is used
+   to call user code from interrupt handlers, typically from timer or RTC
+   callbacks.
+
+   It is not safe to call from C code in any capacity and is mentioned here
+   only for documentation purposes; you should really only call this from
+   an interrupt handler's assembler code.
+
+   @callback  Callback function, may take no argument in practice
+   @arg       Argument
+   Returns the return value of the callback. */
+int gint_inth_callback(int (*function)(void *arg), void *arg);
 
 #endif /* GINT_GINT */

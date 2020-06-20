@@ -10,6 +10,8 @@
 #include <gint/hardware.h>
 #include <gint/exc.h>
 
+#include "kernel.h"
+
 /* Symbols provided by the linker script. For sections:
    - l* represents the load address (source address in ROM)
    - s* represents the size of the section
@@ -22,19 +24,19 @@ extern uint32_t
 	lilram, silram, rilram,		/* IL memory section */
 	lxram,  sxram,  rxram,		/* X memory section */
 	lyram,  syram,  ryram,		/* Y memory section */
-	sbss, rbss,			/* User's BSS section */
-	btors, mtors, etors;		/* Constructor/destructor arrays */
-extern gint_driver_t
-	bdrv, edrv;			/* Driver table */
+	sbss, rbss;			/* User's BSS section */
+
+/* Constructor and destructor arrays */
+extern void (*bctors)(void), (*ectors)(void);
+extern void (*bdtors)(void), (*edtors)(void);
 
 /* User-provided main() function */
 int main(int isappli, int optnum);
 
-/* regcpy() - copy a memory region using symbol information
+/* regcpy(): Copy a memory region using symbol information
    @l  Source pointer (load address)
    @s  Size of area (should be a multiple of 16)
    @r  Destination pointer (relocation address) */
-GSECTION(".pretext")
 static void regcpy(uint32_t * restrict l, int32_t s, uint32_t * restrict r)
 {
 	while(s > 0)
@@ -48,10 +50,9 @@ static void regcpy(uint32_t * restrict l, int32_t s, uint32_t * restrict r)
 }
 #define regcpy(l, s, r) regcpy(&l, (int32_t)&s, &r)
 
-/* regclr() - clear a memory region using symbol information
+/* regclr(): Clear a memory region using symbol information
    @r  Source pointer (base address)
    @s  Size of area (should be a multiple of 16) */
-GSECTION(".pretext")
 static void regclr(uint32_t *r, int32_t s)
 {
 	while(s > 0)
@@ -65,20 +66,17 @@ static void regclr(uint32_t *r, int32_t s)
 }
 #define regclr(r, s) regclr(&r, (int32_t)&s)
 
-/* acall() - call an array of functions (constructors or destructors)
+/* callarray(): Call an array of functions (constructors or destructors)
    @f  First element of array
    @l  First element outside of the array */
-GSECTION(".pretext")
-static void acall(void (**f)(void), void (**l)(void))
+static void callarray(void (**f)(void), void (**l)(void))
 {
 	while(f < l) (*(*f++))();
 }
-#define acall(f, l) acall((void (**)(void))&f, (void (**)(void))&l)
-
 
 /* start() - this is where it all starts
    Returns a status code. Invoking main menu is better than returning! */
-GSECTION(".pretext.entry")
+GSECTION(".text.entry")
 int start(int isappli, int optnum)
 {
 	/* We are currently in a dynamic userspace mapping of an add-in run
@@ -88,17 +86,17 @@ int start(int isappli, int optnum)
 	       Do not disturb the operating system.
 
 	   gint will silently run in an isolated part of the memory (fx9860g)
-	   or at the start of the RAM (fxcg50). It acts as a kernel,
-	   redirecting interrupts and reimplementing drivers, so we can't rely
-	   too much on the system. Ladies and gentlemen, let's have fun! ;D */
+	   or at the start of the RAM (fxcg50). The kernel will redirect
+	   interrupts and load its own drivers, so we can't rely too much on
+	   the system. Ladies and gentlemen, let's have fun! ;D */
 
 	/* For now, we use the system's memory mapper for ROM. We'll still do
-	   it from our TLB miss handler once we're installed. RAM is always
+	   it later in our TLB miss handler once we're installed. RAM is always
 	   fully mapped, but we need to initialize it. We also need to do some
 	   hardware detection because old fx9860g models have a different
 	   processor with some incompatible features. */
 
-	/* Detect architecture - this will tell SH3 from SH4 on fx9860g */
+	/* Detect architecture; this will tell SH3 from SH4 on fx9860g */
 	hw_detect();
 
 	/* Load data sections and wipe the bss section. This has to be done
@@ -110,46 +108,31 @@ int start(int isappli, int optnum)
 	regcpy(lyram,  syram,  ryram);
 	regclr(rbss, sbss);
 
-	/* Install gint and switch VBR */
-	gint_install();
+	/* Install gint, switch VBR and initialize drivers */
+	kinit();
 
 	/* We are now running on our own in kernel mode. Since we have taken
 	   control of interrupts, pretty much any interaction with the system
 	   will break it. We'll limit our use of syscalls and do device driving
 	   ourselves. (Hopefully we can add cool features in the process!) */
 
-	gint_driver_t *drv;
+	/* Now that we have initialized the kernel, we are ready to start the
+	   hosted user application, which has its own constructors and
+	   destructors to work with. */
 
-	/* Initialize all drivers by saving the system settings */
-	for(drv = &bdrv; drv < &edrv; drv++)
-	{
-		/* Wait for hardware availability */
-		if(drv->wait) drv->wait();
-
-		/* Hook for old SH3 fx9860g machines */
-		if(isSH3() && drv->driver_sh3) drv->driver_sh3();
-
-		if(drv->ctx_save) drv->ctx_save(drv->sys_ctx);
-		if(drv->init) drv->init();
-	}
-
-	/* With gint fully initialized, we are ready to start the hosted user
-	   application. We have already loaded the RAM sections earlier; all
-	   that's left is calling the constructors and rolling main(). */
-
-	acall(btors, mtors);
+	callarray(&bctors, &ectors);
 	int ret = main(isappli, optnum);
-	acall(mtors, etors);
+	callarray(&bdtors, &edtors);
 
-	/* Before leaving the application, we need to clean up our mess. We
-	   have changed many hardware settings while accessing the peripheral
-	   modules. The OS is bound to be confused (and hang, or crash, or any
-	   other kind of giving up) if we don't restore them. */
+	/* Before leaving the application, we need to clean everything we
+	   changed to hardware settings and peripheral modules. The OS is bound
+	   to be confused (and hang, or crash, or any other kind of giving up)
+	   if we don't restore them. */
 
 	/* Unload gint and give back control to the system. Driver settings
 	   will be restored while interrupts are disabled */
-	gint_unload();
+	kquit();
 
-	/* TODO: Invoke main menu instead of returning? */
+	/* TODO: Invoke main menu so that add-in can restart? */
 	return ret;
 }

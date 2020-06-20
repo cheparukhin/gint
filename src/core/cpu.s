@@ -10,38 +10,32 @@
 
 /* cpu_setVBR(): Change VBR address */
 _cpu_setVBR:
-	mov.l	r9, @-r15
 	mov.l	r8, @-r15
 	sts.l	pr, @-r15
+	stc.l	sr, @-r15
 
-	mov	#1, r8
-	mov	#28, r0
-	shld	r0, r8
-
-	/* Block all interrupts */
+	/* Block all interrupts by setting IMASK=15 */
+	mov	#0xf, r1
+	shll2	r1
+	shll2	r1
 	stc	sr, r0
-	or	r8, r0
+	or	r1, r0
 	ldc	r0, sr
 
 	/* Set the new VBR address */
-	stc	vbr, r9
+	stc	vbr, r8
 	ldc	r4, vbr
 
 	/* Call the configuration function */
 	jsr	@r5
-	nop
+	mov	r6, r4
 
-	/* Enable interrupts again */
-	stc	sr, r0
-	not	r8, r8
-	and	r8, r0
-	ldc	r0, sr
-
+	/* Enable interrupts again by restoring the status register */
+	ldc.l	@r15+, sr
 	lds.l	@r15+, pr
-	mov.l	@r15+, r8
-	mov	r9, r0
+	mov	r8, r0
 	rts
-	mov.l	@r15+, r9
+	mov.l	@r15+, r8
 
 .text
 

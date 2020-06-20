@@ -57,7 +57,7 @@ GDATA static uint time = 0;
 
 /* buffer_push(): Add an event in the keyboard buffer
    Returns non-zero if the event cannot be pushed. */
-GMAPPED static int buffer_push(driver_event_t ev)
+static int buffer_push(driver_event_t ev)
 {
 	int next = (buffer_end + 1) % KEYBOARD_QUEUE_SIZE;
 	if(next == buffer_start) return 1;
@@ -79,7 +79,7 @@ static int buffer_poll(driver_event_t *ev)
 }
 
 /* keysc_frame(): Generate driver events from KEYSC state */
-GMAPPED static void keysc_frame(void)
+static void keysc_frame(void)
 {
 	GALIGNED(2) uint8_t scan[12] = { 0 };
 
@@ -248,7 +248,7 @@ int keydown_any(int key, ...)
 //	Driver initialization
 //---
 
-GMAPPED static int callback(GUNUSED volatile void *arg)
+static int callback(GUNUSED volatile void *arg)
 {
 	keysc_frame();
 	time++;

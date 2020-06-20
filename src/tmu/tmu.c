@@ -6,6 +6,7 @@
 #include <gint/drivers.h>
 #include <gint/gint.h>
 #include <gint/clock.h>
+#include <gint/intc.h>
 
 #include <gint/mpu/intc.h>
 #include <gint/mpu/tmu.h>
@@ -183,7 +184,7 @@ void timer_wait(int id)
 //---
 
 /* timer_timeout() - callback that sets a flag and halts the timer */
-GMAPPED int timer_timeout(volatile void *arg)
+int timer_timeout(volatile void *arg)
 {
 	volatile int *x = arg;
 	(*x)++;
@@ -283,29 +284,19 @@ static void init(void)
 	gint_inthandler(0xc60, inth_etmu_help, 32);
 
 	/* Enable TMU0 at level 13, TMU1 at level 11, TMU2 at level 9 */
-	gint_intlevel(0, 13);
-	gint_intlevel(1, 11);
-	gint_intlevel(2, 9);
+	intc_priority(INTC_TMU_TUNI0, 13);
+	intc_priority(INTC_TMU_TUNI1, 11);
+	intc_priority(INTC_TMU_TUNI2, 9);
 
 	/* Enable the extra TMUs at level 7 */
-	if(isSH3()) gint_intlevel(23, 7);
-	else
+	intc_priority(INTC_ETMU_TUNI0, 7);
+	if(isSH4())
 	{
-		/* Unmask the standard timers' interrupts */
-		SH7305_INTC.MSKCLR->IMR4 = 0x70;
-
-		gint_intlevel(36, 7);
-		gint_intlevel(25, 7);
-		gint_intlevel(26, 7);
-		gint_intlevel(18, 7);
-		gint_intlevel(32, 7);
-		gint_intlevel(44, 7);
-
-		/* Unmask the extra timers' interrupts */
-		SH7305_INTC.MSKCLR->IMR2 = 0x01;
-		SH7305_INTC.MSKCLR->IMR5 = 0x06;
-		SH7305_INTC.MSKCLR->IMR6 = 0x18;
-		SH7305_INTC.MSKCLR->IMR8 = 0x02;
+		intc_priority(INTC_ETMU_TUNI1, 7);
+		intc_priority(INTC_ETMU_TUNI2, 7);
+		intc_priority(INTC_ETMU_TUNI3, 7);
+		intc_priority(INTC_ETMU_TUNI4, 7);
+		intc_priority(INTC_ETMU_TUNI5, 7);
 	}
 
 	/* Record details in gint's hardware information interface */

@@ -3,10 +3,10 @@
 #include <gint/mpu/power.h>
 #include <gint/mpu/intc.h>
 #include <gint/gint.h>
+#include <gint/intc.h>
 #include <gint/dma.h>
 #include <gint/drivers.h>
 #include <gint/clock.h>
-#include <gint/display.h>
 #include <gint/exc.h>
 
 #define DMA SH7305_DMA
@@ -201,12 +201,13 @@ static void init(void)
 
 	/* Set interrupt priority to 3 (IPRE[15..12] for first three channels,
 	   IPRF[11..8] for last two and error gate */
-	gint_intlevel(16, 3);
-	gint_intlevel(21, 3);
-
-	/* Unmask the channel interrupts and the address error */
-	INTC.MSKCLR->IMR1 = 0x0f;
-	INTC.MSKCLR->IMR5 = 0x70;
+	intc_priority(INTC_DMA_DEI0, 3);
+	intc_priority(INTC_DMA_DEI1, 3);
+	intc_priority(INTC_DMA_DEI2, 3);
+	intc_priority(INTC_DMA_DEI3, 3);
+	intc_priority(INTC_DMA_DEI4, 3);
+	intc_priority(INTC_DMA_DEI5, 3);
+	intc_priority(INTC_DMA_DADERR, 3);
 
 	/* Clear blocking flags and enable the master switch */
 	DMA.OR.AE = 0;

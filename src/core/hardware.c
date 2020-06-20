@@ -26,7 +26,6 @@ GBSS uint32_t gint[HW_KEYS];
    by testing writable bits in the Port L Control Register (PLCR).
 
    Returns the detected MPU type, falling back on mpu_unknown */
-GSECTION(".pretext")
 static int mpu_detect(void)
 {
 	#define PLCR SH7705_PFC.PLCR
@@ -54,7 +53,6 @@ static int mpu_detect(void)
 }
 
 /* hw_detect(): Basic hardware detection */
-GSECTION(".pretext")
 void hw_detect(void)
 {
 	gint[HWMPU] = mpu_detect();
@@ -109,7 +107,6 @@ void hw_detect(void)
 #ifdef FXCG50
 
 /* hw_detect(): Basic hardware detection */
-GSECTION(".pretext")
 void hw_detect(void)
 {
 	gint[HWMPU] = HWMPU_SH7305;
