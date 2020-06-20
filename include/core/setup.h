@@ -20,6 +20,9 @@
    Returns the previous VBR address. */
 uint32_t gint_setvbr(uint32_t vbr, void (*configure)(void));
 
+void gint_setcpuopm(uint32_t CPUOPM);
+uint32_t gint_getcpuopm(void);
+
 /* gint_exch(): Exception handler */
 void gint_exch(void);
 /* gint_tlbh(): TLB miss handler */

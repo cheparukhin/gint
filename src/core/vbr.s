@@ -3,6 +3,9 @@
 */
 
 .global	_gint_setvbr
+.global _gint_setcpuopm
+.global _gint_getcpuopm
+
 .section .gint.mapped
 
 /* gint_setvbr()
@@ -47,3 +50,35 @@ _gint_setvbr:
 	mov	r9, r0
 	rts
 	mov.l	@r15+, r9
+
+.text
+
+/* gint_setcpuopm()
+   Changes the CPUOPM value and executes an ICBI to register the change.
+
+   @r4 New value of CPUOPM (uint32_t) */
+_gint_setcpuopm:
+	/* Set CPUOPM as requested */
+	mov.l	1f, r0
+	mov.l	r4, @r0
+
+	/* Read CPUOPM again */
+	mov.l	@r0, r5
+
+	/* Invalidate a cache address */
+	mov	#-96, r0
+	shll16	r0
+	shll8	r0
+	icbi	@r0
+
+	rts
+	nop
+
+_gint_getcpuopm:
+	mov.l	1f, r0
+	rts
+	mov.l	@r0, r0
+
+.align 4
+
+1:	.long	0xff2f0000

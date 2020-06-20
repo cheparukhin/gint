@@ -37,6 +37,7 @@ typedef struct
 {
 	uint16_t iprs[12];
 	uint8_t masks[13];
+	uint32_t CPUOPM;
 
 } GPACKED(2) gint_core_ctx;
 
@@ -57,6 +58,8 @@ GMAPPED static void gint_ctx_save(gint_core_ctx *ctx)
 		uint8_t *IMR = (void *)SH7305_INTC.MSK;
 		for(int i = 0; i < 13; i++, IMR += 4)
 			ctx->masks[i] = *IMR;
+
+		ctx->CPUOPM = gint_getcpuopm();
 	}
 }
 
@@ -82,6 +85,8 @@ GMAPPED static void gint_ctx_restore(gint_core_ctx *ctx)
 			*IMCR = 0xff;
 			*IMR = ctx->masks[i];
 		}
+
+		gint_setcpuopm(ctx->CPUOPM);
 	}
 }
 
@@ -100,6 +105,8 @@ GMAPPED static void lock(void)
 		*(SH7705_INTC.IPRS[i]) = 0x0000;
 	else for(int i = 0; i < 12; i++)
 		SH7305_INTC.IPRS[2 * i] = 0x0000;
+
+	gint_setcpuopm(gint_getcpuopm() | 0x00000008);
 }
 
 /* gint_install() - install and start gint */

@@ -184,28 +184,35 @@ _gint_inth_callback:
 	stc.l	ssr, @-r15
 	stc.l	sr, @-r15
 
+	/* Save some values to user bank; once we enable interrupts, the kernel
+	   bank might be overwritten at any moment. */
+	ldc	r4, r0_bank
+	ldc	r5, r4_bank
+
 	/* Enable interrupts and go back to user bank. SR.IMASK is already set
 	   to the level of the current interrupt, which makes sure we can only
 	   be re-interrupted by something with a higher priority. */
-	mov.l	.SR_clear_RB_BL, r1
 	stc	sr, r0
+	mov.l	.SR_clear_RB_BL, r1
 	and	r1, r0
 	ldc	r0, sr
 
-	/* We are now in the user bank, but we can still use r0..r7 as the
-	   important values have been saved on the stack. Call back. */
-	stc	r4_bank, r0
+	/* We are now in the user bank with r0 and r4 set. Call back. We want
+	   to forward the return value to kernel bank, but this bank can be
+	   changed at any moment since interrupts are enabled. */
 	sts.l	pr, @-r15
 	jsr	@r0
-	stc	r5_bank, r4
+	nop
 	lds.l	@r15+, pr
 
-	/* We want to forward the return value to the system bank */
-	ldc	r0, r0_bank
-
 	/* Restore the previous status register and the registers of the
-	   interrupted procedure. */
+	   interrupted procedure. Restoring sr gets us back to system bank with
+	   interrupts disabled. */
 	ldc.l	@r15+, sr
+
+	/* We can now pull the return value since interrupts are disabled */
+	stc	r0_bank, r0
+
 	ldc.l	@r15+, ssr
 	ldc.l	@r15+, spc
 	ldc.l	@r15+, r7_bank

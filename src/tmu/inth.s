@@ -45,23 +45,23 @@ _inth_tmu_0:
 	sts.l	pr, @-r15
 	mov.l	r1, @-r15
 
-	/* Load the TCR address and clear the interrupt flag */
+	/* Load the TCR address */
 	mov.l	.mask, r3
+	not	r3, r4
 	mov.l	@(8, r0), r1
-	mov.w	@r1, r2
+
+	/* Clear the interrupt flag */
+1:	mov.w	@r1, r2
+	tst	r4, r2
 	and	r3, r2
 	mov.w	r2, @r1
+	bf	1b
 
-	/* Invoke the callback function and pass the argument */
+	/* Prepare callback and jump to second section */
 	mov.l	.gint_inth_callback_1, r1
 	mov.l	@r0, r4
-	jsr	@r1
-	mov.l	@(4, r0), r5
-
-	/* Jump to second section */
-	mov.l	.timer_stop_1, r1
 	bra	.shared2
-	mov.l	@r15+, r4
+	mov.l	@(4, r0), r5
 
 /* SECOND GATE - TMU1 entry and stop timer */
 _inth_tmu_1:
@@ -71,9 +71,15 @@ _inth_tmu_1:
 
 /*** This is the second shared section ***/
 .shared2:
+	/* Invoke callback */
+	jsr	@r1
+	nop
+
 	/* Stop the timer if the return value is not zero */
+	mov.l	@r15+, r4
 	tst	r0, r0
 	bt	.shared3
+	mov.l	.timer_stop_1, r1
 	jsr	@r1
 	nop
 
@@ -82,7 +88,7 @@ _inth_tmu_1:
 	rts
 	nop
 
-	.zero	12
+	.zero	4
 
 /* THIRD GATE - TMU2 entry and storage for TMU0 */
 _inth_tmu_2:
@@ -104,7 +110,7 @@ _inth_tmu_2:
 _inth_tmu_storage:
 
 .mask:
-	.long	0x0000feff
+	.long	0xfffffeff
 .timer_stop_1:
 	.long	_timer_stop
 
