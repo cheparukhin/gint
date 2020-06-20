@@ -301,7 +301,6 @@ static void init(void)
 
 	/* Record details in gint's hardware information interface */
 
-	gint[HWTMU]  = HW_LOADED;
 	gint[HWETMU] = HW_LOADED | (isSH3() ? HWETMU_1 : HWETMU_6);
 
 	for(int i = 0; i < timer_count() - 3; i++)

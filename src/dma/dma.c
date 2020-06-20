@@ -213,8 +213,6 @@ static void init(void)
 	DMA.OR.AE = 0;
 	DMA.OR.NMIF = 0;
 	DMA.OR.DME = 1;
-
-	gint[HWDMA] = HW_LOADED;
 }
 
 static void wait(void)

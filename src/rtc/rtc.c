@@ -149,8 +149,6 @@ static void init(void)
 	/* Disable the periodic interrupt for now, but give it priority 5 */
 	RTC->RCR2.PES = RTC_NONE;
 	intc_priority(INTC_RTC_PRI, 5);
-
-	gint[HWRTC] = HW_LOADED | HWRTC_TIMER;
 }
 
 //---

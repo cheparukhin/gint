@@ -50,7 +50,6 @@ void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 	if(p_rom) *p_rom = rom;
 	if(p_ram) *p_ram = ram;
 
-	gint[HWMMU] = HW_LOADED;
 	gint[HWURAM] = ram;
 }
 
@@ -97,6 +96,5 @@ void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 	if(p_rom) *p_rom = rom;
 	if(p_ram) *p_ram = ram;
 
-	gint[HWMMU] = HW_LOADED | HWMMU_UTLB;
 	gint[HWURAM] = ram;
 }

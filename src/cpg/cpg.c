@@ -64,8 +64,6 @@ static void sh7705_probe(void)
 	freq.Bphi_f = ckio;
 	freq.Iphi_f = (idiv == 3) ? ckio_3 : ckio >> idiv;
 	freq.Pphi_f = (pdiv == 3) ? ckio_3 : ckio >> pdiv;
-
-	gint[HWCPG] |= HWCPG_COMP;
 }
 
 #undef CPG
@@ -110,8 +108,6 @@ static void sh7305_probe(void)
 	freq.Bphi_f   = base >> (divb + 1);
 	freq.Iphi_f   = base >> (divi + 1);
 	freq.Pphi_f   = base >> (divp + 1);
-
-	gint[HWCPG] |= HWCPG_COMP | HWCPG_EXT;
 }
 
 #undef CPG
@@ -122,8 +118,6 @@ static void sh7305_probe(void)
 
 static void init(void)
 {
-	gint[HWCPG] = HW_LOADED;
-
 	/* This avoids warnings about sh7705_probe() being undefined when
 	   building for fxcg50 */
 	#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))

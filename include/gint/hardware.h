@@ -57,16 +57,11 @@ void hw_detect(void);
 #define HWCALC   3    /* Calculator model */
 #define HWRAM    4    /* Amount of RAM */
 #define HWROM    5    /* Amount of ROM */
-#define HWMMU    6    /* Memory Management Unit */
-#define HWURAM   7    /* Userspace RAM (set iff HWMMU is loaded) */
-#define HWCPG    8    /* Clock Pulse Generator */
-#define HWDMA    9    /* Direct Memory Access Controller */
-#define HWTMU    10   /* Timer Unit */
-#define HWETMU   11   /* Extra Timer Units */
-#define HWRTC    12   /* Real-Time Clock */
-#define HWKBD    13   /* Keyboard */
-#define HWKBDSF  14   /* Keyboard Scan Frequency (set iff HWKBD is loaded) */
-#define HWDD     15   /* Display Driver */
+#define HWURAM   6    /* Userspace RAM */
+#define HWETMU   7    /* Extra Timer Units */
+#define HWKBD    8    /* Keyboard */
+#define HWKBDSF  9    /* Keyboard Scan Frequency (set iff HWKBD is loaded) */
+#define HWDD     10   /* Display Driver */
 
 /*
 **  MPU type
@@ -101,39 +96,6 @@ void hw_detect(void);
 #define HWCALC_FXCG50       5
 
 /*
-**  Memory Management Unit
-*/
-
-/* MMU has a unified TLB. Essentially correlated with SH4. */
-#define HWMMU_UTLB     0x01
-/* Add-in is fully mapped in the TLB. This means that gint needs not handle TLB
-   misses as exceptions. This should generally be set on fx9860g, but not on
-   fxcg50. */
-#define HWMMU_FITTLB   0x02
-
-/*
-**  Clock Pulse Generator
-*/
-
-/* Input clock frequency is known for this model and all frequencies are
-   computed (they used to be measured from the RTC). Should be 1 */
-#define HWCPG_COMP     0x01
-/* Used an extended CPG interface, correlated with SH4 */
-#define HWCPG_EXT      0x02
-
-/*
-**  Direct Memory Access Controller
-*/
-
-/* Nothing other than the HW_LOADED bit yet */
-
-/*
-**  Timer Unit
-*/
-
-/* Nothing other than the HW_LOADED bit yet */
-
-/*
 **  Extra Timer Units
 */
 
@@ -150,13 +112,6 @@ void hw_detect(void);
 #define HWETMU_OK3     0x20
 #define HWETMU_OK4     0x40
 #define HWETMU_OK5     0x80
-
-/*
-**  Real-Time Clock
-*/
-
-/* The RTC timer is enabled */
-#define HWRTC_TIMER    0x01
 
 /*
 **  Keyboard
