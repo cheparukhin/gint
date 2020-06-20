@@ -4,6 +4,8 @@
 static uint16_t *main = (void *)0xac0f0000;
 static uint16_t *scnd = (void *)0xac11b500;
 
+/* On Prizm: should be: 0xa80f0000 and 0xa811b500 */
+
 /* Shared VRAM pointer, the one exposed by <gint/display.h> */
 uint16_t *gint_vram = (void *)0xac0f0000;
 

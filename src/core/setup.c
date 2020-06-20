@@ -5,27 +5,16 @@
 #include <gint/gint.h>
 #include <gint/drivers.h>
 #include <gint/std/string.h>
-#include <core/setup.h>
 #include <gint/hardware.h>
 #include <gint/mpu/intc.h>
 #include <gint/defs/util.h>
 #include <gint/display.h>
-
-/* VBR address, from the linker script */
-#ifdef FX9860G
-extern char gint_vbr_fx9860g[];
-#endif
-#ifdef FXCG50
-extern char gint_vbr_fxcg50[];
-extern char gint_vbr_fxcg20[];
-#endif
+#include "cpu.h"
+#include "vbr.h"
 
 /* VBR addresses for gint and the system */
 GBSS uint32_t gint_vbr;
 GBSS static uint32_t system_vbr;
-/* Size of exception and TLB handler */
-extern char gint_exch_size;
-extern char gint_tlbh_size;
 /* Driver table */
 extern gint_driver_t bdrv, edrv;
 
@@ -59,7 +48,7 @@ GMAPPED static void gint_ctx_save(gint_core_ctx *ctx)
 		for(int i = 0; i < 13; i++, IMR += 4)
 			ctx->masks[i] = *IMR;
 
-		ctx->CPUOPM = gint_getcpuopm();
+		ctx->CPUOPM = cpu_getCPUOPM();
 	}
 }
 
@@ -86,7 +75,7 @@ GMAPPED static void gint_ctx_restore(gint_core_ctx *ctx)
 			*IMR = ctx->masks[i];
 		}
 
-		gint_setcpuopm(ctx->CPUOPM);
+		cpu_setCPUOPM(ctx->CPUOPM);
 	}
 }
 
@@ -106,7 +95,7 @@ GMAPPED static void lock(void)
 	else for(int i = 0; i < 12; i++)
 		SH7305_INTC.IPRS[2 * i] = 0x0000;
 
-	gint_setcpuopm(gint_getcpuopm() | 0x00000008);
+	cpu_setCPUOPM(cpu_getCPUOPM() | 0x00000008);
 }
 
 /* gint_install() - install and start gint */
@@ -141,7 +130,7 @@ void gint_install(void)
 	memcpy(vbr + 0x600, inth_entry, 64);
 
 	/* Time to switch VBR and roll! */
-	system_vbr = gint_setvbr(gint_vbr, lock);
+	system_vbr = cpu_setVBR(gint_vbr, lock);
 }
 
 /* unlock() - unlock interrupts, restoring system settings */
@@ -166,7 +155,7 @@ void gint_unload(void)
 		if(drv->wait) drv->wait();
 	}
 
-	gint_setvbr(system_vbr, unlock);
+	cpu_setVBR(system_vbr, unlock);
 }
 
 //---
@@ -223,7 +212,7 @@ void gint_switch(void (*function)(void))
 		if(drv->wait) drv->wait();
 	}
 
-	gint_setvbr(system_vbr, gint_switch_out);
+	cpu_setVBR(system_vbr, gint_switch_out);
 	if(function) function();
 
 	/* Wait for the OS to finish working */
@@ -231,7 +220,7 @@ void gint_switch(void (*function)(void))
 	{
 		if(drv->wait) drv->wait();
 	}
-	gint_setvbr(gint_vbr, gint_switch_in);
+	cpu_setVBR(gint_vbr, gint_switch_in);
 }
 
 int   __Timer_Install(int id, void (*handler)(void), int delay);

@@ -2,37 +2,28 @@ For the 2.1.0 release:
 * core:      the four basic memory functions (with automated tests)
 * bopti:     remove the deprecated image_t definition
 * project:   remove the compat branch
-* gray:      remove g*() functions
 * core:      remove the boot log
 
 Issues:
-* #3         make drawing functions parameterized
 * #8         support fx-CG Manager
 * #10        support fx-CG 20
 
 Extensions on existing code:
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
-* gray:      add gprint()
 * gray:      double-buffer gray settings and unify d* with g*
 * topti:     support unicode fonts
 * gray:      find good values for more models than the Graph 35+E II
 * dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic
 * hardware:  fill in the HWMEM_FITTLB flag
-* keyboard:  think of extended functions
 * cpg:       spread spectrum on fxcg50
-* display:   use more of topti's assembler in drect()
 * core:      use cmp/str for memchr()
 * r61524:    brightness control and clean the file
-* t6k11:     check if dupdate() can be done by the DMA
 * core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
 * build:     make the build system simpler (two targets are enough by default)
 * core:      run destructors when a task-switch results in leaving the app
 * core:      invoke main menu instead of returning after main() ends
-* prizm:     don't hardcode stack address in fxcg50.ld (if possible)
-* prizm:     detect P1 static RAM (stack) in TLB
 * core rtc:  use qdiv10 to massively improve division performance
-* core:      document the SH7305 PFC in <gint/mpu/pfc.h>
 
 Future directions.
 * A complete file system abstraction

@@ -6,6 +6,7 @@
 #include <gint/std/string.h>
 #include <gint/hardware.h>
 #include <gint/mpu/intc.h>
+#include "vbr.h"
 
 /* Interrupt controllers */
 
@@ -49,8 +50,6 @@ int gint_intlevel(int intid, int level)
 /* gint_inthandler() - configure interrupt handlers */
 void *gint_inthandler(int event_code, const void *handler, size_t size)
 {
-	extern uint32_t gint_vbr;
-
 	/* Normalize the event code */
 	event_code -= 0x400;
 	event_code &= ~0x1f;

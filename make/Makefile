@@ -95,6 +95,7 @@ version_hash = 0x0$(shell git rev-parse --short HEAD)
 all: $(target)
 
 $(target): $(obj)
+	@ rm -f $@
 	$(call cmd_l,ar,$@) $(ar) rcs $(arflags) $@ $^
 
 # Assembler sources
