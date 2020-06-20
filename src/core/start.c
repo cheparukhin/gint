@@ -4,7 +4,6 @@
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
-#include <core/bootlog.h>
 #include <gint/mmu.h>
 #include <gint/drivers.h>
 #include <gint/gint.h>
@@ -110,11 +109,9 @@ int start(int isappli, int optnum)
 	regcpy(lxram,  sxram,  rxram);
 	regcpy(lyram,  syram,  ryram);
 	regclr(rbss, sbss);
-	bootlog_loaded();
 
 	/* Install gint and switch VBR */
 	gint_install();
-	bootlog_kernel();
 
 	/* We are now running on our own in kernel mode. Since we have taken
 	   control of interrupts, pretty much any interaction with the system
@@ -134,13 +131,7 @@ int start(int isappli, int optnum)
 
 		if(drv->ctx_save) drv->ctx_save(drv->sys_ctx);
 		if(drv->init) drv->init();
-
-		#ifdef GINT_BOOT_LOG
-		char const *status = drv->status ? drv->status() : NULL;
-		bootlog_driver(drv->name, status);
-		#endif
 	}
-	bootlog_driver_summary();
 
 	/* With gint fully initialized, we are ready to start the hosted user
 	   application. We have already loaded the RAM sections earlier; all

@@ -245,7 +245,7 @@ int keydown_any(int key, ...)
 }
 
 //---
-//	Driver initialization and status
+//	Driver initialization
 //---
 
 GMAPPED static int callback(GUNUSED volatile void *arg)
@@ -277,18 +277,6 @@ static void init(void)
 	gint[HWKBDSF] = KEYBOARD_SCAN_FREQUENCY;
 }
 
-#ifdef GINT_BOOT_LOG
-
-/* keysc_status() - status string of the driver */
-static const char *keysc_status(void)
-{
-	static char str[3] = "Sw";
-	if(isSH3()) str[0] = 's';
-	return str;
-}
-
-#endif /* GINT_BOOT_LOG */
-
 //---
 //	Driver structure definition
 //---
@@ -296,7 +284,6 @@ static const char *keysc_status(void)
 gint_driver_t drv_keysc = {
 	.name    = "KEYSC",
 	.init    = init,
-	.status  = GINT_DRIVER_STATUS(keysc_status),
 };
 
 GINT_DECLARE_DRIVER(4, drv_keysc);

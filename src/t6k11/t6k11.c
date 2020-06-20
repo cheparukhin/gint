@@ -163,7 +163,8 @@ void t6k11_backlight(int setting)
 
 	/* This setting is mapped to an I/O port:
 	   - On SH3, bit 7 of port G
-	   - On SH4, bit 4 of port N */
+	   - On SH4, bit 4 of port N
+	   TODO: Document the PFC to remove these addresses */
 	if(isSH3())
 	{
 		port = (void *)0xa400012c;
@@ -232,28 +233,12 @@ static void init(void)
 }
 
 //---
-//	Driver status string
-//---
-
-#ifdef GINT_BOOT_LOG
-
-/* t6k11_status() - status string of the driver */
-static const char *t6k11_status(void)
-{
-	/* TODO: t6k11: Detect backlight existence */
-	return "6K11-cB";
-}
-
-#endif /* GINT_BOOT_LOG */
-
-//---
 //	Driver structure definition
 //---
 
 gint_driver_t drv_t6k11 = {
 	.name         = "T6K11",
 	.init         = init,
-	.status       = GINT_DRIVER_STATUS(t6k11_status),
 	.sys_ctx      = &sys_ctx,
 	.gint_ctx     = &gint_ctx,
 	.ctx_save     = ctx_save,

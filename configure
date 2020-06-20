@@ -53,8 +53,6 @@ Build options:
   --cflags=FLAGS       Additional compiler flags at end of command
 
 Library options (disabled by default):
-  --boot-log           Display a boot debug log at startup if a key is pressed
-                       Used to investigate unstabilities.
   --no-syscalls        Cut off all syscalls (this will break things)
                        Only use this option if you have a good idea of which.
   --static-gray        Allocate gray VRAMs in static RAM instead of the heap
@@ -190,7 +188,6 @@ output_config()
 
   echo -n "CONFIG.MACROS ="
   echo -n " -D$(echo $target | tr 'a-z' 'A-Z')"
-  [[ "$boot_log"    ]] && echo -n " -DGINT_BOOT_LOG"
   [[ "$no_syscalls" ]] && echo -n " -DGINT_NO_SYSCALLS"
   [[ "$static_gray" ]] && echo -n " -DGINT_STATIC_GRAY"
   [[ "$atexit_max"  ]] && echo -n " -DATEXIT_MAX=$atexit_max"

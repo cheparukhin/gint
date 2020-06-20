@@ -120,24 +120,6 @@ static void sh7305_probe(void)
 //	Other driver stuff
 //---
 
-#ifdef GINT_BOOT_LOG
-
-#include <gint/std/stdio.h>
-
-static const char *cpg_status(void)
-{
-	static char status[18];
-	sprintf(status, "I%03d B%03d P%03d C%c",
-		freq.Iphi_f / 1000000,
-		freq.Bphi_f / 1000000,
-		freq.Pphi_f / 1000000,
-		isSH3() ? 'e' : 'E'
-	);
-	return status;
-}
-
-#endif /* GINT_BOOT_LOG */
-
 static void init(void)
 {
 	gint[HWCPG] = HW_LOADED;
@@ -153,7 +135,6 @@ static void init(void)
 gint_driver_t drv_cpg = {
 	.name    = "CPG",
 	.init    = init,
-	.status  = GINT_DRIVER_STATUS(cpg_status),
 };
 
 GINT_DECLARE_DRIVER(1, drv_cpg);

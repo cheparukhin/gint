@@ -326,48 +326,6 @@ static void init(void)
 }
 
 //---
-//	Status function
-//---
-
-#ifdef GINT_BOOT_LOG
-/* tmu_status() - status string of extra TMUs for the boot log
-   The status string has a two-character code for each of the extra timers.
-
-   The first character is a digit character describing a value between 0 and 7.
-   * Bit 0 is set if TCOR=0xffffffff
-   * Bit 1 is set if TCNT=0xffffffff
-   * Bit 2 is set if TSTR=0
-
-   The second character indicates the status of interrupts.
-   * "D" (Disabled) if UNIE=0, UNF=0
-   * "L" (Low)      if UNIE=1, UNF=0
-   * "H" (High)     if UNIE=1, UNF=1
-   * "!" (Error)    if UNIE=0, UNF=1
-
-   So the normal status string would be made of "7D"'s. */
-static const char *tmu_status(void)
-{
-	static char status[18] = "ETMU ";
-
-	int j = 5;
-	for(int i = 0; i < timer_count()-3; i++)
-	{
-		etmu_t *T = &ETMU[i];
-		int v1 = (!(T->TCOR + 1))
-		       | (!(T->TCNT + 1) << 1)
-		       | (!(T->TSTR) << 2);
-		int v2 = (T->TCR.UNF << 1) | (T->TCR.UNIE);
-
-		status[j++] = '0' + v1;
-		status[j++] = "DLH!"[v2];
-	}
-	status[j] = 0;
-
-	return status;
-}
-#endif /* GINT_BOOT_LOG */
-
-//---
 //	Context system for this driver
 //---
 
@@ -444,7 +402,6 @@ gint_driver_t drv_tmu = {
 	.name         = "TMU",
 	.driver_sh3   = GINT_DRIVER_SH3(driver_sh3),
 	.init         = init,
-	.status       = GINT_DRIVER_STATUS(tmu_status),
 	.sys_ctx      = &sys_ctx,
 	.gint_ctx     = &gint_ctx,
 	.ctx_save     = ctx_save,

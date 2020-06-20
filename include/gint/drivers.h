@@ -21,23 +21,19 @@
 //	2. ctx_save(sys_ctx)
 //	3. init()
 //
-//	Then, if the on-screen boot log is enabled, the status() function is
-//	called and the returned string is displayed (21 characters max).
-//	4. status() [only if GINT_BOOT_LOG is defined]
-//
 //	If the gint_switch() function is called to temporarily give back
 //	control to the operating system, the state of each driver is saved to
 //	the stack, then restored from there.
-//	5. wait()
-//	6. ctx_save(gint_ctx)
-//	7. ctx_restore(sys_ctx)
+//	4. wait()
+//	5. ctx_save(gint_ctx)
+//	6. ctx_restore(sys_ctx)
 //	(stuff happening outside of gint)
-//	8. ctx_save(sys_ctx)
-//	9. ctx_restore(gint_ctx)
+//	7. ctx_save(sys_ctx)
+//	8. ctx_restore(gint_ctx)
 //
 //	When finally the driver is unloaded, the system context is restored.
-//	10. wait()
-//	11. ctx_restore(sys_ctx)
+//	 9. wait()
+//	10. ctx_restore(sys_ctx)
 //---
 
 /* gint_driver_t - driver meta-information used by gint */
@@ -79,12 +75,6 @@ typedef struct
 	/* Must restore the state of the driver as saved by ctx_save(). */
 	void (*ctx_restore)(void *ctx);
 
-	/* This function may generate a status string to display on the boot
-	   log for debugging purposes. It should be a short (max 21 bytes)
-	   string because all drivers' strings must fit on a few lines. May
-	   return a pointer to a static buffer. May be NULL. */
-	char const * (*status)(void);
-
 } GPACKED(4) gint_driver_t;
 
 /* GINT_DECLARE_DRIVER() - make a driver visible to gint
@@ -108,17 +98,6 @@ typedef struct
 #define GINT_DRIVER_SH3(name) NULL
 #else
 #define GINT_DRIVER_SH3(name) name
-#endif
-
-/* GINT_DRIVER_STATUS() - declare a function for status string generation
-   This macro makes its argument NULL when GINT_BOOT_LOG is undefined, this way
-   the named function can be defined under #ifdef GINT_BOOT_LOG while keeping
-   the structure clean. */
-
-#ifdef GINT_BOOT_LOG
-#define GINT_DRIVER_STATUS(name) name
-#else
-#define GINT_DRIVER_STATUS(name) NULL
 #endif
 
 #endif /* GINT_DRIVERS */

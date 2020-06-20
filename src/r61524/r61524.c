@@ -273,34 +273,12 @@ static void init(void)
 }
 
 //---
-//	Driver status string
-//---
-
-#ifdef GINT_BOOT_LOG
-
-#include <gint/std/stdio.h>
-
-/* r6524_status() - status string */
-static const char *r61524_status(void)
-{
-	select(device_code_read);
-	uint16_t dev = read();
-
-	static char str[8];
-	sprintf(str, "%04xF-b", dev);
-	return str;
-}
-
-#endif
-
-//---
 //	Driver structure definition
 //---
 
 gint_driver_t drv_r61524 = {
 	.name         = "R61524",
 	.init         = init,
-	.status       = GINT_DRIVER_STATUS(r61524_status),
 	.sys_ctx      = &sys_ctx,
 	.gint_ctx     = &gint_ctx,
 	.ctx_save     = ctx_save,
