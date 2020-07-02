@@ -95,8 +95,16 @@ void *_memmove(GUNUSED void *dst, GUNUSED const void *src, GUNUSED size_t n)
 	return dst;
 }
 
-int _memcmp(GUNUSED const void *s1, GUNUSED const void *s2, GUNUSED size_t n)
+int memcmp(GUNUSED const void *s1, GUNUSED const void *s2, GUNUSED size_t n)
 {
+	uint8_t const *p1 = s1;
+	uint8_t const *p2 = s2;
+
+	for(size_t i = 0; i < n; i++)
+	{
+		if(p1[i] != p2[i]) return (p1[i] - p2[i]);
+	}
+
 	return 0;
 }
 

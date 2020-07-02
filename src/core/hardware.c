@@ -3,10 +3,12 @@
 //---
 
 #include <gint/hardware.h>
+#include <gint/mmu.h>
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 #include <gint/defs/util.h>
 #include <gint/mpu/pfc.h>
+#include <gint/std/string.h>
 
 /* Holds information about the current platform */
 GBSS uint32_t gint[HW_KEYS];
@@ -116,11 +118,20 @@ void hw_detect(void)
 	/* Tell Prizms apart from fx-CG 50 by checking the stack address*/
 	uint32_t stack;
 	__asm__("mov r15, %0" : "=r"(stack));
-	gint[HWCALC]  = (stack < 0x8c160000) ? HWCALC_PRIZM : HWCALC_FXCG50;
+	gint[HWCALC]  = (stack < 0x8c000000) ? HWCALC_PRIZM : HWCALC_FXCG50;
+
+	/* Tell the fx-CG emulator apart using the product ID */
+	uint8_t *productID = (void *)0x8001ffd0;
+	if(!memcmp(productID, "\xff\xff\xff\xff\xff\xff\xff\xff", 8))
+		gint[HWCALC] = HWCALC_FXCG_MANAGER;
 
 	/* Basic memory information */
 	gint[HWRAM] = (2 << 20);
 	gint[HWROM] = (32 << 20);
+
+	/* Mapped memory */
+	if(isSH3()) tlb_mapped_memory(NULL, NULL);
+	else utlb_mapped_memory(NULL, NULL);
 }
 
 #endif /* FXCG50 */

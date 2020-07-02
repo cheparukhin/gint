@@ -85,15 +85,17 @@ void hw_detect(void);
 */
 
 /* SH-3-based fx-9860G-family */
-#define HWCALC_FX9860G_SH3  1
+#define HWCALC_FX9860G_SH3   1
 /* Other SH-4A-based fx-9860G-family */
-#define HWCALC_FX9860G_SH4  2
+#define HWCALC_FX9860G_SH4   2
 /* Graph 35+E II, an SH-4A French extension of the fx-9860G family */
-#define HWCALC_G35PE2       3
+#define HWCALC_G35PE2        3
 /* fx-CG 10/20, also known as the "Prizm" family */
-#define HWCALC_PRIZM        4
+#define HWCALC_PRIZM         4
 /* fx-CG 50, a late extension to the Prizm family */
-#define HWCALC_FXCG50       5
+#define HWCALC_FXCG50        5
+/* fx-CG 50 emulator */
+#define HWCALC_FXCG_MANAGER  6
 
 /*
 **  Extra Timer Units

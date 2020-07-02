@@ -1,11 +1,11 @@
 #include <gint/display.h>
 #include <display/cg.h>
-//#include <gint/drivers/r61524.h>
+#include <gint/drivers/r61524.h>
 
 /* dupdate() - Push the video RAM to the display driver */
 void dupdate(void)
 {
-	r61524_display(gint_vram, 0, 224, 1);
+	r61524_display(gint_vram, 0, 224, R61524_DMA);
 
 	/* The DMA is still running, so we need to switch VRAMs to avoid
 	   overwriting the data which is about to be sent. */
@@ -15,5 +15,5 @@ void dupdate(void)
 /* dupdate_noint() - Push VRAM to the display without interrupts */
 void dupdate_noint(void)
 {
-	r61524_display(gint_vram, 0, 224, 0);
+	r61524_display(gint_vram, 0, 224, R61524_DMA_WAIT);
 }

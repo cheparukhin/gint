@@ -1,4 +1,5 @@
 #include <gint/display.h>
+#include <gint/hardware.h>
 
 #ifdef GINT_USER_VRAM
 /* We want to put the VRAM in the user section, however we can't use the
@@ -26,6 +27,17 @@ uint16_t *gint_vram = (void *)0xac0f0000;
 
 /* On Prizm: should be: 0xa80f0000 and 0xa811b500 */
 
+__attribute__((constructor))
+static void init_vram(void)
+{
+	/* On Prizm and fx-CG Manager, move address to 0xa8000000 */
+	if(gint[HWCALC] == HWCALC_PRIZM || gint[HWCALC] == HWCALC_FXCG_MANAGER)
+	{
+		main = (void *)main - 0x04000000;
+		scnd = (void *)scnd - 0x04000000;
+		gint_vram = (void *)gint_vram - 0x04000000;
+	}
+}
 
 /* dsetvram() - Control video RAM address and triple buffering */
 void dsetvram(uint16_t *new_main, uint16_t *new_secondary)

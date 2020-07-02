@@ -7,6 +7,7 @@
 #include <gint/hardware.h>
 #include <gint/drivers.h>
 #include <gint/dma.h>
+#include <gint/drivers/r61524.h>
 
 #define DMA SH7305_DMA
 #define POWER SH7305_POWER
@@ -199,7 +200,7 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 
 /* TODO: r61524: update, backlight, brightness, gamma */
 
-void r61524_display(uint16_t *vram, int start, int height, int interrupts)
+void r61524_display(uint16_t *vram, int start, int height, int method)
 {
 	/* Move the window to the desired region, then select address 0 */
 	r61524_win_set(0, 395, start, start + height - 1);
@@ -211,6 +212,14 @@ void r61524_display(uint16_t *vram, int start, int height, int interrupts)
 	/* Bind address 0xb4000000 to the data write command */
 	select(write_data);
 
+	if(method == R61524_CPU)
+	{
+		extern uint16_t *gint_vram;
+		for(int i = 396*start; i < 396*(start+height); i++)
+			write(gint_vram[i]);
+		return;
+	}
+
 	void *src = vram + 396 * start;
 	void *dst = (void *)0xb4000000;
 
@@ -220,7 +229,7 @@ void r61524_display(uint16_t *vram, int start, int height, int interrupts)
 	int blocks = 99 * (height >> 2);
 
 	/* Now roll! */
-	if(interrupts)
+	if(method == R61524_DMA)
 	{
 		/* If the previous transfer is still running, wait for it */
 		dma_transfer_wait(0);
