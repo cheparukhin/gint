@@ -94,6 +94,11 @@ typedef union
 	int (*pVv) (volatile void *);
 	int (*pCv) (const void *);
 	int (*pCVv)(volatile const void *);
+	/* Integer pointer argument, cv-qualified as needed */
+	int (*pi)  (int *);
+	int (*pVi) (volatile int *);
+	int (*pCi) (const int *);
+	int (*pCVi)(volatile const int *);
 
 } GTRANSPARENT timer_callback_t;
 
