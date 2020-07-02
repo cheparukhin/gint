@@ -68,18 +68,14 @@ SECTIONS
 		*(.text .text.*)
 	} > rom
 
-	/* Interrupt handlers going to ROM:
-	   - gint's interrupt handler blocks (.gint.blocks)
-
-	   Although gint's blocks end up in VBR space, they are installed at
+	/* gint's interrupt handler blocks (.gint.blocks)
+	   Although gint's blocks end up in VBR space, they are relocated at
 	   startup by the library/drivers, so we store them here for now */
 	.gint.blocks : {
 		KEEP(*(.gint.blocks));
 	} > rom
 
-	/* Driver data going to ROM:
-	   - Exposed driver interfaces (.gint.drivers)
-
+	/* Exposed driver interfaces (.gint.drivers)
 	   The driver information is required to start and configure the
 	   driver, even if the symbols are not referenced */
 	.gint.drivers : {
@@ -117,6 +113,7 @@ SECTIONS
 	.bss (NOLOAD) : {
 		_rbss = . ;
 
+		*(.bss.vram)
 		*(.bss COMMON)
 
 		. = ALIGN(16);
@@ -183,9 +180,7 @@ SECTIONS
 
 
 	/*
-	**  gint-related sections
-	**  8c160000:5k  VBR space
-	**  8c161400:3k  .gint.data and .gint.bss
+	**  gint-related sections (VBR space, .gint.data and .gint.bss)
 	*/
 
 	/* VBR address: let's just start at the beginning of the RAM area.

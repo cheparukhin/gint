@@ -13,9 +13,9 @@ prefix=
 cflags=
 
 # Behavior
-boot_log=
 no_syscalls=
 static_gray=
+user_vram=
 
 # Size limits
 atexit_max=
@@ -57,6 +57,7 @@ Library options (disabled by default):
                        Only use this option if you have a good idea of which.
   --static-gray        Allocate gray VRAMs in static RAM instead of the heap
                        May help when --no-syscalls is on.
+  --user-vram          Allocate VRAM in user stack; takes 350k/512k [fxcg50]
 
 Size limits:
   --atexit-max=NUM     Number of exit handlers in atexit()'s array [16]
@@ -109,12 +110,12 @@ for arg; do case "$arg" in
   --cflags=*)
     cflags=${arg#*=};;
 
-  --boot-log)
-    boot_log=true;;
   --no-syscalls)
     no_syscalls=true;;
   --static-gray)
     static_gray=true;;
+  --user-vram)
+    user_vram=true;;
 
   --atexit-max=*)
     n=${arg#*=}
@@ -190,6 +191,7 @@ output_config()
   echo -n " -D$(echo $target | tr 'a-z' 'A-Z')"
   [[ "$no_syscalls" ]] && echo -n " -DGINT_NO_SYSCALLS"
   [[ "$static_gray" ]] && echo -n " -DGINT_STATIC_GRAY"
+  [[ "$user_vram"   ]] && echo -n " -DGINT_USER_VRAM"
   [[ "$atexit_max"  ]] && echo -n " -DATEXIT_MAX=$atexit_max"
   echo ""
 }
