@@ -1,11 +1,8 @@
 For the 2.1.0 release:
-* core:      the four basic memory functions (with automated tests)
 * bopti:     remove the deprecated image_t definition
 * project:   remove the compat branch
-* core:      remove the boot log
 
 Issues:
-* #8         support fx-CG Manager
 * #10        support fx-CG 20
 
 Extensions on existing code:

@@ -13,6 +13,12 @@ void *memcpy(void * restrict dest, void const * restrict src, size_t n);
 /* memset(): Fill a chunk of memory with a single byte */
 void *memset(void *dest, int byte, size_t n);
 
+/* memcpy(): Compare two chunks of memory */
+int memcmp(void const *s1, void const *s2, size_t n);
+
+/* memmove(): Copy a chunk of memory to a possibly overlapping destination */
+void *memmove(void *dest, void const *src, size_t n);
+
 /* strlen(): Length of a NUL-terminated string */
 size_t strlen(char const *str);
 
