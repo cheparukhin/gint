@@ -99,7 +99,7 @@ static void drivers_switch(int who)
 
 static void kinit_cpu(void)
 {
-	cpu_setCPUOPM(cpu_getCPUOPM() | 0x00000008);
+	if(isSH4()) cpu_setCPUOPM(cpu_getCPUOPM() | 0x00000008);
 }
 
 /* kinit(): Install and start gint */
