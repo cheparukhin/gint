@@ -335,11 +335,11 @@ static void init(void)
 	/* Clear every timer to avoid surprises */
 	for(int id = 0; id < 3; id++)
 	{
-		TMU[id].TCOR = 0xffffffff;
-		TMU[id].TCNT = 0xffffffff;
-
 		do TMU[id].TCR.word = 0;
 		while(TMU[id].TCR.word);
+
+		TMU[id].TCOR = 0xffffffff;
+		TMU[id].TCNT = 0xffffffff;
 
 		/* Standard timers: TCR is provided to the interrupt handler */
 		timers[id]->TCR = &TMU[id].TCR;
@@ -455,13 +455,13 @@ static void ctx_save(void *buf)
 static void ctx_restore(void *buf)
 {
 	ctx_t *ctx = buf;
-	*TSTR = ctx->TSTR;
+	*TSTR = 0;
 
 	for(int i = 0; i < 3; i++)
 	{
 		tmu_t *c = &ctx->std[i];
-		TMU[i].TCNT = c->TCNT;
 		TMU[i].TCOR = c->TCOR;
+		TMU[i].TCNT = c->TCNT;
 		TMU[i].TCR.word = c->TCR.word;
 	}
 	for(int i = 0; i < timer_count() - 3; i++)
@@ -480,6 +480,8 @@ static void ctx_restore(void *buf)
 		do T->TCR.byte = c->TCR.byte;
 		while(T->TCR.byte != c->TCR.byte);
 	}
+
+	*TSTR = ctx->TSTR;
 }
 
 //---
