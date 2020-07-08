@@ -21,11 +21,11 @@ GINLINE const tlb_addr_t *tlb_addr(uint way, uint E)
 /* tlb_data() - get the P4 address of a TLB data entry */
 GINLINE const tlb_data_t *tlb_data(uint way, uint E)
 {
-	uint32_t addr = 0xf3000000 | (E << 12)  | (way << 8);
+	uint32_t addr = 0xf3000000 | (E << 12) | (way << 8);
 	return (void *)addr;
 }
 
-/* tlb_mapped_memort() - count amount of mapped memory */
+/* tlb_mapped_memory() - count amount of mapped memory */
 void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 {
 	uint32_t rom = 0, ram = 0;

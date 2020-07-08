@@ -117,12 +117,12 @@ enum
 /* Size of the buffer event queue, can be customized using gint's configure
    script before compiling the library. Better be a power of 2. */
 #ifndef KEYBOARD_QUEUE_SIZE
-#define KEYBOARD_QUEUE_SIZE 64
+#define KEYBOARD_QUEUE_SIZE 32
 #endif
 
 /* Keyboard frequency analysis, must be at least 64 for the keyboard to work,
    and at most 32768 for the extra timer to support it. Better if a power of 2.
-   TODO: Add a configure or runtime setting for KEYBOARD_SCAN_FREQUENCY */
+   TODO: Add a runtime setting for KEYBOARD_SCAN_FREQUENCY */
 #ifndef KEYBOARD_SCAN_FREQUENCY
 #define KEYBOARD_SCAN_FREQUENCY 128
 #endif

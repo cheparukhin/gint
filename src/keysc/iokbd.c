@@ -21,26 +21,30 @@ static void iokbd_delay(void)
 	);
 
 #if 0
-	/* Watchdog delay version */
+	uint8_t  volatile *WTCSRr = (void *)0xffffff86;
+	uint16_t volatile *WTCSRw = (void *)0xffffff86;
+	uint16_t volatile *WTCNTw = (void *)0xffffff84;
+
+	/* Watchdog delay version, each of the values between this and 0xff
+	   account for 256 clock cycles on Pphi. This is roughly equivalent to
+	   2048 nop, lasting ~70 µs */
 	const int delay = 0xf4;
 
 	/* Disable the watchdog timer interrupt and reset configuration */
-	INTC.IPRB.BIT._WDT = 0;
-	WDT.WTCSR.WRITE = 0xa500;
+	*WTCSRw = 0xa500;
 
 	/* Set the delay, input on Pphi / 256 and start counting */
-	WDT.WTCNT.WRITE = 0x5a00 | (delay & 0xff);
-	WDT.WTCSR.WRITE = 0xa505;
-	WDT.WTCSR.WRITE = 0xa585;
+	*WTCNTw = 0x5a00 | (delay & 0xff);
+	*WTCSRw = 0xa505;
+	*WTCSRw = 0xa585;
 
 	/* Actively wait for overflow, then clear the interrupt flag */
-	while((WDT.WTCSR.READ.BYTE & 0x08) == 0);
-	WDT.WTCSR.WRITE = 0xa500 | (WDT.WTCSR.READ.BYTE & 0xf7);
+	while((*WTCSRr & 0x08) == 0);
+	*WTCSRw = 0xa500 | (*WTCSRr & 0xf7);
 
 	/* Reset configuration, counter, and re-enabled interrupt */
-	WDT.WTCSR.WRITE = 0xa500;
-	WDT.WTCSR.WRITE = 0x5a00;
-	INTC.IPRB.BIT._WDT = GINT_INTP_WDT;
+	*WTCSRw = 0xa500;
+	*WTCNTw = 0x5a00;
 #endif
 }
 
@@ -51,6 +55,11 @@ uint8_t iokbd_row(int row)
 {
 	if((unsigned)row > 9) return 0x00;
 	row ^= 1;
+
+	int orig_PBCR = PFC.PBCR;
+	int orig_PMCR = PFC.PMCR;
+	int orig_PBDR = PFC.PBDR;
+	int orig_PMDR = PFC.PMDR;
 
 	/* This will enable output (01) on @row, input (10) everywhere else */
 	uint16_t ctrl_mask = 0x0003 << ((row & 7) * 2);
@@ -81,25 +90,23 @@ uint8_t iokbd_row(int row)
 		/* Set @row to 0, everything else to 1 */
 		PFC.PBDR = 0xff;
 		PFC.PMDR = PFC.PMDR & data_mask;
+		iokbd_delay();
 	}
 
 	/* Now read the input data from the keyboard! */
 	uint8_t input = ~PFC.PADR;
 	iokbd_delay();
 
-	/* Reset the port configuration. I don't know why the intermediate step
-	   is necessary; refer to SimLo's documentation. */
-	PFC.PBCR = 0xaaaa;
-	PFC.PMCR = (PFC.PMCR & 0xff00) | 0x00aa;
-	iokbd_delay();
-	PFC.PBCR = 0x5555;
-	PFC.PMCR = (PFC.PMCR & 0xff00) | 0x0055;
+	/* Reset the port configuration */
+	PFC.PBCR = orig_PBCR;
+	PFC.PMCR = orig_PMCR;
 	iokbd_delay();
 
 	/* Now also reset the data registers. This was forgotten from SimLo's
 	   CheckKeyRow() and blows up everything. */
-	PFC.PBDR = 0x00;
-	PFC.PMDR = PFC.PMDR & 0xf0;
+	PFC.PBDR = orig_PBDR;
+	PFC.PMDR = orig_PMDR;
+	iokbd_delay();
 
 	return input;
 }

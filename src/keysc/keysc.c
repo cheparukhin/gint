@@ -38,9 +38,9 @@ GDATA static uint8_t current[12] = { 0 };
 typedef struct
 {
 	uint16_t time;    /* Locally unique time identifier */
-	uint8_t row;      /* Row number */
 	uint8_t changed;  /* Keys that changed state */
-	uint8_t kind;     /* Type of change, either KEYEV_DOWN or KEYEV_UP */
+	uint8_t row  :4;  /* Row number */
+	uint8_t kind :4;  /* Type of change, either KEYEV_DOWN or KEYEV_UP */
 
 } driver_event_t;
 
@@ -103,7 +103,7 @@ static void keysc_frame(void)
 		if(!diff) continue;
 
 		/* Update internal status if the event could be pushed */
-		driver_event_t ev = { time, row, diff, KEYEV_UP };
+		driver_event_t ev = { time, diff, row, KEYEV_UP };
 		if(!buffer_push(ev)) state[row] &= scan[row];
 	}
 	for(int row = 0; row < 12; row++)
@@ -111,7 +111,7 @@ static void keysc_frame(void)
 		int diff = scan[row] & ~state[row];
 		if(!diff) continue;
 
-		driver_event_t ev = { time, row, diff, KEYEV_DOWN };
+		driver_event_t ev = { time, diff, row, KEYEV_DOWN };
 		if(!buffer_push(ev)) state[row] |= scan[row];
 	}
 }
