@@ -200,7 +200,7 @@ SECTIONS
 	   There's an unused 0x100-byte gap at the start of the VBR space.
 	   The VBR space is already a large block (> 2 kiB), so I'm cutting off
 	   the gap to spare some memory */
-	_gint_vbr_fx9860g = 0x8800df00;
+	_gint_vbr_fx9860g = ORIGIN(vbr) - 0x100;
 
 	. = ORIGIN(rram);
 

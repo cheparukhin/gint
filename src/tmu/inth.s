@@ -215,7 +215,9 @@ _inth_etmux:
 	   * 0x600 to reach the interrupt handlers
 	   * 0x040 to jump over the entry gate
 	   * 0x840 to reach the handler of ETMU2
-	   * Skip over the first instructions */
+	   * Skip over the first instructions
+	   This is different on SH3 due to the compact scheme so it's edited
+	   dynamically at install time. */
 1:	.long	0xe80 + (.shared4 - _inth_etmu2)
 
 .id_etmux:

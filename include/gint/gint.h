@@ -63,9 +63,12 @@ void gint_osmenu(void);
    The first parameter event_code represents the event code associated with the
    interrupt. If it's not a multiple of 0x20 then you're doing something wrong.
    The codes are normally platform-dependent, but gint always uses SH7305
-   codes: SH3 platforms have a translation table. See the documentation for a
-   list of event codes and their associated interrupts. Also check the
-   translation table in gint's source in src/core/inth.S for SH3 support.
+   codes. SH3 platforms have a different, compact VBR layout. gint_inthandler()
+   translates the provided SH7305 codes to the compact layout and the interrupt
+   handler translates the hardware SH3 codes to the compact layout as well. See
+   gint's source in <src/core/inth.S> and <src/core/kernel.c>. Please note that
+   gint_inthandler() uses a table that must be modified for every new SH3
+   interrupt code to extend the compact scheme.
 
    The handler function is run in the kernel register bank with interrupts
    disabled and must end with 'rts' (not 'rte') as the main interrupt handler
@@ -76,8 +79,8 @@ void gint_osmenu(void);
    For convenience gint allows any block size to be loaded as an interrupt
    handler, but it should really be a multiple of 0x20 bytes and not override
    other handlers. If it's not written in assembler, then you're likely doing
-   something wrong, especially with __attribute__((interrupt_handler)) which
-   uses rte.
+   something wrong. Using __attribute__((interrupt_handler)), which uses rte,
+   is especially wrong.
 
    It is common for interrupt handlers to have a few bytes of data, such as the
    address of a callback function. gint often stores this data in the last

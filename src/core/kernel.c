@@ -131,15 +131,68 @@ void kinit(void)
 	sys_ctx.VBR = cpu_setVBR(gint_ctx.VBR, drivers_save_and_init, 0);
 }
 
+/* Due to dire space restrictions on SH3, event codes that are translated to
+   SH4 are further remapped into the VBR space to eliminate gaps and save
+   space. Each entry in this table represents a 32-byte block after the
+   interrupt handler's entry gate. It shows the SH4 event code whose gate is
+   placed on that block (some of gint's SH4 event codes are invented to host
+   helper blocks).
+
+   For instance, the 5th block after the entry gate hosts the interrupt handler
+   for SH4 event 0x9e0, which is ETMU0 underflow.
+
+   The _inth_remap table in src/core/inth.S combines the SH3-SH4 translation
+   with the compact translation, hence its entry for 0xf00 (the SH3 event code
+   for ETMU0 underflow) is the offset in this table where 0x9e0 is stored,
+   which is 4. */
+static const uint16_t sh3_vbr_map[] = {
+	0x400,  /* TMU0 underflow */
+	0x420,  /* TMU1 underflow */
+	0x440,  /* TMU2 underflow */
+	0x460,  /* (gint custom: TMU helper) */
+	0x9e0,  /* ETMU0 underflow */
+	0xc20,  /* ETMU1 underflow (used as helper on SH3) */
+	0xc40,  /* ETMU2 underflow (used as helper on SH3) */
+	0xc60,  /* (gint custom: ETMU helper) */
+	0xaa0,  /* RTC Periodic Interrupt */
+	0xae0,  /* (gint custom: RTC helper) */
+	0
+};
+
 /* gint_inthandler(): Install interrupt handlers */
 void *gint_inthandler(int event_code, const void *handler, size_t size)
 {
+	int offset;
+
 	/* Normalize the event code */
 	if(event_code < 0x400) return NULL;
-	event_code -= 0x400;
 	event_code &= ~0x1f;
 
-	void *dest = (void *)gint_ctx.VBR + event_code + 0x640;
+	/* On SH3, make VBR compact. Use this offset specified in the VBR map
+	   above to avoid gaps */
+	if(isSH3())
+	{
+		int index = 0;
+		while(sh3_vbr_map[index])
+		{
+			if((int)sh3_vbr_map[index] == event_code) break;
+			index++;
+		}
+
+		/* This happens if the event has not beed added to the table,
+		   ie. the compact VBR scheme does not support this code */
+		if(!sh3_vbr_map[index]) return NULL;
+
+		offset = index * 0x20;
+	}
+	/* On SH4, just use the code as offset */
+	else
+	{
+		offset = event_code - 0x400;
+	}
+
+	/* 0x40 is the size of the entry gate */
+	void *dest = (void *)gint_ctx.VBR + 0x600 + 0x40 + offset;
 	return memcpy(dest, handler, size);
 }
 

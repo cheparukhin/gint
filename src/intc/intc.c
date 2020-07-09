@@ -28,11 +28,11 @@ enum{ IPRA, IPRB, IPRC, IPRD, IPRE, IPRF, IPRG, IPRH, IPRI, IPRJ, IPRK, IPRL };
 enum{ IMR0, IMR1, IMR2, IMR3, IMR4, IMR5, IMR6, IMR7, IMR8, IMR9, IMR10 };
 #define _ 0,0
 
-struct info {
+static struct info {
 	uint16_t IPR4, IPR4bits, IMR, IMRbits;
 	/* Only set if different than IPR4 with IPR4bits */
 	uint16_t IPR3, IPR3bits;
-} info[] = {
+} const info[] = {
 	/* Standard TMU */
 	{ IPRA, 0xf000, IMR4,  0x10, _ },
 	{ IPRA, 0x0f00, IMR4,  0x20, _ },
