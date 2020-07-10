@@ -192,24 +192,11 @@ SECTIONS
 
 	. = ORIGIN(ram) + _sbss + _sdata;
 
-	/* gint's data section, going to static RAM. This section contains many
-	   small objects from the library (static/global variables, etc) */
-	.gint.data ALIGN(4) : ALIGN(4) {
-		_lgdata = LOADADDR(.gint.data);
-		_rgdata = . ;
-
-		*(.gint.data .gint.data.*)
-
-		. = ALIGN(16);
-	} > ram AT> rom
-
-	_sgdata = SIZEOF(.gint.data);
-
 	/* gint's uninitialized BSS section, going to static RAM. All the large
 	   data arrays will be located here */
 	.gint.bss (NOLOAD) : {
 		/* Since it's uninitialized, the location doesn't matter */
-		*(.gint.bss .gint.bss.*)
+		*(.gint.bss)
 
 		. = ALIGN(16);
 	} > ram :NONE
@@ -229,8 +216,8 @@ SECTIONS
 	   - Asynchronous unwind tables: no C++ exception handling for now ^^
 	   - Comments or anything the compiler might put in its assembler */
 	/DISCARD/ : {
-		*(.gint.bss.sh3)
 		*(.gint.data.sh3)
+		*(.gint.bss.sh3)
 
 		*(.debug_info .debug_abbrev .debug_loc .debug_aranges
 		  .debug_ranges .debug_line .debug_str)

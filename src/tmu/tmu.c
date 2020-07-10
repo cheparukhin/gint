@@ -27,13 +27,13 @@ typedef struct
 } GPACKED(4) inth_data_t;
 
 /* This array references the storage areas of all timer handlers */
-GDATA static inth_data_t *timers[9] = { NULL };
+static inth_data_t *timers[9] = { NULL };
 
 /* Arrays of standard and extra timers */
-GDATA static tmu_t *TMU = SH7305_TMU.TMU;
-GDATA static etmu_t *ETMU = SH7305_ETMU;
+static tmu_t *TMU = SH7305_TMU.TMU;
+static etmu_t *ETMU = SH7305_ETMU;
 /* TSTR register for standard timers */
-GDATA static volatile uint8_t *TSTR = &SH7305_TMU.TSTR;
+static volatile uint8_t *TSTR = &SH7305_TMU.TSTR;
 
 //---
 //	Local functions

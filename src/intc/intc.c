@@ -13,7 +13,7 @@ GDATA3 sh7705_intc_t SH7705_INTC = {
 	.ICR1 = (void *)0xa4000010,
 };
 
-GDATA sh7305_intc_t SH7305_INTC = {
+sh7305_intc_t SH7305_INTC = {
 	.IPR		= (void *)0xa4080000,
 	.MSK		= (void *)0xa4080080,
 	.MSKCLR		= (void *)0xa40800c0,

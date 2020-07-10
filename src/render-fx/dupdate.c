@@ -5,7 +5,7 @@
 GSECTION(".bss") static uint32_t fx_vram[256];
 
 /* Here is the definition of the VRAM pointer, exposed in <gint/display.h> */
-GDATA uint32_t *gint_vram = fx_vram;
+uint32_t *gint_vram = fx_vram;
 
 /* dupdate() - push the video RAM to the display driver */
 void dupdate(void)

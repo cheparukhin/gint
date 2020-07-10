@@ -55,9 +55,9 @@ typedef word_union(entry_mode_t,
 //---
 
 /* Interface with the controller */
-GDATA static volatile uint16_t *intf = (void *)0xb4000000;
+static volatile uint16_t *intf = (void *)0xb4000000;
 /* Bit 4 of Port R controls the RS bit of the display driver */
-GDATA static volatile uint8_t *PRDR = (void *)0xa405013c;
+static volatile uint8_t *PRDR = (void *)0xa405013c;
 
 GINLINE static void select(uint16_t reg)
 {

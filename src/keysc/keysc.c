@@ -26,13 +26,13 @@
    To ensure that adding pending events to the last-read state always gives the
    internal driver state, this array is not updated if the generation of an
    event fails. (Most likely the even will be regenerated at the next scan.) */
-GDATA static volatile uint8_t state[12] = { 0 };
+static volatile uint8_t state[12] = { 0 };
 
 /* The driver's current event state. This state corresponds to the sum of all
    events sent to the user so far.When the event queue is empty, this is equal
    to [state]. For each generated event, this array is updated to reflect the
    user's view of the keyboard. */
-GDATA static uint8_t current[12] = { 0 };
+static uint8_t current[12] = { 0 };
 
 /* A driver event, which is a common change in a full row */
 typedef struct
@@ -49,11 +49,11 @@ typedef struct
    be at least one free entry. */
 GBSS static driver_event_t buffer[KEYBOARD_QUEUE_SIZE];
 /* Buffer bounds */
-GDATA static int buffer_start = 0;
-GDATA static int buffer_end = 0;
+static int buffer_start = 0;
+static int buffer_end = 0;
 
 /* Current time, in keyboard-scanning ticks */
-GDATA static uint time = 0;
+static uint time = 0;
 
 /* buffer_push(): Add an event in the keyboard buffer
    Returns non-zero if the event cannot be pushed. */
@@ -260,7 +260,6 @@ static void init(void)
 {
 	/* Configure the timer to do 128 keyboard scans per second. This
 	   frequency *must* be high for the KEYSC interface to work! */
-	/* Note: the supporting timer always runs at 32768 Hz. */
 	int delay = 1000000 / KEYBOARD_SCAN_FREQUENCY;
 	if(!delay) delay = 1;
 

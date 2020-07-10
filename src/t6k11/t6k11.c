@@ -52,9 +52,9 @@ enum {
    pins in the address. (?) */
 
 /* RS = 0: Register selection */
-GDATA static volatile uint8_t *sel = (void *)0xb4000000;
+static volatile uint8_t *sel = (void *)0xb4000000;
 /* RS = 1: Command data or vram data */
-GDATA static volatile uint8_t *cmd = (void *)0xb4010000;
+static volatile uint8_t *cmd = (void *)0xb4010000;
 
 /* command() - send a command to set the value of a register
    @reg   Register number

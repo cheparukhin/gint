@@ -143,7 +143,7 @@ _gint_inth_7705:
 1:	.long	0xa4000000	/* INTEVT2 register */
 2:	.long	_inth_remap
 
-.section .gint.data
+.data
 .align 4
 
 /* EVENT CODE TRANSLATION TABLE - 96 BYTES

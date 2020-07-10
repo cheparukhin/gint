@@ -19,12 +19,15 @@
    gint's BSS section is not mentioned here because it's never initialized */
 extern uint32_t
 	brom, srom,			/* Limits of ROM mappings */
-	lgdata, sgdata, rgdata,		/* gint's data section */
 	ldata,  sdata,  rdata,		/* User's data section */
 	lilram, silram, rilram,		/* IL memory section */
 	lxram,  sxram,  rxram,		/* X memory section */
 	lyram,  syram,  ryram,		/* Y memory section */
 	sbss, rbss;			/* User's BSS section */
+#ifdef FX9860G
+extern uint32_t
+	lgmapped, sgmapped, rgmapped;	/* Permanently mapped functions */
+#endif
 
 /* Constructor and destructor arrays */
 extern void (*bctors)(void), (*ectors)(void);
@@ -101,8 +104,10 @@ int start(int isappli, int optnum)
 
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
-	regcpy(lgdata, sgdata, rgdata);
 	regcpy(ldata,  sdata,  rdata);
+	#ifdef FX9860G
+	regcpy(lgmapped, sgmapped, rgmapped);
+	#endif
 	regcpy(lilram, silram, rilram);
 	regcpy(lxram,  sxram,  rxram);
 	regcpy(lyram,  syram,  ryram);

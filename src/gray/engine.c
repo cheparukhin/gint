@@ -21,10 +21,10 @@ GBSS static uint32_t *vrams[4];
 
 /* Current VRAM pair used for drawing; the value can either be 0 (draws to
    VRAMs 0 and 1) or 2 (draws to VRAMs 2 and 3). */
-GDATA static volatile int st = 0;
+static volatile int st = 0;
 
 /* Whether the engine is running. Delays of light and dark frames. */
-GDATA static int runs = 0;
+static int runs = 0;
 GBSS static int delays[2];
 
 /* Underlying timer */

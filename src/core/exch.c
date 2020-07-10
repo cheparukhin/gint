@@ -119,9 +119,9 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 }
 
 /* Panic handler */
-GDATA GNORETURN void (*gint_exc_panic)(uint32_t code) = gint_default_panic;
+GNORETURN void (*gint_exc_panic)(uint32_t code) = gint_default_panic;
 /* Exception catcher */
-GDATA int (*gint_exc_catcher)(uint32_t code) = NULL;
+int (*gint_exc_catcher)(uint32_t code) = NULL;
 
 /* gint_panic(): Panic handler function */
 void gint_panic(uint32_t code)

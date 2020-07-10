@@ -16,7 +16,7 @@
 //---
 
 /* RTC address on SH7305, adjusted at startup on SH7337 and SH7355 */
-GDATA static rtc_t *RTC = &SH7305_RTC;
+static rtc_t *RTC = &SH7305_RTC;
 /* Address of interrupt handler parameters */
 GBSS struct {
 	int (*callback)(volatile void *arg);

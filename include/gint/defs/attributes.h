@@ -7,8 +7,7 @@
 
 /* Objects from specific sections */
 #define GSECTION(x)	__attribute__((section(x)))
-/* Objects from the .gint.data and .gint.bss sections */
-#define GDATA		__attribute__((section(".gint.data")))
+/* Objects from the gint's uninitialized BSS section */
 #define GBSS		__attribute__((section(".gint.bss")))
 /* Additional sections that are only needed on SH3 */
 #define GDATA3		__attribute__((section(".gint.data.sh3")))
