@@ -20,7 +20,7 @@
 //	kprint() definitions
 //---
 
-#define KPRINT_BUFSIZE 256
+#define KPRINT_BUFSIZE 64
 #define KFORMAT_ARGS \
 	GUNUSED int spec, GUNUSED struct kprint_options *opt, va_list *args
 

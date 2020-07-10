@@ -66,7 +66,7 @@ static struct info {
 /* intc_priority(): Configure the level of interrupts */
 int intc_priority(int intname, int level)
 {
-	struct info *i = &info[intname];
+	struct info const *i = &info[intname];
 	int IPRn = i->IPR4, IPRbits = i->IPR4bits;
 
 	if(isSH3() && i->IPR3bits != 0)

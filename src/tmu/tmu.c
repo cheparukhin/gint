@@ -423,10 +423,16 @@ static void init(void)
 //	Context system for this driver
 //---
 
+struct stored_timer {
+	uint32_t TCOR;
+	uint32_t TCNT;
+	uint16_t TCR;
+	uint16_t TSTR;
+};
+
 typedef struct
 {
-	tmu_t std[3];
-	etmu_t extra[6];
+	struct stored_timer t[9];
 	uint8_t TSTR;
 } ctx_t;
 
@@ -440,20 +446,21 @@ static void ctx_save(void *buf)
 
 	for(int i = 0; i < 3; i++)
 	{
-		tmu_t *c = &ctx->std[i];
+		struct stored_timer *c = &ctx->t[i];
 		c->TCOR = TMU[i].TCOR;
 		c->TCNT = TMU[i].TCNT;
-		c->TCR.word = TMU[i].TCR.word;
+		c->TCR  = TMU[i].TCR.word;
 	}
-	for(int i = 0; i < timer_count() - 3; i++)
+	for(int i = 3; i < timer_count(); i++)
 	{
-		etmu_t *T = &ETMU[i], *c = &ctx->extra[i];
+		struct stored_timer *c = &ctx->t[i];
+		etmu_t *T = &ETMU[i-3];
 
 		/* Don't snapshot an interrupt state, because the timer state
 		   is sometimes garbage protected by a masked interrupt. */
 		c->TCOR = T->TCOR ? T->TCOR : 0xffffffff;
 		c->TCNT = T->TCNT ? T->TCNT : c->TCOR;
-		c->TCR.byte = T->TCR.byte & 0xd;
+		c->TCR  = T->TCR.byte & 0xd;
 		c->TSTR	= T->TSTR;
 	}
 }
@@ -465,14 +472,15 @@ static void ctx_restore(void *buf)
 
 	for(int i = 0; i < 3; i++)
 	{
-		tmu_t *c = &ctx->std[i];
+		struct stored_timer *c = &ctx->t[i];
 		TMU[i].TCOR = c->TCOR;
 		TMU[i].TCNT = c->TCNT;
-		TMU[i].TCR.word = c->TCR.word;
+		TMU[i].TCR.word = c->TCR;
 	}
-	for(int i = 0; i < timer_count() - 3; i++)
+	for(int i = 3; i < timer_count(); i++)
 	{
-		etmu_t *T = &ETMU[i], *c = &ctx->extra[i];
+		struct stored_timer *c = &ctx->t[i];
+		etmu_t *T = &ETMU[i-3];
 
 		do T->TCOR = c->TCOR;
 		while(T->TCOR != c->TCOR);
@@ -483,8 +491,8 @@ static void ctx_restore(void *buf)
 		do T->TCNT = c->TCNT;
 		while(T->TCNT != c->TCNT);
 
-		do T->TCR.byte = c->TCR.byte;
-		while(T->TCR.byte != c->TCR.byte);
+		do T->TCR.byte = c->TCR;
+		while(T->TCR.byte != c->TCR);
 	}
 
 	*TSTR = ctx->TSTR;

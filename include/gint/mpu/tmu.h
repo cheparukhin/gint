@@ -48,7 +48,7 @@ typedef volatile struct
 	);
 	pad(19);
 
-} GPACKED(0x10) etmu_t;
+} GPACKED(4) etmu_t;
 
 //---
 //	SH7705 Timer Unit. Refer to:
