@@ -58,8 +58,8 @@ GCONSTRUCTOR static void gray_init(void)
 	}
 	else
 	{
-		delays[0] = 898;
-		delays[1] = 1350;
+		delays[0] = 923;
+		delays[1] = 1742;
 	}
 }
 

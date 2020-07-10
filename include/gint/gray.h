@@ -68,6 +68,7 @@ void gray_stop(void);
        912    1343       heavy        none         good
        993    1609      medium       light       decent
       1325    1607       heavy       light    excellent
+       923    1742        none    scanline         good  [default]
      --------------------------------------------------
 
   Here are values for this version of gint (for the Graph 35+E II only):
@@ -75,7 +76,7 @@ void gray_stop(void);
      LIGHT    DARK    BLINKING     STRIPES       COLORS
      --------------------------------------------------
        680    1078
-       762    1311         low        some     too light  [default]
+       762    1311         low        some    too light  [default]
        869    1097      medium        some    excellent
        869    1311      medium        none         good
        937    1425      medium        none         good
