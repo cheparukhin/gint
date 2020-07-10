@@ -20,9 +20,12 @@
 
    The .gint.blocks section consists of blocks of 32 bytes intended for mapping
    into the VBR space (exception, TLB miss, and interrupt handlers). Each event
-   gate is linearly associated with a block number:
+   gate is linearly associated with a block number on SH4:
 
-     block_id = (event_code - 0x380) / 0x20
+     block_id = (event_code - 0x3c0) / 0x20
+
+   and associated with a compact block number on SH3 through a table (to ensure
+   that blocks are consecutive in memory).
 
    This file provides entry points; drivers may provide their own interrupt
    handlers, and store them in the .gint.blocks section for consistency. They
@@ -32,8 +35,8 @@
    - It is possible to map MPU-specific blocks at runtime, to avoid checking
      the MPU each time an interrupt is handled;
    - However, the blocks can only rely on relative displacements or cross-
-     references if their relative order is known and heeded for. A good example
-     of this is the timer driver. Please be careful. */
+     references if their relative order is known and heeded for both on SH4 and
+     SH3. A good example of this is the timer driver. Please be careful. */
 
 /* SH7305-TYPE DEBUG INTERRUPT HANDLER - 26 BYTES */
 
@@ -76,10 +79,11 @@ _gint_inth_7305:
 	sub	r1, r0
 
 	/* Add the distance to the first entry and jump as a subroutine */
-	add	#40, r0
+	add	#(.first_entry - .jump_over), r0
 	bsrf	r0
 	nop
 
+.jump_over:
 	/* Restore caller-saved registers */
 	lds.l	@r15+, macl
 	lds.l	@r15+, mach
@@ -91,10 +95,11 @@ _gint_inth_7305:
 
 	.zero	24
 1:	.long	0xff000028
+.first_entry:
 
 #ifdef FX9860G
 
-/* SH7705-TYPE INTERRUT HANDLER ENTRY - 52 BYTES */
+/* SH7705-TYPE INTERRUT HANDLER ENTRY - 56 BYTES */
 
 _gint_inth_7705:
 	/* Save caller-saved registers as before */
@@ -107,18 +112,22 @@ _gint_inth_7705:
 	mov.l	1f, r0
 	mov.l	@r0, r0		/* r0 = old_code */
 
-	/* Translate the event code to SH4 format */
+	/* Translate the event code to compact format. The compact format is
+	   laid out in a way that leaves no gap in the VBR space. Additionally,
+	   gates are installed starting at VBR + 0x200 to save space. */
 	mov.l	2f, r2
 	mov	#-5, r3
 	shld	r3, r0		/* r0 = old_code >> 5 */
 	add	#-32, r0	/* r0 = (old_code - 0x400) >> 5 */
-	mov.b	@(r0, r2), r0	/* r0 = (new_code - 0x400) >> 5 */
+	mov.b	@(r0, r2), r0	/* r0 = gate_number */
+	add	#16, r0		/* r0 = (0x200 + gate_number * 0x20) >> 5 */
 	mov	#5, r3
-	shld	r3, r0		/* r0 = new_code - 0x400 */
+	shld	r3, r0		/* r0 = 0x200 + gate_number * 0x20 */
 
-	/* Add the distance between nop and the first entry, and jump */
-	add	#32, r0
-	bsrf	r0
+	/* Start at VBR + 0x200 and jump! */
+	stc	vbr, r1
+	add	r1, r0
+	jsr	@r0
 	nop
 
 	/* Restore saved registers */
@@ -130,7 +139,7 @@ _gint_inth_7705:
 	rte
 	nop
 
-	.zero 12
+	.zero 8
 1:	.long	0xa4000000	/* INTEVT2 register */
 2:	.long	_inth_remap
 
@@ -148,13 +157,15 @@ _gint_inth_7705:
 
    VBR offset  SH3 events       Description
    ----------------------------------------------------------------
+   0x200       400 420 440 ---  TMU0, TMU1, TMU2 and a helper
+   0x280       f00 --- --- ---  ETMU0, ETMU1, ETMU2 and a helper
+   0x300       4a0 ---          RTC Periodic Interrupt and a helper
+   ----------------------------------------------------------------
    0x600       --- ---          Entry gate
-   0x640       400 420 440 ---  TMU0, TMU1, TMU2 and a helper
-   0x6c0       f00 --- --- ---  ETMU0, ETMU1, ETMU2 and a helper
-   0x740       4a0 ---          RTC Periodic Interrupt and a helper
    ----------------------------------------------------------------
 
-   This represents 12 gates so the VBR space ends at VBR + 0x780. */
+   There is space for 16 gates at VBR + 0x200 so the VBR currently ends after
+   the interrupt entry gate at VBR + 0x640. */
 
 _inth_remap:
 	.byte	   0,    1,    2, 0xff, 0xff,    8, 0xff, 0xff

@@ -6,6 +6,7 @@ Issues:
 * #10        support fx-CG 20
 
 Extensions on existing code:
+* tmu:       make interrupt handlers more elegant
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
 * gray:      double-buffer gray settings and unify d* with g*
 * topti:     support unicode fonts

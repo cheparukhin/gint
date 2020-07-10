@@ -378,7 +378,7 @@ static void init(void)
 		/* On SH3, the ETMU handler is not at an offset of 0x840 (event
 		   code 0xc40) but at an offset of 0xc0 */
 		uint32_t *etmu_offset = h + 16;
-		if(isSH3()) *etmu_offset = *etmu_offset - 0x840 + 0xc0;
+		if(isSH3()) *etmu_offset = *etmu_offset - 0xe80 + 0x2c0;
 
 		uint32_t *data_id = h + 20;
 		*data_id = i;

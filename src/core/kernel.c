@@ -162,7 +162,7 @@ static const uint16_t sh3_vbr_map[] = {
 /* gint_inthandler(): Install interrupt handlers */
 void *gint_inthandler(int event_code, const void *handler, size_t size)
 {
-	int offset;
+	void *dest;
 
 	/* Normalize the event code */
 	if(event_code < 0x400) return NULL;
@@ -183,16 +183,16 @@ void *gint_inthandler(int event_code, const void *handler, size_t size)
 		   ie. the compact VBR scheme does not support this code */
 		if(!sh3_vbr_map[index]) return NULL;
 
-		offset = index * 0x20;
+		/* Gates are placed starting at VBR + 0x200 to save space */
+		dest = (void *)gint_ctx.VBR + 0x200 + index * 0x20;
 	}
 	/* On SH4, just use the code as offset */
 	else
 	{
-		offset = event_code - 0x400;
+		/* 0x40 is the size of the entry gate */
+		dest = (void *)gint_ctx.VBR + 0x640 + (event_code - 0x400);
 	}
 
-	/* 0x40 is the size of the entry gate */
-	void *dest = (void *)gint_ctx.VBR + 0x600 + 0x40 + offset;
 	return memcpy(dest, handler, size);
 }
 
