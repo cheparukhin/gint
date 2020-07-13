@@ -1,9 +1,9 @@
 //---
-//	display:common - Internal definitions for common display functions
+//	render - Internal definitions for common display functions
 //---
 
-#ifndef DISPLAY_COMMON
-#define DISPLAY_COMMON
+#ifndef RENDER_COMMON
+#define RENDER_COMMON
 
 #include <gint/display.h>
 
@@ -22,9 +22,9 @@ void gint_dvline(int y1, int y2, int x, color_t color);
 //---
 
 /* Current font */
-extern font_t const * topti_font;
+extern font_t const *topti_font;
 /* Default font */
-extern font_t const * gint_default_font;
+extern font_t const *gint_default_font;
 
 /* enum topti_charset: Available character set decoders
    Each charset is associated with a reduced character table. */
@@ -57,4 +57,4 @@ int charset_decode(enum topti_charset set, uint c);
    using a proportional font, the size array is not heeded for. */
 int topti_offset(font_t const *f, uint glyph);
 
-#endif /* DISPLAY_COMMON */
+#endif /* RENDER_COMMON */

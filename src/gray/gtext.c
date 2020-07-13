@@ -1,5 +1,5 @@
 #include <gint/gray.h>
-#include <display/common.h>
+#include "../render/render.h"
 #include "../render-fx/topti-asm.h"
 
 /* gtext_opt(): Display a string of text */

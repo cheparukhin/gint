@@ -1,6 +1,6 @@
 #include <gint/defs/types.h>
 #include <gint/display.h>
-#include <display/fx.h>
+#include "render-fx.h"
 #include "bopti-asm.h"
 
 /* struct rbox: A rendering box (target coordinates and source rectangle)

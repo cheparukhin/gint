@@ -1,6 +1,6 @@
 #include <gint/display.h>
-#include <display/cg.h>
 #include <gint/drivers/r61524.h>
+#include "render-cg.h"
 
 /* dupdate() - Push the video RAM to the display driver */
 void dupdate(void)

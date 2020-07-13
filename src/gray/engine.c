@@ -10,7 +10,7 @@
 #include <gint/display.h>
 #include <gint/timer.h>
 
-#include <display/fx.h>
+#include "../render-fx/render-fx.h"
 
 /* Three additional video RAMS, allocated statically if --static-gray was set
    at configure time, or with malloc() otherwise. */

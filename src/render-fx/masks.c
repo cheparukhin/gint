@@ -1,4 +1,4 @@
-#include <display/fx.h>
+#include "render-fx.h"
 
 /* masks() - compute the vram masks for a given rectangle */
 void masks(int x1, int x2, uint32_t *masks)

@@ -1,9 +1,9 @@
 //---
-//	display:fx - Internal definitions for the display module on fx9860g
+//	render-fx - Internal definitions for the display module on fx9860g
 //---
 
-#ifndef DISPLAY_FX
-#define DISPLAY_FX
+#ifndef RENDER_FX
+#define RENDER_FX
 
 #include <gint/defs/types.h>
 #include <gint/display.h>
@@ -102,4 +102,4 @@ void gsubimage
 		return;				\
 	}
 
-#endif /* DISPLAY_FX */
+#endif /* RENDER_FX */

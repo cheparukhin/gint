@@ -1,6 +1,6 @@
 #include <gint/display.h>
 #include <gint/defs/util.h>
-#include <display/fx.h>
+#include "render-fx.h"
 
 /* gint_dhline(): Optimized horizontal line using a rectangle mask */
 void gint_dhline(int x1, int x2, int y, int color)

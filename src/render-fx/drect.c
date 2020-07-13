@@ -1,6 +1,6 @@
 #include <gint/defs/util.h>
 #include <gint/display.h>
-#include <display/fx.h>
+#include "render-fx.h"
 
 /* drect() - fill a rectangle of the screen */
 void drect(int x1, int y1, int x2, int y2, int color)

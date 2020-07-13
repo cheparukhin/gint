@@ -2,7 +2,8 @@
 #include <gint/defs/attributes.h>
 #include <gint/display.h>
 #include <gint/std/string.h>
-#include <display/common.h>
+
+#include "../render/render.h"
 #include "topti-asm.h"
 
 /* Default font */

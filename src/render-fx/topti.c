@@ -1,8 +1,9 @@
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
 #include <gint/display.h>
-#include <display/common.h>
-#include <display/fx.h>
+
+#include "../render/render.h"
+#include "render-fx.h"
 #include "topti-asm.h"
 
 /* Default font */

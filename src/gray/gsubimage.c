@@ -1,5 +1,5 @@
 #include <gint/gray.h>
-#include <display/fx.h>
+#include "../render-fx/render-fx.h"
 #include "../render-fx/bopti-asm.h"
 
 /* List of rendering functions */

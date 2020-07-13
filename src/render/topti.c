@@ -1,6 +1,7 @@
 #include <gint/defs/types.h>
 #include <gint/display.h>
-#include <display/common.h>
+
+#include "../render/render.h"
 
 /* TODO: These parameters will eventually be specified by the font */
 #define CHAR_SPACING 1

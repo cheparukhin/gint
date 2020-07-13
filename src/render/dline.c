@@ -1,9 +1,9 @@
 #include <gint/display.h>
 #include <gint/defs/util.h>
-#include <display/common.h>
 
+#include "../render/render.h"
 #ifdef FX9860G
-#include <display/fx.h>
+#include "../render-fx/render-fx.h"
 #endif
 
 /* dline(): Bresenham line drawing algorithm

@@ -1,6 +1,6 @@
 #include <gint/display.h>
 #include <gint/drivers/t6k11.h>
-#include <display/fx.h>
+#include "render-fx.h"
 
 /* Standard video RAM for fx9860g is 1 bit per pixel */
 GSECTION(".bss") static uint32_t fx_vram[256];

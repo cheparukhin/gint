@@ -1,6 +1,6 @@
 #include <gint/defs/util.h>
 #include <gint/gray.h>
-#include <display/fx.h>
+#include "../render-fx/render-fx.h"
 
 /* grect(): Fill a rectangle on the screen */
 void grect(int x1, int y1, int x2, int y2, color_t color)
