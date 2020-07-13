@@ -43,12 +43,11 @@ enum {
 
    When functions that use the gray engine call functions that don't and vice-
    versa, it can be tedious to know exacly when the gray engine should be
-   running. This function provides a stack of gray engine states to solve this
-   problem. When entering a function that uses/doesn't use the gray engine, you
-   can call dgray(DGRAY_PUSH_ON)/dgray(DGRAY_PUSH_OFF) to start/stop the
-   engine; then call dgray(DGRAY_POP) at the end of the function.
-   dgray(DGRAY_POP) will restore the state of the engine as it was before the
-   previous DGRAY_PUSH_*. This allows each function to set its own state
+   running. To solve this problem, this function provides DGRAY_PUSH_ON and
+   DGRAY_PUSH_OFF that save the current state of the engine before starting or
+   stopping it. DGRAY_POP can later be used to transition back to the saved
+   state. 32 states can be saved, meaning that up to 32 DGRAY_PUSH_* can be in
+   effect simultaneously. This allows each function to set its own state
    without altering the state of their callers.
 
    This function returns non-zero if the engine has failed to initialize at

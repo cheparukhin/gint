@@ -148,25 +148,49 @@ static void gray_stop(void)
 /* dgray(): Start or stop the gray engine at the next dupdate() */
 int dgray(int mode)
 {
+	/* Stack of states for the push modes */
+	static uint8_t states[32] = { 0 };
+	static uint8_t current = 0;
+
 	if(mode == DGRAY_ON)
 	{
 		if(!gray_isinit()) return 1;
 
 		/* Set the display module's alternate rendering mode to
 		   override rendering functions to use their g*() variant */
-		dmode = &gray_mode;
-		return 0;
+		if(!dgray_enabled()) dmode = &gray_mode;
 	}
 	else if(mode == DGRAY_OFF)
 	{
 		/* Set the mode to a temporary one that only overrides
 		   dupdate() so that we can stop the engine next frame */
-		if(dmode == &gray_mode) dmode = &gray_exit_mode;
-		return 0;
+		if(dgray_enabled()) dmode = &gray_exit_mode;
 	}
+	else if(mode == DGRAY_PUSH_ON)
+	{
+		if(current >= 32) return 1;
+		states[current++] = dgray_enabled() ? DGRAY_ON : DGRAY_OFF;
 
-	/* TODO: DGRAY_PUSH_* and DGRAY_POP */
-	return 2;
+		return dgray(DGRAY_ON);
+	}
+	else if(mode == DGRAY_PUSH_OFF)
+	{
+		if(current >= 32) return 1;
+		states[current++] = dgray_enabled() ? DGRAY_ON : DGRAY_OFF;
+
+		return dgray(DGRAY_OFF);
+	}
+	else if(mode == DGRAY_POP)
+	{
+		/* Stay at 0 if the user's push/pop logic is broken */
+		if(current > 0) current--;
+
+		/* Switch to previous state */
+		return dgray(states[current]);
+	}
+	else return 1;
+
+	return 0;
 }
 
 /* gray_int(): Interrupt handler */
