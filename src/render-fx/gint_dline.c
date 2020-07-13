@@ -3,7 +3,7 @@
 #include <display/fx.h>
 
 /* gint_dhline(): Optimized horizontal line using a rectangle mask */
-void gint_dhline(int x1, int x2, int y, color_t color)
+void gint_dhline(int x1, int x2, int y, int color)
 {
 	if((uint)y >= 64) return;
 	if(x1 > x2) swap(x1, x2);
@@ -39,7 +39,7 @@ void gint_dhline(int x1, int x2, int y, color_t color)
 }
 
 /* gint_dvline(): Optimized vertical line */
-void gint_dvline(int y1, int y2, int x, color_t color)
+void gint_dvline(int y1, int y2, int x, int color)
 {
 	if((uint)x >= 128) return;
 	if(y1 > y2) swap(y1, y2);

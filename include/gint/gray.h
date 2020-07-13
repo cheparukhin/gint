@@ -1,5 +1,5 @@
 //---
-//	gint:gray - Gray engine and rendering functions
+//	gint:gray - Gray engine control
 //---
 
 #ifndef GINT_GRAY
@@ -8,34 +8,71 @@
 #include <gint/defs/types.h>
 #include <gint/display.h>
 
-//---
-//	Engine control
-//---
+/* Commands for the gray engine */
+enum {
+	/* Start or stop the engine */
+	DGRAY_ON,
+	DGRAY_OFF,
+	/* Start or stop the engine, but remember previous state */
+	DGRAY_PUSH_ON,
+	DGRAY_PUSH_OFF,
+	/* Restore previous state remembered by DGRAY_PUSH_* */
+	DGRAY_POP,
+};
 
-/* gray_start(): Start the gray engine
+/* dgray(): Start or stop the gray engine at the next dupdate()
 
-   The control of the screen is transferred to the engine; you should not use
-   dupdate() after this function, only gupdate().
+   This function configures the display module to work with or without the gray
+   engine. When the mode is set to DGRAY_ON, all rendering functions are
+   replaced to use gray rendering, and gray frames will start being displayed
+   after the next dupdate(). To transition from monochrome rendering to gray
+   rendering, you must first call dgray(DGRAY_ON), then draw your first gray
+   frame from scratch, then call dupdate().
 
-   The engine uses timer number GRAY_TIMER (equal to 0 by default) to run. If
-   the timer is unavailable, this function will fail. Otherwise, the gray
-   engine is started and any attempt to use timer 0 while it is running will be
-   denied by the timer module. */
-void gray_start(void);
+   Similarly, when the mode is DGRAY_OFF, all rendering functions are replaced
+   to use monochrome rendering, and the next frame sent with dupdate() will
+   stop the gray engine on the display. To transition back to monochrome
+   rendering, call dgray(DGRAY_OFF), draw your first monochrome frame from
+   scratch, then call dupdate().
 
-/* gray_stop(): Stop the gray engine
+   The gray engine uses the timer id GRAY_TIMER (which is 0) to run and needs 3
+   additional VRAMs (totaling 4), obtained on the heap by default. Timer 0 is
+   chosen for its precision and high priority. If GRAY_TIMER is unavailable or
+   VRAMs cannot be obtained with malloc(), the gray engine will fail to start
+   and this function will return a non-zero error code.
 
-   Safe to call if the engine was not running. The gray engine returns the
-   control of the screen and dupdate() is safe to use again.
+   When functions that use the gray engine call functions that don't and vice-
+   versa, it can be tedious to know exacly when the gray engine should be
+   running. This function provides a stack of gray engine states to solve this
+   problem. When entering a function that uses/doesn't use the gray engine, you
+   can call dgray(DGRAY_PUSH_ON)/dgray(DGRAY_PUSH_OFF) to start/stop the
+   engine; then call dgray(DGRAY_POP) at the end of the function.
+   dgray(DGRAY_POP) will restore the state of the engine as it was before the
+   previous DGRAY_PUSH_*. This allows each function to set its own state
+   without altering the state of their callers.
 
-   This function will leave the screen in whatever state it is, which is most
-   probably one of the gray buffers being displayed. You should dupdate()
-   quickly after this call to avoid visual artifacts. If the next monochrome
-   frame is slow to render, consider rendering it before stopping the gray
-   engine, and calling dupdate() immediately after. */
-void gray_stop(void);
+   This function returns non-zero if the engine has failed to initialize at
+   startup (because it failed to obtain either GRAY_TIMER or some of its VRAM
+   memory). Because changes to the gray engine only apply after a call to
+   dupdate(), you can check if the engine is successfully initialized with:
 
-/* gray_delays(): Set the gray engine delays
+     int engine_successfully_initialized = dgray(DGRAY_ON);
+     dgray(DGRAY_OFF);
+
+   @mode  DGRAY_ON or DGRAY_PUSH_ON to turn the engine on;
+          DGRAY_OFF or DGRAY_PUSH_OFF to turn the engine off;
+          DGRAY_POP to restore the state as before the last DGRAY_PUSH_*.
+
+   Returns 0 on success and non-zero if the engine has failed to initialize. */
+int dgray(int mode);
+
+/* dgray_enabled(): Check whether gray mode is enabled
+   Returns non-zero if gray mode is enabled, that is if the gray engine is
+   planning to run at the next call to dupdate(). (This is true between the
+   calls to dgray(DGRAY_ON) and dgray(DGRAY_OFF).) */
+int dgray_enabled(void);
+
+/* dgray_setdelays(): Set the gray engine delays
 
    The gray engine works by swapping two images at a fast pace. Pixels that are
    white on both or black or both will appear as such, but pixels that are
@@ -59,164 +96,83 @@ void gray_stop(void);
      and speed; but overall they're the *one* thing you want to avoid.
    * And the color of the shades themselves.
 
-   Here are values from an older version of gint, which may not look good now
-   but provide bases to search for good settings:
+   Here are values from the old fx-9860G-like family, which is every monochrome
+   calculator but the Graph 35+E II:
 
      LIGHT    DARK    BLINKING     STRIPES       COLORS
      --------------------------------------------------
-       860    1298        none    terrible       decent
-       912    1343       heavy        none         good
-       993    1609      medium       light       decent
-      1325    1607       heavy       light    excellent
+       898    1350        none      common         good
+      1075    1444         low      common    too close
+       609     884      medium    terrible     variable
+       937    1333         low      common       decent
        923    1742        none    scanline         good  [default]
      --------------------------------------------------
 
-  Here are values for this version of gint (for the Graph 35+E II only):
+  Here are values for the Graph 35+E II only:
 
      LIGHT    DARK    BLINKING     STRIPES       COLORS
      --------------------------------------------------
-       680    1078
-       762    1311         low        some    too light  [default]
-       869    1097      medium        some    excellent
+       680    1078         low      common         good
+       762    1311         low        some         good  [default]
+       869    1097      medium        some    too close
        869    1311      medium        none         good
-       937    1425      medium        none         good
+       937    1425        none         bad         good
      --------------------------------------------------
+
+   This function sets the delays of the gray engine. It is safe to call while
+   the engine is running, although for best visual effects it is better to call
+   it prior to dgray(GRAY_ON).
 
    @light  New light delay
    @dark   New dark delay */
-void gray_delays(uint32_t light, uint32_t dark);
+void dgray_setdelays(uint32_t light, uint32_t dark);
 
-/* gray_config(): Get the current configuration of the engine
+/* dgray_getdelays(): Get the gray engine delays
 
    Provides the value of the current light and dark delays, measured in timer
    ticks of prescaler P_phi/64. See <gint/clock.h> on how to obtain this value.
    Both pointers may be NULL.
 
    @light  Set to the current light delay setting
-   @dark   Set to the current dark delay setting
-   Returns non-zero if the engine is currently running, 0 otherwise. */
-int gray_config(uint32_t *light, uint32_t *dark);
-
-//---
-//	Area rendering functions
-//---
-
-/* gclear(): Fill the screen with a single color
-   Clears the VRAM and paints all the pixels in the same color. Optimized for
-   opaque colors; use grect() for other colors.
-
-   @color  white, light, dark, black */
-void gclear(color_t color);
-
-/* grect(): Fill a rectangle on the screen
-   Applies a color or an operator to the rectangle enclosed by (x1 y1) and
-   (x2 y2), both included.
-
-   @x1 @x2 @y1 @y2  Bounding rectangle
-   @color           white, light, dark, black, none, invert, lighten, darken */
-void grect(int x1, int y1, int x2, int y2, color_t color);
-
-//---
-//	Point drawing functions
-//---
-
-/* gpixel(): Change a pixel's color
-   Paints the specified pixel. Use lines or area rendering when possible
-   because painting pixels individually is slow.
-
-   @x @y   Coordinates of the pixel to paint
-   @color  white, light, dark, black, none, invert, lighten, darken */
-void gpixel(int x, int y, color_t color);
-
-/* gline(): Render a straight line
-   Draws a line without anti-aliasing, using a Bresenham-style algorithm. Much
-   like dline(), has optimizations for vertical and horizontal lines but is not
-   able to handle clipping.
-
-   @x1 @y1 @x2 @y2  End points of the line (both included)
-   @color           white, light, dark, black, none, invert, lighten, darken */
-void gline(int x1, int y1, int x2, int y2, color_t color);
-
-/* ghline(): Full-width horizontal line
-   @y      Line number
-   @color  white, light, dark, black, none, invert, lighten, darken */
-void ghline(int y, color_t color);
-
-/* gvline(): Full-height vertical line
-   @x      Column number
-   @color  white, light, dark, black, none, invert, lighten, darken */
-void gvline(int x, color_t color);
-
-//---
-//	Text rendering
-//---
-
-/* dfont() and dsize() still work with the gray engine. */
-
-/* gtext(): Display a string of text
-   Exactly like dtext(), except that the rendering is done on the two gray
-   VRAMs and all colors are supported.
-
-   @x @y   Coordinates of top-left corner of the rendered string
-   @str    String to display
-   @fg     Foreground: white, light, dark, black, none, invert, lighten, darken
-   @bg     Background, same colors as fg */
-void gtext(int x, int y, const char *str, int fg, int bg);
-
-//---
-//	Image rendering
-//---
-
-/* gimage(): Render a full image
-   This function is exactly like dimage(), but it draws gray image instead.
-
-   @x @y   Coordinates of the top-left corner of the image
-   @image  Pointer to gray image encoded with [fxconv] */
-void gimage(int x, int y, bopti_image_t const *image);
-
-/* gsubimage(): Render a section of an image
-   Like dsubimage() for gray images. Same options apply.
-
-   @x @y           Coordinates on screen of the rendered subrectangle
-   @image          Pointer to image encoded with [fxconv]
-   @left @top      Top-left coordinates of the subrectangle within [image]
-   @width @height  Subrectangle dimensions
-   @flags          OR-combination of DIMAGE_* flags */
-void gsubimage(int x, int y, bopti_image_t const *image, int left, int top,
-	int width, int height, int flags);
+   @dark   Set to the current dark delay setting */
+void dgray_getdelays(uint32_t *light, uint32_t *dark);
 
 //---
 //	VRAM management
 //---
 
-/* gupdate(): Push the current VRAMs to the screen
+/* dgray_getvram(): Get the current VRAM pointers
+   These pointers can be used for custom rendering functions. */
+void dgray_getvram(uint32_t **light, uint32_t **dark);
 
-   This function swaps pairs of VRAM buffers in the gray engine so that the
-   gray and light VRAMs that were being drawn to are now available to be
-   displayed on the screen at the next refresh, while the VRAMs that were
-   previously being displayed are now available for drawing.
+//---
+//	Aliases for older programs
+//---
 
-   Unlike dupdate(), gupdate() does not interact with the screen as this
-   interaction is done very frequently by the engine itself. It performs an
-   atomic operation to swap buffers, but nothing on the screen will change
-   until the engine's timer actually fires. */
-void gupdate(void);
+/* Functions for the gray engine used to be called g*() to mirror the d*()
+   functions of the display module. They are now bundled together, so these
+   aliases are for older programs that still use the g*() naming scheme */
 
+#ifdef GINT_GRAY_ALIASES
 
-/* gvram(): Get the current VRAM pointers
+#define gclear dclear
+#define grect drect
+#define gpixel dpixel
+#define gline dline
+#define ghline dhline
+#define gvline dvline
+#define gimage dimage
+#define gsubimage dsubimage
+#define gtext dtext
+#define gtext_opt dtext_opt
+#define gprint dprint
+#define gprint_opt dprint_opt
 
-   This function stores the current VRAM pointers to the specified locations.
-   This operation needs to be done atomically because the engine might kick in
-   and sway buffers at any time; calling gvraml() then gvramd() is unsafe.
+#define gupdate dupdate
+#define gray_delays dgray_setdelays
+#define gray_config dgray_getdelays
+#define gvram dgray_getvram
 
-   @light  Set to the current light VRAM pointer
-   @dark   Set to the current dark VRAM pointer */
-void gvram(uint32_t **light, uint32_t **dark);
-
-/* gvraml(): Shorthand to retrieve the current light VRAM pointer */
-uint32_t *gvraml(void);
-
-/* gvramd(): Shorthand to retrieve the current dark VRAM pointer */
-uint32_t *gvramd(void);
+#endif /* GINT_GRAY_ALIASES */
 
 #endif /* GINT_GRAY */

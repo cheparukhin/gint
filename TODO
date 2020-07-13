@@ -1,14 +1,15 @@
 For the 2.1.0 release:
 * bopti:     remove the deprecated image_t definition
 * project:   remove the compat branch
+* project:   remove the gray aliases
 
 Issues:
 * #10        support fx-CG 20
 
 Extensions on existing code:
+* build:     move the private headers to the src/ folder
 * tmu:       make interrupt handlers more elegant
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
-* gray:      double-buffer gray settings and unify d* with g*
 * topti:     support unicode fonts
 * dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic

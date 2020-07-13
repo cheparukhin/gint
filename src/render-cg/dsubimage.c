@@ -1,13 +1,7 @@
 #include <gint/display.h>
 #include "bopti-asm.h"
 
-/* dimage() - render a full image */
-void dimage(int x, int y, bopti_image_t const *img)
-{
-	bopti_render_clip(x, y, img, 0, 0, img->width, img->height);
-}
-
-/* dsubimage() - render a section of an image */
+/* dsubimage(): Render a section of an image */
 void dsubimage(int x, int y, bopti_image_t const *img, int left, int top,
 	int width, int height, int flags)
 {

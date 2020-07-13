@@ -10,22 +10,12 @@ static void *bopti_asm[] = {
 	bopti_gasm_gray_alpha,
 };
 
-/* gimage(): Render a full image */
-void gimage(int x, int y, bopti_image_t const *img)
-{
-	uint32_t *light, *dark;
-	gvram(&light, &dark);
-
-	bopti_render_clip(x, y, img, 0, 0, img->width, img->height, light,
-		dark, bopti_asm[img->profile]);
-}
-
 /* gsubimage(): Render a section of an image */
 void gsubimage(int x, int y, bopti_image_t const *img, int left, int top,
 	int width, int height, int flags)
 {
 	uint32_t *light, *dark;
-	gvram(&light, &dark);
+	dgray_getvram(&light, &dark);
 
 	if(flags & DIMAGE_NOCLIP)
 	{

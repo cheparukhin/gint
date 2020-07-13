@@ -2,8 +2,10 @@
 #include <gint/display.h>
 
 /* drect() - fill a rectangle of the screen */
-void drect(int x1, int y1, int x2, int y2, uint16_t color)
+void drect(int x1, int y1, int x2, int y2, int color)
 {
+	if(color == C_NONE) return;
+
 	if(x1 > x2) swap(x1, x2);
 	if(y1 > y2) swap(y1, y2);
 

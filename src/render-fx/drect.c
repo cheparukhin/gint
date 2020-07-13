@@ -3,7 +3,7 @@
 #include <display/fx.h>
 
 /* drect() - fill a rectangle of the screen */
-void drect(int x1, int y1, int x2, int y2, color_t color)
+void drect(int x1, int y1, int x2, int y2, int color)
 {
 	if(x1 > x2) swap(x1, x2);
 	if(y1 > y2) swap(y1, y2);
@@ -14,6 +14,8 @@ void drect(int x1, int y1, int x2, int y2, color_t color)
 	if(x2 >= 128) x2 = 127;
 	if(y1 < 0) y1 = 0;
 	if(y2 >= 64) y2 = 63;
+
+	DMODE_OVERRIDE(drect, x1, y1, x2, y2, color);
 
 	/* Use masks to get the work done fast! */
 	uint32_t m[4];

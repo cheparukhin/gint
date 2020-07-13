@@ -8,7 +8,7 @@
 #include <gint/defs/types.h>
 #include <gint/display.h>
 
-/* masks() - compute the vram masks for a given rectangle
+/* masks(): Compute the vram masks for a given rectangle
 
    Since the VRAM is line-based with four uin32_t elements per row, we can
    execute any operation on a rectangle by running it on each set of four
@@ -24,7 +24,7 @@
    @masks   Stores the result of the function (four uint32_t values) */
 void masks(int x1, int x2, uint32_t *masks);
 
-/* bopti_render_clip() - render a bopti image with clipping
+/* bopti_render_clip(): Render a bopti image with clipping
    @x @y             Location of the top-left corner
    @img              Image encoded by [fxconv]
    @left @top @w @h  Bounding box to render
@@ -33,7 +33,7 @@ void masks(int x1, int x2, uint32_t *masks);
 void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
 	int top, int w, int h, uint32_t *v1, uint32_t *v2, void *bopti_asm);
 
-/* bopti_render_noclip() - render a bopti image without clipping
+/* bopti_render_noclip(): Render a bopti image without clipping
    This function is only ever slightly faster than bopti_render_clip(),
    eliminating two types of coordinate checks:
    1. The bounding box does not overflow from the image
@@ -46,5 +46,60 @@ void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
    @bopti_asm        Rendering function */
 void bopti_render_noclip(int x, int y, bopti_image_t const *img, int left,
 	int top, int w, int h, uint32_t *v1, uint32_t *v2, void *bopti_asm);
+
+//---
+//	Alternate rendering modes
+//---
+
+/* The gray engine overrides the rendering functions by specifying a set of
+   alternate primitives that are suited to work with two VRAMs. To avoid
+   linking with them when the gray engine is not used, the display module
+   exposes a global state in the form of a struct rendering_mode and the gray
+   engine modifies that state when it runs. */
+struct rendering_mode
+{
+	/* Because the gray engine still has business to do after the call to
+	   dgray(DGRAY_OFF), the original dupdate() is made to execute after
+	   the replacement one if the replacement one returns 1. */
+	int (*dupdate)(void);
+	/* Area rendering */
+	void (*dclear)(color_t color);
+	void (*drect)(int x1, int y1, int x2, int y2, color_t color);
+	/* Point rendering */
+	void (*dpixel)(int x, int y, color_t color);
+	void (*gint_dhline)(int x1, int x2, int y, int color);
+	void (*gint_dvline)(int y1, int y2, int x, int color);
+	/* Text and image rendering */
+	void (*dtext_opt)
+		(int x, int y, int fg, int bg, int halign, int valign,
+		 char const *str);
+	void (*dsubimage)
+		(int x, int y, bopti_image_t const *image, int left, int top,
+		 int width, int height, int flags);
+};
+
+/* The alternate rendering mode pointer (initially NULL)*/
+extern struct rendering_mode const *dmode;
+
+/* These are the corresponding gray rendering functions */
+int gupdate(void);
+void gclear(color_t color);
+void grect(int x1, int y1, int x2, int y2, color_t color);
+void gpixel(int x, int y, color_t color);
+void gint_ghline(int x1, int x2, int y, int color);
+void gint_gvline(int y1, int y2, int x, int color);
+void gtext_opt
+	(int x, int y, int fg, int bg, int halign, int valign,
+	 char const *str);
+void gsubimage
+	(int x, int y, bopti_image_t const *image, int left, int top,
+	 int width, int height, int flags);
+
+/* Short macro to call the alternate rendering function when available */
+#define DMODE_OVERRIDE(func, ...)		\
+	if(dmode && dmode->func) {		\
+		dmode->func(__VA_ARGS__);	\
+		return;				\
+	}
 
 #endif /* DISPLAY_FX */

@@ -133,9 +133,3 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 
 	topti_render(x, y, str, strlen(str), topti_font, fg, bg);
 }
-
-/* dtext(): Simple version of dtext_opt() with defaults */
-void dtext(int x, int y, int fg, char const *str)
-{
-	dtext_opt(x, y, fg, C_NONE, DTEXT_LEFT, DTEXT_TOP, str);
-}

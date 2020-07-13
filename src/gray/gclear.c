@@ -4,7 +4,7 @@
 void gclear(color_t color)
 {
 	uint32_t *light, *dark;
-	gvram(&light, &dark);
+	dgray_getvram(&light, &dark);
 
 	uint32_t l = -(color == C_LIGHT || color == C_BLACK);
 	uint32_t d = -(color == C_DARK  || color == C_BLACK);

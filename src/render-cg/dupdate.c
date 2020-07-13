@@ -11,9 +11,3 @@ void dupdate(void)
 	   overwriting the data which is about to be sent. */
 	dvram_switch();
 }
-
-/* dupdate_noint() - Push VRAM to the display without interrupts */
-void dupdate_noint(void)
-{
-	r61524_display(gint_vram, 0, 224, R61524_DMA_WAIT);
-}

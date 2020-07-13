@@ -4,10 +4,8 @@
 /* gpixel(): Change a pixel's color */
 void gpixel(int x, int y, color_t color)
 {
-	if((uint)x >= 128 || (uint)y >= 64) return;
-
 	uint32_t *light, *dark;
-	gvram(&light, &dark);
+	dgray_getvram(&light, &dark);
 
 	int offset = (y << 2) + (x >> 5);
 	uint32_t mask = 1 << (~x & 31), tmp;

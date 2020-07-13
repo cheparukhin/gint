@@ -10,6 +10,8 @@
 #include <gint/display.h>
 #include <gint/timer.h>
 
+#include <display/fx.h>
+
 /* Three additional video RAMS, allocated statically if --static-gray was set
    at configure time, or with malloc() otherwise. */
 #ifdef GINT_STATIC_GRAY
@@ -17,27 +19,63 @@ GBSS static uint32_t gvrams[3][256];
 #endif
 
 /* Four VRAMs: two to draw and two to display */
-GBSS static uint32_t *vrams[4];
+static uint32_t *vrams[4] = { NULL, NULL, NULL, NULL };
 
 /* Current VRAM pair used for drawing; the value can either be 0 (draws to
    VRAMs 0 and 1) or 2 (draws to VRAMs 2 and 3). */
-static volatile int st = 0;
-
-/* Whether the engine is running. Delays of light and dark frames. */
+static int volatile st = 0;
+/* Timer ID, always equal to GRAY_TIMER except if initialization fails */
+static int timer = -1;
+/* Whether the engine is scheduled to run at the next frame */
 static int runs = 0;
+
+/* Underlying timer, set to count at P_phi/64 */
+#define GRAY_TIMER 0
+#define GRAY_CLOCK TIMER_Pphi_64
+/* Delays of the light and dark frames for the above setting */
 GBSS static int delays[2];
 
-/* Underlying timer */
-#define GRAY_TIMER 0
+/* The alternate rendering mode structure used to override d*() */
+static struct rendering_mode const gray_mode = {
+	.dupdate      = gupdate,
+	.dclear       = gclear,
+	.drect        = grect,
+	.dpixel       = gpixel,
+	.gint_dhline  = gint_ghline,
+	.gint_dvline  = gint_gvline,
+	.dtext_opt    = gtext_opt,
+	.dsubimage    = gsubimage,
+};
+static struct rendering_mode const gray_exit_mode = {
+	.dupdate      = gupdate,
+	.dclear       = NULL,
+	.drect        = NULL,
+	.dpixel       = NULL,
+	.gint_dhline  = NULL,
+	.gint_dvline  = NULL,
+	.dtext_opt    = NULL,
+	.dsubimage    = NULL,
+};
 
 //---
-//	Engine control
+//	Engine control (init/quit and start/stop)
 //---
 
-/* gray_init(): Engine setup */
+static int gray_int(void);
+static void gray_quit(void);
+
+/* gray_isinit(): Check whether the engine is initialized and ready to run */
+static int gray_isinit(void)
+{
+	return (vrams[0] && vrams[1] && vrams[2] && vrams[3] && timer >= 0);
+}
+
+/* gray_init(): Initialize the engine
+   This is done at startup so that memory can be reserved very early from the
+   heap (because not having enough memory is unrecoverable for the engine). */
 GCONSTRUCTOR static void gray_init(void)
 {
-	/* Here [gint_vram] refers to the standard, monochrome VRAM */
+	/* We need four VRAMs. First use the standard monochrome one */
 	vrams[0] = gint_vram;
 
 	#ifdef GINT_STATIC_GRAY
@@ -61,16 +99,74 @@ GCONSTRUCTOR static void gray_init(void)
 		delays[0] = 923;
 		delays[1] = 1742;
 	}
+
+	/* Try to obtain the timer right away */
+	timer = timer_setup(GRAY_TIMER | GRAY_CLOCK, 1000, gray_int);
+
+	/* On failure, release the resources that we obtained */
+	if(!gray_isinit()) gray_quit();
 }
 
-/* gray_quit(): Engine deinitialization() */
+/* gray_quit(): Free engine resources */
 GDESTRUCTOR static void gray_quit(void)
 {
 	#ifndef GINT_STATIC_GRAY
-	free(vrams[1]);
-	free(vrams[2]);
-	free(vrams[3]);
+	if(vrams[1]) free(vrams[1]);
+	if(vrams[2]) free(vrams[2]);
+	if(vrams[3]) free(vrams[3]);
+
+	vrams[1] = NULL;
+	vrams[2] = NULL;
+	vrams[3] = NULL;
 	#endif /* GINT_STATIC_GRAY */
+
+	if(timer >= 0) timer_stop(timer);
+	timer = -1;
+}
+
+/* gray_start(): Start the gray engine */
+static void gray_start(void)
+{
+	st = 2;
+	timer_reload(GRAY_TIMER, delays[0]);
+	timer_start(GRAY_TIMER);
+	runs = 1;
+}
+
+/* gray_stop(): Stop the gray engine */
+static void gray_stop(void)
+{
+	timer_pause(GRAY_TIMER);
+	runs = 0;
+	st = 0;
+}
+
+//---
+//	Dynamic udpate and rendering mode
+//---
+
+/* dgray(): Start or stop the gray engine at the next dupdate() */
+int dgray(int mode)
+{
+	if(mode == DGRAY_ON)
+	{
+		if(!gray_isinit()) return 1;
+
+		/* Set the display module's alternate rendering mode to
+		   override rendering functions to use their g*() variant */
+		dmode = &gray_mode;
+		return 0;
+	}
+	else if(mode == DGRAY_OFF)
+	{
+		/* Set the mode to a temporary one that only overrides
+		   dupdate() so that we can stop the engine next frame */
+		if(dmode == &gray_mode) dmode = &gray_exit_mode;
+		return 0;
+	}
+
+	/* TODO: DGRAY_PUSH_* and DGRAY_POP */
+	return 2;
 }
 
 /* gray_int(): Interrupt handler */
@@ -83,69 +179,57 @@ int gray_int(void)
 	return TIMER_CONTINUE;
 }
 
-/* gray_start(): Start the gray engine */
-void gray_start(void)
+/* gupdate(): Push the current VRAMs to the screen */
+int gupdate(void)
 {
-	#ifndef GINT_STATIC_GRAY
-	if(!vrams[1] || !vrams[2] || !vrams[3]) return;
-	#endif
+	/* At the first gupdate(), start the engine */
+	if(dmode == &gray_mode && !runs)
+	{
+		gray_start();
+		return 0;
+	}
+	/* At the last gupdate(), stop the engine */
+	if(dmode == &gray_exit_mode)
+	{
+		gray_stop();
+		dmode = NULL;
+		return 1;
+	}
 
-	if(runs) return;
-
-	int timer = timer_setup(GRAY_TIMER|TIMER_Pphi_64, delays[0], gray_int);
-	if(timer != GRAY_TIMER) return;
-
-	timer_start(GRAY_TIMER);
-	st = 0;
-	runs = 1;
+	/* When the engine is running, swap frames */
+	st ^= 2;
+	return 0;
 }
 
-/* gray_stop(): Stop the gray engine */
-void gray_stop(void)
+//---
+//	Query and configuration functions
+//---
+
+/* dgray_enabled(): Check whether gray mode is enabled */
+int dgray_enabled(void)
 {
-	timer_stop(GRAY_TIMER);
-	runs = 0;
+	return (dmode == &gray_mode);
 }
 
-/* gray_delays(): Set the gray engine delays */
-void gray_delays(uint32_t light, uint32_t dark)
+/* dgray_setdelays(): Set the gray engine delays */
+void dgray_setdelays(uint32_t light, uint32_t dark)
 {
 	delays[0] = light;
 	delays[1] = dark;
 }
 
-/* gray_config(): Get the current configuration of the engine */
-int gray_config(uint32_t *light, uint32_t *dark)
+/* dgray_getdelays(): Get the gray engine delays */
+void dgray_getdelays(uint32_t *light, uint32_t *dark)
 {
 	if(light) *light = delays[0];
 	if(dark) *dark = delays[1];
-
-	return runs;
 }
 
-/* gupdate(): Push the current VRAMs to the screen */
-void gupdate(void)
-{
-	st ^= 2;
-}
-
-/* gvram(): Get the current VRAM pointers */
-void gvram(uint32_t **light, uint32_t **dark)
+/* dgray_getvram(): Get the current VRAM pointers */
+void dgray_getvram(uint32_t **light, uint32_t **dark)
 {
 	int base = st;
 
 	if(light) *light = vrams[base & 2];
 	if(dark) *dark = vrams[base | 1];
-}
-
-/* gvraml(): Shorthand to retrieve the current light VRAM pointer */
-uint32_t *gvraml(void)
-{
-	return vrams[st & 2];
-}
-
-/* gvramd(): Shorthand to retrieve the current dark VRAM pointer */
-uint32_t *gvramd(void)
-{
-	return vrams[st | 1];
 }

@@ -2,6 +2,7 @@
 #include <gint/defs/attributes.h>
 #include <gint/display.h>
 #include <display/common.h>
+#include <display/fx.h>
 #include "topti-asm.h"
 
 /* Default font */
@@ -172,4 +173,27 @@ void topti_render(int x, int y, char const *str, font_t const *f,
 		asm_bg(v1, v2, bg + vdisp, height - vdisp);
 		asm_fg(v1, v2, operators + vdisp, height - vdisp);
 	}
+}
+
+/* dtext_opt(): Display a string of text */
+void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
+	char const *str)
+{
+	if((uint)fg >= 8 || (uint)bg >= 8) return;
+
+	DMODE_OVERRIDE(dtext_opt, x, y, fg, bg, halign, valign, str);
+
+	if(halign != DTEXT_LEFT || valign != DTEXT_TOP)
+	{
+		int w, h;
+		dsize(str, topti_font, &w, &h);
+
+		if(halign == DTEXT_RIGHT)  x -= w;
+		if(halign == DTEXT_CENTER) x -= ((w+1) >> 1);
+		if(valign == DTEXT_BOTTOM) y -= h;
+		if(valign == DTEXT_MIDDLE) y -= ((h+1) >> 1);
+	}
+
+	topti_render(x, y, str, topti_font, topti_asm_text[fg],
+		topti_asm_text[bg], gint_vram, gint_vram);
 }

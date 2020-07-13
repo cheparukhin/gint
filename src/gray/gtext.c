@@ -2,13 +2,23 @@
 #include <display/common.h>
 #include "../render-fx/topti-asm.h"
 
-/* gtext(): Display a string of text */
-void gtext(int x, int y, const char *str, int fg, int bg)
+/* gtext_opt(): Display a string of text */
+void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
+	char const *str)
 {
-	if((uint)fg >= 8 || (uint)bg >= 8) return;
-
 	uint32_t *light, *dark;
-	gvram(&light, &dark);
+	dgray_getvram(&light, &dark);
+
+	if(halign != DTEXT_LEFT || valign != DTEXT_TOP)
+	{
+		int w, h;
+		dsize(str, topti_font, &w, &h);
+
+		if(halign == DTEXT_RIGHT)  x -= w;
+		if(halign == DTEXT_CENTER) x -= ((w+1) >> 1);
+		if(valign == DTEXT_BOTTOM) y -= h;
+		if(valign == DTEXT_MIDDLE) y -= ((h+1) >> 1);
+	}
 
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],
 		topti_asm_text[bg], light, dark);

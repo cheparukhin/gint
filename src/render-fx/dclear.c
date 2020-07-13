@@ -1,8 +1,11 @@
 #include <gint/display.h>
+#include <display/fx.h>
 
 /* dclear() - fill the screen with a single color */
 void dclear(color_t color)
 {
+	DMODE_OVERRIDE(dclear, color);
+
 	/* SuperH only supports a single write-move addressing mode, which is
 	   pre-decrement write; the other similar mode is post-increment
 	   read. So we'll use pre-decrement writes to improve performance. */
