@@ -167,25 +167,38 @@ void dvline(int x, int color);
 /* font_t: Font data encoded for topti */
 typedef struct
 {
-	/* Length of font name (not necessarily NUL-terminated!) */
-	uint title    :5;
+	/* Font name (NUL-terminated), NULL if no title */
+	char const *name;
+
 	/* Font shape flags */
-	uint bold     :1;
-	uint italic   :1;
-	uint serif    :1;
-	uint mono     :1;
+	uint bold    :1;
+	uint italic  :1;
+	uint serif   :1;
+	uint mono    :1;
+	uint         :3;
 	/* Whether data is variable-length (proportional font) */
-	uint prop     :1;
-	/* Reserved for future use */
-	uint          :2;
-	/* Implemented charcter set */
-	uint charset  :4;
+	uint prop    :1;
+
 	/* Line height */
 	uint8_t line_height;
 	/* Storage height */
 	uint8_t data_height;
 
-	/* The rest of the data depends on whether the font is proportional */
+	/* Number of Unicode blocks */
+	uint8_t block_count;
+	/* Number of total glyphs */
+	uint32_t glyph_count;
+
+	struct {
+		/* Unicode point of first character in block */
+		uint start   :20;
+		/* Length of block */
+		uint length  :12;
+	} *blocks;
+
+	/* Raw glyph data */
+	uint32_t *data;
+
 	union {
 		/* For monospaced fonts */
 		struct {
@@ -193,22 +206,15 @@ typedef struct
 			uint16_t width;
 			/* Storage size, in longwords, of each glyph */
 			uint16_t storage_size;
-			/* Raw glyph data */
-			uint32_t data[];
 		};
 		/* For proportional fonts */
 		struct {
 			/* Storage index to find glyphs quickly */
-			uint16_t index[16];
-			/* Size array (padded to 4 bytes), 1 byte per entry,
-			   followed by glyph data */
-			uint8_t sized_data[];
+			uint16_t *glyph_index;
+			/* Width of each individual glyph */
+			uint8_t *glyph_width;
 		};
 	};
-
-	/* The font name is stored after the data. The size is the length set
-	   in the [title] field, padded to 4 bytes with NULs. There might not
-	   be a NUL at the end. */
 
 } GPACKED(4) font_t;
 

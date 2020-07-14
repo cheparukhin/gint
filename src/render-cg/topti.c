@@ -46,15 +46,7 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	int fg, int bg)
 {
 	/* Raw glyph data */
-	uint32_t const * data;
-	if(!f->prop) data = f->data;
-	else
-	{
-		int cs = charset_size(f->charset);
-		/* 4-align the result */
-		cs += (4 - cs) & 3;
-		data = (void *)(f->sized_data + cs);
-	}
+	uint32_t const *data = f->data;
 
 	/* Storage height, top position within glyph */
 	int height = f->data_height, top = 0;
@@ -76,7 +68,7 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	{
 		int c = *str++;
 
-		int glyph = charset_decode(f->charset, c);
+		int glyph = topti_glyph_index(f, c);
 		if(glyph < 0) continue;
 
 		/* Draw the space if background is opaque */
@@ -95,7 +87,7 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 
 		/* Compute horizontal intersection between glyph and screen */
 
-		int dataw = f->prop ? f->sized_data[glyph] : f->width;
+		int dataw = f->prop ? f->glyph_width[glyph] : f->width;
 		int width = dataw, left = 0;
 
 		if(x + dataw <= 0)

@@ -26,29 +26,12 @@ extern font_t const *topti_font;
 /* Default font */
 extern font_t const *gint_default_font;
 
-/* enum topti_charset: Available character set decoders
-   Each charset is associated with a reduced character table. */
-enum topti_charset
-{
-	charset_numeric  = 0,	/*  10 elements: 0..9 */
-	charset_upper    = 1,	/*  26 elements: A..Z */
-	charset_alpha    = 2,	/*  52 elements: A..Z, a..z */
-	charset_alnum    = 3,	/*  62 elements: A..Z, a..z, 0..9 */
-	charset_print    = 4,	/*  95 elements: 0x20..0x7e  */
-	charset_ascii    = 5,	/* 128 elements: 0x00..0x7f */
-};
-
-/* charset_size(): Number of elements in each character set
-   @set  Character set ID
-   Returns the expected number of glyphs, -1 if charset ID is invalid. */
-int charset_size(enum topti_charset set);
-
-/* charset_decode(): Translate ASCII into reduced character sets
-   Returns the position of [c] in the character table of the given charset, or
-   -1 if [c] is not part of that set.
-   @set  Any character set
-   @c    Character to decode */
-int charset_decode(enum topti_charset set, uint c);
+/* topti_glyph_index(): Obtain the glyph index of a Unicode code point
+   Returns the position of code_point in the character table of the given font,
+   or -1 if code_point is not part of that set.
+   @f           Font object
+   @code_point  Unicode code point to locate the glyph for */
+int topti_glyph_index(font_t const *f, uint32_t code_point);
 
 /* topti_offset(): Use a font index to find the location of a glyph
    @f      Font object

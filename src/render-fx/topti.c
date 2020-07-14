@@ -88,15 +88,7 @@ void topti_render(int x, int y, char const *str, font_t const *f,
 	/* Storage height and number of free bits in operators[] */
 	int height = f->data_height, free;
 	/* Raw glyph data */
-	uint32_t const * data;
-	if(!f->prop) data = f->data;
-	else
-	{
-		int cs = charset_size(f->charset);
-		/* 4-align the result */
-		cs += (4 - cs) & 3;
-		data = (void *)(f->sized_data + cs);
-	}
+	uint32_t const *data = f->data;
 
 	/* Basic clipping */
 	if(x > 127 || y > 63 || y + height <= 0) return;
@@ -126,13 +118,13 @@ void topti_render(int x, int y, char const *str, font_t const *f,
 	/* Pull each character into the operator buffer */
 	while(*str)
 	{
-		int glyph = charset_decode(f->charset, *str++);
+		int glyph = topti_glyph_index(f, *str++);
 		if(glyph < 0) continue;
 
 		int index = topti_offset(f, glyph);
 
 		/* Put glyph data into the operators */
-		int width = f->prop ? f->sized_data[glyph] : f->width;
+		int width = f->prop ? f->glyph_width[glyph] : f->width;
 		free = topti_split(data+index, width, height, free, operators);
 
 		/* Potential space after the glyph */
