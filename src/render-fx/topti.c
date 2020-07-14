@@ -82,9 +82,11 @@ static int topti_split(uint32_t const * glyph, int width, int height, int free,
 }
 
 /* topti_render(): Render a string on the VRAM */
-void topti_render(int x, int y, char const *str, font_t const *f,
+void topti_render(int x, int y, char const *str_char, font_t const *f,
 	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2)
 {
+	uint8_t const *str = (void *)str_char;
+
 	/* Storage height and number of free bits in operators[] */
 	int height = f->data_height, free;
 	/* Raw glyph data */
@@ -116,9 +118,12 @@ void topti_render(int x, int y, char const *str, font_t const *f,
 	v2 += (y << 2) + x;
 
 	/* Pull each character into the operator buffer */
-	while(*str)
+	while(1)
 	{
-		int glyph = topti_glyph_index(f, *str++);
+		uint32_t code_point = topti_utf8_next(&str);
+		if(!code_point) break;
+
+		int glyph = topti_glyph_index(f, code_point);
 		if(glyph < 0) continue;
 
 		int index = topti_offset(f, glyph);

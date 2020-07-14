@@ -55,9 +55,57 @@ int topti_offset(font_t const *f, uint glyph)
 	return offset;
 }
 
-/* dsize(): Get the width and height of rendered text */
-void dsize(const char *str, font_t const * f, int *w, int *h)
+/* topti_utf8_next(): Read the next UTF-8 code point of a string */
+uint32_t topti_utf8_next(uint8_t const **str_pointer)
 {
+	uint8_t const *str = *str_pointer;
+	uint8_t lead = *str++;
+
+	/* Skip non-leaders which are invalid as starting bytes */
+	while((lead >= 0x80 && lead <= 0xbf) ||
+		lead == 0xc0 || lead == 0xc1 || lead == 0xfe || lead == 0xff)
+	{
+		lead = *str++;
+	}
+
+	/* This base case will handle the NUL terminator */
+	if(lead <= 0x7f)
+	{
+		*str_pointer = str;
+		return lead;
+	}
+
+	uint8_t n2 = (*str++ & 0x3f);
+	if(lead <= 0xdf)
+	{
+		*str_pointer = str;
+		return ((lead & 0x1f) << 6) | n2;
+	}
+
+	uint8_t n3 = (*str++ & 0x3f);
+	if(lead <= 0xef)
+	{
+		*str_pointer = str;
+		return ((lead & 0x0f) << 12) | (n2 << 6) | n3;
+	}
+
+	uint8_t n4 = (*str++ & 0x3f);
+	if(lead <= 0xf7)
+	{
+		*str_pointer = str;
+		return ((lead & 0x07) << 18) | (n2 << 12) | (n3 << 6) | n4;
+	}
+
+	/* It the string is too invalid, force a space and try to continue */
+	*str_pointer = str;
+	return 0x20;
+}
+
+/* dsize(): Get the width and height of rendered text */
+void dsize(char const *str_char, font_t const * f, int *w, int *h)
+{
+	uint8_t const *str = (void *)str_char;
+
 	if(!f) f = topti_font;
 	if(h) *h = f->line_height;
 	if(!w) return;
@@ -74,17 +122,21 @@ void dsize(const char *str, font_t const * f, int *w, int *h)
 	}
 
 	/* For proportional fonts, fetch the width of each individual glyphs */
-	int width = 0, c;
+	int width = 0;
+	uint32_t code_point;
 
-	while((c = *str++))
+	while(1)
 	{
-		if(c == ' ')
+		code_point = topti_utf8_next(&str);
+		if(!code_point) break;
+
+		if(code_point == ' ')
 		{
 			width += PROP_SPACING + CHAR_SPACING;
 			continue;
 		}
 
-		int glyph = topti_glyph_index(f, c);
+		int glyph = topti_glyph_index(f, code_point);
 		if(glyph >= 0) width += f->glyph_width[glyph] + CHAR_SPACING;
 	}
 	*w = width - CHAR_SPACING;

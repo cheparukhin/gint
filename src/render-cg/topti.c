@@ -42,9 +42,11 @@ static void topti_glyph(uint16_t *vram, uint32_t const * data, int left,
 		dataw - width, index);
 }
 
-void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
+static void topti_render(int x, int y, char const *str_char, font_t const *f,
 	int fg, int bg)
 {
+	uint8_t const *str = (void *)str_char;
+
 	/* Raw glyph data */
 	uint32_t const *data = f->data;
 
@@ -64,15 +66,16 @@ void topti_render(int x, int y, char const *str, size_t size, font_t const *f,
 	int active_space = 0;
 
 	/* Read each character from the input string */
-	while(size--)
+	while(1)
 	{
-		int c = *str++;
+		uint32_t code_point = topti_utf8_next(&str);
+		if(!code_point) break;
 
-		int glyph = topti_glyph_index(f, c);
+		int glyph = topti_glyph_index(f, code_point);
 		if(glyph < 0) continue;
 
 		/* Draw the space if background is opaque */
-		int prop_space = (c == ' ' && f->prop) ? 5 : 0;
+		int prop_space = (code_point == ' ' && f->prop) ? 5 : 0;
 		if(active_space || prop_space)
 		{
 			active_space += prop_space;
@@ -124,5 +127,5 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 		if(valign == DTEXT_MIDDLE) y -= ((h+1) >> 1);
 	}
 
-	topti_render(x, y, str, strlen(str), topti_font, fg, bg);
+	topti_render(x, y, str, topti_font, fg, bg);
 }
