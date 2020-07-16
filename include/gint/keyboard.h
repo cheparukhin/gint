@@ -244,4 +244,18 @@ key_event_t getkey_opt(int options, volatile int *timeout);
    @next   Delay between subsequent repeats (no more than one hour) */
 void getkey_repeat(int first, int next);
 
+//---
+//	Key code functions
+//---
+
+/* keycode_function(): Identify keys F1 .. F6
+   This function returns number of each F-key (eg. it returns 2 for KEY_F2),
+   and -1 for other keys. */
+int keycode_function(int keycode);
+
+/* keycode_digit(): Identify keys 0 .. 9
+   This function returns the digit associated with digit keycodes (eg. it
+   returns 7 for KEY_7) and -1 for other keys. */
+int keycode_digit(int keycode);
+
 #endif /* GINT_KEYBOARD */
