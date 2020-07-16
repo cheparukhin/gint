@@ -6,12 +6,13 @@
 #define GINT_RTC
 
 #include <gint/defs/types.h>
+#include <gint/timer.h>
 
 //---
 //	Time management
 //---
 
-/* rtc_time_t - a point in time, representable in the RTC registers */
+/* rtc_time_t: A point in time, representable in the RTC registers */
 typedef struct
 {
 	uint16_t year;		/* Years (exact value, e.g. 2018) */
@@ -24,15 +25,15 @@ typedef struct
 
 } rtc_time_t;
 
-/* rtc_get_time() - read the current time from the RTC
+/* rtc_get_time(): Read the current time from the RTC
    @time  Pointer to rtc_time_t structure (needs not be initialized) */
 void rtc_get_time(rtc_time_t *time);
 
-/* rtc_set_time() - write a new current time to the RTC
+/* rtc_set_time(): Set current time in the RTC
    If [time->week_day] is not in the valid range, it is set to 0. Other fields
    are not checked.
    @time  Pointer to new time */
-void rtc_set_time(const rtc_time_t *time);
+void rtc_set_time(rtc_time_t const *time);
 
 //---
 //	RTC timer
@@ -42,8 +43,8 @@ void rtc_set_time(const rtc_time_t *time);
 //	comparing the detected frequencies with the RTC.
 //---
 
-/* rtc_frequency_t - possible frequency settings for the RTC's interrupt */
-typedef enum
+/* Possible frequency settings for the RTC's interrupt */
+enum
 {
 	RTC_500mHz	= 7,
 	RTC_1Hz		= 6,
@@ -53,30 +54,36 @@ typedef enum
 	RTC_64Hz	= 2,
 	RTC_256Hz	= 1,
 	RTC_NONE	= 0,
+};
 
-} rtc_frequency_t;
-
-/* rtc_start_timer() - configure the RTC timer
+/* rtc_start_timer(): Configure the RTC timer
 
    This function sets up the RTC timer to invoke the provided callback function
-   with its argument regularly. This works like normal timers (<gint/timer.h>);
-   [callback] is passed [arg] as argument and the RTC timer is stopped if it
-   returns non-zero.
+   with its argument regularly. This works like standard timers. The callback
+   is a function, the allowed types are listed in <gint/timer.h>. It may have
+   zero or one argument, and must return either TIMER_CONTINUE or TIMER_STOP.
 
-   This function will replace any existing callback!
+   Do not confuse this "RTC timer" with Casio's added timers that run at
+   32768 Hz (which are called "RTC timers" in CPU73050.dll). These timers are
+   called Extra TMU in gint and are handled by <gint/timer.h>.
 
-   Note that, as opposed to timers, it is not possible to know how much time
-   will elapse before the callback will first be called. For instance, setting
-   up a 1 Hz-callback when the current time ends in 950 ms will result in the
-   callback being called after 50 ms, then every second. This is not a problem
-   for most uses. */
-void rtc_start_timer(rtc_frequency_t freq,
-	int (*callback)(volatile void *arg), volatile void *arg);
+   Note that the timing of the first callback is always uncertain. A 1 Hz timer
+   set up when half of the current second is already elapsed will be called for
+   the first time after only 500 ms, for instance.
 
-/* rtc_stop_timer() - stop the RTC timer
+   @freq      Timer frequency
+   @callback  Function to call back at the specified frequency
+   @...       Up to one 4-byte argument for the callback
+   Fails and returns non-zero if the RTC timer is already in use. */
+int rtc_start_timer(int freq, timer_callback_t callback, ...);
+
+/* Makes sure an argument is always provided, for va_arg() */
+#define rtc_start_timer(...) rtc_start_timer(__VA_ARGS__, 0)
+
+/* rtc_stop_timer(): Stop the RTC timer
    This function stops the RTC timer that was set up with rtc_start_timer(). If
    the decision of stopping the timer comes from the callback, it is preferable
-   to return non-zero. */
+   to return TIMER_STOP. */
 void rtc_stop_timer(void);
 
 #endif /* GINT_RTC */

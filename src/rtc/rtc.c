@@ -11,6 +11,10 @@
 #include <gint/hardware.h>
 #include <gint/mpu/rtc.h>
 
+#include <stdarg.h>
+
+#undef rtc_start_timer
+
 //---
 //	Real-Time Clock peripheral registers
 //---
@@ -18,17 +22,17 @@
 /* RTC address on SH7305, adjusted at startup on SH7337 and SH7355 */
 static rtc_t *RTC = &SH7305_RTC;
 /* Address of interrupt handler parameters */
-GBSS struct {
-	int (*callback)(volatile void *arg);
-	volatile void *arg;
+GBSS static struct {
+	void *function;
+	uint32_t arg;
 	volatile uint8_t *RCR2;
-} GPACKED(4) *params;
+} GPACKED(4) *timer_params;
 
 //---
 //	Time management
 //---
 
-/* int8(), int16() - convert BCD to integer */
+/* int8(), int16(): Convert BCD to integer */
 static int int8(uint8_t bcd)
 {
 	return (bcd & 0x0f) + 10 * (bcd >> 4);
@@ -39,7 +43,7 @@ static int int16(uint16_t bcd)
 		+ 1000 * (bcd >> 12);
 }
 
-/* bcd8(), bcd16() - convert integer to BCD
+/* bcd8(), bcd16(): Convert integer to BCD
    TODO: Use some kind of qdiv() for bcd8() and bcd16() */
 static uint8_t bcd8(int integer)
 {
@@ -52,11 +56,9 @@ static uint16_t bcd16(int integer)
 	return (bcd8(integer / 100) << 8) | bcd8(integer % 100);
 }
 
-/* rtc_get_time() - read the current time from the RTC */
+/* rtc_get_time(): Read the current time from the RTC */
 void rtc_get_time(rtc_time_t *time)
 {
-	if(!time) return;
-
 	do {
 		RTC->RCR1.CF = 0;
 
@@ -71,11 +73,11 @@ void rtc_get_time(rtc_time_t *time)
 	} while(RTC->RCR1.CF != 0);
 }
 
-/* rtc_set_time() - write a new current time to the RTC */
-void rtc_set_time(const rtc_time_t *time)
+/* rtc_set_time(): Set current time in the RTC */
+void rtc_set_time(rtc_time_t const *time)
 {
-	if(!time) return;
-	int wday = (time->week_day < 7) ? (time->week_day) : (0);
+	int wday = time->week_day;
+	if(wday >= 7) wday = 0;
 
 	do {
 		RTC->RCR1.CF = 0;
@@ -95,16 +97,23 @@ void rtc_set_time(const rtc_time_t *time)
 //	RTC timer
 //---
 
-/* rtc_start_timer() - configure the RTC timer */
-void rtc_start_timer(rtc_frequency_t freq,
-	int (*callback)(volatile void *arg), volatile void *arg)
+/* rtc_start_timer(): Configure the RTC timer */
+int rtc_start_timer(int freq, timer_callback_t f, ...)
 {
-	/* Temporarily disable the interrupt */
-	RTC->RCR2.PES = RTC_NONE;
+	/* Refuse to override an existing callback */
+	if(RTC->RCR2.PES != RTC_NONE) return 1;
+	if(freq == RTC_NONE) return 1;
 
-	/* Set up the callback */
-	params->callback = callback;
-	params->arg = arg;
+	/* Get the argument */
+	va_list args;
+	va_start(args, f);
+	uint32_t arg = va_arg(args, uint32_t);
+	va_end(args);
+
+	/* Temporarily disable the interrupt and set up the callback */
+	RTC->RCR2.PES = RTC_NONE;
+	timer_params->function = f.v;
+	timer_params->arg = arg;
 
 	/* Clear the interrupt flag */
 	do RTC->RCR2.PEF = 0;
@@ -112,9 +121,10 @@ void rtc_start_timer(rtc_frequency_t freq,
 
 	/* Enable the interrupt */
 	RTC->RCR2.PES = freq;
+	return 0;
 }
 
-/* rtc_stop_timer() - stop the RTC timer */
+/* rtc_stop_timer(): Stop the RTC timer */
 void rtc_stop_timer(void)
 {
 	RTC->RCR2.PES = RTC_NONE;
@@ -143,8 +153,8 @@ static void init(void)
 	h0 = gint_inthandler(0xaa0, inth_rtc_pri, 32);
 	h1 = gint_inthandler(0xae0, inth_rtc_pri_helper, 32);
 
-	params = h0 + 20;
-	params->RCR2 = &RTC->RCR2.byte;
+	timer_params = h0 + 20;
+	timer_params->RCR2 = &RTC->RCR2.byte;
 
 	/* Disable the periodic interrupt for now, but give it priority 5 */
 	RTC->RCR2.PES = RTC_NONE;
