@@ -217,13 +217,24 @@ _gint_inth_callback:
 	ldc	r4, r0_bank
 	ldc	r5, r4_bank
 
-	/* Enable interrupts and go back to user bank. SR.IMASK is already set
+	/* Enable interrupts and go back to user bank. On SH4, SR.IMASK is set
 	   to the level of the current interrupt, which makes sure we can only
 	   be re-interrupted by something with a higher priority. */
-	stc	sr, r0
-	mov.l	.SR_clear_RB_BL, r1
-	and	r1, r0
-	ldc	r0, sr
+	stc	sr, r1
+	mov.l	.SR_clear_RB_BL, r0
+	and	r0, r1
+
+	/* On SH3, set IMASK to 15 to block interrupts while allowing TLB
+	   misses to be handled. */
+	mov.l	.gint, r0
+	mov.l	@r0, r0
+	tst	#1, r0
+	bt	.load_sr
+	mov.l	.SR_set_IMASK, r0
+	or	r0, r1
+
+.load_sr:
+	ldc	r1, sr
 
 	/* We are now in the user bank with r0 and r4 set. Call back. We want
 	   to forward the return value to kernel bank, but this bank can be
@@ -256,3 +267,7 @@ _gint_inth_callback:
 .align 4
 .SR_clear_RB_BL:
 	.long	~((1 << 29) | (1 << 28))
+.SR_set_IMASK:
+	.long	(0xf << 4)
+.gint:
+	.long	_gint
