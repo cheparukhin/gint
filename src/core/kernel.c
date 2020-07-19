@@ -155,6 +155,7 @@ static const uint16_t sh3_vbr_map[] = {
 	0xc40,  /* ETMU2 underflow (used as helper on SH3) */
 	0xc60,  /* (gint custom: ETMU helper) */
 	0xaa0,  /* RTC Periodic Interrupt */
+	1,	/* (Filler to maintain the gap between 0xaa0 and 0xae0) */
 	0xae0,  /* (gint custom: RTC helper) */
 	0
 };

@@ -156,13 +156,13 @@ _gint_inth_7705:
    The VBR interrupt space on SH3 is laid out as follows:
 
    VBR offset  SH3 events       Description
-   ----------------------------------------------------------------
+   -------------------------------------------------------------------
    0x200       400 420 440 ---  TMU0, TMU1, TMU2 and a helper
    0x280       f00 --- --- ---  ETMU0, ETMU1, ETMU2 and a helper
-   0x300       4a0 ---          RTC Periodic Interrupt and a helper
-   ----------------------------------------------------------------
+   0x300       4a0 [ ] ---      RTC Periodic Interrupt, gap and helper
+   -------------------------------------------------------------------
    0x600       --- ---          Entry gate
-   ----------------------------------------------------------------
+   -------------------------------------------------------------------
 
    There is space for 16 gates at VBR + 0x200 so the VBR currently ends after
    the interrupt entry gate at VBR + 0x640. */

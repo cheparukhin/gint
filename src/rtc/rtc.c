@@ -25,7 +25,6 @@ static rtc_t *RTC = &SH7305_RTC;
 GBSS static struct {
 	void *function;
 	uint32_t arg;
-	volatile uint8_t *RCR2;
 } GPACKED(4) *timer_params;
 
 //---
@@ -144,6 +143,12 @@ static void driver_sh3(void)
 
 static void init(void)
 {
+	/* Disable the carry and alarm interrupts (they share their IPR bits
+	   with the periodic interrupt, which we want to enable) */
+	RTC->RCR1.byte = 0;
+	/* Clear the periodic interrupt flag */
+	RTC->RCR2.PEF = 0;
+
 	/* Interrupt handlers provided by rtc/inth.s */
 	extern void inth_rtc_pri(void);
 	extern void inth_rtc_pri_helper(void);
@@ -154,11 +159,15 @@ static void init(void)
 	h1 = gint_inthandler(0xae0, inth_rtc_pri_helper, 32);
 
 	timer_params = h0 + 20;
-	timer_params->RCR2 = &RTC->RCR2.byte;
 
-	/* Disable the periodic interrupt for now, but give it priority 5 */
+	volatile uint8_t **RCR2_pointer = h1 + 28;
+	*RCR2_pointer = &RTC->RCR2.byte;
+
+	/* Disable the RTC interrupts for now. Give them priority 1; higher
+	   priorities cause freezes when going back to the system on SH3
+	   (TODO: Find out about the RTC interrupt problem on SH3) */
 	RTC->RCR2.PES = RTC_NONE;
-	intc_priority(INTC_RTC_PRI, 5);
+	intc_priority(INTC_RTC_PRI, 1);
 }
 
 //---
@@ -183,8 +192,9 @@ static void ctx_save(void *buf)
 static void ctx_restore(void *buf)
 {
 	ctx_t *ctx = buf;
-	RTC->RCR1.byte = ctx->RCR1;
-	RTC->RCR2.byte = ctx->RCR2;
+
+	RTC->RCR1.byte = ctx->RCR1 & 0x18;
+	RTC->RCR2.byte = ctx->RCR2 & 0x7f;
 }
 
 //---
