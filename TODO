@@ -3,17 +3,11 @@ For the 2.1.0 release:
 * project:   remove the compat branch
 * project:   remove the gray aliases
 
-Issues:
-* #10        support fx-CG 20
-
 Extensions on existing code:
 * tmu:       make interrupt handlers more elegant
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
-* topti:     support unicode fonts
 * dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic
-* hardware:  fill in the HWMEM_FITTLB flag
-* cpg:       spread spectrum on fxcg50
 * core:      use cmp/str for memchr()
 * r61524:    brightness control and clean the file
 * core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
@@ -21,6 +15,7 @@ Extensions on existing code:
 * core:      run destructors when a task-switch results in leaving the app
 * core:      invoke main menu instead of returning after main() ends
 * core rtc:  use qdiv10 to massively improve division performance
+* topti:     let the font specify letter and word spacing
 
 Future directions.
 * A complete file system abstraction

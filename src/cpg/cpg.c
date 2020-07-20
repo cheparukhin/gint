@@ -113,11 +113,17 @@ static void sh7305_probe(void)
 #undef CPG
 
 //---
-//	Other driver stuff
+//	Initialization, contexts and driver metadata
 //---
 
 static void init(void)
 {
+	/* Disable spread spectrum in SSGSCR */
+	if(isSH4())
+	{
+		SH7305_CPG.SSCGCR.SSEN = 0;
+	}
+
 	/* This avoids warnings about sh7705_probe() being undefined when
 	   building for fxcg50 */
 	#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
@@ -126,9 +132,31 @@ static void init(void)
 	sh7305_probe();
 }
 
+typedef struct {
+	uint32_t SSCGCR;
+} ctx_t;
+
+static ctx_t sys_ctx, gint_ctx;
+
+static void ctx_save(void *ctx)
+{
+	ctx_t *c = ctx;
+	if(isSH4()) c->SSCGCR = SH7305_CPG.SSCGCR.lword;
+}
+
+static void ctx_restore(void *ctx)
+{
+	ctx_t *c = ctx;
+	if(isSH4()) SH7305_CPG.SSCGCR.lword = c->SSCGCR;
+}
+
 gint_driver_t drv_cpg = {
-	.name    = "CPG",
-	.init    = init,
+	.name         = "CPG",
+	.init         = init,
+	.sys_ctx      = &sys_ctx,
+	.gint_ctx     = &gint_ctx,
+	.ctx_save     = ctx_save,
+	.ctx_restore  = ctx_restore,
 };
 
 GINT_DECLARE_DRIVER(1, drv_cpg);
