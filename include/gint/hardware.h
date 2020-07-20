@@ -14,14 +14,23 @@
 #ifndef GINT_HARDWARE
 #define GINT_HARDWARE
 
+/* For compatibility with ASM, include the following bits only in C code */
+#ifndef CPP_ASM
+
 #include <gint/defs/types.h>
 
 /* Most of the information here is going to be stored in (key, value) pairs for
    predetermined keys and 32-bits values that are often integers or a set of
    flags. The data will be filled by gint or its drivers. */
-
 #define HW_KEYS 16
 extern uint32_t gint[HW_KEYS];
+
+/* hw_detect(): Basic hardware detection
+   This function probes the hardware and fills in the HWMPU, HWCPUVR and
+   HWCPUPR fields. */
+void hw_detect(void);
+
+#endif /* CPP_ASM */
 
 /* MPU detection macros, with a faster version on fx-CG 50 and a generic
    dual-platform version for libraries.
@@ -37,11 +46,6 @@ extern uint32_t gint[HW_KEYS];
 #define isSH4() 1
 #endif
 
-/* hw_detect(): Basic hardware detection
-   This function probes the hardware and fills in the HWMPU, HWCPUVR and
-   HWCPUPR fields. */
-void hw_detect(void);
-
 /* This bit should be set in all data longwords except HWMPU, HWCPUVR, HWCPUPR
    and HWCALC which are guaranteed to always be loaded. If not set then the
    information must be treated as invalid. */
@@ -54,7 +58,7 @@ void hw_detect(void);
 #define HWMPU    0    /* MPU type */
 #define HWCPUVR  1    /* CPU Version Register */
 #define HWCPUPR  2    /* CPU Product Register */
-#define HWCALC   3    /* Calculator model */
+#define HWCALC   3    /* Calculator model, hardcoded in kernel/inth.S */
 #define HWRAM    4    /* Amount of RAM */
 #define HWROM    5    /* Amount of ROM */
 #define HWURAM   6    /* Userspace RAM */
@@ -94,7 +98,7 @@ void hw_detect(void);
 #define HWCALC_PRIZM         4
 /* fx-CG 50, a late extension to the Prizm family */
 #define HWCALC_FXCG50        5
-/* fx-CG 50 emulator */
+/* fx-CG 50 emulator, hardcoded in kernel/inth.S */
 #define HWCALC_FXCG_MANAGER  6
 
 /*

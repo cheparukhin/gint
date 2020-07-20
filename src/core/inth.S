@@ -5,6 +5,9 @@
 **	blocks depending on its configuration.
 */
 
+#define CPP_ASM
+#include <gint/hardware.h>
+
 .global _gint_inth_7305
 
 #ifdef FX9860G
@@ -224,12 +227,21 @@ _gint_inth_callback:
 	mov.l	.SR_clear_RB_BL, r0
 	and	r0, r1
 
-	/* On SH3, set IMASK to 15 to block interrupts while allowing TLB
-	   misses to be handled. */
-	mov.l	.gint, r0
-	mov.l	@r0, r0
+	/* On SH3 the CPUOPM.INTMU bit is not supported, and on the fx-CG
+	   emulator, it is outright ignored. In these situations, set IMASK to
+	   15 to block interrupts while allowing TLB misses to be handled. */
+	mov.l	.gint, r2
+	mov.l	@r2, r0
 	tst	#1, r0
-	bt	.load_sr
+	bf	.set_imask
+	mov.l	@(4*HWCALC,r2), r0
+	cmp/eq	#HWCALC_FXCG_MANAGER, r0
+	bt	.set_imask
+
+	bra	.load_sr
+	nop
+
+.set_imask:
 	mov.l	.SR_set_IMASK, r0
 	or	r0, r1
 

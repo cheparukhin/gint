@@ -26,10 +26,11 @@ machine ?= -m4-nofpu -mb
 endif
 
 # Compiler flags, assembler flags, dependency generation, archiving
+inc     := -I ../include
 cflags  := $(machine) -ffreestanding -nostdlib -Wall -Wextra -std=c11 -Os \
-           -fstrict-volatile-bitfields -I ../include $(CONFIG.MACROS) \
+           -fstrict-volatile-bitfields $(inc) $(CONFIG.MACROS) \
            $(CONFIG.CFLAGS)
-sflags  := $(CONFIG.MACROS)
+sflags  := $(inc) $(CONFIG.MACROS)
 dflags   = -MMD -MT $@ -MF $(@:.o=.d) -MP
 arflags :=
 
