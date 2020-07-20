@@ -36,6 +36,15 @@ extern void (*bdtors)(void), (*edtors)(void);
 /* User-provided main() function */
 int main(int isappli, int optnum);
 
+/* Whether to restart main through the OS menu rather than returning */
+int gint_restart = 0;
+
+/* gint_setrestart(): Set whether to restart the add-in after exiting */
+void gint_setrestart(int restart)
+{
+	gint_restart = restart;
+}
+
 /* regcpy(): Copy a memory region using symbol information
    @l  Source pointer (load address)
    @s  Size of area (should be a multiple of 16)
@@ -77,8 +86,9 @@ static void callarray(void (**f)(void), void (**l)(void))
 	while(f < l) (*(*f++))();
 }
 
-/* start() - this is where it all starts
-   Returns a status code. Invoking main menu is better than returning! */
+/* start(): Where it all starts
+   Returns a status code. Invoking main menu is better than returning, see
+   gint_setrestart() for that. */
 GSECTION(".text.entry")
 int start(int isappli, int optnum)
 {
@@ -126,7 +136,15 @@ int start(int isappli, int optnum)
 	   destructors to work with. */
 
 	callarray(&bctors, &ectors);
-	int ret = main(isappli, optnum);
+
+	int ret;
+	while(1)
+	{
+		ret = main(isappli, optnum);
+		if(!gint_restart) break;
+		gint_osmenu();
+	}
+
 	callarray(&bdtors, &edtors);
 
 	/* Before leaving the application, we need to clean everything we
@@ -137,7 +155,5 @@ int start(int isappli, int optnum)
 	/* Unload gint and give back control to the system. Driver settings
 	   will be restored while interrupts are disabled */
 	kquit();
-
-	/* TODO: Invoke main menu so that add-in can restart? */
 	return ret;
 }

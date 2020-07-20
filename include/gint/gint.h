@@ -43,6 +43,18 @@ void gint_switch(void (*function)(void));
    call to getkey(), but can also be called manually. */
 void gint_osmenu(void);
 
+/* gint_setrestart(): Set whether to restart the add-in after exiting
+
+   An add-in that reaches the end of its code exits. On the calculator, except
+   using OS-dependent settings, it cannot be started again unless another
+   application is launched first.
+
+   This setting allows the add-in to restart by calling gint_osmenu() instead
+   of exiting. This can give a proper illusion of restarting if used correctly.
+
+   @restart  0 to exit, 1 to restart by using gint_osmenu() */
+void gint_setrestart(int restart);
+
 /* gint_inthandler(): Install interrupt handlers
 
    This function installs (copies) interrupt handlers in the VBR space of the
