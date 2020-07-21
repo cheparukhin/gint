@@ -259,10 +259,11 @@ void bopti_render_noclip(int visual_x, int y, bopti_image_t const *img,
 	/* Left pixel of leftmost column */
 	int x = visual_x - (left & 31);
 	width += (left & 31);
+	left &= ~31;
 
 	/* Start column and end column (included) */
-	left >>= 5;
 	int right = (left + width - 1) >> 5;
+	left >>= 5;
 
 	/* Finish with the standard bopti renderer */
 	struct rbox rbox = { x, visual_x, y, width, left, right, top, bottom };
