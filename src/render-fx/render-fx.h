@@ -7,6 +7,7 @@
 
 #include <gint/defs/types.h>
 #include <gint/display.h>
+#include "bopti-asm.h"
 
 /* masks(): Compute the vram masks for a given rectangle
 
@@ -24,13 +25,10 @@
    @masks   Stores the result of the function (four uint32_t values) */
 void masks(int x1, int x2, uint32_t *masks);
 
-/* bopti_render_clip(): Render a bopti image with clipping
-   @x @y             Location of the top-left corner
-   @img              Image encoded by [fxconv]
-   @left @top @w @h  Bounding box to render
-   @v1 @v2           VRAMs (gray rendering is used if v2 != NULL) */
-void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
-	int top, int w, int h, uint32_t *v1, uint32_t *v2);
+/* bopti_clip(): Clip a bounding box to image and VRAM
+   @img   Image encoded by [fxconv]
+   @rbox  Rendering box */
+int bopti_clip(bopti_image_t const *img, struct rbox *rbox);
 
 /* bopti_render_noclip(): Render a bopti image without clipping
    This function is only ever slightly faster than bopti_render_clip(),
@@ -42,8 +40,8 @@ void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
    @img              Image encoded by [fxconv]
    @left @top @w @h  Bounding box to render
    @v1 @v2           VRAMs (gray rendering is used if v2 != NULL) */
-void bopti_render_noclip(int x, int y, bopti_image_t const *img, int left,
-	int top, int w, int h, uint32_t *v1, uint32_t *v2);
+void bopti_render_noclip(bopti_image_t const *img, struct rbox *rbox,
+	uint32_t *v1, uint32_t *v2);
 
 //---
 //	Alternate rendering modes
@@ -72,8 +70,7 @@ struct rendering_mode
 		(int x, int y, int fg, int bg, int halign, int valign,
 		 char const *str);
 	void (*dsubimage)
-		(int x, int y, bopti_image_t const *image, int left, int top,
-		 int width, int height, int flags);
+		(bopti_image_t const *image, struct rbox *r, int flags);
 };
 
 /* The alternate rendering mode pointer (initially NULL)*/
@@ -89,9 +86,7 @@ void gint_gvline(int y1, int y2, int x, int color);
 void gtext_opt
 	(int x, int y, int fg, int bg, int halign, int valign,
 	 char const *str);
-void gsubimage
-	(int x, int y, bopti_image_t const *image, int left, int top,
-	 int width, int height, int flags);
+void gsubimage(bopti_image_t const *image, struct rbox *r, int flags);
 
 /* Short macro to call the alternate rendering function when available */
 #define DMODE_OVERRIDE(func, ...)		\

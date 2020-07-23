@@ -3,22 +3,7 @@
 #include "render-fx.h"
 #include "bopti-asm.h"
 
-/* struct rbox: A rendering box (target coordinates and source rectangle)
-   Some of the data here is redundant, but makes things easier. */
-struct rbox
-{
-	/* Left pixel of the first column to be drawn, even if this column is
-	   not drawn entirely */
-	int x;
-	/* On-screen location of top-left corner */
-	int visual_x, y;
-	/* Width of rendered sub-image */
-	int width;
-	/* Horizontal bounds of the box in the image (included, in columns) */
-	int left, right;
-	/* Vertical bounds of the box in the image (inc-excluded, in pixels) */
-	int top, height;
-};
+#pragma GCC optimize("O3")
 
 /* struct command: A rendering command
    Includes many computed parameters and handy information. Read-only. */
@@ -176,7 +161,7 @@ void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
 	masks(rbox->visual_x, rbox->visual_x + rbox->width - 1, vm);
 
 	/* Number of layers per profile */
-	int layer_count[] = { 1, 2, 2, 3 };
+	static const int layer_count[] = { 1, 2, 2, 3 };
 	int layers = layer_count[img->profile];
 
 	/* For each pair of consecutive VRAM elements involved, create a mask
@@ -207,20 +192,17 @@ void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
 	const uint32_t *layer = (void *)img->data;
 	layer += (rbox->top * img_columns + rbox->left) * layers;
 
-	/* Number of grid columns */
-	int columns = rbox->right - rbox->left + 1;
-
 	/* Compute and execute the command for this parameters */
 	struct command c = {
 	  .x            = rbox->x & 31,
 	  .v1           = v1,
 	  .v2           = v2 ? v2 : v1,
 	  .offset       = (rbox->y << 2) + (rbox->x >> 5),
-	  .columns      = columns,
+	  .columns      = rbox->columns,
 	  .masks        = masks + 2 * left_origin,
 	  .real_start   = (left_origin > 0),
-	  .vram_stride  = 4 - columns,
-	  .data_stride  = ((img_columns - columns) << 2) * layers,
+	  .vram_stride  = 4 - rbox->columns,
+	  .data_stride  = ((img_columns - rbox->columns) << 2) * layers,
 	  .gray         = (v2 != NULL),
 	  .f            = f,
 	};
@@ -231,61 +213,62 @@ void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
 void bopti_render_scsp(bopti_image_t const *img, struct rbox *rbox,
 	uint32_t *v1, uint32_t *v2)
 {
-	/* Rendering function */
-	bopti_asm_t f;
-	if(v2) f.asm_gray_scsp = asm_gray_scsp[img->profile];
-	else   f.asm_mono_scsp = asm_mono_scsp[img->profile];
-
-	/* Compute the only rendering mask. Avoid UB if width = 32 */
-	uint32_t mask = 0xffffffff;
-	if(rbox->width < 32)
-	{
-		int right = 32 - ((rbox->visual_x & 31) + rbox->width);
-		mask = ((1 << rbox->width) - 1) << right;
-	}
+	/* Compute the only rendering mask */
+	uint32_t mask =
+		(0xffffffff << (32 - rbox->width)) >> (rbox->visual_x & 31);
 
 	/* Number of layers */
-	int layer_count[] = { 1, 2, 2, 3 };
-	int layers = layer_count[img->profile];
+	int layers = img->profile - (img->profile >> 1) + 1;
 
-	/* Number of columns in [img] */
-	int img_columns = (img->width + 31) >> 5;
+	/* Number of longwords to skip between rows of [img] */
+	int img_stride = ((img->width + 31) >> 5) * layers;
 
 	/* Interwoven layer data. Skip left columns that are not rendered */
 	const uint32_t *layer = (void *)img->data;
-	layer += (rbox->top * img_columns + rbox->left) * layers;
+	layer += (rbox->top * img_stride) + (rbox->left * layers);
 
 	/* Starting value of VRAM pointers */
 	int offset = (rbox->y << 2) + (rbox->visual_x >> 5);
 	v1 += offset;
-	if(v2) v2 += offset;
 
 	/* Number of rows */
 	int rows = rbox->height;
-	/* Mask shift */
-	int shift = -(rbox->x & 31);
-	if(rbox->x < 0) shift += 32;
 
 	/* Render the grid immediately; mono version */
-	if(!v2) while(rows--)
+	if(!v2)
 	{
-		f.asm_mono_scsp(v1, layer, mask, shift);
-		layer += img_columns * layers;
-		v1 += 4;
+		asm_mono_scsp_t *f = asm_mono_scsp[img->profile];
+		while(rows--)
+		{
+			f(v1, layer, mask, rbox->x);
+			layer += img_stride;
+			v1 += 4;
+		}
 	}
 	/* Gray version */
-	else while(rows--)
+	else
 	{
-		f.asm_gray_scsp(v1, layer, mask, v2, shift);
-		layer += img_columns * layers;
-		v1 += 4;
-		v2 += 4;
+		asm_gray_scsp_t *f = asm_gray_scsp[img->profile];
+		v2 += offset;
+
+		while(rows--)
+		{
+			f(v1, layer, mask, v2, rbox->x);
+			layer += img_stride;
+			v1 += 4;
+			v2 += 4;
+		}
 	}
 }
 
-void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
-	int top, int width, int height, uint32_t *v1, uint32_t *v2)
+int bopti_clip(bopti_image_t const *img, struct rbox *r)
 {
+	/* This load/save is not elegant but it makes GCC use register-only
+	   operations, which is what we need for efficiency */
+	int x = r->visual_x, y = r->y;
+	int left = r->left, top = r->top;
+	int width = r->width, height = r->height;
+
 	/* Adjust the bounding box of the input image */
 	if(left < 0) width  += left, x -= left, left = 0;
 	if(top  < 0) height += top,  y -= top,  top  = 0;
@@ -298,32 +281,34 @@ void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
 	if(x + width  > DWIDTH)  width  = DWIDTH  - x;
 	if(y + height > DHEIGHT) height = DHEIGHT - y;
 
-	/* Early finish for empty intersections */
-	if(width <= 0 || height <= 0) return;
+	r->visual_x = x;
+	r->y = y;
+	r->left = left;
+	r->top = top;
+	r->width = width;
+	r->height = height;
 
-	/* Finish with the noclip variant */
-	bopti_render_noclip(x, y, img, left, top, width, height, v1, v2);
+	/* Return non-zero if the result is empty */
+	return (width <= 0 || height <= 0);
 }
 
-void bopti_render_noclip(int visual_x, int y, bopti_image_t const *img,
-	int left, int top, int width, int height, uint32_t *v1, uint32_t *v2)
+void bopti_render_noclip(bopti_image_t const *img, struct rbox *r,
+	uint32_t *v1, uint32_t *v2)
 {
+	int left = r->left;
+
 	/* Start column and end column (both included) */
-	int cl = (left) >> 5;
-	int cr = (left + width - 1) >> 5;
+	r->left >>= 5;
 
-	/* Finish with the standard bopti renderer */
-	struct rbox rbox = { 0, visual_x, y, width, cl, cr, top, height };
-
-	if(cl == cr && (visual_x & 31) + width <= 32)
+	if(r->columns == 1 && (r->visual_x & 31) + r->width <= 32)
 	{
-		rbox.x = (visual_x & 31) - (left & 31);
-		bopti_render_scsp(img, &rbox, v1, v2);
+		r->x = (left & 31) - (r->visual_x & 31);
+		bopti_render_scsp(img, r, v1, v2);
 	}
 	else
 	{
 		/* x-coordinate of the first pixel of the first column */
-		rbox.x = visual_x - (left & 31);
-		bopti_render(img, &rbox, v1, v2);
+		r->x = r->visual_x - (left & 31);
+		bopti_render(img, r, v1, v2);
 	}
 }

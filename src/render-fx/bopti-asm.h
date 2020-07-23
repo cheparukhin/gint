@@ -36,6 +36,7 @@ typedef void asm_gray_scsp_t(uint32_t *v1, uint32_t const *layer,
 
 /* Type of any rendering function */
 typedef union {
+	void *gen;
 	asm_mono_t *asm_mono;
 	asm_gray_t *asm_gray;
 	asm_mono_scsp_t *asm_mono_scsp;
@@ -83,5 +84,35 @@ extern asm_gray_scsp_t bopti_gasm_mono_alpha_scsp;
 extern asm_gray_scsp_t bopti_gasm_gray_scsp;
 /* bpoti_asm_gray_alpha_scsp(): SCSP "gray_alpha" profile */
 extern asm_gray_scsp_t bopti_gasm_gray_alpha_scsp;
+
+//---
+//	Renderer's data structures
+//---
+
+/* struct rbox: A rendering box (target coordinates and source rectangle)
+   Meaning of fields vary during the rendering process! */
+struct rbox
+{
+	/* General renderer:
+	     On-screen location of the leftmost pixel of the leftmost rendered
+	     column (this particular pixel might not be drawn but is of
+	     importance in the positioning process)
+	   SCSP renderer:
+	     Shift value used to align columns with positions */
+	int x;
+	/* On-screen location of top-left corner; the (x,y) of dsubimage() */
+	int visual_x, y;
+	/* Width of rendered sub-image */
+	int width;
+	/* Before bopti_render{_scsp}():
+	     Left-coordinate of the source box (included, in pixels)
+	   In bopti_render{_scsp}():
+	     Left-coordinate of the source box (included, in columns) */
+	int left;
+	/* Number of columns used in the source box */
+	int columns;
+	/* Vertical bounds of the box in the image (inc-excluded, in pixels) */
+	int top, height;
+};
 
 #endif /* GINT_RENDERFX_BOPTIASM */
