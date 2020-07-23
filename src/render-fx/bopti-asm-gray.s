@@ -1,3 +1,4 @@
+
 .global _bopti_gasm_mono
 .global _bopti_gasm_mono_alpha
 .global _bopti_gasm_gray

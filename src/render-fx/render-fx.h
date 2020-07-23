@@ -28,10 +28,9 @@ void masks(int x1, int x2, uint32_t *masks);
    @x @y             Location of the top-left corner
    @img              Image encoded by [fxconv]
    @left @top @w @h  Bounding box to render
-   @v1 @v2           VRAMs
-   @bopti_asm        Rendering function */
+   @v1 @v2           VRAMs (gray rendering is used if v2 != NULL) */
 void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
-	int top, int w, int h, uint32_t *v1, uint32_t *v2, void *bopti_asm);
+	int top, int w, int h, uint32_t *v1, uint32_t *v2);
 
 /* bopti_render_noclip(): Render a bopti image without clipping
    This function is only ever slightly faster than bopti_render_clip(),
@@ -42,10 +41,9 @@ void bopti_render_clip(int x, int y, bopti_image_t const *img, int left,
    @x @y             Location of the top-left corner
    @img              Image encoded by [fxconv]
    @left @top @w @h  Bounding box to render
-   @v1 @v2           VRAMs
-   @bopti_asm        Rendering function */
+   @v1 @v2           VRAMs (gray rendering is used if v2 != NULL) */
 void bopti_render_noclip(int x, int y, bopti_image_t const *img, int left,
-	int top, int w, int h, uint32_t *v1, uint32_t *v2, void *bopti_asm);
+	int top, int w, int h, uint32_t *v1, uint32_t *v2);
 
 //---
 //	Alternate rendering modes
