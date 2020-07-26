@@ -83,10 +83,6 @@ typedef struct
 
 } GPACKED(4) bopti_image_t;
 
-/* Old alias to image_t, now deprecated because of libimg */
-typedef bopti_image_t image_t __attribute__((deprecated(
-	"image_t has been renamed to bopti_image_t")));
-
 #endif /* FX9860G */
 
 #endif /* GINT_DISPLAY_FX */

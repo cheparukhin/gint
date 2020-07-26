@@ -144,34 +144,4 @@ void dgray_getdelays(uint32_t *light, uint32_t *dark);
    These pointers can be used for custom rendering functions. */
 void dgray_getvram(uint32_t **light, uint32_t **dark);
 
-//---
-//	Aliases for older programs
-//---
-
-/* Functions for the gray engine used to be called g*() to mirror the d*()
-   functions of the display module. They are now bundled together, so these
-   aliases are for older programs that still use the g*() naming scheme */
-
-#ifdef GINT_GRAY_ALIASES
-
-#define gclear dclear
-#define grect drect
-#define gpixel dpixel
-#define gline dline
-#define ghline dhline
-#define gvline dvline
-#define gimage dimage
-#define gsubimage dsubimage
-#define gtext dtext
-#define gtext_opt dtext_opt
-#define gprint dprint
-#define gprint_opt dprint_opt
-
-#define gupdate dupdate
-#define gray_delays dgray_setdelays
-#define gray_config dgray_getdelays
-#define gvram dgray_getvram
-
-#endif /* GINT_GRAY_ALIASES */
-
 #endif /* GINT_GRAY */
