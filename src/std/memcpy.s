@@ -24,7 +24,7 @@ _memcpy_align_dst:
 
 	/* If source is 4-aligned, use mov.l */
 	tst	r2, r5
-	bt/s	.aligned4
+	bt/s	.aligned4_32
 	mov	#4, r2
 
 	/* If unaligned but SH4, use movua.l */
@@ -42,13 +42,40 @@ _memcpy_align_dst:
 	bra	_naive_memcpy
 	nop
 
-.aligned4:
+.aligned4_32:
+	mov	#36, r2
+
+	/* Copy 32 bytes at a time until at most 32 bytes are left */
+	mov.l	@r5+, r0
+	mov.l	@r5+, r1
+	mov.l	@r5+, r7
+	mov.l	r0, @r4
+	mov.l	r1, @(4,r4)
+	mov.l	r7, @(8,r4)
+	mov.l	@r5+, r0
+	mov.l	@r5+, r1
+	mov.l	@r5+, r7
+	mov.l	r0, @(12,r4)
+	mov.l	r1, @(16,r4)
+	mov.l	r7, @(20,r4)
+	mov.l	@r5+, r0
+	mov.l	@r5+, r1
+	add	#-32, r6
+	mov.l	r0, @(24,r4)
+	mov.l	r1, @(28,r4)
+	cmp/ge	r6, r2
+	bf/s	.aligned4_32
+	add	#32, r4
+
+.aligned4_4:
+	mov	#4, r2
+
 	/* Copy 4 bytes at a time until at most 4 bytes are left */
 	mov.l	@r5+, r0
 	mov.l	r0, @r4
 	add	#-4, r6
 	cmp/ge	r6, r2
-	bf/s	.aligned4
+	bf/s	.aligned4_4
 	add	#4, r4
 
 	bra	_naive_memcpy
