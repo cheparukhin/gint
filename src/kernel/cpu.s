@@ -5,21 +5,23 @@
 .global	_cpu_setVBR
 .global _cpu_setCPUOPM
 .global _cpu_getCPUOPM
+.global _cpu_getSR
+.global _cpu_setSR
 
 /* cpu_setVBR(): Change VBR address */
 
 .section .gint.mapped, "ax"
 _cpu_setVBR_reloc:
 	mov.l	r8, @-r15
+	mov.l	r9, @-r15
 	sts.l	pr, @-r15
-	stc.l	sr, @-r15
 
 	/* Block all interrupts by setting IMASK=15 */
-	mov	#0xf, r1
-	shll2	r1
-	shll2	r1
+	mov	#0xf, r9
+	shll2	r9
+	shll2	r9
 	stc	sr, r0
-	or	r1, r0
+	or	r9, r0
 	ldc	r0, sr
 
 	/* Set the new VBR address */
@@ -30,10 +32,17 @@ _cpu_setVBR_reloc:
 	jsr	@r5
 	mov	r6, r4
 
-	/* Enable interrupts again by restoring the status register */
-	ldc.l	@r15+, sr
-	lds.l	@r15+, pr
+	/* Enable interrupts again */
+	stc	sr, r0
+	not	r9, r9
+	and	r9, r0
+	ldc	r0, sr
+
+	/* Return the previous VBR address */
 	mov	r8, r0
+
+	lds.l	@r15+, pr
+	mov.l	@r15+, r9
 	rts
 	mov.l	@r15+, r8
 
@@ -68,5 +77,16 @@ _cpu_getCPUOPM:
 	mov.l	@r0, r0
 
 .align 4
-
 1:	.long	0xff2f0000
+
+/* cpu_getSR(): Get status register */
+_cpu_getSR:
+	stc	sr, r0
+	rts
+	nop
+
+/* cpu_setSR(): Set status register */
+_cpu_setSR:
+	ldc	r4, sr
+	rts
+	nop

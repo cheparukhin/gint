@@ -22,6 +22,7 @@ static void kinit_cpu(void);
 
 typedef struct
 {
+	sr_t SR;
 	uint32_t VBR;
 	uint32_t CPUOPM;
 } ctx_t;
@@ -31,11 +32,19 @@ GBSS static ctx_t sys_ctx, gint_ctx;
 
 static void ctx_save(ctx_t *ctx)
 {
-	if(isSH4()) ctx->CPUOPM = cpu_getCPUOPM();
+	if(isSH4())
+	{
+		ctx->CPUOPM = cpu_getCPUOPM();
+		ctx->SR = cpu_getSR();
+	}
 }
 static void ctx_restore(ctx_t *ctx)
 {
-	if(isSH4()) cpu_setCPUOPM(ctx->CPUOPM);
+	if(isSH4())
+	{
+		cpu_setCPUOPM(ctx->CPUOPM);
+		cpu_setSR(ctx->SR);
+	}
 }
 
 //---
@@ -99,7 +108,15 @@ static void drivers_switch(int who)
 
 static void kinit_cpu(void)
 {
-	if(isSH4()) cpu_setCPUOPM(cpu_getCPUOPM() | 0x00000008);
+	if(isSH4())
+	{
+		cpu_setCPUOPM(cpu_getCPUOPM() | 0x00000008);
+
+		/* Enable DSP mode on the CPU */
+		sr_t SR = cpu_getSR();
+		SR.DSP = 1;
+		cpu_setSR(SR);
+	}
 }
 
 /* kinit(): Install and start gint */
