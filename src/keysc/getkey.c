@@ -15,13 +15,16 @@ static int rep_first = 64;
 /* Delay between subsequent repeats, in scan intervals */
 static int rep_next = 8;
 
-/* getkey() - wait for a pressed key */
+/* Repeat filter function */
+static int (*filter_function)(int key, int duration, int count) = NULL;
+
+/* getkey(): Wait for a key press */
 key_event_t getkey(void)
 {
 	return getkey_opt(GETKEY_DEFAULT, NULL);
 }
 
-/* getkey_opt() - enhanced getkey() */
+/* getkey_opt(): Enhanced getkey() */
 key_event_t getkey_opt(int opt, volatile int *timeout)
 {
 	key_event_t ev;
@@ -33,6 +36,8 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	static int rep_count = 0;
 	/* Keyboard time when the key was pressed */
 	static int rep_time = 0;
+	/* Additional repeat delay set by the filtering function */
+	static int rep_delay = 0;
 
 	/* Reset the state if the repeated key went up while getkey() was not
 	   aware (this happens when different keyboard primitives are used) */
@@ -41,6 +46,7 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		rep_key = 0;
 		rep_count = 0;
 		rep_time = 0;
+		rep_delay = 0;
 	}
 
 	while(1) switch((ev = pollevent()).type)
@@ -85,6 +91,7 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		rep_key = key;
 		rep_count = 0;
 		rep_time = ev.time;
+		rep_delay = 0;
 
 		ev.mod = 1;
 		ev.shift = shift;
@@ -108,11 +115,33 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		/* If the key is key pressed long enough, create a new event */
 		int duration = (int16_t)(ev.time - rep_time);
 
-		int target = (rep_count) ? rep_next : rep_first;
+		if(rep_delay < 0) break;
+		int target = (rep_count ? rep_next : rep_first) + rep_delay;
 		if(duration < target) break;
+
+		/* Filter out the event if repeat filtering is on */
+		if(filter_function && (opt & GETKEY_REP_FILTER))
+		{
+			int s = filter_function(rep_key, duration, rep_count);
+			/* Drop repeats forever */
+			if(s < 0)
+			{
+				rep_delay = -1;
+				break;
+			}
+			/* Delay repeat by set amount */
+			if(s > 0)
+			{
+				s = (s * KEYBOARD_SCAN_FREQUENCY) / 1000;
+				rep_delay += s;
+				break;
+			}
+			/* Accepts repeat (fallthrough) */
+		}
 
 		rep_time += target;
 		rep_count++;
+		rep_delay = 0;
 
 		ev.mod = 1;
 		ev.shift = shift;
@@ -128,13 +157,20 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		rep_key = 0;
 		rep_count = 0;
 		rep_time = 0;
+		rep_delay = 0;
 		break;
 	}
 }
 
-/* getkey_repeat() - set repeat delays for getkey() */
+/* getkey_repeat(): Set repeat delays for getkey() */
 void getkey_repeat(int first, int next)
 {
 	rep_first = (first * KEYBOARD_SCAN_FREQUENCY) / 1000;
 	rep_next = (next * KEYBOARD_SCAN_FREQUENCY) / 1000;
+}
+
+/* getkey_repeat_filter(): Set the repeat filter function */
+void getkey_repeat_filter(int (*filter)(int key, int duration, int count))
+{
+	filter_function = filter;
 }

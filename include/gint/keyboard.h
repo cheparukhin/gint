@@ -200,11 +200,13 @@ enum {
 	/* Repeat arrow keys, or even all keys */
 	GETKEY_REP_ARROWS  = 0x10,
 	GETKEY_REP_ALL     = 0x20,
+	/* Enable repeat event filtering; see getkey_repeat_filter() */
+	GETKEY_REP_FILTER  = 0x40,
 
 	/* No modifiers */
 	GETKEY_NONE        = 0x00,
 	/* Default settings of getkey() */
-	GETKEY_DEFAULT     = 0x1f,
+	GETKEY_DEFAULT     = 0x5f,
 };
 
 /* getkey_opt(): Enhanced getkey()
@@ -243,6 +245,33 @@ key_event_t getkey_opt(int options, volatile int *timeout);
    @first  Delay between key press and first repeat (no more than one hour)
    @next   Delay between subsequent repeats (no more than one hour) */
 void getkey_repeat(int first, int next);
+
+/* getkey_repeat_filter(): Set the repeat filter function
+
+   This function is called by getkey() and getkey_opt() every time a repeat
+   event occurs when GETKEY_REPEAT_FILTER. The function can decide whether to
+   keep, delay it or drop it entirely. It can also change the repeat delays
+   with getkey_repeat() for fully custom repeat delay curves.
+
+   The time elapsed since the last accepted repeat is passed to the filter
+   function; this time must be larger than the repeat time set with
+   getkey_repeat() for getkey() and getkey_opt() to consider a repeat, but it
+   can be much longer if some repeat events were previously filtered out.
+
+   @key       Key that is about to be repeated
+   @duration  Duration since last accepted repeat
+   @count     Number of previous repeats
+
+   The repeat function must either return:
+   * 0, in which case the even is accepted
+   * A positive number of milliseconds, in which case the event is tentatively
+     re-emitted after that time (the filter function will be called again)
+   * A negative number, in which case the event is dropped and further repeats
+     are denied.
+
+   By default the filter function is NULL, which accepts all repeat events.
+   This behavior can be restored explicitly by calling with function=NULL. */
+void getkey_repeat_filter(int (*filter)(int key, int duration, int count));
 
 //---
 //	Key code functions
