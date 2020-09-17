@@ -8,6 +8,27 @@
 #include <gint/mpu/mmu.h>
 
 //---
+//	Unified interface
+//---
+
+/* mmu_translate(): Get the physical address for a virtual page
+   Looks for a translation with the specified virtual address as start, and
+   returns the corresponding physical address. Only works if the argument is
+   page-aligned.
+
+   @virtual  Virtual page address
+   Returns the page's physical address, or -1 if not mapped. */
+uint32_t mmu_translate(uint32_t page);
+
+/* mmu_uram(): Get pointer to physical start of user RAM
+
+   Returns a pointer to the physical location behind 0x08100000. The physical
+   location can be used to access without the TLB, which is useful when
+   interrupts are processed with SR.BL=1. However, the location is highly
+   platform-dependent. */
+void *mmu_uram(void);
+
+//---
 //	SH7705 TLB
 //---
 
@@ -34,6 +55,9 @@ tlb_data_t const *tlb_data(uint way, uint E);
    @ram  Pointer to amount of mapped RAM */
 void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram);
 
+/* tlb_translate(): Get the physical address for a virtual page */
+uint32_t tlb_translate(uint32_t page);
+
 //---
 //	SH7305 Unified TLB
 //---
@@ -58,5 +82,8 @@ utlb_data_t const *utlb_data(uint E);
    @rom  Pointer to amount of mapped ROM
    @ram  Pointer to amount of mapped RAM */
 void utlb_mapped_memory(uint32_t *rom, uint32_t *ram);
+
+/* utlb_translate(): Get the physical address for a virtual page */
+uint32_t utlb_translate(uint32_t page);
 
 #endif /* GINT_MMU */

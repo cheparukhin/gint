@@ -6,6 +6,7 @@
 #include <gint/drivers.h>
 #include <gint/std/string.h>
 #include <gint/hardware.h>
+#include <gint/mmu.h>
 #include <gint/mpu/intc.h>
 
 #include "cpu.h"
@@ -105,14 +106,15 @@ static void kinit_cpu(void)
 /* kinit(): Install and start gint */
 void kinit(void)
 {
-	/* VBR address, provided by the linker script */
 	#ifdef FX9860G
-	gint_ctx.VBR = (uint32_t)&gint_vbr_fx9860g;
+	/* VBR is loaded 0x600 bytes before end of the user RAM (0x100 bytes at
+	   the start of the VBR space are unused) */
+	gint_ctx.VBR = (uint32_t)mmu_uram() + 0x1a00 - 0x100;
 	#endif
+
 	#ifdef FXCG50
-	gint_ctx.VBR = (gint[HWCALC] == HWCALC_FXCG50)
-		? (uint32_t)&gint_vbr_fxcg50
-		: (uint32_t)&gint_vbr_fxcg20;
+	/* VBR is loaded at the start of the user RAM */
+	gint_ctx.VBR = (uint32_t)mmu_uram();
 	#endif
 
 	/* Event handler entry points */
@@ -128,7 +130,7 @@ void kinit(void)
 
 	/* Take control of the VBR and roll! */
 	drivers_wait();
-	sys_ctx.VBR = cpu_setVBR(gint_ctx.VBR, drivers_save_and_init, 0);
+	sys_ctx.VBR = (*cpu_setVBR)(gint_ctx.VBR, drivers_save_and_init, 0);
 }
 
 /* Due to dire space restrictions on SH3, event codes that are translated to
@@ -151,9 +153,9 @@ static const uint16_t sh3_vbr_map[] = {
 	0x440,  /* TMU2 underflow */
 	0x460,  /* (gint custom: TMU helper) */
 	0x9e0,  /* ETMU0 underflow */
-	0xc20,  /* ETMU1 underflow (used as helper on SH3) */
-	0xc40,  /* ETMU2 underflow (used as helper on SH3) */
-	0xc60,  /* (gint custom: ETMU helper) */
+	0xd00,  /* ETMU4 underflow (used as helper on SH3) */
+	0xd20,  /* (gint custom: ETMU helper) */
+	0xd40,  /* (gint custom: ETMU helper) */
 	0xaa0,  /* RTC Periodic Interrupt */
 	1,	/* (Filler to maintain the gap between 0xaa0 and 0xae0) */
 	0xae0,  /* (gint custom: RTC helper) */
@@ -202,13 +204,13 @@ void gint_switch(void (*function)(void))
 {
 	/* Switch from gint to the OS after a short wait */
 	drivers_wait();
-	cpu_setVBR(sys_ctx.VBR, drivers_switch, 1);
+	(*cpu_setVBR)(sys_ctx.VBR, drivers_switch, 1);
 
 	if(function) function();
 
 	/* Then switch back to gint once the OS finishes working */
 	drivers_wait();
-	cpu_setVBR(gint_ctx.VBR, drivers_switch, 0);
+	(*cpu_setVBR)(gint_ctx.VBR, drivers_switch, 0);
 }
 
 /* kquit(): Quit gint and give back control to the system */
@@ -217,5 +219,5 @@ void kquit(void)
 	/* Wait for hardware tasks then restore all of the drivers' state and
 	   return the VBR space to the OS */
 	drivers_wait();
-	cpu_setVBR(sys_ctx.VBR, drivers_restore, 0);
+	(*cpu_setVBR)(sys_ctx.VBR, drivers_restore, 0);
 }

@@ -1,5 +1,6 @@
 Extensions on existing code:
-* tmu:       make interrupt handlers more elegant
+* kernel:    group linker script symbols in a single header file
+* kernel:    be consistent about *tlb_mapped_memory() in hw_detect()
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
 * dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic

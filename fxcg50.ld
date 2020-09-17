@@ -15,14 +15,9 @@ MEMORY
 	/* Userspace mapping of the add-in (without G3A header) */
 	rom   (rx):   o = 0x00300000, l = 2M
 	/* Static RAM; stack grows down from the end of this region.
-	   The first 0x2000 bytes are reserved by gint, see below */
+	   The first 5k (0x1400 bytes) are reserved by gint for the VBR space,
+	   which is loaded dynamically and accessed through P1 */
 	ram   (rw):   o = 0x08101400, l = 507k
-	/* gint's VBR space at the start of the user stack on fx-CG 50 and on
-	   fx-CG 20. This address needs not be determined now because VBR code
-	   is position-independent and stored in ROM so the linker doesn't even
-	   need to know the value */
-	vbr50 (rwx):  o = 0x8c160000, l = 5k
-	vbr20 (rwx):  o = 0x88160000, l = 5k
 	/* On-chip IL memory */
 	ilram (rwx):  o = 0xe5200000, l = 4k
 	/* On-chip X and Y memory */
@@ -127,6 +122,8 @@ SECTIONS
 		_rdata = . ;
 
 		*(.data .data.*)
+		/* References to mapped code - no relocation needed */
+		*(.gint.mappedrel)
 
 		. = ALIGN(16);
 	} > ram AT> rom
@@ -177,27 +174,10 @@ SECTIONS
 	_sxram  = SIZEOF(.xram);
 	_syram  = SIZEOF(.yram);
 
-
-
-	/*
-	**  gint-related sections (VBR space, .gint.data and .gint.bss)
-	*/
-
-	/* VBR address: let's just start at the beginning of the RAM area.
-	   There's an unused 0x100-byte gap at the start of the VBR space.
-	   The VBR space is already a large block (> 2 kiB), so I'm cutting off
-	   the gap to spare some memory */
-	_gint_vbr_fxcg50 = ORIGIN(vbr50) - 0x100;
-	_gint_vbr_fxcg20 = ORIGIN(vbr20) - 0x100;
-
-	. = ORIGIN(ram) + _sbss + _sdata;
-
 	/* gint's uninitialized BSS section, going to static RAM. All the large
 	   data arrays will be located here */
 	.gint.bss (NOLOAD) : {
-		/* Since it's uninitialized, the location doesn't matter */
 		*(.gint.bss)
-
 		. = ALIGN(16);
 	} > ram :NONE
 
@@ -206,24 +186,21 @@ SECTIONS
 
 
 	/*
-	**  Other sections
+	**  Unused sections
 	*/
 
-	/* Unwanted sections going to meet Dave Null:
-	   - SH3-only data sections
-	   - Debug sections, often come out of libgcc
-	   - Java classes registration (why is there any of this here?)
-	   - Asynchronous unwind tables: no C++ exception handling for now ^^
-	   - Comments or anything the compiler might put in its assembler */
 	/DISCARD/ : {
-		*(.gint.data.sh3)
-		*(.gint.bss.sh3)
-
+		/* SH3-only data sections */
+		*(.gint.data.sh3 .gint.bss.sh3)
+		/* Debug sections (often from libgcc) */
 		*(.debug_info .debug_abbrev .debug_loc .debug_aranges
 		  .debug_ranges .debug_line .debug_str)
+		/* Java class registration (why are they even here?!) */
 		*(.jcr)
+		/* Asynchronous unwind tables: no C++ exception handling */
 		*(.eh_frame_hdr)
 		*(.eh_frame)
+		/* Comments or anything the compiler might generate */
 		*(.comment)
 	}
 }

@@ -28,16 +28,13 @@ void gint_panic_set(GNORETURN void (*panic)(uint32_t code));
 
    Sets up an exception-catching function. If an exception occurs, before a
    panic is raised, the exception-catching function is executed with interrupt
-   mode and is given a chance to handle the exception. Passing NULL disables
-   this feature.
+   disabled and is given a chance to handle the exception. Passing NULL
+   disables this feature.
 
    The exception-catching function can do anything that does not use interrupts
    or cause an exception, such as logging the exception or any other useful
-   mechanism. TLB misses count as exceptions and are disabled, so this function
-   must absolutely be mapped *before* it runs! The only real way to ensure this
-   is to have it mapped at all times using the GMAPPED attribute. Note that
-   GMAPPED puts the function in a generally small memory region so you should
-   defer as much handling as possible until after the exception is caught.
+   mechanism. TLB misses are enabled. In general, this function should be as
+   short as possible.
 
    What happens next depends on the return value:
    * If it returns 0, the exception is considered handled and execution

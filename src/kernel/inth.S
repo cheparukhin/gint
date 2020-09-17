@@ -193,8 +193,6 @@ _inth_remap:
    switches back to user bank and executes the callback. It does not save other
    registers (pr/mach/macl/gbr) which are managed by the handler entry. */
 
-.section .gint.mapped
-
 /* gint_inth_callback()
    Calls the specified function with the given argument after saving the user
    context, enabling interrupts and going to user bank.
@@ -202,7 +200,9 @@ _inth_remap:
    @r4  Callback function (volatile void * -> int)
    @r5  Argument (volatile void *)
    Returns the return value of the callback (int). */
-_gint_inth_callback:
+
+.section .gint.mapped, "ax"
+_gint_inth_callback_reloc:
 	stc.l	r0_bank, @-r15
 	stc.l	r1_bank, @-r15
 	stc.l	r2_bank, @-r15
@@ -283,3 +283,7 @@ _gint_inth_callback:
 	.long	(0xf << 4)
 .gint:
 	.long	_gint
+
+.section .gint.mappedrel, "aw"
+_gint_inth_callback:
+	.long	_gint_inth_callback_reloc

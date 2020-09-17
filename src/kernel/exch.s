@@ -1,5 +1,5 @@
 .global _gint_exch
-.section .gint.exch
+.section .gint.exch, "ax"
 .align 4
 
 _gint_exch:
@@ -8,6 +8,7 @@ _gint_exch:
 	sts.l	mach, @-r15
 	sts.l	macl, @-r15
 	mov.l	r8, @-r15
+	mov.l	r9, @-r15
 
 	/* Get the first word of the gint hardware array (HWMPU). If it has the
 	   last bit set, we're SH3 */
@@ -25,9 +26,19 @@ catch:
 	tst	r0, r0
 	bt	panic
 
-	/* Leave if the catcher returns zero */
+	/* Set BL=0, IMASK=15 */
+	stc	sr, r9
+	mov.l	.SR_set_IMASK, r1
+	or	r9, r1
+	mov.l	.SR_clear_BL, r2
+	and	r2, r1
+	ldc	r1, sr
+
+	/* Call the catcher and leave if it returns zero (exception handled) */
 	jsr	@r0
 	mov.l	@r8, r4
+
+	ldc	r9, sr
 	tst	r0, r0
 	bt	end
 
@@ -36,7 +47,11 @@ panic:
 	mov.l	@r8, r4
 	ldc	r4, r4_bank
 
+	mov.l	@r15+, r9
 	mov.l	@r15+, r8
+	lds.l	@r15+, macl
+	lds.l	@r15+, mach
+	ldc.l	@r15+, gbr
 	lds.l	@r15+, pr
 
 	/* Here we switch banks so r0..r7 change meaning! */
@@ -49,6 +64,7 @@ panic:
 	nop
 
 end:
+	mov.l	@r15+, r9
 	mov.l	@r15+, r8
 	lds.l	@r15+, macl
 	lds.l	@r15+, mach
@@ -69,3 +85,7 @@ end:
 	.long	_gint_exc_catcher
 .panic:
 	.long	_gint_exc_panic
+.SR_set_IMASK:
+	.long	(0xf << 4)
+.SR_clear_BL:
+	.long	~(1 << 28)

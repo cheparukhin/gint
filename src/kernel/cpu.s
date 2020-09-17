@@ -6,10 +6,10 @@
 .global _cpu_setCPUOPM
 .global _cpu_getCPUOPM
 
-.section .gint.mapped
-
 /* cpu_setVBR(): Change VBR address */
-_cpu_setVBR:
+
+.section .gint.mapped, "ax"
+_cpu_setVBR_reloc:
 	mov.l	r8, @-r15
 	sts.l	pr, @-r15
 	stc.l	sr, @-r15
@@ -36,6 +36,10 @@ _cpu_setVBR:
 	mov	r8, r0
 	rts
 	mov.l	@r15+, r8
+
+.section .gint.mappedrel, "aw"
+_cpu_setVBR:
+	.long	_cpu_setVBR_reloc
 
 .text
 

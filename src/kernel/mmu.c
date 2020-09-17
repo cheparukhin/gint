@@ -6,6 +6,23 @@
 #include <gint/hardware.h>
 
 //---
+//	Unified interface
+//---
+
+/* mmu_translate(): Get the physical address for a virtual page */
+uint32_t mmu_translate(uint32_t page)
+{
+	return isSH3() ? tlb_translate(page) : utlb_translate(page);
+}
+
+/* mmu_uram(): Get pointer to physical start of user RAM */
+void *mmu_uram(void)
+{
+	/* Use P1 access */
+	return (void *)(mmu_translate(0x08100000) | 0x80000000);
+}
+
+//---
 //	SH7705 TLB
 //---
 
@@ -53,6 +70,24 @@ void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 	gint[HWURAM] = ram;
 }
 
+/* tlb_translate(): Get the physical address for a virtual page */
+uint32_t tlb_translate(uint32_t page)
+{
+	for(int way = 0; way < 4; way++)
+	for(int E = 0; E < 32; E++)
+	{
+		const tlb_addr_t *addr = tlb_addr(way, E);
+		const tlb_data_t *data = tlb_data(way, E);
+		if(!addr->V || !data->V) continue;
+
+		uint32_t src;
+		if(data->SZ) src = (((addr->VPN >> 2) | E) << 12);
+		else src = (addr->VPN | (E << 2)) << 10;
+
+		if(src == page) return data->PPN << 10;
+	}
+	return -1;
+}
 #endif
 
 //---
@@ -84,7 +119,8 @@ void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 		const utlb_data_t *data = utlb_data(E);
 		if(!addr->V || !data->V) continue;
 
-		/* Magic formula to get the size without using an array */
+		/* Magic formula to get the size without using an array since
+		   this code is used even before global data is initialized */
 		int sz = ((data->SZ1 << 1) | data->SZ2) << 3;
 		int size = 1 << ((0x14100c0a >> sz) & 0xff);
 
@@ -97,4 +133,18 @@ void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 	if(p_ram) *p_ram = ram;
 
 	gint[HWURAM] = ram;
+}
+
+/* utlb_translate(): Get the physical address for a virtual page */
+uint32_t utlb_translate(uint32_t page)
+{
+	for(int E = 0; E < 64; E++)
+	{
+		const utlb_addr_t *addr = utlb_addr(E);
+		const utlb_data_t *data = utlb_data(E);
+		if(!addr->V || !data->V) continue;
+
+		if((uint32_t)addr->VPN << 10 == page) return data->PPN << 10;
+	}
+	return -1;
 }

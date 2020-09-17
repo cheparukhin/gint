@@ -14,11 +14,14 @@
    configure the INTC in a way that is safe for the new VBR controller,
    including disabling all interrupts that it cannot handle.
 
+   This function is loaded to a platform-dependent address determined at
+   runtime; call it indirectly through the function pointer.
+
    @vbr        New VBR address
    @conf_intc  Configuration function
    @arg        Additional argument for conf_intc
    Returns the previous VBR address. */
-uint32_t cpu_setVBR(uint32_t vbr, void (*conf_intc)(int arg), int arg);
+uint32_t (*cpu_setVBR)(uint32_t vbr, void (*conf_intc)(int arg), int arg);
 
 /* cpu_setCPUOPM(): Change the CPU Operation Mode register
 

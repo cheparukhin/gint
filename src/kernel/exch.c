@@ -142,7 +142,7 @@ void gint_exc_catch(int (*handler)(uint32_t code))
 }
 
 /* gint_exc_skip(): Skip pending exception instructions */
-GMAPPED void gint_exc_skip(int instructions)
+void gint_exc_skip(int instructions)
 {
 	uint32_t spc;
 

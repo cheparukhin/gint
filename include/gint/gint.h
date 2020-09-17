@@ -110,15 +110,31 @@ void *gint_inthandler(int event_code, void const *handler, size_t size);
    Calls the specified function with the given argument after saving the user
    context, enabling interrupts and going to user bank. This function is used
    to call user code from interrupt handlers, typically from timer or RTC
-   callbacks.
+   callbacks. You can think of it as a way to escape the SR.BL=1 environment to
+   safely call back virtualized and interrupt-based functions during interrupt
+   handling.
 
    It is not safe to call from C code in any capacity and is mentioned here
    only for documentation purposes; you should really only call this from
-   an interrupt handler's assembler code.
+   an interrupt handler's assembler code, typically like this:
+
+        mov.l	.callback, r0
+        mov.l	@r0, r0 # because function pointer
+
+        mov	<function>, r4
+        mov	<argument>, r5
+        jsr	@r0
+        nop
+
+   .callback:
+        .long	_gint_inth_callback
+
+   This function is loaded to a platform-dependent address determined at
+   runtime; call it indirectly through the function pointer.
 
    @callback  Callback function, may take no argument in practice
    @arg       Argument
    Returns the return value of the callback. */
-int gint_inth_callback(int (*function)(void *arg), void *arg);
+int (*gint_inth_callback)(int (*function)(void *arg), void *arg);
 
 #endif /* GINT_GINT */

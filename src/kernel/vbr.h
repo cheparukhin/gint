@@ -5,17 +5,6 @@
 #ifndef GINT_CORE_VBR
 #define GINT_CORE_VBR
 
-#include <gint/defs/types.h>
-
-/* VBR addresses from the linker script */
-#ifdef FX9860G
-extern char gint_vbr_fx9860g[];
-#endif
-#ifdef FXCG50
-extern char gint_vbr_fxcg50[];
-extern char gint_vbr_fxcg20[];
-#endif
-
 /* The kernel's interrupt and exception handlers' entry points */
 void gint_exch(void);
 void gint_tlbh(void);

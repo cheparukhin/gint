@@ -233,7 +233,7 @@ void timer_pause(int id)
 }
 
 /* timer_stop() - stop and free a timer */
-GMAPPED void timer_stop(int id)
+void timer_stop(int id)
 {
 	/* Stop the timer and disable UNIE to indicate that it's free */
 	timer_pause(id);
@@ -290,26 +290,13 @@ int timer_timeout(void volatile *arg)
 }
 
 //---
-//	Low-level functions
-//---
-
-/* timer_clear() - clear an ETMU flag
-   @timer  Timer ID, must be an ETMU */
-GMAPPED void timer_clear(int id)
-{
-	do ETMU[id-3].TCR.UNF = 0;
-	while(ETMU[id-3].TCR.UNF);
-}
-
-//---
 //	Driver initialization
 //---
 
 /* Interrupt handlers for standard timers (4 gates) */
 extern void inth_tmu(void);
 /* Interrupt handlers for extra timers */
-extern void inth_etmu2(void);
-extern void inth_etmu_help(void);
+extern void inth_etmu4(void);
 extern void inth_etmux(void);
 
 #ifdef FX9860G
@@ -362,30 +349,28 @@ static void init(void)
 		while(T->TCR.byte);
 	}
 
-	/* Install the extra timers. The interrupt handler takes 3 gates, so we
-	   install 3 even on SH3 where there's only one */
-	int limit = isSH3() ? 6 : 9;
-
-	for(int i = 3; i < limit; i++)
+	/* Install the extra timers. On SH3, only ETMU0 is available */
+	for(int i = 3; i < timer_count(); i++) if(i != 7)
 	{
-		void *handler = (i == 5) ? inth_etmu2 : inth_etmux;
-		void *h = gint_inthandler(etmu_event[i-3], handler, 32);
+		void *h = gint_inthandler(etmu_event[i-3], inth_etmux, 32);
+		timers[i] = h + 20;
 
-		timers[i] = h + 24;
-
-		if(i == 5) continue;
-
-		/* On SH3, the ETMU handler is not at an offset of 0x840 (event
-		   code 0xc40) but at an offset of 0xc0 */
+		/* On SH3, the ETMU handler is not at an offset of 0x900 (event
+		   code 0xd00) but at an offset of 0xa0 */
 		uint32_t *etmu_offset = h + 16;
-		if(isSH3()) *etmu_offset = *etmu_offset - 0xe80 + 0x2c0;
+		if(isSH3()) *etmu_offset = *etmu_offset - 0xf40 + 0x2a0;
 
-		uint32_t *data_id = h + 20;
+		uint16_t *data_id = h + 14;
 		*data_id = i;
+
+		uint32_t *TCR = h + 28;
+		*TCR = (uint32_t)&ETMU[i-3].TCR;
 	}
 
-	/* Also install the helper handler */
-	gint_inthandler(0xc60, inth_etmu_help, 32);
+	/* Also install ETMU4, even on SH3, because it contains common code */
+	h = gint_inthandler(etmu_event[4], inth_etmu4, 96);
+	timers[7] = h + 84;
+	*(uint32_t *)(h + 92) = (uint32_t)&ETMU[4].TCR;
 
 	/* Enable TMU0 at level 13, TMU1 at level 11, TMU2 at level 9 */
 	intc_priority(INTC_TMU_TUNI0, 13);

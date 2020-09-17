@@ -1,5 +1,5 @@
 .global _gint_tlbh
-.section .gint.tlbh
+.section .gint.tlbh, "ax"
 .align 4
 
 _gint_tlbh:

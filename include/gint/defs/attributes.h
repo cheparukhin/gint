@@ -16,9 +16,6 @@
 #define GILRAM		__attribute__((section(".ilram")))
 #define GXRAM		__attribute__((section(".xram")))
 #define GYRAM		__attribute__((section(".yram")))
-/* Objects that must remain mapped; placed in "real RAM" (some P1 area) on
-   fx9860g, and ILRAM on fxcg50 */
-#define GMAPPED		__attribute__((section(".gint.mapped")))
 
 /* Unused parameters or variables */
 #define GUNUSED		__attribute__((unused))

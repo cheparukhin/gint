@@ -26,7 +26,8 @@ extern uint32_t
 	sbss, rbss;			/* User's BSS section */
 #ifdef FX9860G
 extern uint32_t
-	lgmapped, sgmapped, rgmapped;	/* Permanently mapped functions */
+	lgmapped, sgmapped,		/* Permanently mapped functions */
+	lreloc, sreloc;			/* Relocatable references */
 #endif
 
 /* Constructor and destructor arrays */
@@ -60,7 +61,7 @@ static void regcpy(uint32_t * restrict l, int32_t s, uint32_t * restrict r)
 		s -= 16;
 	}
 }
-#define regcpy(l, s, r) regcpy(&l, (int32_t)&s, &r)
+#define regcpy(l, s, r) regcpy(l, (int32_t)s, r)
 
 /* regclr(): Clear a memory region using symbol information
    @r  Source pointer (base address)
@@ -76,7 +77,7 @@ static void regclr(uint32_t *r, int32_t s)
 		s -= 16;
 	}
 }
-#define regclr(r, s) regclr(&r, (int32_t)&s)
+#define regclr(r, s) regclr(r, (int32_t)s)
 
 /* callarray(): Call an array of functions (constructors or destructors)
    @f  First element of array
@@ -98,30 +99,41 @@ int start(int isappli, int optnum)
 
 	       Do not disturb the operating system.
 
-	   gint will silently run in an isolated part of the memory (fx9860g)
-	   or at the start of the RAM (fxcg50). The kernel will redirect
-	   interrupts and load its own drivers, so we can't rely too much on
-	   the system. Ladies and gentlemen, let's have fun! ;D */
+	   gint loads its important code and data at the start of the user RAM
+	   area. The kernel redirects interrupts and uses its own drivers, so
+	   we can't rely too much on syscalls. Ladies and gentlemen, let's have
+	   fun! ;D */
 
 	/* For now, we use the system's memory mapper for ROM. We'll still do
 	   it later in our TLB miss handler once we're installed. RAM is always
-	   fully mapped, but we need to initialize it. We also need to do some
-	   hardware detection because old fx9860g models have a different
-	   processor with some incompatible features. */
+	   fully mapped, but we need to initialize it. We also need to perform
+	   hardware detection because there are many models and emulators with
+	   varying processor, peripherals, and configuration. */
 
-	/* Detect architecture; this will tell SH3 from SH4 on fx9860g */
+	/* Detect hardware; this will mainly tell SH3 from SH4 on fx-9860G */
 	hw_detect();
 
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
-	regcpy(ldata,  sdata,  rdata);
+	regcpy(&ldata,  &sdata,  &rdata);
+	regcpy(&lilram, &silram, &rilram);
+	regcpy(&lxram,  &sxram,  &rxram);
+	regcpy(&lyram,  &syram,  &ryram);
+	regclr(&rbss, &sbss);
+
 	#ifdef FX9860G
-	regcpy(lgmapped, sgmapped, rgmapped);
+	/* Copy permanentely-mapped code to start of user RAM (on fx-CG 50 it
+	   is loaded along ILRAM contents) */
+	void *rgmapped = mmu_uram();
+	regcpy(&lgmapped, &sgmapped, rgmapped);
+
+	/* Relocate references to this code */
+	uint32_t volatile *fixups = &lreloc;
+	for(uint i = 0; i < (uint32_t)&sreloc / 4; i++)
+	{
+		fixups[i] += (uint32_t)rgmapped;
+	}
 	#endif
-	regcpy(lilram, silram, rilram);
-	regcpy(lxram,  sxram,  rxram);
-	regcpy(lyram,  syram,  ryram);
-	regclr(rbss, sbss);
 
 	/* Install gint, switch VBR and initialize drivers */
 	kinit();
@@ -137,16 +149,15 @@ int start(int isappli, int optnum)
 
 	callarray(&bctors, &ectors);
 
-	int ret;
+	int rc = 1;
 	while(1)
 	{
-		ret = main(isappli, optnum);
+		rc = main(isappli, optnum);
 		if(!gint_restart) break;
 		gint_osmenu();
 	}
 
 	callarray(&bdtors, &edtors);
-
 	/* Before leaving the application, we need to clean everything we
 	   changed to hardware settings and peripheral modules. The OS is bound
 	   to be confused (and hang, or crash, or any other kind of giving up)
@@ -155,5 +166,5 @@ int start(int isappli, int optnum)
 	/* Unload gint and give back control to the system. Driver settings
 	   will be restored while interrupts are disabled */
 	kquit();
-	return ret;
+	return rc;
 }

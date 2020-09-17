@@ -15,14 +15,20 @@ MEMORY
 {
 	/* Userspace mapping of the add-in (G1A header takes 0x200 bytes) */
 	rom   (rx):   o = 0x00300200, l = 500k
-	/* This is mapped to RAM; 8k on SH3, 32k on SH4. Since gint uses the
-	   last 2k for its VBR and mapped code, 6k are left */
+
+	/* User RAM is mapped at 0x08100000 through MMU; 8k on SH3, 32k on SH4.
+	   Currently gint provides access to 8k, with three blocks:
+	   * 0x200 bytes for text accessed without the TLB when SR.BL=1, linked
+	     into the rram region below, then loaded dynamically
+	   * 6k for user content
+	   * 0x600 bytes for the VBR space, also without MMU */
 	ram   (rw):   o = 0x08100200, l = 6k
-	/* This is the VBR space. The [ram] region is mapped to 8801c000. This
-	   region is used at load time and mentioned here for completeness */
-	vbr   (rwx):  o = 0x8801da00, l = 1536
-	/* These first bits of RAM are used for gint's perma-mapped code */
-	rram  (rwx):  o = 0x8801c000, l = 512
+
+	/* This region represents the first block of user RAM. Linker arranges
+	   sections as if linked to address 0, then gint's runtime determines
+	   the location and relocates references (which are manual) */
+	rram  (rwx):  o = 0x00000000, l = 512
+
 	/* On-chip IL memory */
 	ilram (rwx):  o = 0xe5200000, l = 4k
 	/* On-chip X and Y memory */
@@ -141,6 +147,10 @@ SECTIONS
 		_ldata = LOADADDR(.data);
 		_rdata = . ;
 
+		_lreloc = . ;
+		*(.gint.mappedrel);
+		_sreloc = ABSOLUTE(. - _lreloc);
+
 		*(.data .data.*)
 		*(D)
 		*(.gint.data.sh3)
@@ -205,24 +215,16 @@ SECTIONS
 
 
 	/*
-	**  RRAM sections
+	**  Relocated no-MMU RAM sections
 	*/
-
-	/* VBR address: let's just start at the beginning of the RRAM area.
-	   There's an unused 0x100-byte gap at the start of the VBR space.
-	   The VBR space is already a large block (~2 kiB), so I'm cutting off
-	   the gap to spare some memory */
-	_gint_vbr_fx9860g = ORIGIN(vbr) - 0x100;
 
 	. = ORIGIN(rram);
 
-	/* Code that must remain permanently mapped (.gint.mapped) */
+	/* Code that must remain permanently mapped (.gint.mapped); relocated
+	   to start of user RAM at startup, accessed through P1 */
 	.gint.mapped ALIGN(4) : ALIGN(4) {
 		_lgmapped = LOADADDR(.gint.mapped);
-		_rgmapped = . ;
-
 		*(.gint.mapped)
-
 		. = ALIGN(16);
 	} > rram AT> rom
 
@@ -231,21 +233,19 @@ SECTIONS
 
 
 	/*
-	**  Other sections
+	**  Unused sections
 	*/
 
-	/* Unwanted sections going to meet Dave Null:
-	   - Debug sections, often come out of libgcc
-	   - Java classes registration (why is there any of this here?)
-	   - Asynchronous unwind tables: no C++ exception handling for now ^^
-	   - Comments or anything the compiler might put in its assembler
-	   - A stack section sometimes generated for build/version.o */
 	/DISCARD/ : {
+		/* Debug sections (often from libgcc) */
 		*(.debug_info .debug_abbrev .debug_loc .debug_aranges
 		  .debug_ranges .debug_line .debug_str)
+		/* Java class registration (why are they even here?!) */
 		*(.jcr)
+		/* Asynchronous unwind tables: no C++ exception handling */
 		*(.eh_frame_hdr)
 		*(.eh_frame)
+		/* Comments or anything the compiler might generate */
 		*(.comment)
 	}
 }

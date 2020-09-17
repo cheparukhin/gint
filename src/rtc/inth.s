@@ -15,13 +15,11 @@ _inth_rtc_pri:
 	/* Invoke the callback function with its argument */
 	sts.l	pr, @-r15
 	mov.l	.gint_inth_callback, r0
+	mov.l	@r0, r0
 	mov.l	1f, r4
 	mov.l	2f, r5
 	jsr	@r0
 	nop
-
-	/* Save the return value */
-	mov	r0, r3
 
 	/* Jump to another gate to finish the work:
 	   - 0xc is the size of storage below
@@ -37,6 +35,9 @@ _inth_rtc_pri:
 	.long _gint_inth_callback
 
 _inth_rtc_pri_helper:
+
+	/* Save the return value */
+	mov	r0, r3
 
 .clear:
 	/* Clear the interrupt flag */
@@ -56,7 +57,6 @@ _inth_rtc_pri_helper:
 .end:
 	lds.l	@r15+, pr
 	rts
-	nop
 	nop
 
 .RCR2:	.long 0xa413fede	/* RCR2 address, edited at startup on SH3 */
