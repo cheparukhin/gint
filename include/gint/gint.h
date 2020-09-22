@@ -135,6 +135,6 @@ void *gint_inthandler(int event_code, void const *handler, size_t size);
    @callback  Callback function, may take no argument in practice
    @arg       Argument
    Returns the return value of the callback. */
-int (*gint_inth_callback)(int (*function)(void *arg), void *arg);
+extern int (*gint_inth_callback)(int (*function)(void *arg), void *arg);
 
 #endif /* GINT_GINT */

@@ -21,7 +21,8 @@
    @conf_intc  Configuration function
    @arg        Additional argument for conf_intc
    Returns the previous VBR address. */
-uint32_t (*cpu_setVBR)(uint32_t vbr, void (*conf_intc)(int arg), int arg);
+extern uint32_t (*cpu_setVBR)(uint32_t vbr, void (*conf_intc)(int arg),
+	int arg);
 
 /* cpu_setCPUOPM(): Change the CPU Operation Mode register
 
