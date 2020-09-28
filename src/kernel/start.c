@@ -116,10 +116,16 @@ int start(int isappli, int optnum)
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
 	regcpy(&ldata,  &sdata,  &rdata);
-	regcpy(&lilram, &silram, &rilram);
-	regcpy(&lxram,  &sxram,  &rxram);
-	regcpy(&lyram,  &syram,  &ryram);
 	regclr(&rbss, &sbss);
+
+	/* Do not load data to ILRAM, XRAM or YRAM on SH3 - the areas don't
+	   exist. If you use them, you're responsible! */
+	if(!isSH3())
+	{
+		regcpy(&lilram, &silram, &rilram);
+		regcpy(&lxram,  &sxram,  &rxram);
+		regcpy(&lyram,  &syram,  &ryram);
+	}
 
 	#ifdef FX9860G
 	/* Copy permanentely-mapped code to start of user RAM (on fx-CG 50 it
