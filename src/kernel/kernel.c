@@ -58,9 +58,8 @@ static void drivers_save_and_init(GUNUSED int zero)
 
 	for driver_asc(d)
 	{
-		if(d->ctx_save) d->ctx_save(d->sys_ctx);
-
 		if(isSH3() && d->driver_sh3) d->driver_sh3();
+		if(d->ctx_save) d->ctx_save(d->sys_ctx);
 		if(d->init) d->init();
 	}
 }
