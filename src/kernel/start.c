@@ -113,6 +113,26 @@ int start(int isappli, int optnum)
 	/* Detect hardware; this will mainly tell SH3 from SH4 on fx-9860G */
 	hw_detect();
 
+	/* The dynamic TLB mechanism for old SH3-based fx-9860G (basically OS
+	   1.00 and the fx-9860G emulator) is not clear yet, so gint can't load
+	   pages dynamically. Load everything preventively (works only if the
+	   add-in is small enough) */
+	#ifdef FX9860G
+	if(isSH3())
+	{
+		/* Try to map every ROM address up to _srom */
+		volatile uint8_t *x = (void *)0x00300000;
+		uint32_t loaded = 0;
+
+		while(loaded < (uint32_t)&srom)
+		{
+			volatile uint8_t y = *x;
+			loaded += 1024;
+			x += 1024;
+		}
+	}
+	#endif
+
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
 	regcpy(&ldata,  &sdata,  &rdata);
