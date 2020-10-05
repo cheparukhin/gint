@@ -44,6 +44,8 @@ void gint_dvline(int y1, int y2, int x, int color)
 	if((uint)x >= 128) return;
 	if(y1 > y2) swap(y1, y2);
 	if(y1 >= 64 || y2 < 0) return;
+	if(y1 < 0) y1 = 0;
+	if(y2 >= 64) y2 = 63;
 
 	uint32_t *base = gint_vram + (y1 << 2) + (x >> 5);
 	uint32_t *lword = base + ((y2 - y1 + 1) << 2);
