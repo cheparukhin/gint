@@ -30,18 +30,24 @@ void masks(int x1, int x2, uint32_t *masks);
    @rbox  Rendering box */
 int bopti_clip(bopti_image_t const *img, struct rbox *rbox);
 
-/* bopti_render_noclip(): Render a bopti image without clipping
-   This function is only ever slightly faster than bopti_render_clip(),
-   eliminating two types of coordinate checks:
-   1. The bounding box does not overflow from the image
-   2. The final rendering does not overflow from the screen
+/* bopti_render(): Render a bopti image
+   Copies an image into the VRAM. This function does not perform clipping;
+   use bopti_clip() on the rbox before calling it if needed.
 
-   @x @y             Location of the top-left corner
-   @img              Image encoded by [fxconv]
-   @left @top @w @h  Bounding box to render
-   @v1 @v2           VRAMs (gray rendering is used if v2 != NULL) */
-void bopti_render_noclip(bopti_image_t const *img, struct rbox *rbox,
-	uint32_t *v1, uint32_t *v2);
+   @img     Image encoded by [fxconv]
+   @rbox    Rendering box (may or may not be clipped)
+   @v1 @v2  VRAMs (gray rendering is used if v2 != NULL) */
+void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
+    uint32_t *v2);
+
+/* bopti_render_scsp(): Single-column single-position image renderer
+   This function is a specialized version of bopti_render() that can be used
+   when only a single column of the source image is used (all pixels to be
+   rendered are in a single 32-aligned 32-wide pixel column of the source) and
+   a single position of the VRAM is used (all pixels to be rendered end up in a
+   single 32-aligned 32-wide pixel column of the VRAM). */
+void bopti_render_scsp(bopti_image_t const *img, struct rbox *rbox,
+    uint32_t *v1, uint32_t *v2);
 
 //---
 //	Alternate rendering modes

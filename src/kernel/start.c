@@ -126,7 +126,7 @@ int start(int isappli, int optnum)
 
 		while(loaded < (uint32_t)&srom)
 		{
-			volatile uint8_t y = *x;
+			GUNUSED volatile uint8_t y = *x;
 			loaded += 1024;
 			x += 1024;
 		}
@@ -148,7 +148,7 @@ int start(int isappli, int optnum)
 	}
 
 	#ifdef FX9860G
-	/* Copy permanentely-mapped code to start of user RAM (on fx-CG 50 it
+	/* Copy permanently-mapped code to start of user RAM (on fx-CG 50 it
 	   is loaded along ILRAM contents) */
 	void *rgmapped = mmu_uram();
 	regcpy(&lgmapped, &sgmapped, rgmapped);
@@ -184,6 +184,7 @@ int start(int isappli, int optnum)
 	}
 
 	callarray(&bdtors, &edtors);
+
 	/* Before leaving the application, we need to clean everything we
 	   changed to hardware settings and peripheral modules. The OS is bound
 	   to be confused (and hang, or crash, or any other kind of giving up)

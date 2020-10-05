@@ -3,10 +3,6 @@
 
 #include "../render/render.h"
 
-/* TODO: These parameters will eventually be specified by the font */
-#define CHAR_SPACING 1
-#define PROP_SPACING 5
-
 /* dfont(): Set the default font for text rendering */
 font_t const *dfont(font_t const * font)
 {

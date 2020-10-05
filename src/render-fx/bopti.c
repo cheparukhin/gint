@@ -291,24 +291,3 @@ int bopti_clip(bopti_image_t const *img, struct rbox *r)
 	/* Return non-zero if the result is empty */
 	return (width <= 0 || height <= 0);
 }
-
-void bopti_render_noclip(bopti_image_t const *img, struct rbox *r,
-	uint32_t *v1, uint32_t *v2)
-{
-	int left = r->left;
-
-	/* Start column and end column (both included) */
-	r->left >>= 5;
-
-	if(r->columns == 1 && (r->visual_x & 31) + r->width <= 32)
-	{
-		r->x = (left & 31) - (r->visual_x & 31);
-		bopti_render_scsp(img, r, v1, v2);
-	}
-	else
-	{
-		/* x-coordinate of the first pixel of the first column */
-		r->x = r->visual_x - (left & 31);
-		bopti_render(img, r, v1, v2);
-	}
-}

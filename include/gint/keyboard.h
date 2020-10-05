@@ -248,10 +248,10 @@ void getkey_repeat(int first, int next);
 
 /* getkey_repeat_filter(): Set the repeat filter function
 
-   This function is called by getkey() and getkey_opt() every time a repeat
-   event occurs when GETKEY_REPEAT_FILTER. The function can decide whether to
-   keep, delay it or drop it entirely. It can also change the repeat delays
-   with getkey_repeat() for fully custom repeat delay curves.
+   The repeat filter is called by getkey() and getkey_opt() every time a repeat
+   event occurs when GETKEY_REP_FILTER is set. The filter can decide whether to
+   keep, delay or drop the event. It can also change the repeat delays with
+   getkey_repeat() for fully custom repeat delay curves.
 
    The time elapsed since the last accepted repeat is passed to the filter
    function; this time must be larger than the repeat time set with

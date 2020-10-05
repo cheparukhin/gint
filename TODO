@@ -1,4 +1,5 @@
 Extensions on existing code:
+* project:   add license file
 * kernel:    group linker script symbols in a single header file
 * kernel:    be consistent about *tlb_mapped_memory() in hw_detect()
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
