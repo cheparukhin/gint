@@ -133,7 +133,7 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 		free = topti_split(data+index, width, height, free, operators);
 
 		/* Potential space after the glyph */
-		int space = (*str != 0);
+		int space = (*str != 0) ? f->char_spacing : 0;
 		free -= space;
 
 		if(free > 0) continue;

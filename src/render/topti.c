@@ -105,39 +105,34 @@ uint32_t topti_utf8_next(uint8_t const **str_pointer)
 void dsize(char const *str_char, font_t const * f, int *w, int *h)
 {
 	uint8_t const *str = (void *)str_char;
+	uint32_t code_point;
 
 	if(!f) f = topti_font;
 	if(h) *h = f->line_height;
 	if(!w) return;
 
 	/* Width for monospaced fonts is easy, unfortunately we still need to
-	   compute the length of [str]. Critical applications might do the
-	   product themselves to avoid this cost. */
+	   compute the length and group bytes into Unicode code points. */
 	if(!f->prop)
 	{
 		int length = 0;
-		while(*str++) length++;
-		*w = (f->width + CHAR_SPACING) * length - CHAR_SPACING;
+		while((code_point = topti_utf8_next(&str))) length++;
+
+		*w = (f->width + f->char_spacing) * length - f->char_spacing;
 		return;
 	}
 
 	/* For proportional fonts, fetch the width of each individual glyphs */
 	int width = 0;
-	uint32_t code_point;
 
 	while(1)
 	{
 		code_point = topti_utf8_next(&str);
 		if(!code_point) break;
 
-		if(code_point == ' ')
-		{
-			width += PROP_SPACING + CHAR_SPACING;
-			continue;
-		}
-
 		int glyph = topti_glyph_index(f, code_point);
-		if(glyph >= 0) width += f->glyph_width[glyph] + CHAR_SPACING;
+		if(glyph < 0) continue;
+		width += f->glyph_width[glyph] + f->char_spacing;
 	}
-	*w = width - CHAR_SPACING;
+	*w = width - f->char_spacing;
 }

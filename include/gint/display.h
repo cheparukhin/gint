@@ -189,6 +189,11 @@ typedef struct
 	/* Number of total glyphs */
 	uint32_t glyph_count;
 
+    /* Character spacing (usually 1) */
+    uint8_t char_spacing;
+
+    uint :24;
+
 	struct {
 		/* Unicode point of first character in block */
 		uint start   :20;

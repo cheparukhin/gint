@@ -61,9 +61,8 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 	/* Move to top row */
 	uint16_t *target = gint_vram + 396 * y;
 
-	/* Character spacing and space waiting to be drawn */
-	int space = 1;
-	int active_space = 0;
+	/* Character spacing waiting to be drawn, in pixels */
+	int space = 0;
 
 	/* Read each character from the input string */
 	while(1)
@@ -74,29 +73,23 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 		int glyph = topti_glyph_index(f, code_point);
 		if(glyph < 0) continue;
 
-		/* Draw the space if background is opaque */
-		int prop_space = (code_point == ' ' && f->prop) ? 5 : 0;
-		if(active_space || prop_space)
-		{
-			active_space += prop_space;
-			if(bg >= 0) drect(x, y, x + active_space - 1,
-				y + height - 1, bg);
-		}
-		x += active_space;
-		if(prop_space) { active_space = space; continue; }
+		int dataw = f->prop ? f->glyph_width[glyph] : f->width;
+
+		/* Draw character spacing if background is opaque */
+		if(space && bg >= 0) drect(x, y, x+space-1, y+height-1, bg);
+		x += space;
 		if(x >= 396) break;
 
 		int index = topti_offset(f, glyph);
 
 		/* Compute horizontal intersection between glyph and screen */
 
-		int dataw = f->prop ? f->glyph_width[glyph] : f->width;
 		int width = dataw, left = 0;
 
 		if(x + dataw <= 0)
 		{
 			x += dataw;
-			active_space = space;
+			space = f->char_spacing;
 			continue;
 		}
 		if(x < 0) left = -x, width += x;
@@ -108,7 +101,7 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 			dataw, fg, bg);
 
 		x += dataw;
-		active_space = space;
+		space = f->char_spacing;
 	}
 }
 
