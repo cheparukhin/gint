@@ -119,6 +119,7 @@ typedef struct
 //	SH7305 Interrupt Controller. Refer to:
 //	  "Renesas SH7724 User's Manual: Hardware"
 //	  Section 13: "Interrupt Controller (INTC)"
+//	Also CPU73050.dll was disassembled to find out the bits.
 //---
 
 /* sh7305_intc_ipc_t - Interrupt Priority Controller
@@ -131,29 +132,29 @@ typedef volatile struct
 		uint16_t TMU0_0	:4;	/* TMU0 Channel 0 */
 		uint16_t TMU0_1	:4;	/* TMU0 Channel 1 */
 		uint16_t TMU0_2	:4;	/* TMU0 Channel 2 */
-		uint16_t IrDA	:4;	/* Infrared Communication */
+		uint16_t	:4;
 	);
 	pad(2);
 
 	word_union(IPRB,
-		uint16_t	:4;
-		uint16_t LCDC	:4;	/* LCD Controller */
-		uint16_t DMAC1A	:4;	/* Direct Memory Access Controller 1 */
+		uint16_t _	:4;	/* Unknown (TODO) */
+		uint16_t _LCDC	:4;	/* SH7724: LCD Controller */
+		uint16_t _DMAC1A:4;	/* SH7724: DMAC1 channels 0..3 */
 		uint16_t	:4;
 	);
 	pad(2);
 
 	word_union(IPRC,
-		uint16_t TMU1_0	:4;	/* TMU1 Channel 0 */
-		uint16_t TMU1_1	:4;	/* TMU1 Channel 1 */
-		uint16_t TMU1_2	:4;	/* TMU1 Channel 2 */
 		uint16_t	:4;
+		uint16_t	:4;
+		uint16_t	:4;
+		uint16_t SPU	:4;	/* SPU's DSP0 and DSP1 */
 	);
 	pad(2);
 
 	word_union(IPRD,
 		uint16_t	:4;
-		uint16_t MMCIF	:4;	/* MultiMedia Card Interface */
+		uint16_t _MMCIF	:4;	/* SH7724: MultiMedia Card Interface */
 		uint16_t	:4;
 		uint16_t	:4;
 	);
@@ -171,12 +172,12 @@ typedef volatile struct
 		uint16_t KEYSC	:4;	/* Key Scan Interface */
 		uint16_t DMACOB	:4;	/* DMAC0 transfer/error info */
 		uint16_t USB0_1	:4;	/* USB controller */
-		uint16_t CMT	:4;	/* Compare Match Timer */
+		uint16_t _CMT	:4;	/* SH7724: Compare Match Timer */
 	);
 	pad(2);
 
 	word_union(IPRG,
-		uint16_t SCIF0	:4;	/* SCIF0 transfer/error info */
+		uint16_t _SCIF0	:4;	/* SH7724: SCIF0 transfer/error info */
 		uint16_t ETMU1	:4;	/* Extra TMU 1 */
 		uint16_t ETMU2	:4;	/* Extra TMU 2 */
 		uint16_t	:4;
@@ -184,26 +185,26 @@ typedef volatile struct
 	pad(2);
 
 	word_union(IPRH,
-		uint16_t MSIOF0	:4;	/* Clock-synchronized SCIF channel 0 */
-		uint16_t MSIOF1	:4;	/* Clock-synchronized SCIF channel 1 */
-		uint16_t	:4;
-		uint16_t	:4;
+		uint16_t _MSIOF0:4;	/* SH7724: Sync SCIF channel 0 */
+		uint16_t _MSIOF1:4;	/* SH7724: Sync SCIF channel 1 */
+		uint16_t _1	:4;	/* Unknown (TODO) */
+		uint16_t _2	:4;	/* Unknown (TODO) */
 	);
 	pad(2);
 
 	word_union(IPRI,
 		uint16_t ETMU4	:4;	/* Extra TMU 4 */
 		uint16_t	:4;
-		uint16_t	:4;
+		uint16_t _	:4;	/* Unknown (TODO) */
 		uint16_t	:4;
 	);
 	pad(2);
 
 	word_union(IPRJ,
 		uint16_t ETMU0	:4;	/* Extra TMU 0 */
-		uint16_t	:4;
+		uint16_t _	:4;	/* Unknown (TODO) */
 		uint16_t FSI	:4;	/* FIFO-Buffered Serial Interface */
-		uint16_t SDHI1	:4;	/* SD Card Host Interface channel 1 */
+		uint16_t _SDHI1	:4;	/* SH7724: SD Card Host Interface 1 */
 	);
 	pad(2);
 
@@ -211,14 +212,14 @@ typedef volatile struct
 		uint16_t RTC	:4;	/* Real-Time Clock */
 		uint16_t DMAC1B	:4;	/* DMAC1 transfer/error info */
 		uint16_t	:4;
-		uint16_t SDHI0	:4;	/* SD Card Host Interface channel 0 */
+		uint16_t	:4;
 	);
 	pad(2);
 
 	word_union(IPRL,
 		uint16_t ETMU5	:4;	/* Extra TMU 5 */
+		uint16_t _	:4;	/* Unknown (TODO) */
 		uint16_t	:4;
-		uint16_t TPU	:4;	/* Timer-Pulse Unit */
 		uint16_t	:4;
 	);
 	pad(2);
