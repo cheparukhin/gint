@@ -10,5 +10,5 @@ void srand(unsigned int seed)
 
 int rand(void)
 {
-	return tinymt32_generate_uint32(&random);
+	return tinymt32_generate_uint32(&random) & 0x7fffffff;
 }

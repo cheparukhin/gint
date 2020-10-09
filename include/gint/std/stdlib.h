@@ -19,10 +19,12 @@ void *calloc(size_t nmemb, size_t size);
 /* realloc(): Reallocate dynamic memory */
 void *realloc(void *ptr, size_t size);
 
+#define RAND_MAX 0x7fffffff
+
 /* srand(): Seed the PRNG */
 void srand(unsigned int seed);
 
-/* rand(): Generate a pseudo-random number */
+/* rand(): Generate a pseudo-random number between 0 and RAND_MAX */
 int rand(void);
 
 #endif /* GINT_STD_STDLIB */
