@@ -114,10 +114,10 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 		int w, h;
 		dsize(str, topti_font, &w, &h);
 
-		if(halign == DTEXT_RIGHT)  x -= w;
-		if(halign == DTEXT_CENTER) x -= ((w+1) >> 1);
-		if(valign == DTEXT_BOTTOM) y -= h;
-		if(valign == DTEXT_MIDDLE) y -= ((h+1) >> 1);
+		if(halign == DTEXT_RIGHT)  x -= w - 1;
+		if(halign == DTEXT_CENTER) x -= (w >> 1);
+		if(valign == DTEXT_BOTTOM) y -= h - 1;
+		if(valign == DTEXT_MIDDLE) y -= (h >> 1);
 	}
 
 	topti_render(x, y, str, topti_font, fg, bg);

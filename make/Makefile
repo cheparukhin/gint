@@ -123,7 +123,7 @@ $(call src2obj,../src/font8x9.png): ../src/font8x9.png
 	$(call cmd_m,fxconv,font8x9.png) fxconv -f $< -o $@ \
 		--cg --toolchain=$(CONFIG.TOOLCHAIN) name:gint_font8x9 \
 		charset:print grid.size:8x11 grid.padding:1 grid.border:0 \
-		proportional:true
+		proportional:true height:9
 
 # Version symbol. ld generates a .stack section for unknown reasons; I remove
 # it in the linker script.
