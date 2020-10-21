@@ -56,6 +56,9 @@ static struct info {
 	{ IPRK, 0xf000, IMR10, 0x04, IPRA, 0x000f },
 	{ IPRK, 0xf000, IMR10, 0x02, IPRA, 0x000f },
 	{ IPRK, 0xf000, IMR10, 0x01, IPRA, 0x000f },
+	/* SPU */
+	{ IPRC, 0x000f, IMR3, 0x04, _ /* Not supported on SH3! */ },
+	{ IPRC, 0x000f, IMR4, 0x08, _ },
 };
 
 

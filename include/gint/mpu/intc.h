@@ -293,7 +293,7 @@ typedef struct
 //	Forward definitions
 //---
 
-/* Provided by core/gint.c */
+/* Provided by intc/intc.c */
 extern sh7705_intc_t SH7705_INTC;
 extern sh7305_intc_t SH7305_INTC;
 

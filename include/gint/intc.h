@@ -38,6 +38,9 @@ enum {
 	INTC_RTC_ATI,
 	INTC_RTC_PRI,
 	INTC_RTC_CUI,
+	/* SPU; interrupts from the DSPs and the SPU-bound DMA */
+	INTC_SPU_DSP0,
+	INTC_SPU_DSP1,
 };
 
 //---

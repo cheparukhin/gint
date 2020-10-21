@@ -82,7 +82,7 @@ typedef volatile struct
 		uint32_t		:1;
 		uint32_t I2C		:1;
 		uint32_t		:1;
-		uint32_t SPU		:1;
+		uint32_t FSI_SPU	:1;
 		uint32_t _unknown2	:1;
 		uint32_t		:1;
 		uint32_t LCDC		:1;
