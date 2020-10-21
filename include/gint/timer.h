@@ -41,7 +41,7 @@
    * Set a specific ID in timer_setup(), in which case the delay is no longer
      interpreter as count of µs, but as a TCOR value.
    * If this ID is a TMU, you can further add (with + or |) a prescaler
-     specification, one of TIMER_Po_{4,16,64,256}.
+     specification, one of TIMER_Pphi_{4,16,64,256}.
    * Regardless of how the timer was obtained, you can use timer_reload() to
      replace the value of TCOR.
    * Also note that TMU0, TMU1, TMU2 and the ETMU have respective interrupt
@@ -59,7 +59,7 @@
 
    Standard TMU can count at different speeds. A fast speed offers more
    precision but a slower speed offers longer delays. gint automatically
-   selects suitable speed by default.
+   selects suitable speeds by default.
 
    If you want something very particular, you can add (with + or |) a prescaler
    value to a chosen ID in timer_setup() to request that specific value. The
@@ -185,6 +185,12 @@ void timer_stop(int timer);
    immediately. Even after timer_wait(), the timer may not be available since
    it may have only paused. If the timer never stops, you're in trouble. */
 void timer_wait(int timer);
+
+/* timer_spinwait(): Actively wait for a timer to raise UNF
+   Waits until the timer raises UNF, without sleeping. This is useful for
+   delays in driver code that is run when interrupts are disabled. This relies
+   neither on the interrupt signal nor on the UNIE flag. */
+void timer_spinwait(int timer);
 
 //---
 //	Low-level functions

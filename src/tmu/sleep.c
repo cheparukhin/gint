@@ -5,8 +5,7 @@
 #include <gint/clock.h>
 #include <gint/timer.h>
 
-/* sleep_us(): Sleep for a fixed duration in microseconds */
-void sleep_us(uint64_t delay_us)
+static void do_sleep(uint64_t delay_us, int spin)
 {
 	volatile int flag = 0;
 
@@ -14,5 +13,18 @@ void sleep_us(uint64_t delay_us)
 	if(timer < 0) return;
 
 	timer_start(timer);
-	timer_wait(timer);
+	if(spin) timer_spinwait(timer);
+	else timer_wait(timer);
+}
+
+/* sleep_us(): Sleep for a fixed duration in microseconds */
+void sleep_us(uint64_t delay_us)
+{
+	do_sleep(delay_us, 0);
+}
+
+/* sleep_us_spin(): Actively sleep for a fixed duration in microseconds */
+void sleep_us_spin(uint64_t delay_us)
+{
+	do_sleep(delay_us, 1);
 }

@@ -67,6 +67,11 @@ const clock_frequency_t *clock_freq(void);
    function selects a timer with timer_setup() called with TIMER_ANY. */
 void sleep_us(uint64_t delay_us);
 
+/* sleep_us_spin(): Actively sleep for a fixed duration in microseconds
+   Like sleep_us(), but uses timer_spinwait() and does not rely on interrupts
+   being enabled. Useful in timer code running without interrupts. */
+void sleep_us_spin(uint64_t delay_us);
+
 /* sleep_ms(): Sleep for a fixed duration in milliseconds */
 #define sleep_ms(delay_ms) sleep_us((delay_ms) * 1000ull)
 

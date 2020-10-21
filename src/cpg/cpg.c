@@ -56,7 +56,9 @@ static void sh7705_probe(void)
 	/* Deduce the frequency of the main clocks. This value is ckio/3 */
 	int ckio_3 = 9830400;
 
-	/* Exchange the setting values 2 and 3 */
+	/* Exchange the setting values 2 and 3 (corresponding to /3 and /4)
+	   This means that /1, /2, /4 are now 0, 1, 2, which is perfect for a
+	   quick bit shift */
 	idiv = idiv ^ (idiv >> 1);
 	pdiv = pdiv ^ (pdiv >> 1);
 
@@ -87,8 +89,8 @@ static void sh7305_probe(void)
 	if(CPG.FLLFRQ.SELXM == 1) fll >>= 1;
 	freq.FLL = fll;
 
-	/* On SH7724, the divider ratio is given by 1 / (setting + 1), but
-	   SH7305 behaves as 1 / (2^setting + 1). */
+	/* On SH7724, the divider ratio is given by 1 / (setting + 1), but on
+	   the SH7305 it is 1 / (2^setting + 1). */
 
 	int divb = CPG.FRQCRA.BFC;
 	int divi = CPG.FRQCRA.IFC;

@@ -261,19 +261,34 @@ void timer_stop(int id)
 	}
 }
 
-/* timer_wait() - wait until a timer is stopped */
+/* timer_wait(): Wait for a timer to stop */
 void timer_wait(int id)
 {
 	if(id < 3)
 	{
 		tmu_t *T = &TMU[id];
-		/* Sleep if an interruption will wake us up */
+		/* Sleep only if an interrupt will be there to wake us up */
 		while(*TSTR & (1 << id)) if(T->TCR.UNIE) sleep();
 	}
 	else
 	{
 		etmu_t *T = &ETMU[id-3];
 		while(T->TSTR) if(T->TCR.UNIE) sleep();
+	}
+}
+
+/* timer_spinwait(): Actively wait for a timer to raise UNF */
+void timer_spinwait(int id)
+{
+	if(id < 3)
+	{
+		tmu_t *T = &TMU[id];
+		while(!T->TCR.UNF) {}
+	}
+	else
+	{
+		etmu_t *T = &ETMU[id-3];
+		while(!T->TCR.UNF) {}
 	}
 }
 
