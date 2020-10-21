@@ -54,7 +54,17 @@ typedef volatile struct
 		uint32_t	:4;
 		uint32_t P1FC	:4;	/* Pphi divider 1 [*] */
 	);
-	pad(0x20);
+	pad(0x4);
+
+	lword_union(FSICLKCR,
+		uint32_t	:16;
+		uint32_t DIVB	:6;	/* Division ratio for port B */
+		uint32_t	:1;
+		uint32_t CLKSTP	:1;	/* Clock Stop */
+		uint32_t SRC	:2;	/* Clock source select */
+		uint32_t DIVA	:6;	/* Division ratio for port A */
+	);
+	pad(0x18);
 
 	lword_union(PLLCR,
 		uint32_t	:17;
@@ -65,8 +75,17 @@ typedef volatile struct
 		uint32_t CKOFF	:1;	/* CKO Output Stop */
 		uint32_t	:1;
 	);
+	pad(0x14);
 
-	pad(0x1c);
+	lword_union(SPUCLKCR,
+		uint32_t	:23;
+		uint32_t CLKSTP	:1;	/* Clock Stop */
+		uint32_t _	:1;	/* Unknown */
+		uint32_t	:1;
+		uint32_t DIV	:6;	/* Division ratio */
+	);
+	pad(0x4);
+
 	lword_union(SSCGCR,
 		uint32_t SSEN	:1;	/* Spread Spectrum Enable */
 		uint32_t	:31;

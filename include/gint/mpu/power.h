@@ -37,8 +37,8 @@ typedef volatile struct
 		uint32_t RS		:1;
 		uint32_t IL		:1;
 		uint32_t SndCache	:1;
+		uint32_t _unknown1	:1;
 		uint32_t		:1;
-		uint32_t FPU		:1;
 
 		uint32_t		:1;
 		uint32_t INTC		:1;
@@ -53,41 +53,44 @@ typedef volatile struct
 		uint32_t CMT		:1;
 		uint32_t RWDT		:1;
 		uint32_t DMAC1		:1;
-		uint32_t 		:1;
-		uint32_t TMU1		:1;
-		uint32_t SCIF0		:1;
-		uint32_t SCIF1		:1;
+		uint32_t 		:4;
 
-		uint32_t SCIF2		:1;
-		uint32_t SCIF3		:1;
-		uint32_t SCIF4		:1;
-		uint32_t SCIF5		:1;
-		uint32_t		:1;
+		uint32_t SCIF		:1;
+		uint32_t KEYSC		:1;
+		uint32_t RTC		:1;
+		uint32_t		:2;
 		uint32_t MSIOF0		:1;
 		uint32_t MSIOF1		:1;
 		uint32_t		:1;
 	);
 
-	/* Module Stop Control Register 1 */
-	lword_union(MSTPCR1,
-		uint32_t		:19;
-		uint32_t KEYSC		:1;
-		uint32_t RTC		:1;
-		uint32_t		:1;
-		uint32_t I2C0		:1;
-		uint32_t I2C1		:1;
-		uint32_t		:8;
-	);
-
 	/* Module Stop Control Register 2
-	   I stripped down this one to remove any fancy modules from the SH7724
-	   that are unlikely to even be present in the SH7305. */
+	   The list was established by Yatis. See <https://bible.planet-casio.
+	   com/yatis/hardware/sh7305/power.html>. */
 	lword_union(MSTPCR2,
+		uint32_t		:2;
+		uint32_t MMC		:1;
+		uint32_t		:1;
+		uint32_t ADC		:1;
 		uint32_t		:6;
-		uint32_t TPU		:1;
-		uint32_t		:4;
 		uint32_t USB0		:1;
-		uint32_t		:20;
+		uint32_t		:2;
+		uint32_t SDC		:1;
+		uint32_t		:2;
+		uint32_t FLCTL		:1;
+		uint32_t ECC		:1;
+		uint32_t		:1;
+		uint32_t I2C		:1;
+		uint32_t		:1;
+		uint32_t SPU		:1;
+		uint32_t _unknown2	:1;
+		uint32_t		:1;
+		uint32_t LCDC		:1;
+		uint32_t _unknown3	:1;
+		uint32_t Cmod		:1;
+		uint32_t		:1;
+		uint32_t Cmod2A		:1;
+		uint32_t		:2;
 	);
 	pad(4);
 
