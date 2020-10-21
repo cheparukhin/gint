@@ -1,8 +1,9 @@
 //---
-//	gint:core:mmu - MMU-related definitions
+//	gint:mmu:mmu - MMU driver definition and context management
 //---
 
 #include <gint/mmu.h>
+#include <gint/drivers.h>
 #include <gint/hardware.h>
 
 //---
@@ -148,3 +149,54 @@ uint32_t utlb_translate(uint32_t page)
 	}
 	return -1;
 }
+
+//---
+//	Initialization
+//---
+
+static void init(void)
+{
+	/* Make writes to the control register area synchronous; this is needed
+	   for the SPU to operate properly */
+	if(isSH4()) SH7305_MMU.PASCR.UBC = 1;
+}
+
+//---
+//	Context management
+//---
+
+typedef struct {
+	uint32_t PASCR;
+	uint32_t IRMCR;
+} ctx_t;
+
+GBSS static ctx_t sys_ctx, gint_ctx;
+
+static void ctx_save(void *buf)
+{
+	if(isSH3()) return;
+
+	ctx_t *ctx = buf;
+	ctx->PASCR = SH7305_MMU.PASCR.lword;
+	ctx->IRMCR = SH7305_MMU.IRMCR.lword;
+}
+
+static void ctx_restore(void *buf)
+{
+	if(isSH3()) return;
+
+	ctx_t *ctx = buf;
+	SH7305_MMU.PASCR.lword = ctx->PASCR;
+	SH7305_MMU.IRMCR.lword = ctx->IRMCR;
+}
+
+gint_driver_t drv_mmu = {
+	.name         = "MMU",
+	.init         = init,
+	.sys_ctx      = &sys_ctx,
+	.gint_ctx     = &gint_ctx,
+	.ctx_save     = ctx_save,
+	.ctx_restore  = ctx_restore,
+};
+
+GINT_DECLARE_DRIVER(1, drv_mmu);
