@@ -29,8 +29,15 @@ static void init(void)
 
 	/* Reset the SPU */
 	SPU.SPUSRST.RST = 0;
+	sleep_us_spin(1000);
 	SPU.SPUSRST.RST = 1;
 	sleep_us_spin(1000);
+
+	/* Initially give all P memory and X memory to DSP0 */
+	SPU.PBANKC0 = 0x1f;
+	SPU.PBANKC1 = 0x00;
+	SPU.XBANKC0 = 0x7f;
+	SPU.XBANKC1 = 0x00;
 
 	/* Perform full DSP resets */
 	DSP0.DSPCORERST = 1;
