@@ -16,6 +16,10 @@
 
 static void kinit_cpu(void);
 
+/* Forcefully pull in the INTC driver which gint cannot run without */
+extern gint_driver_t drv_intc;
+GUNUSED gint_driver_t *gint_required_intc = &drv_intc;
+
 //---
 //	Context for the CPU and registers not directly managed by a driver
 //---
