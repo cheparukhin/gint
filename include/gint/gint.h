@@ -6,15 +6,7 @@
 #define GINT_GINT
 
 #include <gint/defs/types.h>
-
-/* GINT_VERSION - the library version number
-
-   gint is versioned from its repository commits on the master branch. The
-   GINT_VERSION integer contains the short commit hash with 7 digits.
-
-   For instance, 0x03f7c0a0 means commit 3f7c0a0. */
-extern char GINT_VERSION;
-#define GINT_VERSION ((uint32_t)&GINT_VERSION)
+#include <gint/config.h>
 
 /* gint_switch(): Switch out of gint to execute a function
 

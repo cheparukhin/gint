@@ -26,7 +26,7 @@ machine ?= -m4-nofpu -mb
 endif
 
 # Compiler flags, assembler flags, dependency generation, archiving
-inc     := -I ../include
+inc     := -I ../include -I include
 cflags  := $(machine) -ffreestanding -nostdlib -Wall -Wextra -std=c11 -Os \
            -fstrict-volatile-bitfields $(inc) $(CONFIG.MACROS) \
            $(CONFIG.CFLAGS)
@@ -64,7 +64,7 @@ src_obj  := $(foreach s,$(src),$(call src2obj,$s))
 # Files with special handling
 spe-fx  := ../src/font5x7.png
 spe-cg  := ../src/font8x9.png
-spe_obj := version.o $(foreach s,$(spe-$(CONFIG.TARGET)),$(call src2obj,$s))
+spe_obj := $(foreach s,$(spe-$(CONFIG.TARGET)),$(call src2obj,$s))
 
 # All object files
 obj := $(src_obj) $(spe_obj)
@@ -87,6 +87,8 @@ objcopy	= $(CONFIG.TOOLCHAIN)-objcopy
 
 # Version symbol is obtained by using the last commit hash on 7 nibbles
 version_hash = 0x0$(shell git rev-parse --short HEAD)
+# Version number: closest tag, with additional commits
+version_number = $(shell git describe --tag --always | cut -d- -f1-2)
 
 
 #
@@ -95,7 +97,7 @@ version_hash = 0x0$(shell git rev-parse --short HEAD)
 
 all: $(target)
 
-$(target): $(obj)
+$(target): include/gint/config.h $(obj)
 	@ rm -f $@
 	$(call cmd_l,ar,$@) $(ar) rcs $(arflags) $@ $^
 
@@ -113,6 +115,11 @@ src/%.c.o: ../src/%.c src/%.c.d
 	$(call cmd_b,gcc,$*.c) $(gcc) -c $< -o $@ $(dflags) $(cflags)
 
 # Special files
+include/gint/config.h: ../include/gint/config.h.in $(gitfile)
+	@ mkdir -p $(dir $@)
+	$(call cmd_m,sed,$@) cp $< $@
+	@ sed -i'' 's/@GINT_VERSION@/"$(version_number)"/' $@
+	@ sed -i'' 's/@GINT_HASH@/$(version_hash)/' $@
 $(call src2obj,../src/font5x7.png): ../src/font5x7.png
 	@ mkdir -p $(dir $@)
 	$(call cmd_m,fxconv,font5x7.png) fxconv -f $< -o $@ \
@@ -125,19 +132,12 @@ $(call src2obj,../src/font8x9.png): ../src/font8x9.png
 		charset:print grid.size:8x11 grid.padding:1 grid.border:0 \
 		proportional:true height:9
 
-# Version symbol. ld generates a .stack section for unknown reasons; I remove
-# it in the linker script.
-version.o: $(gitfile)
-	@ mkdir -p $(dir $@)
-	@ echo "_GINT_VERSION = $(version_hash);" > $@.txt
-	$(call cmd_b,ld,$@) $(ld) -r -R $@.txt -o $@
-
 #
 #  Cleaning
 #
 
 clean:
-	@ rm -rf src version.o{,txt}
+	@ rm -rf src include
 distclean: clean
 	@ rm -rf Makefile $(CONFIG) $(target)
 
@@ -156,7 +156,9 @@ install: $(target)
 	install -d $(PREFIX)
 	install $(target) $(m644) $(PREFIX)
 	install ../$(CONFIG.TARGET.LONG).ld $(m644) $(PREFIX)
-	cp -r ../include/gint $(PREFIX)/include
+	install -d $(PREFIX)/include/gint
+	cp ../include/gint/*.h $(PREFIX)/include/gint/
+	cp include/gint/*.h $(PREFIX)/include/gint/
 
 uninstall:
 	rm -f $(PREFIX)/$(target)

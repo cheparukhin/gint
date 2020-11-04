@@ -1,0 +1,19 @@
+//---
+//	config - Compile-time generate configuration
+//---
+
+#ifndef GINT_CONFIG
+#define GINT_CONFIG
+
+#include <gint/defs/types.h>
+
+/* GINT_VERSION: Latest tag and number of additional commits
+     "2.1.0"   = Release 2.1.0
+     "2.1.1-5" = 5 commits after release 2.1.1 */
+#define GINT_VERSION @GINT_VERSION@
+
+/* GINT_HASH: Commit hash with 7 digits
+     0x03f7c0a0 = Commit 3f7c0a0 */
+#define GINT_HASH @GINT_HASH@
+
+#endif /* GINT_CONFIG */
