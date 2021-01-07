@@ -157,8 +157,8 @@ install: $(target)
 	install $(target) $(m644) $(PREFIX)
 	install ../$(CONFIG.TARGET.LONG).ld $(m644) $(PREFIX)
 	install -d $(PREFIX)/include/gint
-	cp ../include/gint/*.h $(PREFIX)/include/gint/
-	cp include/gint/*.h $(PREFIX)/include/gint/
+	cp -r ../include/gint/* $(PREFIX)/include/gint/
+	cp -r include/gint/* $(PREFIX)/include/gint/
 
 uninstall:
 	rm -f $(PREFIX)/$(target)
