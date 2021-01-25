@@ -3,16 +3,23 @@
 -include giteapc-config.make
 
 configure:
-	@ mkdir -p build-fx && cd build-fx && ../configure --target=fx9860g
-	@ mkdir -p build-cg && cd build-cg && ../configure --target=fxcg50
+	@ fxsdk build-fx -c
+	@ fxsdk build-cg -c
 
 build:
-	@ make all
+	@ fxsdk build-fx
+	@ fxsdk build-cg
 
 install:
-	@ make install
+	@ fxsdk build-fx install
+	@ fxsdk build-cg install
 
 uninstall:
-	@ make uninstall
+	@ if [[ -e build-fx/install_manifest.txt ]]; then \
+	     xargs rm -f < build-fx/install_manifest.txt; \
+          fi
+	@ if [[ -e build-cg/install_manifest.txt ]]; then \
+	     xargs rm -f < build-cg/install_manifest.txt; \
+          fi
 
 .PHONY: configure build install uninstall

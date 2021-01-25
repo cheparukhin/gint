@@ -8,7 +8,6 @@ Extensions on existing code:
 * core:      use cmp/str for memchr()
 * r61524:    brightness control and clean the file
 * core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
-* build:     make the build system simpler (two targets are enough by default)
 * core:      run destructors when a task-switch results in leaving the app
 * core rtc:  use qdiv10 to massively improve division performance
 * topti:     let the font specify letter and word spacing
