@@ -1,19 +1,16 @@
 # gint project
 
-gint (pronounce 'guin') is a development system for Casio fx-9860G II and
-fx-CG 50 calculators. It provides a mostly free-standing runtime and is used
-to develop add-ins under Linux, along with specialized GCC toolchains and the
-[fxSDK](/Lephenixnoir/fxsdk).
+gint (pronounce “guin”) is an add-in unikernel for CASIO calculators of the
+fx-9860G II and fx-CG 50 families. It provides a mostly free-standing runtime
+and is used to develop add-ins under Linux, along with specialized GCC
+toolchains and the [fxSDK](/Lephenixnoir/fxsdk).
 
-gint is a modular kernel that implements its own drivers for the calculator's
-hardware, overriding the operating system and its syscalls. It is a drop-in
-replacement from fxlib, with which it is mostly incompatible. gint exposes a
-new, richer API to manipulate the hardware and take advantage of the full
-capabilities of the machine.
+When running in an add-in, gint takes control of the calculator's hardware
+from the operating system, and manages it with its own drivers. It exposes a
+new, richer API that takes advantage of the full capabilities of the machine.
 
-This is free software: you may use it for any purpose, share it, and modify it
-as long as you share your changes. Credit is not required, but please let me
-know!
+This is free software: you may use it for any purpose, share it, modify it, and
+share your changes. Credit is not required, but please let me know!
 
 gint also includes third-party code that is distributed under its own license.
 Currently, this only includes:
@@ -25,27 +22,45 @@ Currently, this only includes:
 ## Programming interface
 
 Because of its free-standing design, gint's API provides direct and efficient
-access to the low-level MPU features, among which:
+access to low-level MPU features, which includes:
 
 * Multi-key management with event systems suitable for games
 * Hardware timers with sub-millisecond and sub-microsecond resolution
 * Fast screen drivers with DMAC on fx-CG 50
 * Efficient and user-extendable interrupt management
+* Safe access to on-chip and DSP memory areas
+* Hardware-driven memory primitives (DMA, DSP)
 
 The library also offers powerful higher-level features:
 
 * An enhanced version of the system's GetKey() and GetKeyWait()
 * A gray engine that works by rapidly swapping monochrome images on fx-9860G II
-* Blazingly fast drawing functions when working with the fxSDK (image rendering
-  is 10 times faster than MonochromeLib)
-* Integrated font management with the fxSDK
-* Integration with a Newlib port by Memallox (WIP)
+* Blazingly fast rendering functions (image rendering is 10 times faster tha
+  MonochromeLib)
+* Integrated font management
 
-## Building and installing gint
+A couple of libraries extend these features, including:
 
-You can choose to build gint for fx-9860G II (monochrome calculators, aka
-Graph 85 family), fx-CG 50 (color calculators, aka Prizm or Graph 90 family),
-or both. There are a few dependencies:
+* [libprof](/Lephenixnoir/libprof): Profiling and performance evaluation
+* [libimg](/Lephenixnoir/libimg): Versatile image transformations
+* [OpenLibm](/Lephenixnoir/OpenLibm): A port of the standard math library
+* Integration with [a Newlib port by Memallox](/PlaneteCasio/libc) (unstable)
+
+## Basic use with GiteaPC and the fxSDK
+
+gint can be installed automatically with [GiteaPC](/Lephenixnoir/GiteaPC).
+
+```bash
+% giteapc install Lephenixnoir/gint
+```
+
+Normally you don't use it directly, instead the fxSDK provides project
+templates that are set up to use gint. Please see the
+[fxSDK README file](/Lephenixnoir/fxsdk) for details.
+
+## Building and installing manually
+
+You will need a couple of tools:
 
 * A suitable GCC toolchain in the `PATH`. You can absolutely *not* build gint
   with your system compiler!
@@ -53,10 +68,7 @@ or both. There are a few dependencies:
   * For fx-9860G II, `sh3eb-elf` is strongly advised
   * For fx-CG 50, `sh4eb-elf` (with `-m4-nofpu`) is slightly better but
     `sh3eb-elf` is completely fine
-* The [fxSDK](/Lephenixnoir/fxsdk) installed and available in the PATH. You
-  will need `fxconv` to build gint, and if you intend to develop add-ins for
-  fx-9860G II, you probably want `fxg1a` as well. All these tools are built by
-  default.
+* The [fxSDK](/Lephenixnoir/fxsdk) installed and available in the PATH.
 
 fx-CG 50 developers probably want a g3a wrapper as well; the reference
 implementation is Tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
@@ -64,49 +76,46 @@ needed at the very last compilation step to create the g3a file. On Arch Linux,
 you can use the [AUR/mkg3a](https://aur.archlinux.org/packages/mkg3a) package
 maintained directly by Tari.
 
-The build process is detailed below for both platforms, the principle is the
-same. You can build both targets at the same time by reading the two sections.
+gint is built with CMake; the fxSDK provides CMake modules to target the
+calculator, as well as a couple of utilities. gint is always installed in the
+compiler's install path (as given by `sh-elf-gcc --print-search-dirs`) which is
+detected automatically, so normally you don't need to set the install prefix.
 
-By default gint will be installed in the appropriate compiler folder, which
-is `$PREFIX/` for libraries and linker scripts, and `$PREFIX/include/gint/` for
-headers, where `PREFIX` is obtained by running
-`${toolchain}-gcc --print-search-dirs` and reading the line that starts with
-`install:`. You can change this with the `--prefix` configure option, but
-normally you don't need to.
+**Building for fx-9860G II**
 
-### Building for fx-9860G II
+`fxsdk build-fx` will invoke CMake and make. If you have specific configuration
+options, run once with `-c` to configure.
 
-Create a build directory and configure in it:
+```
+% fxsdk build-fx -c <OPTIONS...>
+```
 
-    % mkdir build.fx && cd build.fx
-    % ../configure --target=fx9860g
+Run without `-c` to build. This configures automatically.
 
-Then build the source and install the library files to the selected directory.
-You might need root access if you selected a target directory owned by root
-with `--prefix`, or if you built your compiler as root.
+```
+% fxsdk build-fx
+```
 
-    % make
-    % make install
+The available options are:
 
-### Building for fx-CG 50
+* `-DGINT_STATIC_GRAY=1`: Put the gray engine's VRAMs in static RAM instead of
+  using `malloc()`
 
-Create a build directory and configure in it. The default toolchain is
-`sh4eb-elf`, if you wish to build with `sh3eb-elf`, you need to add a
-command-line option `--toolchain=sh3eb-elf`.
+**Building for fx-CG 50**
 
-    % mkdir build.cg && cd build.cg
-    % ../configure --target=fxcg50
+Same as fx-9860G II, except the command is `fxsdk build-cg` instead of `fxsdk
+build-fx`.
 
-Then build the source and install the library files to the selected directory.
+The available options are:
 
-    % make
-    % make install
+* `-DGINT_USER_VRAM=1`: Store all VRAMs in the user stack (takes up 350k/512k)
 
-## Using gint
+## Linking with gint manually
 
-To use gint as your runtime environment, the bare minimum is:
+Projects created with the fxSDK link with gint out-of-the-box. If you're not
+using the fxSDK, you will need to:
 
-* Build with `-ffreestanding`;
+* Build with `-ffreestanding -fstrict-volatile-bitfields`;
 * Link with `-T fx9860g.ld` and `-lgint-fx` on fx-9860G;
 * Link with `-T fxcg50.ld` and `-lgint-cg` on fx-CG 50.
 
@@ -114,6 +123,3 @@ If you don't have a standard library such as
 [Memallox's port of newlib](/PlaneteCasio/libc), you also need `-nostdlib`. I
 typically use `-m3 -mb` or `-m4-nofpu -mb` to specify the platform, but that
 may not even be necessary.
-
-Typically you might want to do this with the [fxSDK](/Lephenixnoir/fxsdk),
-which hides most of the details and makes it easy to roll add-ins.
