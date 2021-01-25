@@ -1,5 +1,6 @@
 #include <gint/display.h>
 #include <gint/hardware.h>
+#include <gint/config.h>
 
 #ifdef GINT_USER_VRAM
 /* We want to put the VRAM in the user section, however we can't use the
@@ -10,7 +11,7 @@
 GALIGNED(4) GSECTION(".bss.vram") int8_t _gint_vram_buffers[396*224*2];
 
 /* In this case, we can define pointers to our user stack directly, these will
-   be the physical address associated with _vram_buffers */
+   be the physical address associated with _gint_vram_buffers */
 static uint16_t *main = (void *)0xac161400;
 static uint16_t *scnd = (void *)0xac18c900;
 

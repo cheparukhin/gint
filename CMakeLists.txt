@@ -1,5 +1,4 @@
 # Build system for the gint unikernel
-# TODO: Options for NO_SYSCALLS, STATIC_GRAY, USER_VRAM, ATEXIT_MAX
 
 cmake_minimum_required(VERSION 3.18)
 project(Gint VERSION 2.3.0 LANGUAGES C ASM)
@@ -7,7 +6,10 @@ project(Gint VERSION 2.3.0 LANGUAGES C ASM)
 include(GitVersionNumber)
 include(Fxconv)
 
-# Generate <gint/config.h> with commit hash and version name in
+option(GINT_USER_VRAM "Put all VRAMs into the user stack (fx-CG 50 only)")
+option(GINT_STATIC_GRAY "Use static memory instead of malloc for gray buffers (fx-9860G only)")
+
+# Generate <gint/config.h> with commit hash, version name and options
 git_version_number(SHORT_HASH "GINT_GIT_HASH" TAG_RELATIVE "GINT_GIT_VERSION")
 configure_file(include/gint/config.h.in include/gint/config.h)
 

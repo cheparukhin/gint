@@ -16,4 +16,12 @@
      0x03f7c0a0 = Commit 3f7c0a0 */
 #define GINT_HASH 0x@GINT_GIT_HASH@
 
+/* GINT_USER_VRAM: Selects whether to store VRAMs in the user stack (occupying
+   350k/512k of the area) or in the system stack (the default). (fx-CG 50) */
+#cmakedefine GINT_USER_VRAM
+
+/* GINT_STATIC_GRAY: Selects whether additional gray VRAMs are allocated
+   statically or in the system heap (fx-9860G) */
+#cmakedefine GINT_STATIC_GRAY
+
 #endif /* GINT_CONFIG */
