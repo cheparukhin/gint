@@ -100,9 +100,7 @@ set(SOURCES_CG
 
 set(ASSETS_FX src/font5x7.png)
 set(ASSETS_CG src/font8x9.png)
-set_source_files_properties(${ASSETS_FX} ${ASSETS_CG} PROPERTIES
-  LANGUAGE FXCONV
-  OBJECT_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/fxconv-metadata.txt")
+fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 
 include_directories("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
 add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields)
