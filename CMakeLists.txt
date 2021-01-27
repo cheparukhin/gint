@@ -123,11 +123,17 @@ endif()
 
 set_target_properties("${NAME}" PROPERTIES OUTPUT_NAME "${NAME}")
 
+# Library file
 install(TARGETS "${NAME}" DESTINATION "${FXSDK_COMPILER_INSTALL}")
+# Linker script
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}"
   DESTINATION "${FXSDK_COMPILER_INSTALL}")
+# Headers
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
   DESTINATION "${FXSDK_COMPILER_INSTALL}"
   FILES_MATCHING PATTERN "*.h")
+# Auto-generated config header
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/gint/config.h"
   DESTINATION "${FXSDK_COMPILER_INSTALL}/include/gint")
+# CMake module to find gint
+install(FILES cmake/FindGint.cmake DESTINATION "${FXSDK_CMAKE_MODULE_PATH}")
