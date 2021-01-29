@@ -15,10 +15,10 @@ install:
 	@ fxsdk build-cg install
 
 uninstall:
-	@ if [[ -e build-fx/install_manifest.txt ]]; then \
+	@ if [ -e build-fx/install_manifest.txt ]; then \
 	     xargs rm -f < build-fx/install_manifest.txt; \
           fi
-	@ if [[ -e build-cg/install_manifest.txt ]]; then \
+	@ if [ -e build-cg/install_manifest.txt ]; then \
 	     xargs rm -f < build-cg/install_manifest.txt; \
           fi
 
