@@ -46,7 +46,7 @@ A couple of libraries extend these features, including:
 * [OpenLibm](/Lephenixnoir/OpenLibm): A port of the standard math library
 * Integration with [a Newlib port by Memallox](/PlaneteCasio/libc) (unstable)
 
-## Basic use with GiteaPC and the fxSDK
+## Installing with GiteaPC
 
 gint can be installed automatically with [GiteaPC](/Lephenixnoir/GiteaPC).
 
@@ -54,32 +54,22 @@ gint can be installed automatically with [GiteaPC](/Lephenixnoir/GiteaPC).
 % giteapc install Lephenixnoir/gint
 ```
 
-Normally you don't use it directly, instead the fxSDK provides project
+Normally you don't use gint directly, instead the fxSDK provides project
 templates that are set up to use gint. Please see the
 [fxSDK README file](/Lephenixnoir/fxsdk) for details.
 
 ## Building and installing manually
 
-You will need a couple of tools:
-
-* A suitable GCC toolchain in the `PATH`. You can absolutely *not* build gint
-  with your system compiler!
-  * The tutorial on Planète Casio builds an `sh-elf` that works everywhere
-  * For fx-9860G II, `sh3eb-elf` is strongly advised
-  * For fx-CG 50, `sh4eb-elf` (with `-m4-nofpu`) is slightly better but
-    `sh3eb-elf` is completely fine
-* The [fxSDK](/Lephenixnoir/fxsdk) installed and available in the PATH.
+gint is built using the [fxSDK](/Lephenixnoir/fxsdk), which provides a suitable
+CMake environment for the calculator. gint is always installed in the
+compiler's install path (as given by `sh-elf-gcc --print-search-dirs`) which is
+detected automatically, so normally you don't need to set the install prefix.
 
 fx-CG 50 developers probably want a g3a wrapper as well; the reference
 implementation is Tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
 needed at the very last compilation step to create the g3a file. On Arch Linux,
 you can use the [AUR/mkg3a](https://aur.archlinux.org/packages/mkg3a) package
 maintained directly by Tari.
-
-gint is built with CMake; the fxSDK provides CMake modules to target the
-calculator, as well as a couple of utilities. gint is always installed in the
-compiler's install path (as given by `sh-elf-gcc --print-search-dirs`) which is
-detected automatically, so normally you don't need to set the install prefix.
 
 **Building for fx-9860G II**
 
@@ -110,7 +100,16 @@ The available options are:
 
 * `-DGINT_USER_VRAM=1`: Store all VRAMs in the user stack (takes up 350k/512k)
 
-## Linking with gint manually
+## Using in CMake-based add-ins
+
+Find the `Gint` module and link against `Gint::Gint`.
+
+```cmake
+find_module(Gint 2.1 REQUIRED)
+target_link_libraries(<target_name> Gint::Gint)
+```
+
+## Using in Makefile-based add-ins
 
 Projects created with the fxSDK link with gint out-of-the-box. If you're not
 using the fxSDK, you will need to:
