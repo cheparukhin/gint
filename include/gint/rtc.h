@@ -22,6 +22,7 @@ typedef struct
 	uint8_t hours;		/* Hour (0..23) */
 	uint8_t minutes;	/* Minute (0..59) */
 	uint8_t seconds;	/* Second (0..59) */
+	uint8_t ticks;		/* 128-Hz sub-second counter (0...127) */
 
 } rtc_time_t;
 
@@ -31,9 +32,15 @@ void rtc_get_time(rtc_time_t *time);
 
 /* rtc_set_time(): Set current time in the RTC
    If [time->week_day] is not in the valid range, it is set to 0. Other fields
-   are not checked.
+   are not checked. R64CNT cannot be set to [time->ticks] is ignored.
    @time  Pointer to new time */
 void rtc_set_time(rtc_time_t const *time);
+
+/* rtc_ticks(): Get number of 128-Hz ticks elapsed since Midnight.
+
+   Returns R64CNT + 128*RSECCNT + 128*60*RMINCNT + 128*60*60*RHRCNT. This can
+   be used as a 128-Hz counter, but it wraps around at midnight. */
+uint32_t rtc_ticks(void);
 
 //---
 //	RTC timer

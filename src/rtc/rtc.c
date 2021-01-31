@@ -61,6 +61,7 @@ void rtc_get_time(rtc_time_t *time)
 	do {
 		RTC->RCR1.CF = 0;
 
+		time->ticks     = RTC->R64CNT;
 		time->seconds   = int8(RTC->RSECCNT.byte);
 		time->minutes   = int8(RTC->RMINCNT.byte);
 		time->hours     = int8(RTC->RHRCNT.byte);

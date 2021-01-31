@@ -41,6 +41,7 @@ set(SOURCES_COMMON
   src/render/topti.c
   src/rtc/inth.s
   src/rtc/rtc.c
+  src/rtc/rtc_ticks.c
   src/spu/spu.c
   src/std/tinymt32/rand.c
   src/std/tinymt32/tinymt32.c
