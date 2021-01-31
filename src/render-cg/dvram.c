@@ -32,6 +32,7 @@ __attribute__((constructor))
 static void init_vram(void)
 {
 	/* On Prizm and fx-CG Manager, move address to 0xa8000000 */
+	/* TODO: Detect base RAM address in BSC rather than hardcoding it */
 	if(gint[HWCALC] == HWCALC_PRIZM || gint[HWCALC] == HWCALC_FXCG_MANAGER)
 	{
 		main = (void *)main - 0x04000000;

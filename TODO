@@ -1,4 +1,5 @@
 Extensions on existing code:
+* stdio:     support %f in printf
 * project:   add license file
 * kernel:    group linker script symbols in a single header file
 * kernel:    be consistent about *tlb_mapped_memory() in hw_detect()
@@ -20,3 +21,5 @@ Future directions.
 * USB communication, using Yatis' reverse-engineering of the module
 * Make fx9860g projects work out of the box on fxcg50
 * Use the DSP to enhance parallel computation
+* Dynamic memory allocation
+* Base for Yatis' threads library

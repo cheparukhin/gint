@@ -98,10 +98,12 @@ void hw_detect(void)
 	*R4 = b4;
 
 	gint[HWRAM]  = ext ? (512 << 10) : (256 << 10);
-	/* Will be detected later on */
-	gint[HWURAM] = -1;
 	/* Traditionally 4 MiB, Graph 35+E II has 8 MiB */
 	gint[HWROM]  = (gint[HWCALC] == HWCALC_G35PE2) ? (8 << 20) : (4 << 20);
+
+	/* Mapped memory */
+	if(isSH3()) tlb_mapped_memory(NULL, NULL);
+	else utlb_mapped_memory(NULL, NULL);
 }
 
 #endif /* FX9860G and platform-agnostic */
@@ -130,8 +132,7 @@ void hw_detect(void)
 	gint[HWROM] = (32 << 20);
 
 	/* Mapped memory */
-	if(isSH3()) tlb_mapped_memory(NULL, NULL);
-	else utlb_mapped_memory(NULL, NULL);
+	utlb_mapped_memory(NULL, NULL);
 }
 
 #endif /* FXCG50 */
