@@ -5,15 +5,18 @@
 #include <gint/keyboard.h>
 #include <gint/gint.h>
 #include <gint/defs/types.h>
+#include "getkey.h"
 
 #ifdef FX9860G
 #include <gint/drivers/t6k11.h>
 #endif
 
 /* Delay between a key press and the first repeat, in scan intervals */
-static int rep_first = 64;
+static int rep_first = 51;
 /* Delay between subsequent repeats, in scan intervals */
-static int rep_next = 8;
+static int rep_next = 5;
+/* Same in milliseconds (values supplied by the user */
+static int rep_first_ms = 400, rep_next_ms = 40;
 
 /* Repeat filter function */
 static int (*filter_function)(int key, int duration, int count) = NULL;
@@ -132,7 +135,7 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 			/* Delay repeat by set amount */
 			if(s > 0)
 			{
-				s = (s * KEYBOARD_SCAN_FREQUENCY) / 1000;
+				s = (s * keysc_scan_frequency()) / 1000;
 				rep_delay += s;
 				break;
 			}
@@ -165,12 +168,21 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 /* getkey_repeat(): Set repeat delays for getkey() */
 void getkey_repeat(int first, int next)
 {
-	rep_first = (first * KEYBOARD_SCAN_FREQUENCY) / 1000;
-	rep_next = (next * KEYBOARD_SCAN_FREQUENCY) / 1000;
+	rep_first_ms = first;
+	rep_next_ms = next;
+
+	rep_first = (first * keysc_scan_frequency()) / 1000;
+	rep_next = (next * keysc_scan_frequency()) / 1000;
 }
 
 /* getkey_repeat_filter(): Set the repeat filter function */
 void getkey_repeat_filter(int (*filter)(int key, int duration, int count))
 {
 	filter_function = filter;
+}
+
+/* Refresh repeat delays after a change in keyboard scan frequency */
+void getkey_refresh_delays(void)
+{
+	getkey_repeat(rep_first_ms, rep_next_ms);
 }

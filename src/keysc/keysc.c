@@ -13,7 +13,15 @@
 #include <gint/drivers/iokbd.h>
 #include <gint/hardware.h>
 
+#include "getkey.h"
+
 #include <stdarg.h>
+
+/* Keyboard scan frequency in Hertz. Start with 128 Hz, this frequency *must
+   be high* for the keyboard to work! */
+static int scan_frequency = 128;
+/* Keyboard scanner timer */
+static int keysc_tid = -1;
 
 //---
 //	Keyboard buffer
@@ -76,6 +84,38 @@ static int buffer_poll(driver_event_t *ev)
 	*ev = buffer[buffer_start];
 	buffer_start = (buffer_start + 1) % KEYBOARD_QUEUE_SIZE;
 	return 0;
+}
+
+//---
+//	Keyboard scanning
+//---
+
+/* keysc_scan_frequency(): Get the current keyboard scan frequency in Hertz */
+int keysc_scan_frequency(void)
+{
+	return scan_frequency;
+}
+
+/* keysc_scan_frequency_us(): Get keyboard scan delay in microseconds */
+uint32_t keysc_scan_frequency_us(void)
+{
+	int delay = 1000000 / scan_frequency;
+	if(delay == 0) delay = 1;
+	return delay;
+}
+
+/* keysc_set_scan_frequency(): Set the keyboard scan frequency in Hertz */
+void keysc_set_scan_frequency(int freq)
+{
+	if(freq < 64) freq = 64;
+	if(freq > 32768) freq = 32768;
+	scan_frequency = freq;
+
+	if(keysc_tid < 0) return;
+	uint32_t TCOR = timer_delay(keysc_tid, keysc_scan_frequency_us(), 0);
+	timer_reload(keysc_tid, TCOR);
+
+	getkey_refresh_delays();
 }
 
 /* keysc_frame(): Generate driver events from KEYSC state */
@@ -258,20 +298,14 @@ static int callback(void)
 /* init() - setup the support timer */
 static void init(void)
 {
-	/* Configure the timer to do 128 keyboard scans per second. This
-	   frequency *must* be high for the KEYSC interface to work! */
-	int delay = 1000000 / KEYBOARD_SCAN_FREQUENCY;
-	if(!delay) delay = 1;
-
 	/* Set the default repeat times (milliseconds) */
 	getkey_repeat(400, 40);
 
 	/* The timer will be stopped when the timer driver is unloaded */
-	int tid = timer_setup(TIMER_ANY, delay, callback);
-	if(tid >= 0) timer_start(tid);
+	keysc_tid = timer_setup(TIMER_ANY,keysc_scan_frequency_us(),callback);
+	if(keysc_tid >= 0) timer_start(keysc_tid);
 
 	gint[HWKBD] = HW_LOADED | (isSH3() ? HWKBD_IO : HWKBD_KSI);
-	gint[HWKBDSF] = KEYBOARD_SCAN_FREQUENCY;
 }
 
 //---

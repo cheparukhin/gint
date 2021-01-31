@@ -64,7 +64,7 @@ void hw_detect(void);
 #define HWURAM   6    /* Userspace RAM */
 #define HWETMU   7    /* Extra Timer Units */
 #define HWKBD    8    /* Keyboard */
-#define HWKBDSF  9    /* Keyboard Scan Frequency (set iff HWKBD is loaded) */
+#define HWKBDSF       /* Deprecated: use keysc_scan_frequency() */
 #define HWDD     10   /* Display Driver */
 
 /*

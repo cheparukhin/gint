@@ -120,12 +120,28 @@ enum
 #define KEYBOARD_QUEUE_SIZE 32
 #endif
 
-/* Keyboard frequency analysis, must be at least 64 for the keyboard to work,
-   and at most 32768 for the extra timer to support it. Better if a power of 2.
-   TODO: Add a runtime setting for KEYBOARD_SCAN_FREQUENCY */
-#ifndef KEYBOARD_SCAN_FREQUENCY
-#define KEYBOARD_SCAN_FREQUENCY 128
-#endif
+/* Keyboard frequency analysis is a runtime setting since gint 2.4. This macro
+   is preserved for compatibility until gint 3. */
+#define KEYBOARD_SCAN_FREQUENCY keysc_scan_frequency()
+
+//---
+//  Scan frequency settings
+//---
+
+/* keysc_scan_frequency(): Get the current keyboard scan frequency in Hertz */
+int keysc_scan_frequency(void);
+
+/* keysc_scan_frequency_us(): Get keyboard scan delay in microseconds */
+uint32_t keysc_scan_frequency_us(void);
+
+/* keysc_set_scan_frequency(): Set the keyboard scan frequency in Hertz
+
+   The new frequency must be at least 64 for the keyboard to work reliably, and
+   at most 32768 for the underlying ETMU to support it. Out-of-range values are
+   forced to the closest valid value.
+
+   @freq  New scan frequency, in Hertz */
+void keysc_set_scan_frequency(int freq);
 
 //---
 //	Event-level functions
