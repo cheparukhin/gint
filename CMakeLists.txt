@@ -30,6 +30,7 @@ set(SOURCES_COMMON
   src/keysc/iokbd.c
   src/keysc/keycodes.c
   src/keysc/keysc.c
+  src/kprint/kprint.c
   src/mmu/mmu.c
   src/render/dhline.c
   src/render/dimage.c
@@ -43,18 +44,18 @@ set(SOURCES_COMMON
   src/rtc/rtc.c
   src/rtc/rtc_ticks.c
   src/spu/spu.c
-  src/std/tinymt32/rand.c
-  src/std/tinymt32/tinymt32.c
   src/std/memcmp.s
   src/std/memcpy.s
   src/std/memmove.s
   src/std/memset.s
-  src/std/stdio.c
+  src/std/print.c
   src/std/string.c
   src/tmu/inth-etmu.s
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
   src/tmu/tmu.c
+  src/3rdparty/tinymt32/rand.c
+  src/3rdparty/tinymt32/tinymt32.c
 )
 set(SOURCES_FX
   src/gray/engine.c

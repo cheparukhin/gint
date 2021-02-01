@@ -1,5 +1,5 @@
 //---
-//	The stdio formatted printer.
+//	gint:kprint - gint's printf(3)-like formatted printer
 //
 //	Things to change when creating new formats:
 //	-> List of prototypes at the end of the definition section
@@ -9,6 +9,7 @@
 
 #include <gint/std/stdio.h>
 #include <gint/std/string.h>
+#include <gint/kprint.h>
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
@@ -21,8 +22,6 @@
 //---
 
 #define KPRINT_BUFSIZE 64
-#define KFORMAT_ARGS \
-	GUNUSED int spec, GUNUSED struct kprint_options *opt, va_list *args
 
 /* Current position in the output buffer */
 static char *kprint_ptr = NULL;
@@ -44,41 +43,6 @@ static enum {
 //	KprintOutputDevice = 1,
 } kprint_type;
 
-/*
-	struct kprint_options -- standard format options
-*/
-struct kprint_options
-{
-	/* Minimal length of formatted string (padding can be added) */
-	uint16_t length;
-	/* How much significant characters of data, meaning varies */
-	uint16_t precision;
-
-	/* Size specifier for integers (%o, %x, %i, %d, %u), may be one of:
-	   (0) char       (8-bit)
-	   (1) short     (16-bit)
-	   (2) int       (32-bit)
-	   (3) long      (32-bit)
-	   (4) long long (64-bit) */
-	uint8_t size;
-
-	/* (#) Alternative form: base prefixes, decimal point */
-	uint alternative :1;
-	/* ( ) Add a blank sign before nonnegative numbers */
-	uint blank_sign :1;
-	/* (+) Always add a sign before a number (overrides ' ') */
-	uint force_sign :1;
-
-	/* Alignment options: each option overrides all others before itself
-	   NUL By default, align right
-	   (0) Left-pad numerical values with zeros
-	   (-) Align left by adding space on the right, dropping zeros */
-	uint8_t alignment;
-
-} GPACKED(2);
-
-typedef void (*kprint_formatter_t)(KFORMAT_ARGS);
-
 /* Default formatters */
 static void kformat_char (KFORMAT_ARGS);
 static void kformat_int  (KFORMAT_ARGS);
@@ -98,6 +62,20 @@ kprint_formatter_t kprint_formatters[26] = {
 	kformat_uint,	NULL,		NULL,		kformat_uint,
 	NULL,		NULL,
 };
+
+/* kprint_register(): Register a formatter */
+void kprint_register(int spec, kprint_formatter_t kformat)
+{
+	spec |= 0x20;
+	int i = (spec | 0x20) - 'a';
+
+	/* Non-letters */
+	if(i < 0 || i >= 26) return;
+	/* Size-specifying letters */
+	if(spec == 'h' || spec == 'l' || spec == 'z') return;
+
+	kprint_formatters[i] = kformat;
+}
 
 //---
 //	Output functions
@@ -144,10 +122,10 @@ GINLINE static void kprint_outn(int byte, size_t n)
 //---
 
 /* kprint_opt(): Parse option strings */
-struct kprint_options kprint_opt(char const **options_ptr)
+kprint_options_t kprint_opt(char const **options_ptr)
 {
 	/* No options enabled by default, set the size to int */
-	struct kprint_options opt = { .size = 2 };
+	kprint_options_t opt = { .size = 2 };
 
 	/* This function acts as a deterministic finite automaton */
 	enum {
@@ -195,6 +173,7 @@ struct kprint_options kprint_opt(char const **options_ptr)
 		/* Data size */
 		if(c == 'h') opt.size--;
 		if(c == 'l') opt.size++;
+		if(c == 'z') opt.size = 3;
 
 		if(c >= '1' && c <= '9') state = length, options--;
 	}
@@ -211,7 +190,7 @@ struct kprint_options kprint_opt(char const **options_ptr)
 void kprint(char const *format, va_list *args)
 {
 	int c, spec;
-	struct kprint_options opt;
+	kprint_options_t opt;
 
 	while((c = *format++))
 	{
@@ -262,37 +241,11 @@ size_t kvsprint(char *output, size_t length, char const *format, va_list *args)
 //	Formatter helpers
 //---
 
-/* struct geometry: General geometry for a format */
-struct geometry
+/* kformat_geometry(): Calculate the geometry of a format */
+void kformat_geometry(kprint_options_t *opt, kprint_geometry_t *g)
 {
-	uint16_t left_spaces;	/* Spaces before content */
-	uint8_t  sign;		/* Sign character (NUL, ' ', '+' or '-') */
-	uint8_t  prefix;	/* Base prefix ('0', '0x', etc) length */
-	uint16_t zeros;		/* For numerical displays, number of zeros */
-	uint16_t content;	/* Content length in bytes */
-	uint16_t right_spaces;	/* Spaces after content */
-
-} GPACKED(2);
-
-/* kformat_geometry(): Calculate the geometry of a format
-
-   The caller must provide the [prefix] and [content] lengths in the geometry
-   structure. Additionally, a sign must be indicated: either '+' if the
-   formatted value is nonnegative, or '-' otherwise. The sign might be updated
-   by this function, but not the other two fields.
-
-   This function is not *really* isolated from the standard kformat functions
-   (as would a precise API be), because the meaning of each options and the
-   process of resolving them varies so much. */
-static void kformat_geometry(int spec, struct kprint_options *opt,
-	struct geometry *g)
-{
-	/* Determining whether we are in numerical. The blacklist approach
-	   allows custom specifiers which call this function to enable zeros if
-	   they like (they can disable them by un-setting opt->alignment if
-	   it's '0' in any case) */
-	int numerical = (spec != 'c' && spec != 'p' && spec != 's');
-
+	int integral = (g->style == KPRINT_INTEGER);
+	int numerical = (g->style == KPRINT_NUMERICAL) || integral;
 	ssize_t padding;
 
 	/* Sign character (no discussion required for negative values) */
@@ -305,12 +258,12 @@ static void kformat_geometry(int spec, struct kprint_options *opt,
 
 	g->zeros = 0;
 
-	padding = opt->length - !!g->sign - g->prefix
+	padding = opt->length - (g->sign != 0) - g->prefix
 		- max(g->content, opt->precision);
 	if(padding < 0) padding = 0;
 
-	/* In numerical modes, precision forces zeros */
-	if(numerical && opt->precision)
+	/* In integral modes, precision forces zeros */
+	if(integral && opt->precision)
 	{
 		if(opt->alignment == '0') opt->alignment = 0;
 
@@ -384,7 +337,7 @@ static int digits_8(char *str, uint64_t n)
 
 static int64_t load_i(int size, va_list *args)
 {
-	/* All smaller types are promoted to int wth sign extension, so we
+	/* All smaller types are promoted to int with sign extension, so we
 	   don't need to care about them. */
 	if(size == 3) return va_arg(*args, long);
 	if(size == 4) return va_arg(*args, long long);
@@ -410,10 +363,10 @@ static void kformat_char(KFORMAT_ARGS)
 {
 	int c = va_arg(*args, int);
 
-	struct geometry g = {
+	kprint_geometry_t g = {
 		.prefix = 0, .sign = 0, .content = 1,
 	};
-	kformat_geometry(spec, opt, &g);
+	kformat_geometry(opt, &g);
 
 	kprint_outn(' ', g.left_spaces);
 	kprint_out(c);
@@ -434,10 +387,10 @@ static void kformat_str(KFORMAT_ARGS)
 	uint32_t precision = opt->precision ? opt->precision : (-1);
 	while(s[len] && len < precision) len++;
 
-	struct geometry g = {
+	kprint_geometry_t g = {
 		.prefix = 0, .sign = 0, .content = len,
 	};
-	kformat_geometry(spec, opt, &g);
+	kformat_geometry(opt, &g);
 
 	kprint_outn(' ', g.left_spaces);
 	for(size_t i = 0; i < len; i++) kprint_out(s[i]);
@@ -456,9 +409,10 @@ static void kformat_int(KFORMAT_ARGS)
 	int64_t n = load_i(opt->size, args);
 
 	/* Compute the sign and the absolute value */
-	struct geometry g = {
+	kprint_geometry_t g = {
 		.sign   = (n < 0) ? '-' : '+',
 		.prefix = 0,
+		.style  = KPRINT_INTEGER,
 	};
 	if(n < 0) n = -n;
 
@@ -470,7 +424,7 @@ static void kformat_int(KFORMAT_ARGS)
 	total = max(pure, opt->precision);
 	g.content = total;
 
-	kformat_geometry(spec, opt, &g);
+	kformat_geometry(opt, &g);
 
 	/* Print the result */
 	kprint_outn(' ', g.left_spaces);
@@ -507,10 +461,11 @@ static void kformat_uint(KFORMAT_ARGS)
 	size_t prefix = 0;
 	if(opt->alternative) prefix = (specl != 'u') + (specl == 'x');
 
-	struct geometry g = {
-		.sign = 0, .prefix = prefix, .content = total
+	kprint_geometry_t g = {
+		.sign = 0, .prefix = prefix, .content = total,
+		.style = KPRINT_INTEGER,
 	};
-	kformat_geometry(spec, opt, &g);
+	kformat_geometry(opt, &g);
 
 	/* Output */
 	kprint_outn(' ', g.left_spaces);
@@ -551,9 +506,10 @@ static void kformat_fixed(KFORMAT_ARGS)
 	int64_t n = load_i(opt->size, args);
 
 	/* Compute the sign and the absolute value */
-	struct geometry g = {
+	kprint_geometry_t g = {
 		.sign   = (n < 0) ? '-' : '+',
 		.prefix = 0,
+		.style  = KPRINT_NUMERICAL,
 	};
 	if(n < 0) n = -n;
 
@@ -561,7 +517,7 @@ static void kformat_fixed(KFORMAT_ARGS)
 	char digits[32];
 
 	g.content = digits_10(digits, n) + 1;
-	kformat_geometry(spec, opt, &g);
+	kformat_geometry(opt, &g);
 
 	/* Print the result */
 	kprint_outn(' ', g.left_spaces);
@@ -575,44 +531,4 @@ static void kformat_fixed(KFORMAT_ARGS)
 	}
 
 	kprint_outn(' ', g.right_spaces);
-}
-
-//---
-//	Standard formatted printing functions
-//---
-
-/* sprintf() */
-GWEAK int sprintf(char *str, char const *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-
-	int count = kvsprint(str, 65536, format, &args);
-
-	va_end(args);
-	return count;
-}
-
-/* vsprintf() */
-GWEAK int vsprintf(char *str, char const *format, va_list args)
-{
-	return kvsprint(str, 65536, format, &args);
-}
-
-/* snprintf() */
-GWEAK int snprintf(char *str, size_t n, char const *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-
-	int count = kvsprint(str, n, format, &args);
-
-	va_end(args);
-	return count;
-}
-
-/* vsprintf() */
-GWEAK int vsnprintf(char *str, size_t n, char const *format, va_list args)
-{
-	return kvsprint(str, n, format, &args);
 }

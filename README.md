@@ -17,7 +17,7 @@ Currently, this only includes:
 
 * A stripped-down version of the [TinyMT random number generator](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/TINYMT/index.html)
   ([GitHub repository](https://github.com/MersenneTwister-Lab/TinyMT)) by
-  Mutsuo Saito and Makoto Matsumoto. See `src/std/tinymt32/LICENSE.txt`.
+  Mutsuo Saito and Makoto Matsumoto. See `src/3rdparty/tinymt32/LICENSE.txt`.
 
 ## Programming interface
 

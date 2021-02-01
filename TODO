@@ -1,4 +1,5 @@
 Extensions on existing code:
+* kernel:    check if cpu_setVBR() really needs to be perma-mapped
 * stdio:     support %f in printf
 * project:   add license file
 * kernel:    group linker script symbols in a single header file
