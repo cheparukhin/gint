@@ -1,6 +1,6 @@
 # Build system for the gint unikernel
 
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.16)
 project(Gint VERSION 2.3.0 LANGUAGES C ASM)
 
 include(GitVersionNumber)
