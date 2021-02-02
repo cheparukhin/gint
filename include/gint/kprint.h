@@ -19,6 +19,13 @@
    see <stdio.h>. */
 size_t kvsprint(char *output, size_t len, char const *format, va_list *args);
 
+/* kprint_enable_fp(): Enable and load floating-point formats
+   Loads floating-point formats %e, %E, %f, %F, %g and %G. By default these
+   formats are not enabled because the formatting code takes a large amount of
+   space. Calling this function pulls the floating-point formatter from the
+   gint library at link time. */
+void kprint_enable_fp(void);
+
 //---
 // Printer extensions
 //---
@@ -34,7 +41,7 @@ typedef struct {
 	/* Minimal length of formatted string (padding can be added) */
 	uint16_t length;
 	/* How much significant characters of data, meaning varies */
-	uint16_t precision;
+	int16_t precision;
 
 	/* Size specifier for integers (%o, %x, %i, %d, %u), may be one of:
 	   (0) char       (8-bit)
@@ -78,6 +85,15 @@ typedef void (*kprint_formatter_t)(KFORMAT_ARGS);
    @kformat  Format function */
 void kprint_register(int spec, kprint_formatter_t kformat);
 
+/* kprint_out(): Output a single character to the kprint buffer */
+void kprint_out(int byte);
+
+/* kprint_outn(): Output the same character <n> times */
+void kprint_outn(int byte, int n);
+
+/* kprint_outstr(): Output a string to the kprint buffer */
+void kprint_outstr(char const *str, int n);
+
 //---
 // Helper functions for formatters
 //---
@@ -103,8 +119,8 @@ typedef struct
 	/* Style of display:
 	     KPRINT_GENERIC    Sign ignored, 0-padding ignored
 	     KPRINT_INTEGER    .precision causes 0-padding
-	     KPRINT_NUMERICAL  No effect */
-	enum { KPRINT_GENERIC = 0, KPRINT_INTEGER, KPRINT_NUMERICAL } style;
+	     KPRINT_NUMERIC    No effect */
+	enum { KPRINT_GENERIC = 0, KPRINT_INTEGER, KPRINT_NUMERIC } style;
 
 } GPACKED(2) kprint_geometry_t;
 
@@ -115,10 +131,11 @@ typedef struct
    * g->prefix, the length of the desired prefix (if unused, 0)
    * g->content, the natural content length for the provided data
    * g->sign, the sign of the input ("+" or "-"); for KPRINT_GENERIC, 0
+   * g->style, which affects the meaning of options
 
    This function outputs:
-   * g->sign, which can be changed to " " or NUL depending on opt
-   * All other fields of g that are not part of the input
+   * g->sign, which will be changed to " " or NUL (0) depending on options
+   * All fields of g that are not part of the input
 
    The algorithm for laying out the format is as follows.
    1. For numerical and integer formats, turn a "+" sign into " " if

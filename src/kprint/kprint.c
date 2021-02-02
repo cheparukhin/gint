@@ -66,15 +66,12 @@ kprint_formatter_t kprint_formatters[26] = {
 /* kprint_register(): Register a formatter */
 void kprint_register(int spec, kprint_formatter_t kformat)
 {
-	spec |= 0x20;
-	int i = (spec | 0x20) - 'a';
-
 	/* Non-letters */
-	if(i < 0 || i >= 26) return;
+	if(spec < 'a' || spec > 'z') return;
 	/* Size-specifying letters */
 	if(spec == 'h' || spec == 'l' || spec == 'z') return;
 
-	kprint_formatters[i] = kformat;
+	kprint_formatters[spec - 'a'] = kformat;
 }
 
 //---
@@ -104,17 +101,23 @@ static void kprint_flush(void)
 	kprint_ptr    = kprint_buffer;
 }
 
-/* kprint_out(): Output a single character to the buffer */
-GINLINE static void kprint_out(int byte)
+/* kprint_out(): Output a single character to the kprint buffer */
+GINLINE void kprint_out(int byte)
 {
 	if(kprint_ptr >= kprint_limit) kprint_flush();
 	*kprint_ptr++ = byte;
 }
 
 /* kprint_outn(): Output the same character <n> times */
-GINLINE static void kprint_outn(int byte, size_t n)
+GINLINE void kprint_outn(int byte, int n)
 {
-	while(n--) kprint_out(byte);
+	while(n-- > 0) kprint_out(byte);
+}
+
+/* kprint_outstr(): Output a string to the kprint buffer */
+GINLINE void kprint_outstr(char const *str, int n)
+{
+	for(int i = 0; i < n; i++) kprint_out(str[i]);
 }
 
 //---
@@ -125,7 +128,7 @@ GINLINE static void kprint_outn(int byte, size_t n)
 kprint_options_t kprint_opt(char const **options_ptr)
 {
 	/* No options enabled by default, set the size to int */
-	kprint_options_t opt = { .size = 2 };
+	kprint_options_t opt = { .size = 2, .precision = -1 };
 
 	/* This function acts as a deterministic finite automaton */
 	enum {
@@ -144,6 +147,7 @@ kprint_options_t kprint_opt(char const **options_ptr)
 		if(c == '.')
 		{
 			state = precision;
+			opt.precision = 0;
 			continue;
 		}
 		else if(state == length && c >= '0' && c <= '9')
@@ -213,11 +217,9 @@ void kprint(char const *format, va_list *args)
 		opt = kprint_opt(&format);
 		spec = *format++;
 
-		if(spec)
-		{
-			int id = (spec | 0x20) - 'a';
+		int id = (spec | 0x20) - 'a';
+		if(id >= 0 && id < 26 && kprint_formatters[id])
 			kprint_formatters[id](spec, &opt, args);
-		}
 	}
 
 	kprint_flush();
@@ -245,7 +247,7 @@ size_t kvsprint(char *output, size_t length, char const *format, va_list *args)
 void kformat_geometry(kprint_options_t *opt, kprint_geometry_t *g)
 {
 	int integral = (g->style == KPRINT_INTEGER);
-	int numerical = (g->style == KPRINT_NUMERICAL) || integral;
+	int numerical = (g->style == KPRINT_NUMERIC) || integral;
 	ssize_t padding;
 
 	/* Sign character (no discussion required for negative values) */
@@ -263,7 +265,7 @@ void kformat_geometry(kprint_options_t *opt, kprint_geometry_t *g)
 	if(padding < 0) padding = 0;
 
 	/* In integral modes, precision forces zeros */
-	if(integral && opt->precision)
+	if(integral && opt->precision >= 0)
 	{
 		if(opt->alignment == '0') opt->alignment = 0;
 
@@ -294,7 +296,6 @@ void kformat_geometry(kprint_options_t *opt, kprint_geometry_t *g)
 static int digits_10(char *str, uint64_t n)
 {
 	int digits = 0;
-
 	while(n || !digits)
 	{
 		/* TODO: Use qdiv() in kprint's digits_10() */
@@ -421,6 +422,7 @@ static void kformat_int(KFORMAT_ARGS)
 	int pure, total;
 
 	pure = digits_10(digits, n);
+	if(opt->precision == 0 && !n) pure = 0;
 	total = max(pure, opt->precision);
 	g.content = total;
 
@@ -455,6 +457,7 @@ static void kformat_uint(KFORMAT_ARGS)
 	if(specl == 'o') pure = digits_8(digits, n);
 	if(specl == 'x') pure = digits_16(digits, spec == 'X', n);
 
+	if(opt->precision == 0 && !n) pure = 0;
 	total = max(pure, opt->precision);
 
 	/* Prefix length */
@@ -509,7 +512,7 @@ static void kformat_fixed(KFORMAT_ARGS)
 	kprint_geometry_t g = {
 		.sign   = (n < 0) ? '-' : '+',
 		.prefix = 0,
-		.style  = KPRINT_NUMERICAL,
+		.style  = KPRINT_NUMERIC,
 	};
 	if(n < 0) n = -n;
 

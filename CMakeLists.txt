@@ -31,6 +31,7 @@ set(SOURCES_COMMON
   src/keysc/keycodes.c
   src/keysc/keysc.c
   src/kprint/kprint.c
+  src/kprint/kformat_fp.c
   src/mmu/mmu.c
   src/render/dhline.c
   src/render/dimage.c
@@ -56,6 +57,7 @@ set(SOURCES_COMMON
   src/tmu/tmu.c
   src/3rdparty/tinymt32/rand.c
   src/3rdparty/tinymt32/tinymt32.c
+  src/3rdparty/grisu2b_59_56/grisu2b_59_56.c
 )
 set(SOURCES_FX
   src/gray/engine.c
@@ -104,8 +106,15 @@ set(ASSETS_FX src/font5x7.png)
 set(ASSETS_CG src/font8x9.png)
 fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 
-include_directories("${PROJECT_SOURCE_DIR}/include" "${PROJECT_BINARY_DIR}/include")
+include_directories(
+  "${PROJECT_SOURCE_DIR}/include"
+  "${PROJECT_BINARY_DIR}/include"
+  "${FXSDK_COMPILER_INSTALL}/include/openlibm")
 add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields)
+
+# Silence extended warnings on Grisu2b code
+set_source_files_properties(src/3rdparty/grisu2b_59_56/grisu2b_59_56.c PROPERTIES
+  COMPILE_OPTIONS "-Wno-all;-Wno-extra")
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   add_compile_definitions(FX9860G)
