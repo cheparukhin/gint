@@ -17,8 +17,9 @@
    page-aligned.
 
    @virtual  Virtual page address
+   @size     If provided, set to the size of the page
    Returns the page's physical address, or -1 if not mapped. */
-uint32_t mmu_translate(uint32_t page);
+uint32_t mmu_translate(uint32_t page, uint32_t *size);
 
 /* mmu_uram(): Get pointer to physical start of user RAM
 
@@ -27,6 +28,13 @@ uint32_t mmu_translate(uint32_t page);
    interrupts are processed with SR.BL=1. However, the location is highly
    platform-dependent. */
 void *mmu_uram(void);
+
+/* mmu_uram_size(): Get size of user RAM area
+
+   Returns the size of the static memory at 0x08100000, whose address is
+   returned by mmu_uram(). This is typically 8k on SH3 fx-9860G, 32k on SH4
+   fx-9860G, and 512k on fx-CG 50. */
+uint32_t mmu_uram_size(void);
 
 //---
 //	SH7705 TLB
@@ -56,7 +64,7 @@ tlb_data_t const *tlb_data(uint way, uint E);
 void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram);
 
 /* tlb_translate(): Get the physical address for a virtual page */
-uint32_t tlb_translate(uint32_t page);
+uint32_t tlb_translate(uint32_t page, uint32_t *size);
 
 //---
 //	SH7305 Unified TLB
@@ -84,6 +92,6 @@ utlb_data_t const *utlb_data(uint E);
 void utlb_mapped_memory(uint32_t *rom, uint32_t *ram);
 
 /* utlb_translate(): Get the physical address for a virtual page */
-uint32_t utlb_translate(uint32_t page);
+uint32_t utlb_translate(uint32_t page, uint32_t *size);
 
 #endif /* GINT_MMU */

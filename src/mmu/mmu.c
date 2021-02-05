@@ -11,16 +11,30 @@
 //---
 
 /* mmu_translate(): Get the physical address for a virtual page */
-uint32_t mmu_translate(uint32_t page)
+uint32_t mmu_translate(uint32_t page, uint32_t *size)
 {
-	return isSH3() ? tlb_translate(page) : utlb_translate(page);
+	return isSH3() ? tlb_translate(page,size) : utlb_translate(page,size);
 }
 
 /* mmu_uram(): Get pointer to physical start of user RAM */
 void *mmu_uram(void)
 {
 	/* Use P1 access */
-	return (void *)(mmu_translate(0x08100000) | 0x80000000);
+	return (void *)(mmu_translate(0x08100000, NULL) | 0x80000000);
+}
+
+/* mmu_uram_size(): Get size of user RAM area */
+uint32_t mmu_uram_size(void)
+{
+	uint32_t size = 0;
+	uint32_t pagesize;
+
+	while(mmu_translate(0x08100000 + size, &pagesize) != (uint32_t)-1)
+	{
+		size += pagesize;
+	}
+
+	return size;
 }
 
 //---
@@ -72,7 +86,7 @@ void tlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 }
 
 /* tlb_translate(): Get the physical address for a virtual page */
-uint32_t tlb_translate(uint32_t page)
+uint32_t tlb_translate(uint32_t page, uint32_t *size)
 {
 	for(int way = 0; way < 4; way++)
 	for(int E = 0; E < 32; E++)
@@ -85,7 +99,11 @@ uint32_t tlb_translate(uint32_t page)
 		if(data->SZ) src = (((addr->VPN >> 2) | E) << 12);
 		else src = (addr->VPN | (E << 2)) << 10;
 
-		if(src == page) return data->PPN << 10;
+		if(src == page)
+		{
+			if(size) *size = (data->SZ ? 4096 : 1024);
+			return data->PPN << 10;
+		}
 	}
 	return -1;
 }
@@ -137,7 +155,7 @@ void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 }
 
 /* utlb_translate(): Get the physical address for a virtual page */
-uint32_t utlb_translate(uint32_t page)
+uint32_t utlb_translate(uint32_t page, uint32_t *size)
 {
 	for(int E = 0; E < 64; E++)
 	{
@@ -145,7 +163,14 @@ uint32_t utlb_translate(uint32_t page)
 		const utlb_data_t *data = utlb_data(E);
 		if(!addr->V || !data->V) continue;
 
-		if((uint32_t)addr->VPN << 10 == page) return data->PPN << 10;
+		if((uint32_t)addr->VPN << 10 == page)
+		{
+			/* Same magic formula as utlb_mapped_memory() */
+			int sz = ((data->SZ1 << 1) | data->SZ2) << 3;
+			if(size) *size = 1 << ((0x14100c0a >> sz) & 0xff);
+
+			return data->PPN << 10;
+		}
 	}
 	return -1;
 }
