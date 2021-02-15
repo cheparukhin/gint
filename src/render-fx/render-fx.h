@@ -74,7 +74,7 @@ struct rendering_mode
 	/* Text and image rendering */
 	void (*dtext_opt)
 		(int x, int y, int fg, int bg, int halign, int valign,
-		 char const *str);
+		 char const *str, int size);
 	void (*dsubimage)
 		(bopti_image_t const *image, struct rbox *r, int flags);
 };
@@ -89,9 +89,8 @@ void grect(int x1, int y1, int x2, int y2, color_t color);
 void gpixel(int x, int y, color_t color);
 void gint_ghline(int x1, int x2, int y, int color);
 void gint_gvline(int y1, int y2, int x, int color);
-void gtext_opt
-	(int x, int y, int fg, int bg, int halign, int valign,
-	 char const *str);
+void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
+	 char const *str, int size);
 void gsubimage(bopti_image_t const *image, struct rbox *r, int flags);
 
 /* Short macro to call the alternate rendering function when available */

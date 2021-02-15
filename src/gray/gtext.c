@@ -4,7 +4,7 @@
 
 /* gtext_opt(): Display a string of text */
 void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
-	char const *str)
+	char const *str, int size)
 {
 	uint32_t *light, *dark;
 	dgray_getvram(&light, &dark);
@@ -21,5 +21,5 @@ void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 	}
 
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],
-		topti_asm_text[bg], light, dark);
+		topti_asm_text[bg], light, dark, size);
 }

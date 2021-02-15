@@ -22,8 +22,10 @@ extern asm_text_t *topti_asm_text[8];
    @asm_fg  Assembler function for text rendering
    @asm_bg  Assembler function for background rendering
    @v1      Monochrome VRAM or light gray VRAM
-   @v2      Monochrome or dark gray VRAM */
+   @v2      Monochrome or dark gray VRAM
+   @size    Maximum number of characters to render */
 void topti_render(int x, int y, char const *str, font_t const *f,
-	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2);
+	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2,
+	int size);
 
 #endif /* GINT_RENDERFX_TOPTIASM */

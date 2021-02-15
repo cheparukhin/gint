@@ -6,6 +6,8 @@
 #include "render-fx.h"
 #include "topti-asm.h"
 
+#undef dtext_opt
+
 /* Default font */
 extern font_t gint_font5x7;
 font_t const * gint_default_font = &gint_font5x7;
@@ -83,9 +85,11 @@ static int topti_split(uint32_t const * glyph, int width, int height, int free,
 
 /* topti_render(): Render a string on the VRAM */
 void topti_render(int x, int y, char const *str_char, font_t const *f,
-	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2)
+	asm_text_t *asm_fg, asm_text_t *asm_bg, uint32_t *v1, uint32_t *v2,
+	int size)
 {
 	uint8_t const *str = (void *)str_char;
+	uint8_t const *str0 = str;
 
 	/* Storage height and number of free bits in operators[] */
 	int height = f->data_height, free;
@@ -121,7 +125,7 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 	while(1)
 	{
 		uint32_t code_point = topti_utf8_next(&str);
-		if(!code_point) break;
+		if(!code_point || (size >= 0 && str - str0 > size)) break;
 
 		int glyph = topti_glyph_index(f, code_point);
 		if(glyph < 0) continue;
@@ -175,16 +179,16 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 
 /* dtext_opt(): Display a string of text */
 void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
-	char const *str)
+	char const *str, int size)
 {
 	if((uint)fg >= 8 || (uint)bg >= 8) return;
 
-	DMODE_OVERRIDE(dtext_opt, x, y, fg, bg, halign, valign, str);
+	DMODE_OVERRIDE(dtext_opt, x, y, fg, bg, halign, valign, str, size);
 
 	if(halign != DTEXT_LEFT || valign != DTEXT_TOP)
 	{
 		int w, h;
-		dsize(str, topti_font, &w, &h);
+		dnsize(str, size, topti_font, &w, &h);
 
 		if(halign == DTEXT_RIGHT)  x -= w - 1;
 		if(halign == DTEXT_CENTER) x -= (w >> 1);
@@ -193,5 +197,5 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 	}
 
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],
-		topti_asm_text[bg], gint_vram, gint_vram);
+		topti_asm_text[bg], gint_vram, gint_vram, size);
 }

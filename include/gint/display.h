@@ -303,9 +303,16 @@ enum {
             fx-CG 50: Any R5G6B6 color, or C_NONE
    @halign  Where x should be relative to the rendered string
    @valign  Where y should be relative to the rendered string
-   @str     String to display */
+   @str     String to display
+   @size    Maximum number of bytes to display (negative for no limit) */
 void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
-	char const *str);
+	char const *str, int size);
+
+/* The last parameter @size was added in gint 2.4; this macro will add it
+   automatically with a value of -1 if the call is made with only 7 parameters.
+   This is for backwards compatibility. */
+#define dtext_opt8(x,y,fg,bg,h,v,str,sz,...) dtext_opt(x,y,fg,bg,h,v,str,sz)
+#define dtext_opt(...) dtext_opt8(__VA_ARGS__, -1)
 
 /* dtext(): Simple version of dtext_opt() with defaults
    Calls dtext_opt() with bg=C_NONE, halign=DTEXT_LEFT and valign=DTEXT_TOP. */

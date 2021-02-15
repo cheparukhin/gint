@@ -43,9 +43,10 @@ static void topti_glyph(uint16_t *vram, uint32_t const * data, int left,
 }
 
 static void topti_render(int x, int y, char const *str_char, font_t const *f,
-	int fg, int bg)
+	int fg, int bg, int size)
 {
 	uint8_t const *str = (void *)str_char;
+	uint8_t const *str0 = str;
 
 	/* Raw glyph data */
 	uint32_t const *data = f->data;
@@ -68,7 +69,7 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 	while(1)
 	{
 		uint32_t code_point = topti_utf8_next(&str);
-		if(!code_point) break;
+		if(!code_point || (size >= 0 && str - str0 > size)) break;
 
 		int glyph = topti_glyph_index(f, code_point);
 		if(glyph < 0) continue;
@@ -107,12 +108,12 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 
 /* dtext_opt(): Display a string of text */
 void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
-	char const *str)
+	char const *str, int size)
 {
 	if(halign != DTEXT_LEFT || valign != DTEXT_TOP)
 	{
 		int w, h;
-		dsize(str, topti_font, &w, &h);
+		dnsize(str, size, topti_font, &w, &h);
 
 		if(halign == DTEXT_RIGHT)  x -= w - 1;
 		if(halign == DTEXT_CENTER) x -= (w >> 1);
@@ -120,5 +121,5 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 		if(valign == DTEXT_MIDDLE) y -= (h >> 1);
 	}
 
-	topti_render(x, y, str, topti_font, fg, bg);
+	topti_render(x, y, str, topti_font, fg, bg, size);
 }
