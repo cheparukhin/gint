@@ -24,6 +24,9 @@
 extern uint32_t (*cpu_setVBR)(uint32_t vbr, void (*conf_intc)(int arg),
 	int arg);
 
+/* cpu_getVBR(): Query the current VBR address */
+uint32_t cpu_getVBR(void);
+
 /* cpu_setCPUOPM(): Change the CPU Operation Mode register
 
    Updates the CPU Operation Mode with the specified settings, then performs a

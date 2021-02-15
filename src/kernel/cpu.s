@@ -2,7 +2,8 @@
 **	gint:core:vbr - Assembler-level VBR management
 */
 
-.global	_cpu_setVBR
+.global _cpu_getVBR
+.global _cpu_setVBR
 .global _cpu_setCPUOPM
 .global _cpu_getCPUOPM
 .global _cpu_getSR
@@ -51,6 +52,12 @@ _cpu_setVBR:
 	.long	_cpu_setVBR_reloc
 
 .text
+
+/* cpu_getVBR(): Query the current VBR address */
+_cpu_getVBR:
+	stc	vbr, r0
+	rts
+	nop
 
 /* cpu_setCPUOPM(): Change the CPU Operation Mode register */
 _cpu_setCPUOPM:

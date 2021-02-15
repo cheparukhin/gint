@@ -179,6 +179,9 @@ SECTIONS
 	.gint.bss (NOLOAD) : {
 		*(.gint.bss)
 		. = ALIGN(16);
+
+		/* End of user RAM */
+		_euram = . ;
 	} > ram :NONE
 
 	_sgbss = SIZEOF(.gint.bss);

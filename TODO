@@ -1,9 +1,8 @@
 Extensions on existing code:
+* kernel:    better restore to userspace before panic (ensure BL=0 IMASK=0)
 * kernel:    check if cpu_setVBR() really needs to be perma-mapped
-* stdio:     support %f in printf
 * project:   add license file
 * kernel:    group linker script symbols in a single header file
-* kernel:    be consistent about *tlb_mapped_memory() in hw_detect()
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
 * dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic
@@ -12,7 +11,6 @@ Extensions on existing code:
 * core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
 * core:      run destructors when a task-switch results in leaving the app
 * core rtc:  use qdiv10 to massively improve division performance
-* topti:     let the font specify letter and word spacing
 
 Future directions.
 * A complete file system abstraction

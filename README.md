@@ -21,7 +21,7 @@ Currently, this includes:
 * A stripped-down version of the [Grisu2b floating-point representation
   algorithm](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf)
   with α=-59 and γ=-56, by Florian Loitsch. See `src/3rdparty/grisu2b_59_56/README`
-  for details [the original code here](https://drive.google.com/open?id=0BwvYOx00EwKmejFIMjRORTFLcTA).
+  for details, and [the original code here](https://drive.google.com/open?id=0BwvYOx00EwKmejFIMjRORTFLcTA).
 
 ## Programming interface
 

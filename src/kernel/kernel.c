@@ -127,9 +127,17 @@ static void kinit_cpu(void)
 void kinit(void)
 {
 	#ifdef FX9860G
-	/* VBR is loaded 0x600 bytes before end of the user RAM (0x100 bytes at
-	   the start of the VBR space are unused) */
-	gint_ctx.VBR = (uint32_t)mmu_uram() + 0x1a00 - 0x100;
+	/* VBR is loaded at the end of the user RAM. */
+	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size();
+	/* On SH4, stack is at the end of the region, leave 8k */
+	if(isSH4()) uram_end -= 0x2000;
+	/* VBR size differs with models. On SH3, only 0x600 bytes are used due
+	   to the compact scheme. On SH4, 0x1100 bytes are needed to cover the
+	   expanded region. */
+	uram_end -= (isSH3() ? 0x600 : 0x1100);
+
+	/* There are 0x100 unused bytes at the start of the VBR area */
+	gint_ctx.VBR = uram_end - 0x100;
 	#endif
 
 	#ifdef FXCG50
@@ -190,6 +198,12 @@ void *gint_inthandler(int event_code, const void *handler, size_t size)
 	/* Normalize the event code */
 	if(event_code < 0x400) return NULL;
 	event_code &= ~0x1f;
+
+	/* Prevent writing beyond the end of the VBR space on SH4. Using code
+	   0xfc0 into the interrupt handler space (which starts 0x540 bytes
+	   into VBR-reserved memory) would reach byte 0x540 + 0xfc0 - 0x400 =
+	   0x1100, which is out of gint's reserved VBR area.  */
+	if(isSH4() && event_code + size > 0xfc0) return NULL;
 
 	/* On SH3, make VBR compact. Use this offset specified in the VBR map
 	   above to avoid gaps */

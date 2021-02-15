@@ -16,12 +16,15 @@ MEMORY
 	/* Userspace mapping of the add-in (G1A header takes 0x200 bytes) */
 	rom   (rx):   o = 0x00300200, l = 500k
 
-	/* User RAM is mapped at 0x08100000 through MMU; 8k on SH3, 32k on SH4.
-	   Currently gint provides access to 8k, with three blocks:
+	/* User RAM is mapped at 0x08100000 through MMU; usually 8k on SH3, 32k
+	   on SH4. This script exposes only 6k to the user, reserving:
 	   * 0x200 bytes for text accessed without the TLB when SR.BL=1, linked
 	     into the rram region below, then loaded dynamically
-	   * 6k for user content
-	   * 0x600 bytes for the VBR space, also without MMU */
+	   * 0x600 bytes for the VBR space, also without MMU
+	   On SH3, the VBR space consumes these 0x600 bytes. On SH4, it spans
+	   0x1100 bytes near the end of the user RAM, which is larger; the 6k
+	   left for the user are honored in both cases. Unused memory from the
+	   exposed 6k and non-exposed memory is available through malloc(). */
 	ram   (rw):   o = 0x08100200, l = 6k
 
 	/* This region represents the first block of user RAM. Linker arranges
@@ -172,6 +175,9 @@ SECTIONS
 		*(.gint.bss .gint.bss.sh3)
 
 		. = ALIGN(16);
+
+		/* End of user RAM */
+		_euram = . ;
 	} > ram :NONE
 
 	_sgbss = SIZEOF(.gint.bss);
