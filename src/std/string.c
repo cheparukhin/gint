@@ -4,6 +4,7 @@
 
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
+#include <gint/std/string.h>
 #include <stdarg.h>
 
 GWEAK size_t strlen(char const *str)
@@ -32,4 +33,21 @@ GWEAK int strcmp(char const *s1, char const *s2)
 {
 	while(*s1 && *s1 == *s2) s1++, s2++;
 	return *s1 - *s2;
+}
+
+GWEAK char *strchr(char const *s, int c)
+{
+	while(*s && *s != c) s++;
+	return (*s) ? (char *)s : NULL;
+}
+
+GWEAK char *strrchr(char const *s, int c)
+{
+	char const *found = NULL;
+	while(*s)
+	{
+		if(*s == c) found = s;
+		s++;
+	}
+	return (char *)found;
 }

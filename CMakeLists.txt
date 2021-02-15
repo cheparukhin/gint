@@ -52,6 +52,7 @@ set(SOURCES_COMMON
   src/std/memset.s
   src/std/print.c
   src/std/string.c
+  src/std/string-ext.c
   src/tmu/inth-etmu.s
   src/tmu/inth-tmu.s
   src/tmu/sleep.c

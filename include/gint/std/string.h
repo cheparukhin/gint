@@ -31,4 +31,13 @@ char *strcat(char *dest, const char *src);
 /* strcmp(): Compare NUL-terminated strings */
 int strcmp(char const *s1, char const *s2);
 
+/* strchr(): Find the first occurrence of a character in a string */
+char *strchr(char const *s, int c);
+
+/* strrchr(): Find the last occurrence of a character in a string */
+char *strrchr(char const *s, int c);
+
+/* strchrnul(): Like strchr(), but returns end-of-string instead of NUL */
+char *strchrnul(char const *s, int c);
+
 #endif /* GINT_STD_STRING */
