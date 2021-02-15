@@ -45,6 +45,7 @@ set(SOURCES_COMMON
   src/rtc/rtc.c
   src/rtc/rtc_ticks.c
   src/spu/spu.c
+  src/std/aprint.c
   src/std/memcmp.s
   src/std/memcpy.s
   src/std/memmove.s

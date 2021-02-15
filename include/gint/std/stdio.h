@@ -17,7 +17,7 @@
    * Parameter length (hh, h, l, ll, z)
    * Limiting the size of the output and still returning the whole length
    * If kprint_enable_fp() from <gint/kprint.h> is called: floating-point
-     formats (%e, %E, %f, %F, %g, %G) (disabled by default for space)
+     formats (%e, %E, %f, %F, %g, %G) (disabled by default to save space)
 
    They do not support:
    * Hexadecimal floating-point (%a, %A)
@@ -41,5 +41,9 @@ int vsprintf(char *str, char const *format, va_list args);
 int snprintf(char *str, size_t n, char const *format, ...);
 /* Print to string with limited size from va_list */
 int vsnprintf(char *str, size_t n, char const *format, va_list args);
+/* Print to auto-allocated string */
+int asprintf(char **strp, char const *format, ...);
+/* Print to auto-allocated string from va_list */
+int vasprintf(char **strp, char const *format, va_list args);
 
 #endif /* GINT_STD_STDIO */
