@@ -97,10 +97,11 @@ uint32_t topti_utf8_next(uint8_t const **str_pointer)
 	return 0x20;
 }
 
-/* dsize(): Get the width and height of rendered text */
-void dsize(char const *str_char, font_t const * f, int *w, int *h)
+/* dnsize(): Get the width and height of rendered text, with character limit */
+void dnsize(char const *str_char, int size, font_t const *f, int *w, int *h)
 {
 	uint8_t const *str = (void *)str_char;
+	uint8_t const *str0 = str;
 	uint32_t code_point;
 
 	if(!f) f = topti_font;
@@ -112,7 +113,13 @@ void dsize(char const *str_char, font_t const * f, int *w, int *h)
 	if(!f->prop)
 	{
 		int length = 0;
-		while((code_point = topti_utf8_next(&str))) length++;
+		while(1)
+		{
+			code_point = topti_utf8_next(&str);
+			if(!code_point || (size >= 0 && str - str0 > size))
+				break;
+			length++;
+		}
 
 		*w = (f->width + f->char_spacing) * length - f->char_spacing;
 		return;
@@ -124,11 +131,54 @@ void dsize(char const *str_char, font_t const * f, int *w, int *h)
 	while(1)
 	{
 		code_point = topti_utf8_next(&str);
-		if(!code_point) break;
+		if(!code_point || (size >= 0 && str - str0 > size)) break;
 
 		int glyph = topti_glyph_index(f, code_point);
-		if(glyph < 0) continue;
-		width += f->glyph_width[glyph] + f->char_spacing;
+		if(glyph >= 0)
+			width += f->glyph_width[glyph] + f->char_spacing;
 	}
 	*w = width - f->char_spacing;
+}
+
+/* dsize(): Get the width and height of rendered text */
+void dsize(char const *str_char, font_t const *f, int *w, int *h)
+{
+	return dnsize(str_char, -1, f, w, h);
+}
+
+/* drsize(): Get width of rendered text with reverse size limit */
+char const *drsize(char const *str_char, font_t const *f, int width, int *w)
+{
+	uint8_t const *str = (void *)str_char;
+	uint32_t code_point;
+
+	int used_width = 0;
+	if(!f) f = topti_font;
+
+	while(used_width < width)
+	{
+		/* Record that last glyph considered fits */
+		str_char = (void *)str;
+
+		code_point = topti_utf8_next(&str);
+		if(!code_point)
+		{
+			str_char = (void *)str;
+			break;
+		}
+
+		if(used_width > 0) used_width += f->char_spacing;
+		if(!f->prop)
+		{
+			used_width += f->width;
+		}
+		else
+		{
+			int glyph = topti_glyph_index(f, code_point);
+			if(glyph >= 0) used_width += f->glyph_width[glyph];
+		}
+	}
+
+	if(w) *w = used_width;
+	return str_char;
 }

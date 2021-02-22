@@ -264,6 +264,32 @@ font_t const *dfont(font_t const *font);
    @w @h  Set to the width and height of the rendered text, may be NULL */
 void dsize(char const *str, font_t const *font, int *w, int *h);
 
+/* dnsize(): Get the width and height of rendered text, with character limit
+
+   This function is similar to dsize(), but stops after (size) bytes If
+   (size < 0), there is no limit and this function is identical to dsize().
+
+   @str   String whose size must be evaluated
+   @size  Maximum number of bytes to read from (str)
+   @font  Font to use; if NULL, defaults to the current font
+   @w @h  Set to the width and height of the rendered text, may be NULL */
+void dnsize(char const *str, int size, font_t const *font, int *w, int *h);
+
+/* drsize(): Get width of rendered text with reverse size limit
+
+   This function is the opposite of dnsize(). It determines how many characters
+   of (str) can fit into the specified (width), and returns a pointer to the
+   first character after that section. If (w) is non-NULL, it it set to the
+   width of the section, which is typically a couple of pixels smaller than
+   the provided limit.
+
+   @str    String to read characters from
+   @font   Font to use; if NULL, defaults to the current font
+   @width  Maximum width
+   @w      Set to the width of the rendered text, may be NULL
+   Returns a pointer to first character that doesn't fit, or end-of-str */
+char const *drsize(char const *str, font_t const *font, int width, int *w);
+
 /* Alignment settings for dtext_opt() and dprint_opt(). Combining a vertical
    and a horizontal alignment option specifies where a given point (x,y) should
    be relative to the rendered string. */
