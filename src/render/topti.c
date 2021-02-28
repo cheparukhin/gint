@@ -12,6 +12,12 @@ font_t const *dfont(font_t const * font)
 	return old_font;
 }
 
+/* dfont_default(): Get gint's default font */
+font_t const *dfont_default(void)
+{
+	return gint_default_font;
+}
+
 /* topti_glyph_index(): Obtain the glyph index of a Unicode code point */
 int topti_glyph_index(font_t const *f, uint32_t code_point)
 {

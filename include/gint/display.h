@@ -229,9 +229,6 @@ typedef struct
    dtext_opt(), dtext() and the related functions. If the specified font is
    NULL, gint's default font is used instead.
 
-   On fx-9860G, the default font is a 5x7 font very close to the system's.
-   On fx-CG 50, the default font is an original, proportional 8x9 font.
-
    This function returns the previously configured font. Normally you want to
    restore it after you're done so as to not affect ambiant calls to text
    rendering functions. It would look like this:
@@ -243,6 +240,12 @@ typedef struct
    @font  Font to use for subsequent text rendering calls
    Returns the previously configured font. */
 font_t const *dfont(font_t const *font);
+
+/* dfont_default(): Get gint's default font
+
+   On fx-9860G, the default font is a 5x7 font very close to the system's.
+   On fx-CG 50, the default font is an original, proportional 8x9 font. */
+font_t const *dfont_default(void);
 
 /* dsize(): Get the width and height of rendered text
 
