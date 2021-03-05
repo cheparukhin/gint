@@ -304,7 +304,10 @@ key_event_t keydev_read(keydev_t *d)
 		{
 			if(e.type == KEYEV_DOWN && k == KEY_SHIFT)
 			{
-				d->pressed_shift |= keydev_idle(d,KEY_SHIFT,0);
+				if(d->delayed_shift)
+					d->delayed_shift = 0;
+				else if(keydev_idle(d,KEY_SHIFT,0))
+					d->pressed_shift = 1;
 			}
 			else if(e.type != KEYEV_UP && k == d->rep_key)
 			{
@@ -322,7 +325,10 @@ key_event_t keydev_read(keydev_t *d)
 		{
 			if(e.type == KEYEV_DOWN && k == KEY_ALPHA)
 			{
-				d->pressed_alpha |= keydev_idle(d,KEY_ALPHA,0);
+				if(d->delayed_alpha)
+					d->delayed_alpha = 0;
+				else if(keydev_idle(d,KEY_ALPHA,0))
+					d->pressed_alpha = 1;
 			}
 			else if(e.type != KEYEV_UP && k == d->rep_key)
 			{

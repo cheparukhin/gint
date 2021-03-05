@@ -14,8 +14,6 @@
 #include <gint/drivers/iokbd.h>
 #include <gint/hardware.h>
 
-#include "getkey.h"
-
 #include <stdarg.h>
 
 /* Keyboard scan frequency in Hertz. Start with 128 Hz, this frequency *must
@@ -55,8 +53,6 @@ void keysc_set_scan_frequency(int freq)
 	if(freq > 32768) freq = 32768;
 	scan_frequency = freq;
 	scan_frequency_us = 1000000 / freq;
-
-	getkey_refresh_delays();
 
 	if(keysc_tid < 0) return;
 	uint32_t TCOR = timer_delay(keysc_tid, scan_frequency_us, 0);

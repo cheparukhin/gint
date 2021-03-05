@@ -210,14 +210,18 @@ enum {
 	/* Repeat arrow keys, or even all keys */
 	GETKEY_REP_ARROWS  = 0x10,
 	GETKEY_REP_ALL     = 0x20,
-	/* Enable repeat event filtering; see getkey_repeat_filter() */
-	GETKEY_REP_FILTER  = 0x40,
+	/* Enable custom repeat profiles; see getkey_set_repeat_profile() */
+	GETKEY_REP_PROFILE = 0x40,
 
 	/* No modifiers */
 	GETKEY_NONE        = 0x00,
 	/* Default settings of getkey() */
 	GETKEY_DEFAULT     = 0x5f,
 };
+
+/* getkey_profile_t: Custom repeat profile function
+   See getkey_set_repeat_profile() for details. */
+typedef int (*getkey_profile_t)(int key, int duration, int count);
 
 /* getkey_opt(): Enhanced getkey()
 
@@ -256,32 +260,33 @@ key_event_t getkey_opt(int options, volatile int *timeout);
    @next   Delay between subsequent repeats (no more than one hour) */
 void getkey_repeat(int first, int next);
 
-/* getkey_repeat_filter(): Set the repeat filter function
+/* getkey_repeat_profile(): Get the current repeat profile function */
+getkey_profile_t getkey_repeat_profile(void);
 
-   The repeat filter is called by getkey() and getkey_opt() every time a repeat
-   event occurs when GETKEY_REP_FILTER is set. The filter can decide whether to
-   keep, delay or drop the event. It can also change the repeat delays with
-   getkey_repeat() for fully custom repeat delay curves.
+/* getkey_set_repeat_profile(): Set the repeat profile function
 
-   The time elapsed since the last accepted repeat is passed to the filter
-   function; this time must be larger than the repeat time set with
-   getkey_repeat() for getkey() and getkey_opt() to consider a repeat, but it
-   can be much longer if some repeat events were previously filtered out.
+   The repeat profile is called by getkey() and getkey_opt() when a key is
+   pressed or held, and getkey() is planning to repeat it. The profile decides
+   whether such repetition is allowed, and if so, how long it shoud take. The
+   profile has access to the following information:
 
-   @key       Key that is about to be repeated
-   @duration  Duration since last accepted repeat
-   @count     Number of previous repeats
+   @key       Key for which a repetition is being considered
+   @duration  Duration since the key was first pressed (us)
+   @count     Number of previous repeats (0 on the first call)
 
-   The repeat function must either return:
-   * 0, in which case the even is accepted
-   * A positive number of milliseconds, in which case the event is tentatively
-     re-emitted after that time (the filter function will be called again)
-   * A negative number, in which case the event is dropped and further repeats
-     are denied.
+   The profile function must either return a positive number of microseconds to
+   wait until the next repeat, or 0 to block the repeat indefinitely. Note that
+   the keyboard device typically updates every 7-8 ms, timings are tracked in
+   microseconds only to limit deviations.
 
-   By default the filter function is NULL, which accepts all repeat events.
-   This behavior can be restored explicitly by calling with function=NULL. */
-void getkey_repeat_filter(int (*filter)(int key, int duration, int count));
+   Setting a repeat profile overrides GETKEY_REP_ARROWS, GETKEY_REP_ALL, and
+   the repeat delays. Calling with profile=NULL restores this behavior.
+
+   This mechanism replaces a "repeat filter" that existed until gint 2.4. The
+   main difference is that the repeat filter was called when the repeat event
+   arrived, whereas the repeat profile is called one repeat earlier to schedule
+   the repeat exactly when needed. */
+void getkey_set_repeat_profile(getkey_profile_t profile);
 
 //---
 //	Key code functions
