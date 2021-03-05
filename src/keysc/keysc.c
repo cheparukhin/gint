@@ -7,6 +7,7 @@
 #include <gint/timer.h>
 #include <gint/clock.h>
 #include <gint/keyboard.h>
+#include <gint/drivers/keydev.h>
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
@@ -18,77 +19,22 @@
 #include <stdarg.h>
 
 /* Keyboard scan frequency in Hertz. Start with 128 Hz, this frequency *must
-   be high* for the keyboard to work! */
+   be high* for the keyboard to work! Reading at low frequencies produces a lot
+   of artifacts. See https://www.casiopeia.net/forum/viewtopic.php?p=20592. */
 static int scan_frequency = 128;
+/* Approximation in microseconds, used by the timer and repeat delays */
+static uint32_t scan_frequency_us = 7812; /* 1000000 / scan_frequency */
+
 /* Keyboard scanner timer */
 static int keysc_tid = -1;
+/* Keyboard input device for this Key Scan Interface */
+static keydev_t dev_keysc;
 
-//---
-//	Keyboard buffer
-//---
-
-/* The driver's internal state. At each step of time, this file compares the
-   internal state with the hardware state and generates events accordingly.
-   Events can be seen as a delta-encoding of the keyboard state over time.
-
-   To ensure that adding pending events to the last-read state always gives the
-   internal driver state, this array is not updated if the generation of an
-   event fails. (Most likely the even will be regenerated at the next scan.) */
-static volatile uint8_t state[12] = { 0 };
-
-/* The driver's current event state. This state corresponds to the sum of all
-   events sent to the user so far.When the event queue is empty, this is equal
-   to [state]. For each generated event, this array is updated to reflect the
-   user's view of the keyboard. */
-static uint8_t current[12] = { 0 };
-
-/* A driver event, which is a common change in a full row */
-typedef struct
+/* keydev_std(): Standard keyboard input device */
+keydev_t *keydev_std(void)
 {
-	uint16_t time;    /* Locally unique time identifier */
-	uint8_t changed;  /* Keys that changed state */
-	uint8_t row  :4;  /* Row number */
-	uint8_t kind :4;  /* Type of change, either KEYEV_DOWN or KEYEV_UP */
-
-} driver_event_t;
-
-/* The keyboard event buffer. This is a circular list defined by [buffer_start]
-   and [buffer_end]. To avoid an ambiguity when start == end, there must always
-   be at least one free entry. */
-GBSS static driver_event_t buffer[KEYBOARD_QUEUE_SIZE];
-/* Buffer bounds */
-static int buffer_start = 0;
-static int buffer_end = 0;
-
-/* Current time, in keyboard-scanning ticks */
-static uint time = 0;
-
-/* buffer_push(): Add an event in the keyboard buffer
-   Returns non-zero if the event cannot be pushed. */
-static int buffer_push(driver_event_t ev)
-{
-	int next = (buffer_end + 1) % KEYBOARD_QUEUE_SIZE;
-	if(next == buffer_start) return 1;
-
-	buffer[buffer_end] = ev;
-	buffer_end = next;
-	return 0;
+	return &dev_keysc;
 }
-
-/* buffer_poll(): Generate key events from the buffer
-   Sets [ev] and returns zero on success, otherwise non-zero. */
-static int buffer_poll(driver_event_t *ev)
-{
-	if(buffer_start == buffer_end) return 1;
-
-	*ev = buffer[buffer_start];
-	buffer_start = (buffer_start + 1) % KEYBOARD_QUEUE_SIZE;
-	return 0;
-}
-
-//---
-//	Keyboard scanning
-//---
 
 /* keysc_scan_frequency(): Get the current keyboard scan frequency in Hertz */
 int keysc_scan_frequency(void)
@@ -99,9 +45,7 @@ int keysc_scan_frequency(void)
 /* keysc_scan_frequency_us(): Get keyboard scan delay in microseconds */
 uint32_t keysc_scan_frequency_us(void)
 {
-	int delay = 1000000 / scan_frequency;
-	if(delay == 0) delay = 1;
-	return delay;
+	return scan_frequency_us;
 }
 
 /* keysc_set_scan_frequency(): Set the keyboard scan frequency in Hertz */
@@ -110,20 +54,21 @@ void keysc_set_scan_frequency(int freq)
 	if(freq < 64) freq = 64;
 	if(freq > 32768) freq = 32768;
 	scan_frequency = freq;
-
-	if(keysc_tid < 0) return;
-	uint32_t TCOR = timer_delay(keysc_tid, keysc_scan_frequency_us(), 0);
-	timer_reload(keysc_tid, TCOR);
+	scan_frequency_us = 1000000 / freq;
 
 	getkey_refresh_delays();
+
+	if(keysc_tid < 0) return;
+	uint32_t TCOR = timer_delay(keysc_tid, scan_frequency_us, 0);
+	timer_reload(keysc_tid, TCOR);
 }
 
-/* keysc_frame(): Generate driver events from KEYSC state */
-static void keysc_frame(void)
+/* keysc_tick(): Update the keyboard to the next state */
+static int keysc_tick(void)
 {
 	GALIGNED(2) uint8_t scan[12] = { 0 };
 
-	/* First scan the key matrix: from I/O ports on SH3, KEYSC on SH4 */
+	/* Scan the key matrix: from I/O ports on SH3, KEYSC on SH4 */
 	if(isSH3()) iokbd_scan(scan);
 	else
 	{
@@ -133,82 +78,15 @@ static void keysc_frame(void)
 		for(int i = 0; i < 6; i++) array[i] = KEYSC[i];
 	}
 
-	/* Compare new data with the internal state. Push releases before
-	   presses so that a key change occurring within a single analysis
-	   frame can be performed. This happens all the time when going back to
-	   the main MENU via gint_osmenu() on a keybind. */
-	for(int row = 0; row < 12; row++)
-	{
-		int diff = ~scan[row] & state[row];
-		if(!diff) continue;
-
-		/* Update internal status if the event could be pushed */
-		driver_event_t ev = { time, diff, row, KEYEV_UP };
-		if(!buffer_push(ev)) state[row] &= scan[row];
-	}
-	for(int row = 0; row < 12; row++)
-	{
-		int diff = scan[row] & ~state[row];
-		if(!diff) continue;
-
-		driver_event_t ev = { time, diff, row, KEYEV_DOWN };
-		if(!buffer_push(ev)) state[row] |= scan[row];
-	}
+	keydev_process_state(&dev_keysc, scan);
+	keydev_tick(&dev_keysc, scan_frequency_us);
+	return TIMER_CONTINUE;
 }
 
 /* pollevent() - poll the next keyboard event */
 key_event_t pollevent(void)
 {
-	/* Every time a driver event is unqueued, its key events are generated
-	   and put in this small buffer */
-	static key_event_t events[8];
-	/* Number of pending events in the previous buffer */
-	static int events_pending = 0;
-
-	/* Use pending events first, if they exist */
-
-	if(events_pending > 0)
-	{
-		key_event_t ev = events[--events_pending];
-
-		/* Update the current state buffer according to [ev] */
-		int row = (ev.key >> 4) ^ 1;
-		int col = 0x80 >> (ev.key & 0x7);
-
-		if(ev.type == KEYEV_DOWN) current[row] |=  col;
-		if(ev.type == KEYEV_UP)   current[row] &= ~col;
-
-		return ev;
-	}
-
-	/* If not key event is pending, generate a chunk by polling the driver
-	   event queue */
-
-	driver_event_t ev;
-	if(buffer_poll(&ev))
-	{
-		key_event_t ev = { .type = KEYEV_NONE, .time = time };
-		return ev;
-	}
-
-	/* Generate new key events and return the first of them*/
-	int changed = ev.changed;
-	for(int code = ((ev.row ^ 1) << 4) | 0x7; code & 0x7; code--)
-	{
-		if(changed & 1)
-		{
-			key_event_t keyev = {
-				.time = ev.time,
-				.type = ev.kind,
-				.key = code,
-			};
-			events[events_pending++] = keyev;
-		}
-		changed >>= 1;
-	}
-
-	/* Call recursively to avoid duplicating the event emission code */
-	return pollevent();
+	return keydev_unqueue_event(&dev_keysc);
 }
 
 /* waitevent() - wait for the next keyboard event */
@@ -223,7 +101,7 @@ key_event_t waitevent(volatile int *timeout)
 		sleep();
 	}
 
-	key_event_t ev = { .type = KEYEV_NONE, .time = time };
+	key_event_t ev = { .type = KEYEV_NONE, .time = dev_keysc.time };
 	return ev;
 }
 
@@ -240,10 +118,7 @@ void clearevents(void)
 /* keydown(): Current key state */
 int keydown(int key)
 {
-	int row = (key >> 4) ^ 1;
-	int col = 0x80 >> (key & 0x7);
-
-	return (current[row] & col) != 0;
+	return keydev_keydown(&dev_keysc, key);
 }
 
 /* keydown_all(): Check a set of keys for simultaneous input
@@ -288,21 +163,15 @@ int keydown_any(int key, ...)
 //	Driver initialization
 //---
 
-static int callback(void)
-{
-	keysc_frame();
-	time++;
-	return 0;
-}
-
-/* init() - setup the support timer */
 static void init(void)
 {
+	keydev_init(&dev_keysc);
+
 	/* Set the default repeat times (milliseconds) */
 	getkey_repeat(400, 40);
 
 	/* The timer will be stopped when the timer driver is unloaded */
-	keysc_tid = timer_setup(TIMER_ANY,keysc_scan_frequency_us(),callback);
+	keysc_tid = timer_setup(TIMER_ANY, scan_frequency_us, keysc_tick);
 	if(keysc_tid >= 0) timer_start(keysc_tid);
 
 	gint[HWKBD] = HW_LOADED | (isSH3() ? HWKBD_IO : HWKBD_KSI);

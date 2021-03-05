@@ -114,12 +114,6 @@ enum
 	KEYEV_HOLD = 3,		/* A key that was pressed has been held down */
 };
 
-/* Size of the buffer event queue, can be customized using gint's configure
-   script before compiling the library. Better be a power of 2. */
-#ifndef KEYBOARD_QUEUE_SIZE
-#define KEYBOARD_QUEUE_SIZE 32
-#endif
-
 /* Keyboard frequency analysis is a runtime setting since gint 2.4. This macro
    is preserved for compatibility until gint 3. */
 #define KEYBOARD_SCAN_FREQUENCY keysc_scan_frequency()

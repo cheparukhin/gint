@@ -11,6 +11,8 @@
 #include <stddef.h>
 /* For all fixed-width integer types */
 #include <stdint.h>
+/* For human-readable boolean types */
+#include <stdbool.h>
 
 /* Fixed-width types for bit fields are quite meaningless */
 typedef unsigned int uint;

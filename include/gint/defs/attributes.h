@@ -28,6 +28,8 @@
    GCC cannot optimize access size, and reads to memory-mapped I/O with invalid
    access sizes silently fail - honestly you don't want this to happen */
 #define GPACKED(x)	__attribute__((packed, aligned(x)))
+/* Packed enumerations */
+#define GPACKEDENUM	__attribute__((packed))
 /* Transparent unions */
 #define GTRANSPARENT	__attribute__((transparent_union))
 

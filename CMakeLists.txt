@@ -29,6 +29,7 @@ set(SOURCES_COMMON
   src/keysc/getkey.c
   src/keysc/iokbd.c
   src/keysc/keycodes.c
+  src/keysc/keydev.c
   src/keysc/keysc.c
   src/kprint/kprint.c
   src/kprint/kformat_fp.c
