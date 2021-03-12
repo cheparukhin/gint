@@ -12,10 +12,10 @@
 .text
 
 /* Dynamic allocation */
-.global _malloc
-.global _free
-.global _calloc
-.global _realloc
+.global ___malloc
+.global ___free
+.global ___calloc
+.global ___realloc
 
 /* Bfile driver */
 .global	_BFile_Remove
@@ -54,13 +54,11 @@
 
 /* Dynamic allocation */
 
-_malloc:
+___malloc:
 	syscall(0x0acd)
-_free:
+___free:
 	syscall(0x0acc)
-_calloc:
-	syscall(0x0e6b)
-_realloc:
+___realloc:
 	syscall(0x0e6d)
 
 /* BFile driver */
@@ -114,13 +112,11 @@ syscall_table:
 
 /* Dynamic allocation */
 
-_malloc:
+___malloc:
 	syscall(0x1f44)
-_free:
+___free:
 	syscall(0x1f42)
-_calloc:
-	syscall(0x1f40)
-_realloc:
+___realloc:
 	syscall(0x1f46)
 
 /* BFile driver */

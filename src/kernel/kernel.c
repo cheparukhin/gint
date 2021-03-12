@@ -8,6 +8,7 @@
 #include <gint/hardware.h>
 #include <gint/mmu.h>
 #include <gint/mpu/intc.h>
+#include <gint/kmalloc.h>
 
 #include "cpu.h"
 #include "vbr.h"
@@ -159,6 +160,9 @@ void kinit(void)
 	/* Take control of the VBR and roll! */
 	drivers_wait();
 	sys_ctx.VBR = (*cpu_setVBR)(gint_ctx.VBR, drivers_save_and_init, 0);
+
+	/* Initialize memory allocators */
+	kmalloc_init();
 }
 
 /* Due to dire space restrictions on SH3, event codes that are translated to

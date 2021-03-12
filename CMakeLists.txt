@@ -31,6 +31,8 @@ set(SOURCES_COMMON
   src/keysc/keycodes.c
   src/keysc/keydev.c
   src/keysc/keysc.c
+  src/kmalloc/arena_osheap.c
+  src/kmalloc/kmalloc.c
   src/kprint/kprint.c
   src/kprint/kformat_fp.c
   src/mmu/mmu.c
@@ -47,6 +49,7 @@ set(SOURCES_COMMON
   src/rtc/rtc_ticks.c
   src/spu/spu.c
   src/std/aprint.c
+  src/std/malloc.c
   src/std/memcmp.s
   src/std/memcpy.s
   src/std/memmove.s
