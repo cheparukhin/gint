@@ -5,6 +5,7 @@
 #include <gint/kmalloc.h>
 #include <gint/defs/util.h>
 #include <gint/std/string.h>
+#include <gint/config.h>
 
 /* Maximum number of arenas */
 #define KMALLOC_ARENA_MAX 8
@@ -17,12 +18,22 @@ void kmalloc_init(void)
 {
 	/* Provide the OS heap */
 	extern kmalloc_arena_t kmalloc_arena_osheap;
-	arenas[0 /* KMALLOC_ARENA_MAX - 1 */] = &kmalloc_arena_osheap;
+	arenas[KMALLOC_ARENA_MAX - 1] = &kmalloc_arena_osheap;
 }
 
 //---
 // Allocation functions
 //---
+
+kmalloc_arena_t *kmalloc_get_arena(char const *name)
+{
+	for(int i = 0; i < KMALLOC_ARENA_MAX; i++)
+	{
+		if(arenas[i] && !strcmp(arenas[i]->name, name))
+			return arenas[i];
+	}
+	return NULL;
+}
 
 /* Find the arena that contains a given block */
 static kmalloc_arena_t *arena_owning(void *ptr)
@@ -89,7 +100,20 @@ void *krealloc(void *ptr, size_t size)
 	kmalloc_arena_t *a = arena_owning(ptr);
 	if(!a) return NULL;
 
-	return a->realloc(ptr, size, a->data);
+	void *rc = a->realloc(ptr, size, a->data);
+
+	/* Maintain statistics */
+	if(rc)
+	{
+		a->stats.total_volume += size;
+		a->stats.total_blocks++;
+	}
+	else
+	{
+		a->stats.total_failures++;
+	}
+
+	return rc;
 }
 
 /* kfree(): Free memory allocated with kalloc() */

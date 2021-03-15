@@ -3,8 +3,8 @@
 -include giteapc-config.make
 
 configure:
-	@ fxsdk build-fx -c
-	@ fxsdk build-cg -c
+	@ fxsdk build-fx -c $(GINT_CMAKE_OPTIONS)
+	@ fxsdk build-cg -c $(GINT_CMAKE_OPTIONS)
 
 build:
 	@ fxsdk build-fx

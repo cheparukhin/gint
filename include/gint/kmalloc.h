@@ -5,6 +5,7 @@
 #ifndef GINT_KMALLOC
 #define GINT_KMALLOC
 
+#include <gint/config.h>
 #include <gint/defs/types.h>
 
 //---
@@ -72,17 +73,95 @@ typedef struct {
 
 } kmalloc_arena_t;
 
-//---
-// Internal API
-//---
+/* kmalloc_init_arena(): Initialize an arena with gint's allocator
 
-/* kmalloc_init(): Initialize the dynamic allocator */
-void kmalloc_init(void);
+   This function initializes an arena on the region located between (a->start)
+   and (a->end) and initializes the data structures for gint's allocator. It
+   only sets the malloc(), realloc(), free() and (data) attributes of the
+   structure, everything else should be initialized manually. The arena must
+   have at least 256 bytes. */
+void kmalloc_init_arena(kmalloc_arena_t *a, bool enable_statistics);
 
 /* kmalloc_add_arena(): Add a new arena to the heap source
    Adds a fully-initialized arena to the heap source. The priority of the new
    arena compared to other default arenas is not specified. Returns true on
    success, false if the maximum number of arenas has been reached. */
 bool kmalloc_add_arena(kmalloc_arena_t *arena);
+
+//---
+// Internal functions
+//---
+
+/* kmalloc_init(): Initialize the dynamic allocator */
+void kmalloc_init(void);
+
+/* kmalloc_get_arena(): Find an arena by name */
+kmalloc_arena_t *kmalloc_get_arena(char const *name);
+
+//---
+// Introspection functions for arenas managed by gint's allocator
+//---
+
+/* kmalloc_gint_stats_t: Optional statistics for gint's allocator
+
+   These statistics are tracked by gint's allocator if requested when the arena
+   is created. They can't be added or removed after creation.
+
+   The free memory and used memory are counted in data bytes. Because the
+   allocator uses some data, the initial value of (free_memory) is less than
+   the size of the region. Additionally, because each used or free block has a
+   4-byte header, (free_memory + used_memory) is not a constant value, so don't
+   expect to get exactly what these values indicate (also fragmentation). */
+typedef struct {
+	/* Free space, used space, peak used space over time */
+	uint32_t free_memory;
+	uint32_t used_memory;
+	uint32_t peak_used_memory;
+	/* Number of mallocs that failed because of not enough free space */
+	int exhaustion_failures;
+	/* Number of mallocs that failed because of fragmentation */
+	int fragmentation_failures;
+	/* Number of reallocs that successfully re-used the same location */
+	int expanding_reallocs;
+	/* Number of reallocs that moved the data around */
+	int relocating_reallocs;
+} kmalloc_gint_stats_t;
+
+/* kmalloc_get_gint_stats(): Get gint statistics for an arena
+
+   Returns a pointer to the arena's statistics; returns NULL if the arena is
+   not managed by gint's allocator or statistics were not enabled. */
+kmalloc_gint_stats_t *kmalloc_get_gint_stats(kmalloc_arena_t *arena);
+
+#ifdef GINT_KMALLOC_DEBUG
+
+/* Check that the sequence covers exactly the arena's region. */
+bool kmallocdbg_sequence_covers(kmalloc_arena_t *a);
+
+/* Check that the marker for the last block is correctly set and unique. */
+bool kmallocdbg_sequence_terminator(kmalloc_arena_t *a);
+
+/* Check that the values of (used) and (previous_used) are coherent. */
+bool kmallocdbg_sequence_coherent_used(kmalloc_arena_t *a);
+
+/* Check that the size in the footer is correct for all free blocks. */
+bool kmallocdbg_sequence_footer_size(kmalloc_arena_t *a);
+
+/* Check that all free blocks are surrounded by used blocks. */
+bool kmallocdbg_sequence_merged_free(kmalloc_arena_t *a);
+
+/* Check that the doubly-linked list is well-formed. */
+bool kmallocdbg_list_structure(kmalloc_arena_t *a);
+
+/* Check that used blocks and list cover exactly the arena's region. */
+bool kmallocdbg_index_covers(kmalloc_arena_t *a);
+
+/* Check that all blocs referenced in free lists are of the correct class. */
+bool kmallocdbg_index_class_separation(kmalloc_arena_t *a);
+
+/* Number of blocks in the sequence. */
+int kmallocdbg_sequence_length(kmalloc_arena_t *a);
+
+#endif /* GINT_KMALLOC_DEBUG */
 
 #endif /* GINT_KMALLOC */

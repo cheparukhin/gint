@@ -128,7 +128,7 @@ static void kinit_cpu(void)
 void kinit(void)
 {
 	#ifdef FX9860G
-	/* VBR is loaded at the end of the user RAM. */
+	/* On fx-9860G, VBR is loaded at the end of the user RAM. */
 	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size();
 	/* On SH4, stack is at the end of the region, leave 8k */
 	if(isSH4()) uram_end -= 0x2000;
@@ -139,11 +139,13 @@ void kinit(void)
 
 	/* There are 0x100 unused bytes at the start of the VBR area */
 	gint_ctx.VBR = uram_end - 0x100;
-	#endif
+	#endif /* FX9860G */
 
 	#ifdef FXCG50
-	/* VBR is loaded at the start of the user RAM */
+	/* On fx-CG 50, VBR is loaded at the start of the user RAM. */
 	gint_ctx.VBR = (uint32_t)mmu_uram();
+	/* All of the user RAM can be used, except for some 16k of stack */
+	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size() - 0x4000;
 	#endif
 
 	/* Event handler entry points */
@@ -163,6 +165,17 @@ void kinit(void)
 
 	/* Initialize memory allocators */
 	kmalloc_init();
+
+	/* Create an allocation arena with unused static RAM */
+	static kmalloc_arena_t static_ram = { 0 };
+	extern uint32_t euram;
+	static_ram.name = "_uram";
+	static_ram.is_default = isSH4();
+	static_ram.start = mmu_uram() + ((uint32_t)&euram - 0x08100000);
+	static_ram.end = (void *)uram_end;
+
+	kmalloc_init_arena(&static_ram, true);
+	kmalloc_add_arena(&static_ram);
 }
 
 /* Due to dire space restrictions on SH3, event codes that are translated to

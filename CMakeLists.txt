@@ -8,6 +8,7 @@ include(Fxconv)
 
 option(GINT_USER_VRAM "Put all VRAMs into the user stack (fx-CG 50 only)")
 option(GINT_STATIC_GRAY "Use static memory instead of malloc for gray buffers (fx-9860G only)")
+option(GINT_KMALLOC_DEBUG "Enable debug functions for kmalloc")
 
 # Generate <gint/config.h> with commit hash, version name and options
 git_version_number(SHORT_HASH "GINT_GIT_HASH" TAG_RELATIVE "GINT_GIT_VERSION")
@@ -31,6 +32,7 @@ set(SOURCES_COMMON
   src/keysc/keycodes.c
   src/keysc/keydev.c
   src/keysc/keysc.c
+  src/kmalloc/arena_gint.c
   src/kmalloc/arena_osheap.c
   src/kmalloc/kmalloc.c
   src/kprint/kprint.c

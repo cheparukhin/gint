@@ -24,4 +24,10 @@
    statically or in the system heap (fx-9860G) */
 #cmakedefine GINT_STATIC_GRAY
 
+/* GINT_KMALLOC_DEBUG: Selects whether kmalloc debug functions are enabled
+   (these are mainly data structure integrity checks and information that make
+   sense for a developer). This is independent from statistics, which can be
+   enabled or disabled at runtime. */
+#cmakedefine GINT_KMALLOC_DEBUG
+
 #endif /* GINT_CONFIG */
