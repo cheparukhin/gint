@@ -100,7 +100,7 @@ static void drivers_switch(int who)
 
 	/* Restore the other context */
 	ctx_restore(who ? &sys_ctx : &gint_ctx);
-	for driver_asc(d)
+	for driver_dsc(d)
 	{
 		if(!d->ctx_save || !d->ctx_restore) continue;
 		d->ctx_restore(who ? d->sys_ctx : d->gint_ctx);
