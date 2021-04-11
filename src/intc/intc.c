@@ -59,6 +59,8 @@ static struct info {
 	/* SPU */
 	{ IPRC, 0x000f, IMR3, 0x04, _ /* Not supported on SH3! */ },
 	{ IPRC, 0x000f, IMR4, 0x08, _ },
+	/* USB */
+	{ IPRF, 0x00f0, IMR9, 0x02, _ /* Driver not SH3-compatible yet */ },
 };
 
 

@@ -65,6 +65,13 @@ set(SOURCES_COMMON
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
   src/tmu/tmu.c
+  src/usb/classes/ff-bulk.c
+  src/usb/configure.c
+  src/usb/inth.s
+  src/usb/pipes.c
+  src/usb/setup.c
+  src/usb/string.c
+  src/usb/usb.c
   src/3rdparty/tinymt32/rand.c
   src/3rdparty/tinymt32/tinymt32.c
   src/3rdparty/grisu2b_59_56/grisu2b_59_56.c

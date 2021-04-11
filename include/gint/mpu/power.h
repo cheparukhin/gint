@@ -63,6 +63,7 @@ typedef volatile struct
 		uint32_t MSIOF1		:1;
 		uint32_t		:1;
 	);
+	pad(4);
 
 	/* Module Stop Control Register 2
 	   The list was established by Yatis. See <https://bible.planet-casio.
