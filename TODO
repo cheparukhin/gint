@@ -1,4 +1,5 @@
 Extensions on existing code:
+* kernel:    use GINT_CB() for all callbacks, without breaking the timer API
 * kernel:    better restore to userspace before panic (ensure BL=0 IMASK=0)
 * kernel:    check if cpu_setVBR() really needs to be perma-mapped
 * project:   add license file

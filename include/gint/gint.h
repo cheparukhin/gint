@@ -129,4 +129,160 @@ void *gint_inthandler(int event_code, void const *handler, size_t size);
    Returns the return value of the callback. */
 extern int (*gint_inth_callback)(int (*function)(void *arg), void *arg);
 
+//---
+// Callback functions
+//---
+
+/* gint_callback_arg_t: All types of arguments allowed in a callback
+   Other types can be used if casted, notably pointers to custom types can be
+   casted to (void *). */
+typedef union {
+	/* Integer types */
+	int i;
+	unsigned int u;
+	int32_t i32;
+	uint32_t u32;
+	/* 4-byte floating-point type */
+	float f;
+	/* Pointer to void */
+	void *pv;
+	void const *pv_c;
+	void volatile *pv_v;
+	void volatile const *pv_cv;
+	/* Pointer to int */
+	int *pi;
+	int const *pi_c;
+	int volatile *pi_v;
+	int volatile const *pi_cv;
+	/* Pointer to unsigned int */
+	unsigned int *pu;
+	unsigned int const *pu_c;
+	unsigned int volatile *pu_v;
+	unsigned int volatile const *pu_cv;
+	/* Pointer to int32_t */
+	int32_t *pi32;
+	int32_t const *pi32_c;
+	int32_t volatile *pi32_v;
+	int32_t volatile const *pi32_cv;
+	/* Pointer to uint32_t */
+	uint32_t *pu32;
+	uint32_t const *pu32_c;
+	uint32_t volatile *pu32_v;
+	uint32_t volatile const *pu32_cv;
+	/* Pointer to float */
+	float *pf;
+	float const *pf_c;
+	float volatile *pf_v;
+	float volatile const *pf_cv;
+	/* Pointer to double */
+	double *pd;
+	double const *pd_c;
+	double volatile *pd_v;
+	double volatile const *pd_cv;
+
+} gint_callback_arg_t;
+
+/* gint_callback_t: Callback function with up to 4 register arguments */
+typedef struct {
+	void *function;
+	gint_callback_arg_t args[4];
+} gint_callback_t;
+
+/* GINT_CB(): Build a callback object from function and arguments
+
+   This macro builds a callback object (of type gint_callback_t). Callback
+   objects are used in various APIs (timers, RTC, DMA, USB...) to notify the
+   program of events that are caused by the hardware instead of the program.
+
+   Callbacks are often called asynchronously, which means that the function
+   setting up the callback finishes first, and then the callback is called
+   later while some other part of the program is running. This is tricky,
+   because in order to invoke the callback:
+
+   * The code and arguments must still exist, even though the function that
+     provided them has finished long ago;
+   * The call ABI is lost as soon as we store parameters instead of
+     syntactically performing a call in the code.
+
+   For the first issue, the caller has to make sure that every pointer that is
+   passed to the callback will still be valid when the callback is invoked; in
+   particular, pointers to variables on the stack can ony be used if the
+   callback is guaranteed to be called before the function ends (eg. if there
+   is a synchronous wait in the function).
+
+   For the second issue, gint's callback mechanism guarantees ABI compatibility
+   by restricting the arguments that can be passed to the callback.
+
+   * Only arguments that fit into registers can be passed. In practice, this
+     mostly excludes 64-bit integer, double floating-point values, and custom
+     structures. This way, there is a somewhat solid guarantee that the
+     callback function will take arguments in r4...r7.
+   * Only up to 4 arguments can be passed.
+   * Only values of the types listed in gint_callback_arg_t can be passed.
+
+   If you need to work around one of these limitations, pass a pointer to a
+   structure containing your arguments (if the callback is invoked after the
+   current function ends, make the structure static or global).
+
+   If you need to pass a char or a short, cast to an int and have the callback
+   function take an int. If you need to pass a pointer to a type not listed in
+   gint_callback_arg_t (such as a structure), cast it to (void *); the callback
+   function can still take a pointer to the custom type as argument.
+
+   If the conditions for the callback to work are not met, the compiler will
+   emit on of these two errors:
+
+   * error: static assertion failed: "GINT_CB: too many arguments (maximum 4)"
+     -> This is emitted if you have more than 4 arguments.
+   * error: cast to union type from type not present in union
+     -> This is emitted if you pass a parameter of an invalid type.
+
+   Both are followed with a series of compiler notes mentioning the various
+   macros defined below. */
+#define GINT_CB(func, ...) \
+	((gint_callback_t){ .function = func, .args = { \
+		__VA_OPT__(GINT_CB_ARGS1(__VA_ARGS__)) \
+	}})
+#define GINT_CB_ARGS1(a1, ...) \
+	(gint_callback_arg_t)(a1), __VA_OPT__(GINT_CB_ARGS2(__VA_ARGS__))
+#define GINT_CB_ARGS2(a2, ...) \
+	(gint_callback_arg_t)(a2), __VA_OPT__(GINT_CB_ARGS3(__VA_ARGS__))
+#define GINT_CB_ARGS3(a3, ...) \
+	(gint_callback_arg_t)(a3), __VA_OPT__(GINT_CB_ARGS4(__VA_ARGS__))
+#define GINT_CB_ARGS4(a4, ...) \
+	({ __VA_OPT__(_Static_assert(0, \
+		"GINT_CB: too many arguments (maximum 4)");) \
+	(gint_callback_arg_t)(a4); })
+
+/* GINT_CB_NULL: Empty callback */
+#define GINT_CB_NULL ((gint_callback_t){ .function = NULL, .args = {} })
+
+/* GINT_CB_SET(): Callback that sets an integer to 1
+   This is defined as a function to make sure the pointer is to an int. */
+static void GINT_CB_SET_function(int volatile *pointer)
+{
+	(*pointer) = 1;
+}
+static GINLINE gint_callback_t GINT_CB_SET(int volatile *pointer)
+{
+	return GINT_CB(GINT_CB_SET_function, pointer);
+}
+
+/* GINT_CB_INC(): Callback that increments an integer */
+static void GINT_CB_INC_function(int volatile *pointer)
+{
+	(*pointer)++;
+}
+static GINLINE gint_callback_t GINT_CB_INC(int volatile *pointer)
+{
+	return GINT_CB(GINT_CB_INC_function, pointer);
+}
+
+/* gint_callback_invoke(): Invoke a callback function */
+static GINLINE int gint_callback_invoke(gint_callback_t cb)
+{
+	int (*f)(int r4, int r5, int r6, int r7) = cb.function;
+	return f(cb.args[0].i, cb.args[1].i, cb.args[2].i, cb.args[3].i);
+}
+
 #endif /* GINT_GINT */
