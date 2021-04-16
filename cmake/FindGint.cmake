@@ -28,7 +28,7 @@ else()
   set(PATH_TO_LIBGINT TRUE)
   if(GINT_CONFIG_PATH)
     execute_process(
-      COMMAND sed -E "s/#define.*GINT_VERSION\\s+\"(\\S+)\"$/\\1/p; d" ${GINT_CONFIG_PATH}
+      COMMAND sed "s/#define GINT_VERSION \"\\([^\"]\\{1,\\}\\)\"/\\1/p; d" ${GINT_CONFIG_PATH}
       OUTPUT_VARIABLE GINT_VERSION
       OUTPUT_STRIP_TRAILING_WHITESPACE
     )
