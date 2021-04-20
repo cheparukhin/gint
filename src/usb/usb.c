@@ -23,7 +23,7 @@ extern void inth_usb(void);
 
 /* Callback function to invoke when the USB module is configured */
 /* TODO: usb_open() callback: Let interfaces specify when they're ready! */
-static gint_callback_t usb_open_callback = GINT_CB_NULL;
+static gint_call_t usb_open_callback = GINT_CALL_NULL;
 /* Whether the USB link is currently open */
 static bool volatile usb_open_status = false;
 
@@ -119,7 +119,7 @@ static void usb_module_stop(bool restore_mselcr)
 	*MSELCRA = (*MSELCRA & 0xff3f) | 0x0040;
 }
 
-int usb_open(usb_interface_t const **interfaces, gint_callback_t callback)
+int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 {
 	usb_log("---- usb_open ----\n");
 
@@ -196,7 +196,7 @@ void usb_close(void)
 	usb_module_stop(false);
 	usb_log("---- usb_close ----\n");
 
-	usb_open_callback = GINT_CB_NULL;
+	usb_open_callback = GINT_CALL_NULL;
 	usb_open_status = false;
 }
 
@@ -241,8 +241,8 @@ void usb_interrupt_handler(void)
 			usb_open_status = true;
 			if(usb_open_callback.function)
 			{
-				gint_callback_invoke(usb_open_callback);
-				usb_open_callback = GINT_CB_NULL;
+				gint_call(usb_open_callback);
+				usb_open_callback = GINT_CALL_NULL;
 			}
 		}
 	}

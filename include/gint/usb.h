@@ -82,13 +82,13 @@ typedef struct usb_interface_endpoint {
    will return an error.
 
    The second parameter is a callback to be (asynchronously) invoked when the
-   USB link becomes ready. Use GINT_CB() to create one, or pass GINT_CB_NULL
-   for no callback. You can also use usb_open_wait() to synchronously wait for
-   the link to be ready.
+   USB link is ready. Use GINT_CALL() to create one, or pass GINT_CALL_NULL for
+   no callback. You can also use usb_open_wait() to synchronously wait for the
+   link to be ready.
 
    @interfaces  NULL-terminate list of interfaces to open
    @callback    Optional function to be called when the USB link opens */
-int usb_open(usb_interface_t const **interfaces, gint_callback_t callback);
+int usb_open(usb_interface_t const **interfaces, gint_call_t callback);
 
 /* usb_open_wait(): Wait until the USB link is ready
    When called after usb_open(), this function waits until the communication is

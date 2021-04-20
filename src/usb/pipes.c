@@ -124,7 +124,7 @@ struct transfer {
 	/* Whether to use the DMA */
 	bool dma;
 	/* Callback at the end of the transfer */
-	gint_callback_t callback;
+	gint_call_t callback;
 };
 /* Operations to be continued whenever buffers get empty */
 GBSS static struct transfer volatile pipe_transfers[10];
@@ -198,7 +198,7 @@ static bool write_round(struct transfer volatile *t, int pipe)
 		/* After the DMA starts the code below will update pointers for
 		   the next iteration */
 		// dma_start(X, Y, Z,
-		//	GINT_CB(maybe_commit, (void *)t, pipe));
+		//	GINT_CALL(maybe_commit, (void *)t, pipe));
 	}
 	else
 	{
@@ -220,7 +220,7 @@ static bool write_round(struct transfer volatile *t, int pipe)
 
 /* usb_write_async(): Asynchronously write to a USB pipe */
 int usb_write_async(int pipe, void const *data, int size, int unit_size,
-	bool use_dma, gint_callback_t callback)
+	bool use_dma, gint_call_t callback)
 {
 	struct transfer volatile *t = &pipe_transfers[pipe];
 
@@ -257,14 +257,14 @@ int usb_write_sync(int pipe, void const *data, int size, int unit_size,
 	/* Wait for a previous write and/or transfer to finish */
 	while(t->data || (pipe && !USB.PIPECTR[pipe-1].BSTS)) sleep();
 
-	usb_write_async(pipe, data, size, unit_size, use_dma, GINT_CB_NULL);
+	usb_write_async(pipe, data, size, unit_size, use_dma, GINT_CALL_NULL);
 
 	/* Wait for the write to finish (but not the transfer) */
 	while(t->data) sleep();
 	return 0;
 }
 
-void usb_commit_async(int pipe, gint_callback_t callback)
+void usb_commit_async(int pipe, gint_call_t callback)
 {
 	struct transfer volatile *t = &pipe_transfers[pipe];
 	t->committed = true;
@@ -287,6 +287,5 @@ void usb_pipe_write_bemp(int pipe)
 
 	USB.BEMPENB.word &= ~(1 << pipe);
 
-	if(t->callback.function)
-		gint_callback_invoke(t->callback);
+	if(t->callback.function) gint_call(t->callback);
 }

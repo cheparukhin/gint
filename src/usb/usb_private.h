@@ -154,8 +154,8 @@ int usb_write_sync(int pipe, void const *data, int size, int unit_size,
    This function is similar to usb_write_sync(), but it only starts the writing
    and returns immediately without ever waiting. The writing then occurs in the
    background of the calling code, and the caller is notified through a
-   callback when it completes. Use GINT_CB() to create a callback or pass
-   GINT_CB_NULL.
+   callback when it completes. Use GINT_CALL() to create a callback or pass
+   GINT_CALL_NULL.
 
    If the pipe is busy due to a previous asynchronous write, this function
    returns USB_PIPE_BUSY. When called with (use_dma=true), it returns as soon
@@ -175,7 +175,7 @@ int usb_write_sync(int pipe, void const *data, int size, int unit_size,
    @callback   Optional callback to invoke when the write completes
    -> Returns an error code (0 on success). */
 int usb_write_async(int pipe, void const *data, int size, int unit_size,
-	bool use_dma, gint_callback_t callback);
+	bool use_dma, gint_call_t callback);
 
 /* usb_commit_sync(): Synchronously commit a write
 
@@ -190,7 +190,7 @@ void usb_commit_sync(int pipe);
    This function commits the specified pipe, causing the pipe to transfer
    written data as soon as all the writes complete. It returns immediately and
    instead the specified callback is invoked when the transfer completes. */
-void usb_commit_async(int pipe, gint_callback_t callback);
+void usb_commit_async(int pipe, gint_call_t callback);
 
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe);
