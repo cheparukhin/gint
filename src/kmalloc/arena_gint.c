@@ -33,7 +33,7 @@
    detect whether to merge into the previous block after a free().
 
    The allocation algorithm will mostly use way #3 to find free blocks. When
-   freeing, ways #1 and #2 are used to coalese adjacent blocks. Ways #3 and #4
+   freeing, ways #1 and #2 are used to coalesce adjacent blocks. Ways #3 and #4
    are used to maintain the linked lists.
 
    The footer uses 8 bytes if the block has 8 bytes of raw data, and 12 bytes
