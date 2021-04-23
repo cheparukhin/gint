@@ -6,6 +6,7 @@
 #include <gint/defs/util.h>
 #include <gint/hardware.h>
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/dma.h>
 #include <gint/drivers/r61524.h>
 
@@ -119,85 +120,6 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 //	Driver functions
 //---
 
-/* void r61524_test(void)
-{
-	uint16_t device_name;
-	uint16_t doc;
-	int SM, SS;
-	entry_mode_t em;
-	uint16_t dc2;
-	int FP, BP;
-	uint16_t lpc;
-	int VEM, COL;
-
-	//---
-
-	select(device_code_read);
-	device_name = read();
-
-	Bdisp_AllClr_VRAM();
-	print(1, 1, "Name=????");
-	print_hex(6, 1, device_name, 4);
-
-	if(device_name != 0x1524)
-	{
-		print(1, 2, "Aborting.");
-		Bdisp_PutDisp_DD();
-		getkey();
-		return;
-	}
-
-	//---
-
-	select(driver_output_control);
-	doc = read();
-	SM = (doc >> 10) & 1;
-	SS = (doc >> 8) & 1;
-
-	select(entry_mode);
-	em.word = read();
-
-	select(display_control_2);
-	dc2 = read();
-	FP = (dc2 >> 8) & 0xf;
-	BP = dc2 & 0xf;
-
-	select(low_power_control);
-	lpc = read();
-	VEM = (lpc >> 4) & 1;
-	COL = lpc & 1;
-
-	//---
-
-	print(15, 4, " SM=?");
-	print_hex(19, 4, SM, 1);
-	print(15, 5, " SS=?");
-	print_hex(19, 5, SS, 1);
-
-	print(1, 2, "TRI=?  DFM=?  BGR=?");
-	print_hex(5,  2, em.TRI, 1);
-	print_hex(12, 2, em.DFM, 1);
-	print_hex(19, 2, em.BGR, 1);
-	print(1, 3, "HWM=?  ORG=?   ID=?");
-	print_hex(5,  3, em.HWM, 1);
-	print_hex(12, 3, em.DFM, 1);
-	print_hex(19, 3, em.ID, 1);
-	print(1, 4, " AM=?  EPF=?");
-	print_hex(5,  4, em.AM, 1);
-	print_hex(12, 4, em.EPF, 1);
-
-	print(1, 5, " FP=?   BP=?");
-	print_hex(5, 5, FP, 1);
-	print_hex(12, 5, BP, 1);
-
-	print(1, 6, "VEM=?  COL=?");
-	print_hex(5, 6, VEM, 1);
-	print_hex(12, 6, COL, 1);
-
-	Bdisp_PutDisp_DD();
-	getkey();
-} */
-
 /* TODO: r61524: update, backlight, brightness, gamma */
 
 void r61524_display(uint16_t *vram, int start, int height, int method)
@@ -243,55 +165,23 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 }
 
 //---
-//	Context system for this driver
+// State and driver metadata
 //---
 
-typedef struct
+static void hsave(r61524_state_t *s)
 {
-	/* Graphics RAM range */
-	uint16_t HSA, HEA, VSA, VEA;
-
-} GPACKED(2) ctx_t;
-
-/* Allocate one buffer in gint's storage section */
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
-{
-	ctx_t *ctx = buf;
-	r61524_win_get(&ctx->HSA, &ctx->HEA, &ctx->VSA, &ctx->VEA);
+	r61524_win_get(&s->HSA, &s->HEA, &s->VSA, &s->VEA);
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(r61524_state_t const *s)
 {
-	ctx_t *ctx = buf;
-	r61524_win_set(ctx->HSA, ctx->HEA, ctx->VSA, ctx->VEA);
+	r61524_win_set(s->HSA, s->HEA, s->VSA, s->VEA);
 }
-
-//---
-//	Driver initialization
-//---
-
-static void init(void)
-{
-	select(device_code_read);
-	uint16_t devname = read();
-
-	gint[HWDD] = HW_LOADED | HWDD_FULL;
-	if(devname == 0x1524) gint[HWDD] |= HWDD_KNOWN;
-}
-
-//---
-//	Driver structure definition
-//---
 
 gint_driver_t drv_r61524 = {
 	.name         = "R61524",
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(r61524_state_t),
 };
-
-GINT_DECLARE_DRIVER(5, drv_r61524);
+GINT_DECLARE_DRIVER(26, drv_r61524);

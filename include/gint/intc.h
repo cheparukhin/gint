@@ -5,6 +5,8 @@
 #ifndef GINT_INTC
 #define GINT_INTC
 
+#include <gint/defs/types.h>
+
 //---
 //	Interrupt names
 //---
@@ -64,5 +66,55 @@ enum {
    @level    Requested interrupt level
    Returns the interrupt level that was assigned before the call. */
 int intc_priority(int intname, int level);
+
+/* intc_handler(): Install interrupt handlers
+
+   This function installs (copies) interrupt handlers in the VBR space of the
+   application. Each handler is a 32-byte block aligned on a 32-byte boundary.
+   When an interrupt request is accepted, the hardware jumps to a specific
+   interrupt handler at an address that depends on the interrupt source.
+
+   For safety, interrupt handlers should avoid referring to data from other
+   blocks because the arrangement of blocks at runtime depends on event codes.
+   The assembler program will assume that consecutive blocks in the source code
+   will be consecutive in memory, which is not always true. Avoiding cross-
+   references is a practical rule to avoid problems. (gint breaks this rule
+   quite often but does it safely.)
+
+   This function allows anyone to replace any interrupt handler so make sure
+   you're not interfering with interrupt assignments from gint or a library.
+
+   The first parameter event_code represents the event code associated with the
+   interrupt. If it's not a multiple of 0x20 then you're doing something wrong.
+   The codes are normally platform-dependent, but gint always uses SH7305
+   codes. SH3 platforms have a different, compact VBR layout. gint_inthandler()
+   translates the provided SH7305 codes to the compact layout and the interrupt
+   handler translates the hardware SH3 codes to the compact layout as well. See
+   gint's source in <src/kernel/inth.S> and <src/intc/intc.c>. Please note that
+   intc_handler() uses a table that must be modified for every new SH3
+   interrupt code to extend the compact scheme.
+
+   The handler function is run in the kernel register bank with interrupts
+   disabled and must end with 'rts' (not 'rte') as the main interrupt handler
+   saves some registers for you. By default, user bank registers are not saved
+   except for gbr/mach/macl; if you want to call back to arbitrary code safely,
+   use gint_inth_callback() in your handler.
+
+   For convenience gint allows any block size to be loaded as an interrupt
+   handler, but it should really be a multiple of 0x20 bytes and not override
+   other handlers. If it's not written in assembler, then you're likely doing
+   something wrong. Using __attribute__((interrupt_handler)), which uses rte,
+   is especially wrong.
+
+   It is common for interrupt handlers to have a few bytes of data, such as the
+   address of a callback function. gint often stores this data in the last
+   bytes of the block. This function returns the VBR address of the block which
+   has just been installed, to allow the caller to edit the parameters later.
+
+   @event_code  Identifier of the interrupt block
+   @handler     Address of handler function
+   @size        How many bytes to copy
+   Returns the VBR address where the handler was installed. */
+void *intc_handler(int event_code, void const *handler, size_t size);
 
 #endif /* GINT_INTC */

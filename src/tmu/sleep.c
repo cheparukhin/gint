@@ -13,7 +13,10 @@ static void do_sleep(uint64_t delay_us, int spin)
 	if(timer < 0) return;
 
 	timer_start(timer);
-	if(spin) timer_spinwait(timer);
+	if(spin) {
+		timer_spinwait(timer);
+		timer_stop(timer);
+	}
 	else timer_wait(timer);
 }
 

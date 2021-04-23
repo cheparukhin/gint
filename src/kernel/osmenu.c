@@ -69,5 +69,5 @@ static void __osmenu(void)
 /* gint_osmenu() - switch out of gint and call the calculator's main menu */
 void gint_osmenu(void)
 {
-	gint_switch(__osmenu);
+	gint_world_switch(GINT_CALL(__osmenu));
 }

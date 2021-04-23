@@ -8,21 +8,33 @@
 #include <gint/defs/types.h>
 #include <gint/defs/call.h>
 #include <gint/config.h>
+#include <gint/intc.h>
 
-/* gint_switch(): Switch out of gint to execute a function
+/* gint_world_switch(): Switch out of gint to execute a function
 
-   This function can be used to leave gint, restore the system's driver
-   context, and execute code there before returning to gint. By doing this one
-   can effectively interleave gint with the standard OS execution. The
-   limitations are quite extreme though, so unless you know precisely what
-   you're doing that requires getting out of gint (eg. BFile), be careful.
+   This function can be used to leave gint, restore the OS's hardware state,
+   and execute code there before returning to gint. By doing this one can
+   effectively interleave gint with the standard OS execution. gint drivers
+   will be inactive during this time but OS features such as BFile or the
+   main menu are available.
 
    This main uses for this switch are going back to the main menu and using
    BFile function. You can go back to the main menu easily by calling getkey()
    (or getkey_opt() with the GETKEY_MENU flag set) and pressing the MENU key,
    or by calling gint_osmenu() below which uses this switch.
 
-   @function  Function to call in OS mode */
+   The code to execute while in OS mode is passed as a gint call; you can use
+   GINT_CALL() to create one. This allows you to pass arguments to your
+   function, as well as return an int.
+
+   @function  A GINT_CALL() to execute while in OS mode
+   -> Returns the return value of (function), if any, 0 if function is NULL. */
+int gint_world_switch(gint_call_t function);
+
+/* This function is an older version of gint_world_switch() which only accepts
+   functions with no arguments and no return value. It will be removed in
+   gint 3. */
+__attribute__((deprecated("Use gint_world_switch() instead")))
 void gint_switch(void (*function)(void));
 
 /* gint_osmenu(): Call the calculator's main menu
@@ -48,55 +60,11 @@ void gint_osmenu(void);
    @restart  0 to exit, 1 to restart by using gint_osmenu() */
 void gint_setrestart(int restart);
 
-/* gint_inthandler(): Install interrupt handlers
-
-   This function installs (copies) interrupt handlers in the VBR space of the
-   application. Each handler is a 32-byte block aligned on a 32-byte boundary.
-   When an interrupt request is accepted, the hardware jumps to a specific
-   interrupt handler at an address that depends on the interrupt source.
-
-   For safety, interrupt handlers should avoid referring to data from other
-   blocks because the arrangement of blocks at runtime depends on event codes.
-   The assembler program will assume that consecutive blocks in the source code
-   will be consecutive in memory, which is not always true. Avoiding cross-
-   references is a practical rule to avoid problems. (gint breaks this rule
-   quite often but does it safely.)
-
-   This function allows anyone to replace any interrupt handler so make sure
-   you're not interfering with interrupt assignments from gint or a library.
-
-   The first parameter event_code represents the event code associated with the
-   interrupt. If it's not a multiple of 0x20 then you're doing something wrong.
-   The codes are normally platform-dependent, but gint always uses SH7305
-   codes. SH3 platforms have a different, compact VBR layout. gint_inthandler()
-   translates the provided SH7305 codes to the compact layout and the interrupt
-   handler translates the hardware SH3 codes to the compact layout as well. See
-   gint's source in <src/core/inth.S> and <src/core/kernel.c>. Please note that
-   gint_inthandler() uses a table that must be modified for every new SH3
-   interrupt code to extend the compact scheme.
-
-   The handler function is run in the kernel register bank with interrupts
-   disabled and must end with 'rts' (not 'rte') as the main interrupt handler
-   saves some registers for you. By default, user bank registers are not saved
-   except for gbr/mach/macl; if you want to call back to arbitrary code safely,
-   use gint_inth_callback() in your handler.
-
-   For convenience gint allows any block size to be loaded as an interrupt
-   handler, but it should really be a multiple of 0x20 bytes and not override
-   other handlers. If it's not written in assembler, then you're likely doing
-   something wrong. Using __attribute__((interrupt_handler)), which uses rte,
-   is especially wrong.
-
-   It is common for interrupt handlers to have a few bytes of data, such as the
-   address of a callback function. gint often stores this data in the last
-   bytes of the block. This function returns the VBR address of the block which
-   has just been installed, to allow the caller to edit the parameters later.
-
-   @event_code  Identifier of the interrupt block
-   @handler     Address of handler function
-   @size        How many bytes to copy
-   Returns the VBR address where the handler was installed. */
-void *gint_inthandler(int event_code, void const *handler, size_t size);
+/* This function has been moved to the INTC driver */
+__attribute__((deprecated("Use intc_handler() instead")))
+static GINLINE void *gint_inthandler(int code, void const *h, size_t size) {
+	return intc_handler(code, h, size);
+}
 
 /* gint_inth_callback(): Call back arbitrary code from an interrupt handler
 

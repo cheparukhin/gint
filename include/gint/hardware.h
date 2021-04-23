@@ -62,10 +62,10 @@ void hw_detect(void);
 #define HWRAM    4    /* Amount of RAM */
 #define HWROM    5    /* Amount of ROM */
 #define HWURAM   6    /* Userspace RAM */
-#define HWETMU   7    /* Extra Timer Units */
+#define HWETMU        /* Deprecated: use timer_count() (ETMU always load) */
 #define HWKBD    8    /* Keyboard */
 #define HWKBDSF       /* Deprecated: use keysc_scan_frequency() */
-#define HWDD     10   /* Display Driver */
+#define HWDD          /* Deprecated: use the T6K11/R61524 API */
 
 /*
 **  MPU type
@@ -102,24 +102,6 @@ void hw_detect(void);
 #define HWCALC_FXCG_MANAGER  6
 
 /*
-**  Extra Timer Units
-*/
-
-/* A single-timer ETMU unit was found. Correlated with SH3 */
-#define HWETMU_1       0x01
-/* A 6-timer ETMU unit was found. Correlated with SH4 */
-#define HWETMU_6       0x02
-/* Individual timer status. Not all timers might be operational after setting
-   up the driver due to seemingly limitless behavioral differences with the
-   TMU. Operational here means TCNT=TCOR=-1, interrupt disabled and cleared. */
-#define HWETMU_OK0     0x04
-#define HWETMU_OK1     0x08
-#define HWETMU_OK2     0x10
-#define HWETMU_OK3     0x20
-#define HWETMU_OK4     0x40
-#define HWETMU_OK5     0x80
-
-/*
 **  Keyboard
 */
 
@@ -131,22 +113,5 @@ void hw_detect(void);
 #define HWKBD_WDD      0x02
 /* The keyboard uses a KEYSC-based scan method. This is only possible on SH4 */
 #define HWKBD_KSI      0x04
-
-/*
-**  Display Driver
-*/
-
-/* Display driver is known. This cannot be determined on fx9860g as the Toshiba
-   T6K11 and its Graph 35+E II variant don't seem to have an identification
-   command. It is set to 0 on fx9860g and used on fxcg50. */
-#define HWDD_KNOWN     0x01
-/* The display driver was configured to use the full screen, instead of leaving
-   bands on the side. [fxcg50] */
-#define HWDD_FULL      0x02
-/* The contrast address for this OS version is known. [fx9860g] */
-#define HWDD_CONTRAST  0x04
-/* Backlight management is supported. This is used both on fx9860g models with
-   back-lit screen (although that very fact cannot be detected) and fxcg50. */
-#define HWDD_LIGHT     0x08
 
 #endif /* GINT_HARDWARE */

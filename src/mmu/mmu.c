@@ -4,6 +4,7 @@
 
 #include <gint/mmu.h>
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/hardware.h>
 
 //---
@@ -175,11 +176,7 @@ uint32_t utlb_translate(uint32_t page, uint32_t *size)
 	return -1;
 }
 
-//---
-//	Initialization
-//---
-
-static void init(void)
+static void configure(void)
 {
 	/* Make writes to the control register area synchronous; this is needed
 	   for the SPU to operate properly */
@@ -187,41 +184,28 @@ static void init(void)
 }
 
 //---
-//	Context management
+// State and driver metadata
 //---
 
-typedef struct {
-	uint32_t PASCR;
-	uint32_t IRMCR;
-} ctx_t;
-
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
+static void hsave(mmu_state_t *s)
 {
 	if(isSH3()) return;
-
-	ctx_t *ctx = buf;
-	ctx->PASCR = SH7305_MMU.PASCR.lword;
-	ctx->IRMCR = SH7305_MMU.IRMCR.lword;
+	s->PASCR = SH7305_MMU.PASCR.lword;
+	s->IRMCR = SH7305_MMU.IRMCR.lword;
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(mmu_state_t const *s)
 {
 	if(isSH3()) return;
-
-	ctx_t *ctx = buf;
-	SH7305_MMU.PASCR.lword = ctx->PASCR;
-	SH7305_MMU.IRMCR.lword = ctx->IRMCR;
+	SH7305_MMU.PASCR.lword = s->PASCR;
+	SH7305_MMU.IRMCR.lword = s->IRMCR;
 }
 
 gint_driver_t drv_mmu = {
 	.name         = "MMU",
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.configure    = configure,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(mmu_state_t),
 };
-
-GINT_DECLARE_DRIVER(1, drv_mmu);
+GINT_DECLARE_DRIVER(02, drv_mmu);

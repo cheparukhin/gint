@@ -18,8 +18,14 @@ configure_file(include/gint/config.h.in include/gint/config.h)
 
 set(SOURCES_COMMON
   src/cpg/cpg.c
+  src/cpu/atomic.c
+  src/cpu/cpu.c
+  src/cpu/registers.s
+  src/dma/dma.c
+  src/dma/inth.s
+  src/dma/memcpy.c
+  src/dma/memset.c
   src/intc/intc.c
-  src/kernel/cpu.s
   src/kernel/exch.c
   src/kernel/exch.s
   src/kernel/hardware.c
@@ -29,6 +35,7 @@ set(SOURCES_COMMON
   src/kernel/start.c
   src/kernel/syscalls.S
   src/kernel/tlbh.S
+  src/kernel/world.c
   src/keysc/getkey.c
   src/keysc/iokbd.c
   src/keysc/keycodes.c
@@ -101,10 +108,6 @@ set(SOURCES_FX
   src/t6k11/t6k11.c
 )
 set(SOURCES_CG
-  src/dma/dma.c
-  src/dma/inth.s
-  src/dma/memcpy.c
-  src/dma/memset.c
   src/r61524/r61524.c
   src/render-cg/bopti-asm.s
   src/render-cg/bopti.c
@@ -127,7 +130,7 @@ include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "${PROJECT_BINARY_DIR}/include"
   "${FXSDK_COMPILER_INSTALL}/include/openlibm")
-add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields)
+add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields -mtas)
 
 # Silence extended warnings on Grisu2b code
 set_source_files_properties(src/3rdparty/grisu2b_59_56/grisu2b_59_56.c PROPERTIES

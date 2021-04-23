@@ -4,7 +4,7 @@
 
 #include <gint/timer.h>
 #include <gint/drivers.h>
-#include <gint/gint.h>
+#include <gint/drivers/states.h>
 #include <gint/clock.h>
 #include <gint/intc.h>
 #include <gint/mpu/tmu.h>
@@ -39,8 +39,8 @@ static volatile uint8_t *TSTR = &SH7305_TMU.TSTR;
 //	Local functions
 //---
 
-/* configure(): Configure a fixed timer */
-static void configure(int id, uint32_t delay, int clock, void *f, uint32_t arg)
+/* conf(): Configure a fixed timer */
+static void conf(int id, uint32_t delay, int clock, void *f, uint32_t arg)
 {
 	if(id < 3)
 	{
@@ -169,7 +169,7 @@ int timer_setup(int spec, uint64_t delay, timer_callback_t function, ...)
 		/* Find the delay constant for that timer and clock */
 		if(spec < 0) delay = timer_delay(id, delay, clock);
 
-		configure(id, delay, clock, function.v, arg);
+		conf(id, delay, clock, function.v, arg);
 		return id;
 	}
 
@@ -314,22 +314,23 @@ extern void inth_tmu(void);
 extern void inth_etmu4(void);
 extern void inth_etmux(void);
 
-#ifdef FX9860G
-static void driver_sh3(void)
+static void constructor(void)
 {
-	TMU = SH7705_TMU.TMU;
-	ETMU = SH7705_ETMU;
-	TSTR = &SH7705_TMU.TSTR;
+	if(isSH3())
+	{
+		TMU = SH7705_TMU.TMU;
+		ETMU = SH7705_ETMU;
+		TSTR = &SH7705_TMU.TSTR;
+	}
 }
-#endif /* FX9860G */
 
-static void init(void)
+static void configure(void)
 {
 	uint16_t etmu_event[6] = { 0x9e0, 0xc20, 0xc40, 0x900, 0xd00, 0xfa0 };
 	*TSTR = 0;
 
 	/* Install the standard TMU's interrupt handlers */
-	void *h = gint_inthandler(0x400, inth_tmu, 128);
+	void *h = intc_handler(0x400, inth_tmu, 128);
 	timers[0] = h + 84;
 	timers[1] = h + 104;
 	timers[2] = h + 116;
@@ -367,7 +368,7 @@ static void init(void)
 	/* Install the extra timers. On SH3, only ETMU0 is available */
 	for(int i = 3; i < timer_count(); i++) if(i != 7)
 	{
-		void *h = gint_inthandler(etmu_event[i-3], inth_etmux, 32);
+		void *h = intc_handler(etmu_event[i-3], inth_etmux, 32);
 		timers[i] = h + 20;
 
 		/* On SH3, the ETMU handler is not at an offset of 0x900 (event
@@ -383,7 +384,7 @@ static void init(void)
 	}
 
 	/* Also install ETMU4, even on SH3, because it contains common code */
-	h = gint_inthandler(etmu_event[4], inth_etmu4, 96);
+	h = intc_handler(etmu_event[4], inth_etmu4, 96);
 	timers[7] = h + 84;
 	*(uint32_t *)(h + 92) = (uint32_t)&ETMU[4].TCR;
 
@@ -402,58 +403,25 @@ static void init(void)
 		intc_priority(INTC_ETMU_TUNI4, 7);
 		intc_priority(INTC_ETMU_TUNI5, 7);
 	}
-
-	/* Record details in gint's hardware information interface */
-
-	gint[HWETMU] = HW_LOADED | (isSH3() ? HWETMU_1 : HWETMU_6);
-
-	for(int i = 0; i < timer_count() - 3; i++)
-	{
-		etmu_t *T = &ETMU[i];
-		int v = !(T->TCOR + 1)
-		     && !(T->TCNT + 1)
-		     && !(T->TSTR)
-		     && !(T->TCR.UNF)
-		     && !(T->TCR.UNIE);
-		gint[HWETMU] |= v << (i + 2);
-	}
 }
 
 //---
-//	Context system for this driver
+// State and driver metadata
 //---
 
-struct stored_timer {
-	uint32_t TCOR;
-	uint32_t TCNT;
-	uint16_t TCR;
-	uint16_t TSTR;
-};
-
-typedef struct
+static void hsave(tmu_state_t *s)
 {
-	struct stored_timer t[9];
-	uint8_t TSTR;
-} ctx_t;
-
-/* Allocate a system buffer in gint's BSS area */
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
-{
-	ctx_t *ctx = buf;
-	ctx->TSTR = *TSTR;
+	s->TSTR = *TSTR;
 
 	for(int i = 0; i < 3; i++)
 	{
-		struct stored_timer *c = &ctx->t[i];
-		c->TCOR = TMU[i].TCOR;
-		c->TCNT = TMU[i].TCNT;
-		c->TCR  = TMU[i].TCR.word;
+		s->t[i].TCOR = TMU[i].TCOR;
+		s->t[i].TCNT = TMU[i].TCNT;
+		s->t[i].TCR  = TMU[i].TCR.word;
 	}
 	for(int i = 3; i < timer_count(); i++)
 	{
-		struct stored_timer *c = &ctx->t[i];
+		struct tmu_state_stored_timer *c = &s->t[i];
 		etmu_t *T = &ETMU[i-3];
 
 		/* Don't snapshot an interrupt state, because the timer state
@@ -465,21 +433,19 @@ static void ctx_save(void *buf)
 	}
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(tmu_state_t const *s)
 {
-	ctx_t *ctx = buf;
 	*TSTR = 0;
 
 	for(int i = 0; i < 3; i++)
 	{
-		struct stored_timer *c = &ctx->t[i];
-		TMU[i].TCOR = c->TCOR;
-		TMU[i].TCNT = c->TCNT;
-		TMU[i].TCR.word = c->TCR;
+		TMU[i].TCOR = s->t[i].TCOR;
+		TMU[i].TCNT = s->t[i].TCNT;
+		TMU[i].TCR.word = s->t[i].TCR;
 	}
 	for(int i = 3; i < timer_count(); i++)
 	{
-		struct stored_timer *c = &ctx->t[i];
+		struct tmu_state_stored_timer const *c = &s->t[i];
 		etmu_t *T = &ETMU[i-3];
 
 		do T->TCOR = c->TCOR;
@@ -487,7 +453,6 @@ static void ctx_restore(void *buf)
 
 		T->TSTR = c->TSTR;
 
-		/* Remember that TCNT and TCR take time to write to */
 		do T->TCNT = c->TCNT;
 		while(T->TCNT != c->TCNT);
 
@@ -495,21 +460,15 @@ static void ctx_restore(void *buf)
 		while(T->TCR.byte != c->TCR);
 	}
 
-	*TSTR = ctx->TSTR;
+	*TSTR = s->TSTR;
 }
-
-//---
-//	Driver structure definition
-//---
 
 gint_driver_t drv_tmu = {
 	.name         = "TMU",
-	.driver_sh3   = GINT_DRIVER_SH3(driver_sh3),
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.constructor  = constructor,
+	.configure    = configure,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(tmu_state_t),
 };
-
-GINT_DECLARE_DRIVER(2, drv_tmu);
+GINT_DECLARE_DRIVER(13, drv_tmu);

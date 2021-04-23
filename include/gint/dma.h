@@ -5,9 +5,6 @@
 #ifndef GINT_DMA
 #define GINT_DMA
 
-/* TODO: Enable DMA on fx-9860G */
-#ifdef FXCG50
-
 #include <gint/defs/types.h>
 
 /* dma_size_t - Transfer block size */
@@ -108,7 +105,5 @@ void *dma_memset(void *dst, uint32_t pattern, size_t size);
    @dst   Source addresss (32-aligned)
    @size  Size of region (32-aligned) */
 void *dma_memcpy(void * restrict dst, const void * restrict src, size_t size);
-
-#endif /* FXCG50 */
 
 #endif /* GINT_DMA */

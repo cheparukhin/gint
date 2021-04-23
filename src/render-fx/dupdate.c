@@ -3,7 +3,7 @@
 #include "render-fx.h"
 
 /* Standard video RAM for fx9860g is 1 bit per pixel */
-GSECTION(".bss") static uint32_t fx_vram[256];
+GSECTION(".bss") GALIGNED(32) static uint32_t fx_vram[256];
 
 /* Here is the definition of the VRAM pointer, exposed in <gint/display.h> */
 uint32_t *gint_vram = fx_vram;

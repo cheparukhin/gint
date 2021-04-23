@@ -2,11 +2,9 @@ Extensions on existing code:
 * bfile:     implement the optimization-restart as realized by Kbd2
 * kernel:    use GINT_CALL() for all callbacks, without breaking the timer API
 * kernel:    better restore to userspace before panic (ensure BL=0 IMASK=0)
-* kernel:    check if cpu_setVBR() really needs to be perma-mapped
 * project:   add license file
 * kernel:    group linker script symbols in a single header file
 * bopti:     try to display fullscreen images with TLB access + DMA on fxcg50
-* dma:       fx9860g support (need to switch it on and update the Makefile)
 * core:      try to leave add-in without reset in case of panic
 * core:      use cmp/str for memchr()
 * r61524:    brightness control and clean the file
@@ -22,5 +20,4 @@ Future directions.
 * USB communication, using Yatis' reverse-engineering of the module
 * Make fx9860g projects work out of the box on fxcg50
 * Use the DSP to enhance parallel computation
-* Dynamic memory allocation
 * Base for Yatis' threads library

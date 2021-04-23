@@ -2,15 +2,14 @@
 #include <gint/mpu/dma.h>
 #include <gint/mpu/power.h>
 #include <gint/mpu/intc.h>
-#include <gint/gint.h>
 #include <gint/intc.h>
 #include <gint/dma.h>
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/clock.h>
 #include <gint/exc.h>
 
 #define DMA SH7305_DMA
-#define INTC SH7305_INTC
 #define POWER SH7305_POWER
 
 typedef volatile sh7305_dma_channel_t channel_t;
@@ -174,9 +173,8 @@ void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
 //	Initialization
 //---
 
-static void init(void)
+static void configure(void)
 {
-	/* This driver is not implemented on SH3 */
 	if(isSH3()) return;
 
 	/* Install the interrupt handler from dma/inth.s */
@@ -186,7 +184,7 @@ static void init(void)
 	for(int i = 0; i < 6; i++)
 	{
 		/* Install interrupt handler */
-		void *h = gint_inthandler(codes[i], inth_dma_te, 32);
+		void *h = intc_handler(codes[i], inth_dma_te, 32);
 		channel_t *ch = dma_channel(i);
 
 		/* Set its CHCR address */
@@ -197,7 +195,7 @@ static void init(void)
 
 	/* Install the address error gate */
 	extern void inth_dma_ae(void);
-	gint_inthandler(0xbc0, inth_dma_ae, 32);
+	intc_handler(0xbc0, inth_dma_ae, 32);
 
 	/* Set interrupt priority to 3 (IPRE[15..12] for first three channels,
 	   IPRF[11..8] for last two and error gate */
@@ -215,55 +213,52 @@ static void init(void)
 	DMA.OR.DME = 1;
 }
 
-static void wait(void)
+static void universal_unbind(void)
 {
 	/* Make sure any DMA transfer is finished before leaving the app */
 	dma_transfer_wait(-1);
 }
 
-//---
-//	Context system for this driver
-//---
-
-typedef struct
+static bool hpowered(void)
 {
-	channel_t ch[6];
-	int clock;
-	uint16_t OR;
+	if(isSH3()) return false;
+	return (POWER.MSTPCR0.DMAC0 == 0);
+}
 
-} GPACKED(4) ctx_t;
-
-/* One buffer for the system state will go in gint's .bss section */
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
+static void hpoweron(void)
 {
-	ctx_t *ctx = buf;
+	if(isSH3()) return;
+	POWER.MSTPCR0.DMAC0 = 0;
+}
+
+static void hpoweroff(void)
+{
+	if(isSH3()) return;
+	POWER.MSTPCR0.DMAC0 = 1;
+}
+
+//---
+// State and driver metadata
+//---
+
+static void hsave(dma_state_t *s)
+{
+	if(isSH3()) return;
 
 	for(int i = 0; i < 6; i++)
 	{
 		channel_t *ch = dma_channel(i);
-		ctx->ch[i].SAR        = ch->SAR;
-		ctx->ch[i].DAR        = ch->DAR;
-		ctx->ch[i].TCR        = ch->TCR;
-		ctx->ch[i].CHCR.lword = ch->CHCR.lword;
+		s->ch[i].SAR        = ch->SAR;
+		s->ch[i].DAR        = ch->DAR;
+		s->ch[i].TCR        = ch->TCR;
+		s->ch[i].CHCR.lword = ch->CHCR.lword;
 	}
-
-	ctx->OR = DMA.OR.word;
-
-	/* Save the supply status of the DMA0 clock */
-	ctx->clock = POWER.MSTPCR0.DMAC0;
+	s->OR = DMA.OR.word;
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(dma_state_t const *s)
 {
-	ctx_t *ctx = buf;
-
-	/* Restore the supply status of the DMA0 clock first. If the DMA was
-	   originally on standby, the context is basically trash so we don't
-	   want to write that back. If it was originally running, we need to
-	   power it up again for the writes to registers to have any effect */
-	POWER.MSTPCR0.DMAC0 = ctx->clock;
+	if(isSH3()) return;
 
 	/* Disable the DMA while editing */
 	DMA.OR.DME = 0;
@@ -271,26 +266,24 @@ static void ctx_restore(void *buf)
 	for(int i = 0; i < 6; i++)
 	{
 		channel_t *ch = dma_channel(i);
-		ch->SAR        = ctx->ch[i].SAR;
-		ch->DAR        = ctx->ch[i].DAR;
-		ch->TCR        = ctx->ch[i].TCR;
-		ch->CHCR.lword = ctx->ch[i].CHCR.lword;
+		ch->SAR        = s->ch[i].SAR;
+		ch->DAR        = s->ch[i].DAR;
+		ch->TCR        = s->ch[i].TCR;
+		ch->CHCR.lword = s->ch[i].CHCR.lword;
 	}
-	DMA.OR.word = ctx->OR;
+	DMA.OR.word = s->OR;
 }
 
-//---
-//	Driver structure definition
-//---
-
 gint_driver_t drv_dma0 = {
-	.name         = "DMA0",
-	.init         = init,
-	.wait         = wait,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.name         = "DMA",
+	.configure    = configure,
+	.funbind      = universal_unbind,
+	.unbind       = universal_unbind,
+	.hpowered     = hpowered,
+	.hpoweron     = hpoweron,
+	.hpoweroff    = hpoweroff,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(dma_state_t),
 };
-
-GINT_DECLARE_DRIVER(2, drv_dma0);
+GINT_DECLARE_DRIVER(05, drv_dma0);

@@ -3,6 +3,7 @@
 //---
 
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/clock.h>
 
 #include <gint/hardware.h>
@@ -115,10 +116,10 @@ static void sh7305_probe(void)
 #undef CPG
 
 //---
-//	Initialization, contexts and driver metadata
+// Initialization
 //---
 
-static void init(void)
+static void configure(void)
 {
 	/* Disable spread spectrum in SSGSCR */
 	if(isSH4())
@@ -134,31 +135,25 @@ static void init(void)
 	sh7305_probe();
 }
 
-typedef struct {
-	uint32_t SSCGCR;
-} ctx_t;
+//---
+// State and driver metadata
+//---
 
-static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *ctx)
+static void hsave(cpg_state_t *s)
 {
-	ctx_t *c = ctx;
-	if(isSH4()) c->SSCGCR = SH7305_CPG.SSCGCR.lword;
+	if(isSH4()) s->SSCGCR = SH7305_CPG.SSCGCR.lword;
 }
 
-static void ctx_restore(void *ctx)
+static void hrestore(cpg_state_t const *s)
 {
-	ctx_t *c = ctx;
-	if(isSH4()) SH7305_CPG.SSCGCR.lword = c->SSCGCR;
+	if(isSH4()) SH7305_CPG.SSCGCR.lword = s->SSCGCR;
 }
 
 gint_driver_t drv_cpg = {
 	.name         = "CPG",
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.configure    = configure,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(cpg_state_t),
 };
-
-GINT_DECLARE_DRIVER(1, drv_cpg);
+GINT_DECLARE_DRIVER(05, drv_cpg);

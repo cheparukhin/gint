@@ -4,7 +4,7 @@
 
 #include <gint/rtc.h>
 #include <gint/drivers.h>
-#include <gint/gint.h>
+#include <gint/drivers/states.h>
 #include <gint/intc.h>
 
 #include <gint/defs/types.h>
@@ -134,15 +134,13 @@ void rtc_stop_timer(void)
 //	Driver initialization
 //---
 
-#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
-static void driver_sh3(void)
+static void constructor(void)
 {
 	/* Adjust the address of the RTC */
-	RTC = &SH7705_RTC;
+	if(isSH3()) RTC = &SH7705_RTC;
 }
-#endif
 
-static void init(void)
+static void configure(void)
 {
 	/* Disable the carry and alarm interrupts (they share their IPR bits
 	   with the periodic interrupt, which we want to enable) */
@@ -156,8 +154,8 @@ static void init(void)
 
 	/* Install the RTC interrupt handler */
 	GUNUSED void *h0, *h1;
-	h0 = gint_inthandler(0xaa0, inth_rtc_pri, 32);
-	h1 = gint_inthandler(0xae0, inth_rtc_pri_helper, 32);
+	h0 = intc_handler(0xaa0, inth_rtc_pri, 32);
+	h1 = intc_handler(0xae0, inth_rtc_pri_helper, 32);
 
 	timer_params = h0 + 20;
 
@@ -172,44 +170,27 @@ static void init(void)
 }
 
 //---
-//	Context system for this driver
+// State and driver metadata
 //---
 
-typedef struct
+static void hsave(rtc_state_t *s)
 {
-	uint8_t RCR1;
-	uint8_t RCR2;
-} ctx_t;
-
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
-{
-	ctx_t *ctx = buf;
-	ctx->RCR1 = RTC->RCR1.byte;
-	ctx->RCR2 = RTC->RCR2.byte;
+	s->RCR1 = RTC->RCR1.byte;
+	s->RCR2 = RTC->RCR2.byte;
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(rtc_state_t const *s)
 {
-	ctx_t *ctx = buf;
-
-	RTC->RCR1.byte = ctx->RCR1 & 0x18;
-	RTC->RCR2.byte = ctx->RCR2 & 0x7f;
+	RTC->RCR1.byte = s->RCR1 & 0x18;
+	RTC->RCR2.byte = s->RCR2 & 0x7f;
 }
-
-//---
-//	Driver structure definition
-//---
 
 gint_driver_t drv_rtc = {
 	.name         = "RTC",
-	.driver_sh3   = GINT_DRIVER_SH3(driver_sh3),
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.constructor  = constructor,
+	.configure    = configure,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(rtc_state_t),
 };
-
-GINT_DECLARE_DRIVER(2, drv_rtc);
+GINT_DECLARE_DRIVER(13, drv_rtc);

@@ -3,9 +3,9 @@
 #include <gint/mpu/power.h>
 #include <gint/mpu/cpg.h>
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/clock.h>
 #include <gint/intc.h>
-#include <gint/gint.h>
 #include "usb_private.h"
 
 #define USB SH7305_USB
@@ -52,43 +52,33 @@ void usb_log(char const *format, ...)
 // Module powering and depowering
 //---
 
-static bool usb_module_active(void)
+static bool hpowered(void)
 {
 	return (SH7305_CPG.USBCLKCR.CLKSTP == 0) &&
 		(SH7305_POWER.MSTPCR2.USB0 == 0);
 }
 
-/* Start the clock of the USB module, without enabling operations or notifying
-   the host. This procedure does just enough to allow reading registers, and
-   writing to SYSCFG and BUSWAIT. If (enable_write == true), it also turns on
-   SCKE so that registers can be written to. */
-static void usb_module_start(bool enable_write)
+static void hpoweron(void)
 {
-	if(!usb_module_active())
-	{
-		/* TODO: USB: Proper handling of MSELCRA and MSELCRB */
-		uint16_t volatile *MSELCRA = (void *)0xa4050180;
-		uint16_t volatile *MSELCRB = (void *)0xa4050182;
-		*MSELCRA &= 0xff3f;
-		*MSELCRB &= 0x3fff;
+	if(hpowered()) return;
 
-		/* Leave some delay for the clock to settle (like OS). I have
-		   observed that after a reset, 20 ms are *NOT ENOUGH* for the
-		   clock to start properly. 35 ms seemed fine. (?) */
-		SH7305_CPG.USBCLKCR.CLKSTP = 0;
-		sleep_us_spin(50000);
+	/* TODO: USB: Proper handling of MSELCRA and MSELCRB */
+	uint16_t volatile *MSELCRA = (void *)0xa4050180;
+	uint16_t volatile *MSELCRB = (void *)0xa4050182;
+	*MSELCRA &= 0xff3f;
+	*MSELCRB &= 0x3fff;
 
-		SH7305_POWER.MSTPCR2.USB0 = 0;
-		SH7305_USB_UPONCR.word = 0x0600;
-	}
+	/* Leave some delay for the clock to settle. The OS leaves
+	   100 ms, but it just never seems necessary. */
+	SH7305_CPG.USBCLKCR.CLKSTP = 0;
+	sleep_us_spin(1000);
 
-	if(!enable_write) return;
+	SH7305_POWER.MSTPCR2.USB0 = 0;
+	SH7305_USB_UPONCR.word = 0x0600;
 
-	/* Turn on SCKE, which activates all other registers. Because the clock
-	   for the USB module is 48 MHz and the processor runs at a higher
-	   frequency, wait for a little bit before modifying registers. Writing
-	   within 3-4 CPU cycles is 100% unsafe and has been observed to cause
-	   freezes during testing. */
+	/* Turn on SCKE, which activates all other registers. The existing
+	   BUSWAIT delay might not be high enough, so wait a little bit before
+	   modifying registers; a couple CPU cycles is enough. */
 	USB.SYSCFG.SCKE = 1;
 	for(int i = 0; i < 10; i++) __asm__ volatile("nop");
 
@@ -96,8 +86,7 @@ static void usb_module_start(bool enable_write)
 	USB.BUSWAIT.word = 15;
 }
 
-/* Stop the clock of the USB module. */
-static void usb_module_stop(bool restore_mselcr)
+static void hpoweroff(void)
 {
 	uint16_t volatile *MSELCRA = (void *)0xa4050180;
 	uint16_t volatile *MSELCRB = (void *)0xa4050182;
@@ -110,9 +99,7 @@ static void usb_module_stop(bool restore_mselcr)
 	SH7305_POWER.MSTPCR2.USB0 = 1;
 
 	SH7305_CPG.USBCLKCR.CLKSTP = 1;
-	sleep_us_spin(50000);
-
-	if(!restore_mselcr) return;
+	sleep_us_spin(1000);
 
 	/* The values used by the OS (a PFC driver could do better) */
 	*MSELCRB = (*MSELCRB & 0x3fff) | 0xc000;
@@ -133,7 +120,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	}
 
 	usb_open_callback = callback;
-	usb_module_start(true);
+	if(!hpowered()) hpoweron();
 
 	*(uint16_t volatile *)0xa4d800c2 = 0x0020;
 
@@ -178,7 +165,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.NRDYENB.word = 0x0000;
 	USB.BEMPENB.word = 0x0000;
 
-	gint_inthandler(0xa20, inth_usb, 32);
+	intc_handler(0xa20, inth_usb, 32);
 	intc_priority(INTC_USB, 15);
 
 	usb_open_status = true;
@@ -193,7 +180,7 @@ void usb_open_wait(void)
 void usb_close(void)
 {
 	intc_priority(INTC_USB, 0);
-	usb_module_stop(false);
+	hpoweroff();
 	usb_log("---- usb_close ----\n");
 
 	usb_open_callback = GINT_CALL_NULL;
@@ -267,91 +254,53 @@ void usb_interrupt_handler(void)
 }
 
 //---
-// Hardware context
+// State and driver metadata
 //---
 
-typedef struct
+void hsave(usb_state_t *s)
 {
-	/* Control and power-up. We don't try to save power-related registers
-	   from other modules nor UPONCR, because (1) they have to be changed
-	   to access the module, so the OS cannot realy on their value being
-	   preserved, and (2) numerous timing and order issues mean in practice
-	   that changing them less makes program more stable. */
-	uint16_t SYSCFG, DVSTCTR, TESTMODE, REG_C2;
-	/* FIFO configuration */
-	uint16_t CFIFOSEL, D0FIFOSEL, D1FIFOSEL;
-	/* Interrupt configuration */
-	uint16_t INTENB0, BRDYENB, NRDYENB, BEMPENB, SOFCFG;
-	/* Default Control Pipe (maybe not needed) */
-	uint16_t DCPCFG, DCPMAXP, DCPCTR;
-	/* Whether the module is running at this time */
-	bool active;
-} ctx_t;
+	s->SYSCFG    = USB.SYSCFG.word;
+	s->DVSTCTR   = USB.DVSTCTR.word;
+	s->TESTMODE  = USB.TESTMODE.word;
+	s->REG_C2    = USB.REG_C2;
 
-GBSS static ctx_t sys_ctx, gint_ctx;
+	s->CFIFOSEL  = USB.CFIFOSEL.word;
+	s->D0FIFOSEL = USB.D0FIFOSEL.word;
+	s->D1FIFOSEL = USB.D1FIFOSEL.word;
 
-static void ctx_save(void *buf)
-{
-	ctx_t *ctx = buf;
+	s->INTENB0   = USB.INTENB0.word;
+	s->BRDYENB   = USB.BRDYENB.word;
+	s->NRDYENB   = USB.NRDYENB.word;
+	s->BEMPENB   = USB.BEMPENB.word;
+	s->SOFCFG    = USB.SOFCFG.word;
 
-	/* We only save the OS context once to avoid unnecessary quick power
-	   cycles (which are the most unstable things in this driver) */
-	static bool has_saved_sys = false;
-	if(buf == &sys_ctx && has_saved_sys) return;
-	if(buf == &sys_ctx) has_saved_sys = true;
-
-	ctx->active = usb_module_active() || (ctx == &gint_ctx);
-
-	/* Power ON the USB module clock so that the registers can be saved.
-	   We don't enable writing since we only want to observe registers */
-	usb_module_start(false);
-
-	ctx->SYSCFG    = USB.SYSCFG.word;
-	ctx->DVSTCTR   = USB.DVSTCTR.word;
-	ctx->TESTMODE  = USB.TESTMODE.word;
-	ctx->REG_C2    = USB.REG_C2;
-
-	ctx->CFIFOSEL  = USB.CFIFOSEL.word;
-	ctx->D0FIFOSEL = USB.D0FIFOSEL.word;
-	ctx->D1FIFOSEL = USB.D1FIFOSEL.word;
-
-	ctx->INTENB0   = USB.INTENB0.word;
-	ctx->BRDYENB   = USB.BRDYENB.word;
-	ctx->NRDYENB   = USB.NRDYENB.word;
-	ctx->BEMPENB   = USB.BEMPENB.word;
-	ctx->SOFCFG    = USB.SOFCFG.word;
-
-	ctx->DCPCFG    = USB.DCPCFG.word;
-	ctx->DCPMAXP   = USB.DCPMAXP.word;
-	ctx->DCPCTR    = USB.DCPCTR.word;
+	s->DCPCFG    = USB.DCPCFG.word;
+	s->DCPMAXP   = USB.DCPMAXP.word;
+	s->DCPCTR    = USB.DCPCTR.word;
 
 	/* Leave the module open for gint to use it, or for the next restore
 	   to proceed more quickly (if during a world switch) */
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(usb_state_t const *s)
 {
-	ctx_t *ctx = buf;
+	USB.DVSTCTR.word        = s->DVSTCTR;
+	USB.TESTMODE.word       = s->TESTMODE;
+	USB.REG_C2              = s->REG_C2;
 
-	usb_module_start(true);
+	USB.CFIFOSEL.word       = s->CFIFOSEL;
+	USB.D0FIFOSEL.word      = s->D0FIFOSEL;
+	USB.D1FIFOSEL.word      = s->D1FIFOSEL;
 
-	USB.DVSTCTR.word        = ctx->DVSTCTR;
-	USB.TESTMODE.word       = ctx->TESTMODE;
-	USB.REG_C2              = ctx->REG_C2;
+	USB.INTENB0.word        = s->INTENB0;
+	USB.BRDYENB.word        = s->BRDYENB;
+	USB.NRDYENB.word        = s->NRDYENB;
+	USB.BEMPENB.word        = s->BEMPENB;
+	USB.SOFCFG.word         = s->SOFCFG;
 
-	USB.CFIFOSEL.word       = ctx->CFIFOSEL;
-	USB.D0FIFOSEL.word      = ctx->D0FIFOSEL;
-	USB.D1FIFOSEL.word      = ctx->D1FIFOSEL;
-
-	USB.INTENB0.word        = ctx->INTENB0;
-	USB.BRDYENB.word        = ctx->BRDYENB;
-	USB.NRDYENB.word        = ctx->NRDYENB;
-	USB.BEMPENB.word        = ctx->BEMPENB;
-	USB.SOFCFG.word         = ctx->SOFCFG;
-
-	USB.DCPCFG.word         = ctx->DCPCFG;
-	USB.DCPMAXP.word        = ctx->DCPMAXP;
-	USB.DCPCTR.word         = ctx->DCPCTR;
+	USB.DCPCFG.word         = s->DCPCFG;
+	USB.DCPMAXP.word        = s->DCPMAXP;
+	USB.DCPCTR.word         = s->DCPCTR;
 
 	/* Clear remaining interrupts. Read-only bits will be ignored */
 	USB.INTSTS0.word        = 0;
@@ -360,21 +309,16 @@ static void ctx_restore(void *buf)
 	USB.BEMPSTS.word        = 0;
 
 	/* Restore SYSCFG last as clearing SCKE disables writing */
-	USB.SYSCFG.word         = ctx->SYSCFG;
-
-	if(!ctx->active) usb_module_stop(true);
+	USB.SYSCFG.word         = s->SYSCFG;
 }
-
-//---
-// Driver structure definition
-//---
 
 gint_driver_t drv_usb = {
 	.name         = "USB",
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.hpowered     = hpowered,
+	.hpoweron     = hpoweron,
+	.hpoweroff    = hpoweroff,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(usb_state_t),
 };
-
-GINT_DECLARE_DRIVER(3, drv_usb);
+GINT_DECLARE_DRIVER(16, drv_usb);

@@ -3,6 +3,7 @@
 //---
 
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/drivers/t6k11.h>
 
 #include <gint/defs/attributes.h>
@@ -181,68 +182,39 @@ void t6k11_backlight(int setting)
 	if(setting < 0) *port ^= mask;
 }
 
-//---
-//	Context system for this driver
-//---
-
-typedef struct
+static void constructor(void)
 {
-	/* Some status bits, obtained by using the STRD command */
-	uint8_t strd;
-
-	/* There *are* other parameters that are affected by the driver, but
-	   they cannot be read, so I can't determine the system's setting */
-
-} GPACKED(1) ctx_t;
-
-/* Pre-allocate a context in gint's uninitialized section */
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
-{
-	if(gint[HWCALC] == HWCALC_G35PE2) return;
-
-	ctx_t *ctx = buf;
-	ctx->strd = status();
-}
-
-static void ctx_restore(void *buf)
-{
-	if(gint[HWCALC] == HWCALC_G35PE2) return;
-
-	ctx_t *ctx = buf;
-
-	/* Set an X-address of 0 with the original display mode */
-	uint8_t nf = (ctx->strd & 0x04) >> 2;
-	command(reg_xaddr, 0x80 | (nf << 6));
-
-	/* Restore the counter mode */
-	uint8_t cnt = (ctx->strd & 0x03);
-	command(reg_counter, cnt);
-}
-
-//---
-//	Driver initialization
-//---
-
-static void init(void)
-{
-	gint[HWDD] = HW_LOADED | HWDD_LIGHT;
-
 	if(gint[HWCALC] == HWCALC_G35PE2) t6k11_version = 2;
 }
 
 //---
-//	Driver structure definition
+// State and driver metadata
 //---
+
+static void hsave(t6k11_state_t *s)
+{
+	if(t6k11_version == 2) return;
+	s->STRD = status();
+}
+
+static void hrestore(t6k11_state_t const *s)
+{
+	if(t6k11_version == 2) return;
+
+	/* Set an X-address of 0 with the original display mode */
+	uint8_t nf = (s->STRD & 0x04) >> 2;
+	command(reg_xaddr, 0x80 | (nf << 6));
+
+	/* Restore the counter mode */
+	uint8_t cnt = (s->STRD & 0x03);
+	command(reg_counter, cnt);
+}
 
 gint_driver_t drv_t6k11 = {
 	.name         = "T6K11",
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.constructor  = constructor,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(t6k11_state_t),
 };
-
-GINT_DECLARE_DRIVER(5, drv_t6k11);
+GINT_DECLARE_DRIVER(26, drv_t6k11);

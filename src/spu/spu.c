@@ -2,6 +2,7 @@
 #include <gint/mpu/cpg.h>
 #include <gint/mpu/power.h>
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/clock.h>
 #include <gint/intc.h>
 
@@ -11,7 +12,7 @@
 #define CPG   SH7305_CPG
 #define POWER SH7305_POWER
 
-static void init(void)
+static void configure(void)
 {
 	/* Block SPU interrupts from DSP0, DSP1, and their DMA */
 	intc_priority(INTC_SPU_DSP0, 0);
@@ -53,46 +54,30 @@ int spu_zero(void)
 }
 
 //---
-//	Hardware context
+// State and driver metadata
 //---
 
-typedef struct
+static void hsave(spu_state_t *s)
 {
-	uint32_t PBANKC0, PBANKC1;
-	uint32_t XBANKC0, XBANKC1;
-} ctx_t;
-
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
-{
-	ctx_t *ctx = buf;
-	ctx->PBANKC0 = SPU.PBANKC0;
-	ctx->PBANKC1 = SPU.PBANKC1;
-	ctx->XBANKC0 = SPU.XBANKC0;
-	ctx->XBANKC1 = SPU.XBANKC1;
+	s->PBANKC0 = SPU.PBANKC0;
+	s->PBANKC1 = SPU.PBANKC1;
+	s->XBANKC0 = SPU.XBANKC0;
+	s->XBANKC1 = SPU.XBANKC1;
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(spu_state_t const *s)
 {
-	ctx_t *ctx = buf;
-	SPU.PBANKC0 = ctx->PBANKC0;
-	SPU.PBANKC1 = ctx->PBANKC1;
-	SPU.XBANKC0 = ctx->XBANKC0;
-	SPU.XBANKC1 = ctx->XBANKC1;
+	SPU.PBANKC0 = s->PBANKC0;
+	SPU.PBANKC1 = s->PBANKC1;
+	SPU.XBANKC0 = s->XBANKC0;
+	SPU.XBANKC1 = s->XBANKC1;
 }
-
-//---
-//	Driver structure definition
-//---
 
 gint_driver_t drv_spu = {
 	.name         = "SPU",
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.configure    = configure,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(spu_state_t),
 };
-
-GINT_DECLARE_DRIVER(3, drv_spu);
+GINT_DECLARE_DRIVER(16, drv_spu);

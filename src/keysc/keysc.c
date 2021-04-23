@@ -159,7 +159,7 @@ int keydown_any(int key, ...)
 //	Driver initialization
 //---
 
-static void init(void)
+static void configure(void)
 {
 	keydev_init(&dev_keysc);
 
@@ -174,12 +174,11 @@ static void init(void)
 }
 
 //---
-//	Driver structure definition
+// State and driver metadata
 //---
 
 gint_driver_t drv_keysc = {
-	.name    = "KEYSC",
-	.init    = init,
+	.name       = "KEYSC",
+	.configure  = configure,
 };
-
-GINT_DECLARE_DRIVER(4, drv_keysc);
+GINT_DECLARE_DRIVER(23, drv_keysc);

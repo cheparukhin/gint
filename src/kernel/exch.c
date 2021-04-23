@@ -49,6 +49,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	/* Custom gint codes for convenience */
 	if(code == 0x1020) name = "DMA address error";
 	if(code == 0x1040) name = "Add-in too large";
+	if(code == 0x1060) name = "Memory init failed";
 
 	if(name[0]) dtext(1, 9, name);
 	else dprint(1, 9, "%03x", code);
@@ -80,6 +81,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	/* Custom gint codes for convenience */
 	if(code == 0x1020) name = "DMA address error";
 	if(code == 0x1040) name = "Add-in not fully mapped (too large)";
+	if(code == 0x1060) name = "Memory initialization failed (heap)";
 
 	dprint(6, 25, "%03x %s", code, name);
 

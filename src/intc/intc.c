@@ -1,8 +1,13 @@
 #include <gint/drivers.h>
+#include <gint/drivers/states.h>
 #include <gint/hardware.h>
+#include <gint/cpu.h>
 #include <gint/mpu/intc.h>
+#include <gint/std/string.h>
 
-/* Interrupt controllers */
+//---
+// Interrupt controllers
+//---
 
 GDATA3 sh7705_intc_t SH7705_INTC = {
 	.IPR = {
@@ -63,12 +68,40 @@ static struct info {
 	{ IPRF, 0x00f0, IMR9, 0x02, _ /* Driver not SH3-compatible yet */ },
 };
 
+/* Compact SH3 VBR-space scheme
+
+   Due to the low amount of memory available on SH3, event codes that are
+   translated to SH4 are further remapped into the VBR space to eliminate gaps
+   and save space. Each entry in this table represents a 32-byte block after
+   the VBR + 0x200. It shows the SH4 event code whose gate is placed on that
+   block (some of gint's SH4 event codes are invented to host helper blocks).
+
+   For instance, the 5th block after the entry gate hosts the interrupt handler
+   for SH4 event 0x9e0, which is ETMU0 underflow.
+
+   The _inth_remap table in src/kernel/inth.S combines the SH3-SH4 translation
+   with the compact translation, hence its entry for 0xf00 (the SH3 event code
+   for ETMU0 underflow) is the offset in this table where 0x9e0 (the SH4 event
+   code for the same event) is stored, which is 4. */
+static const uint16_t sh3_vbr_map[] = {
+	0x400,  /* TMU0 underflow */
+	0x420,  /* TMU1 underflow */
+	0x440,  /* TMU2 underflow */
+	0x460,  /* (gint custom: TMU helper) */
+	0x9e0,  /* ETMU0 underflow */
+	0xd00,  /* ETMU4 underflow (used as helper on SH3) */
+	0xd20,  /* (gint custom: ETMU helper) */
+	0xd40,  /* (gint custom: ETMU helper) */
+	0xaa0,  /* RTC Periodic Interrupt */
+	1,	/* (Filler to maintain the gap between 0xaa0 and 0xae0) */
+	0xae0,  /* (gint custom: RTC helper) */
+	0
+};
 
 //---
-//	Interrupt controller functions
+// Interrupt controller functions
 //---
 
-/* intc_priority(): Configure the level of interrupts */
 int intc_priority(int intname, int level)
 {
 	struct info const *i = &info[intname];
@@ -99,11 +132,52 @@ int intc_priority(int intname, int level)
 	return oldlevel;
 }
 
+void *intc_handler(int event_code, const void *handler, size_t size)
+{
+	void *dest;
+
+	/* Normalize the event code */
+	if(event_code < 0x400) return NULL;
+	event_code &= ~0x1f;
+
+	/* Prevent writing beyond the end of the VBR space on SH4. Using code
+	   0xfc0 into the interrupt handler space (which starts 0x540 bytes
+	   into VBR-reserved memory) would reach byte 0x540 + 0xfc0 - 0x400 =
+	   0x1100, which is out of gint's reserved VBR area.  */
+	if(isSH4() && event_code + size > 0xfc0) return NULL;
+
+	/* On SH3, make VBR compact. Use this offset specified in the VBR map
+	   above to avoid gaps */
+	if(isSH3())
+	{
+		int index = 0;
+		while(sh3_vbr_map[index])
+		{
+			if((int)sh3_vbr_map[index] == event_code) break;
+			index++;
+		}
+
+		/* This happens if the event has not beed added to the table,
+		   ie. the compact VBR scheme does not support this code */
+		if(!sh3_vbr_map[index]) return NULL;
+
+		dest = (void *)cpu_getVBR() + 0x200 + index * 0x20;
+	}
+	/* On SH4, just use the code as offset */
+	else
+	{
+		/* 0x40 is the size of the entry gate */
+		dest = (void *)cpu_getVBR() + 0x640 + (event_code - 0x400);
+	}
+
+	return memcpy(dest, handler, size);
+}
+
 //---
-//	Initialization
+// State and driver metadata
 //---
 
-static void init(void)
+static void configure(void)
 {
 	/* Just disable everything, drivers will enable what they support */
 	if(isSH3()) for(int i = 0; i < 8; i++)
@@ -112,51 +186,35 @@ static void init(void)
 		SH7305_INTC.IPR[2 * i] = 0x0000;
 }
 
-//---
-//	Driver context
-//---
-
-typedef struct
+static void hsave(intc_state_t *s)
 {
-	uint16_t IPR[12];
-	uint8_t MSK[13];
-} ctx_t;
-
-GBSS static ctx_t sys_ctx, gint_ctx;
-
-static void ctx_save(void *buf)
-{
-	ctx_t *ctx = buf;
-
 	if(isSH3())
 	{
 		for(int i = 0; i < 8; i++)
-			ctx->IPR[i] = *(SH7705_INTC.IPR[i]);
+			s->IPR[i] = *(SH7705_INTC.IPR[i]);
 	}
 	else
 	{
 		for(int i = 0; i < 12; i++)
-			ctx->IPR[i] = SH7305_INTC.IPR[2 * i];
+			s->IPR[i] = SH7305_INTC.IPR[2 * i];
 
 		uint8_t *IMR = (void *)SH7305_INTC.MSK;
 		for(int i = 0; i < 13; i++, IMR += 4)
-			ctx->MSK[i] = *IMR;
+			s->MSK[i] = *IMR;
 	}
 }
 
-static void ctx_restore(void *buf)
+static void hrestore(intc_state_t const *s)
 {
-	ctx_t *ctx = buf;
-
 	if(isSH3())
 	{
 		for(int i = 0; i < 8; i++)
-			*(SH7705_INTC.IPR[i]) = ctx->IPR[i];
+			*(SH7705_INTC.IPR[i]) = s->IPR[i];
 	}
 	else
 	{
 		for(int i = 0; i < 12; i++)
-			SH7305_INTC.IPR[2 * i] = ctx->IPR[i];
+			SH7305_INTC.IPR[2 * i] = s->IPR[i];
 
 		/* Setting masks it a bit more involved than reading them */
 		uint8_t *IMCR = (void *)SH7305_INTC.MSKCLR;
@@ -164,22 +222,16 @@ static void ctx_restore(void *buf)
 		for(int i = 0; i < 13; i++, IMR += 4, IMCR += 4)
 		{
 			*IMCR = 0xff;
-			*IMR = ctx->MSK[i];
+			*IMR = s->MSK[i];
 		}
 	}
 }
 
-//---
-//	Driver structure definition
-//---
-
 gint_driver_t drv_intc = {
 	.name         = "INTC",
-	.init         = init,
-	.sys_ctx      = &sys_ctx,
-	.gint_ctx     = &gint_ctx,
-	.ctx_save     = ctx_save,
-	.ctx_restore  = ctx_restore,
+	.configure    = configure,
+	.hsave        = (void *)hsave,
+	.hrestore     = (void *)hrestore,
+	.state_size   = sizeof(intc_state_t),
 };
-
-GINT_DECLARE_DRIVER(0, drv_intc);
+GINT_DECLARE_DRIVER(01, drv_intc);
