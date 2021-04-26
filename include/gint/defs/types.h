@@ -18,6 +18,8 @@
 typedef unsigned int uint;
 /* Signed size_t */
 typedef signed int ssize_t;
+/* Offset in file (used in standard functions) */
+typedef unsigned int off_t;
 
 //---
 //	Structure elements

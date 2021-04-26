@@ -105,6 +105,21 @@ struct BFile_FileInfo
 	/* Address of first fragment (do not use directly) */
 	void *address;
 };
+enum BFile_FileType
+{
+	BFile_Type_Directory  = 0x0000,
+	BFile_Type_File       = 0x0001,
+	BFile_Type_Addin      = 0x0002,
+	BFile_Type_Eact       = 0x0003,
+	BFile_Type_Language   = 0x0004,
+	BFile_Type_Bitmap     = 0x0005,
+	BFile_Type_MainMem    = 0x0006,
+	BFile_Type_Temp       = 0x0007,
+	BFile_Type_Dot        = 0x0008,
+	BFile_Type_DotDot     = 0x0009,
+	BFile_Type_Volume     = 0x000a,
+	BFile_Type_Archived   = 0x0041,
+};
 int BFile_FindFirst(uint16_t const *search, int *shandle, uint16_t *foundfile,
 	struct BFile_FileInfo *fileinfo);
 
