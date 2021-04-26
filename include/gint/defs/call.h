@@ -139,17 +139,23 @@ static GINLINE int gint_call(gint_call_t cb)
 // Predefined indirect calls
 //
 // * GINT_CALL_SET(pointer_to_int) will create an indirect call that sets
-//   (*pointer_to_int) to 1 when invoked.
+//   (*pointer_to_int) to 1 when invoked. Returns 0.
 //
 // * GINT_CALL_INC(pointer_to_int) will create an indirect call that increments
-//   (*pointer_to_int) when invoked.
+//   (*pointer_to_int) when invoked. Returns 0.
+//
+// * GINT_CALL_SET_STOP(pointer_to_int) is like GINT_CALL_SET() but it returns
+//   1 (TIMER_STOP) so it can be used to set a pointer just once in a timer.
+//
+// * GINT_CALL_INC_STOP(pointer_to_int) similarly returns 1 (TIMER_STOP).
 //---
 
 /* GINT_CALL_SET(): Callback that sets an integer to 1
    This is defined as a function to make sure the pointer is to an int. */
-static void GINT_CALL_SET_function(int volatile *pointer)
+static int GINT_CALL_SET_function(int volatile *pointer)
 {
 	(*pointer) = 1;
+	return 0;
 }
 static GINLINE gint_call_t GINT_CALL_SET(int volatile *pointer)
 {
@@ -157,13 +163,36 @@ static GINLINE gint_call_t GINT_CALL_SET(int volatile *pointer)
 }
 
 /* GINT_CALL_INC(): Callback that increments an integer */
-static void GINT_CALL_INC_function(int volatile *pointer)
+static int GINT_CALL_INC_function(int volatile *pointer)
 {
 	(*pointer)++;
+	return 0;
 }
 static GINLINE gint_call_t GINT_CALL_INC(int volatile *pointer)
 {
 	return GINT_CALL(GINT_CALL_INC_function, pointer);
+}
+
+/* GINT_CALL_SET_STOP(): Same as GINT_CALL_SET(), but returns TIMER_STOP */
+static int GINT_CALL_SET_STOP_function(int volatile *pointer)
+{
+	(*pointer) = 1;
+	return 1;
+}
+static GINLINE gint_call_t GINT_CALL_SET_STOP(int volatile *pointer)
+{
+	return GINT_CALL(GINT_CALL_SET_STOP_function, pointer);
+}
+
+/* GINT_CALL_INC(): Callback that increments an integer */
+static int GINT_CALL_INC_STOP_function(int volatile *pointer)
+{
+	(*pointer)++;
+	return 1;
+}
+static GINLINE gint_call_t GINT_CALL_INC_STOP(int volatile *pointer)
+{
+	return GINT_CALL(GINT_CALL_INC_STOP_function, pointer);
 }
 
 #endif /* GINT_DEFS_CALL */
