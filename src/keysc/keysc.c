@@ -167,7 +167,8 @@ static void configure(void)
 	getkey_repeat(400, 40);
 
 	/* The timer will be stopped when the timer driver is unloaded */
-	keysc_tid = timer_setup(TIMER_ANY, scan_frequency_us, keysc_tick);
+	keysc_tid = timer_configure(TIMER_ANY, scan_frequency_us,
+		GINT_CALL(keysc_tick));
 	if(keysc_tid >= 0) timer_start(keysc_tid);
 
 	gint[HWKBD] = HW_LOADED | (isSH3() ? HWKBD_IO : HWKBD_KSI);

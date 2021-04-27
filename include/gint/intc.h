@@ -117,4 +117,17 @@ int intc_priority(int intname, int level);
    Returns the VBR address where the handler was installed. */
 void *intc_handler(int event_code, void const *handler, size_t size);
 
+/* intc_handler_function(): Install a function as an interrupt handler
+
+   This function can be used to install simple interrupt handlers. It installs
+   a pre-written interrupt handler that calls back the provided function.
+   Essentially it means that the interrupt handler can be written in C without
+   the numerous constraints of intc_handler(), at the cost of always going back
+   to userspace and a small time overhead.
+
+   @event_code  Identifier of the interrupt block
+   @function    Function to use as a handler
+   Returns true on success, false if the event code is invalid. */
+bool intc_handler_function(int event_code, void (*function)(void));
+
 #endif /* GINT_INTC */

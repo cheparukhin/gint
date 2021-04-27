@@ -101,7 +101,8 @@ GCONSTRUCTOR static void gray_init(void)
 	}
 
 	/* Try to obtain the timer right away */
-	timer = timer_setup(GRAY_TIMER | GRAY_CLOCK, 1000, gray_int);
+	timer = timer_configure(GRAY_TIMER | GRAY_CLOCK, 1000,
+		GINT_CALL(gray_int));
 
 	/* On failure, release the resources that we obtained */
 	if(!gray_isinit()) gray_quit();

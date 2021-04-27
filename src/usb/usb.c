@@ -10,8 +10,7 @@
 
 #define USB SH7305_USB
 
-/* Interrupt handler */
-extern void inth_usb(void);
+static void usb_interrupt_handler(void);
 
 /* Shorthand to clear a bit in INTSTS0 */
 #define INTSTS0_clear(field_name) {				\
@@ -165,7 +164,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.NRDYENB.word = 0x0000;
 	USB.BEMPENB.word = 0x0000;
 
-	intc_handler(0xa20, inth_usb, 32);
+	intc_handler_function(0xa20, usb_interrupt_handler);
 	intc_priority(INTC_USB, 15);
 
 	usb_open_status = true;
@@ -191,7 +190,7 @@ void usb_close(void)
 // Userspace interrupt handler
 //---
 
-void usb_interrupt_handler(void)
+static void usb_interrupt_handler(void)
 {
 	static char const * const device_st[] = {
 		"powered", "default", "address", "configured",

@@ -6,6 +6,7 @@
 #define GINT_RTC
 
 #include <gint/defs/types.h>
+#include <gint/defs/call.h>
 #include <gint/timer.h>
 
 //---
@@ -43,7 +44,7 @@ void rtc_set_time(rtc_time_t const *time);
 uint32_t rtc_ticks(void);
 
 //---
-//	RTC timer
+//	RTC periodic interrupt
 //	The real-time clock produces a regular interrupt which may be used as a
 //	timer with a maximum frequency of 256 Hz. It is also useful to check
 //	that the clock settings (see <gint/clock.h>) are properly detected, by
@@ -63,34 +64,36 @@ enum
 	RTC_NONE	= 0,
 };
 
-/* rtc_start_timer(): Configure the RTC timer
+/* rtc_periodic_enable(): Enable the periodic interrupt
 
-   This function sets up the RTC timer to invoke the provided callback function
-   with its argument regularly. This works like standard timers. The callback
-   is a function, the allowed types are listed in <gint/timer.h>. It may have
-   zero or one argument, and must return either TIMER_CONTINUE or TIMER_STOP.
+   This function sets up the periodic interrupt to invoke the provided callback
+   regularly. As with timers, the callback must return either TIMER_CONTINUE or
+   TIMER_STOP.
 
-   Do not confuse this "RTC timer" with Casio's added timers that run at
-   32768 Hz (which are called "RTC timers" in CPU73050.dll). These timers are
-   called Extra TMU in gint and are handled by <gint/timer.h>.
+   Do not confuse this interrupt with CASIO's extra timers that run at 32768 Hz
+   (which are called "RTC timers" in CPU73050.dll). These timers are called
+   Extra TMU or ETMU in gint and are handled by <gint/timer.h>.
 
    Note that the timing of the first callback is always uncertain. A 1 Hz timer
    set up when half of the current second is already elapsed will be called for
    the first time after only 500 ms, for instance.
 
-   @freq      Timer frequency
-   @callback  Function to call back at the specified frequency
-   @...       Up to one 4-byte argument for the callback
-   Fails and returns non-zero if the RTC timer is already in use. */
-int rtc_start_timer(int freq, timer_callback_t callback, ...);
+   @frequency  Periodic interrupt frequency
+   @callback   Function to call back at the specified frequency
+   Returns true on success, false if the interrupt is already in use. */
+bool rtc_periodic_enable(int frequency, gint_call_t callback);
 
-/* Makes sure an argument is always provided, for va_arg() */
+/* rtc_periodic_disable(): Stop the periodic interrupt
+
+   This has the same effect as returning TIMER_STOP from the callback, or
+   setting RTC_NONE as the parameter for rtc_periodic_enable(). */
+void rtc_periodic_disable(void);
+
+/* Deprecated versions with old-style callbacks and more confusing names */
+__attribute__((deprecated("Use rtc_periodic_enable() instead")))
+int rtc_start_timer(int frequency, timer_callback_t callback, ...);
 #define rtc_start_timer(...) rtc_start_timer(__VA_ARGS__, 0)
-
-/* rtc_stop_timer(): Stop the RTC timer
-   This function stops the RTC timer that was set up with rtc_start_timer(). If
-   the decision of stopping the timer comes from the callback, it is preferable
-   to return TIMER_STOP. */
+__attribute__((deprecated("Use rtc_periodic_disable() instead")))
 void rtc_stop_timer(void);
 
 #endif /* GINT_RTC */

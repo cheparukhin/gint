@@ -82,19 +82,16 @@ static struct info {
    The _inth_remap table in src/kernel/inth.S combines the SH3-SH4 translation
    with the compact translation, hence its entry for 0xf00 (the SH3 event code
    for ETMU0 underflow) is the offset in this table where 0x9e0 (the SH4 event
-   code for the same event) is stored, which is 4. */
+   code for the same event) is stored, which is 3. */
 static const uint16_t sh3_vbr_map[] = {
 	0x400,  /* TMU0 underflow */
 	0x420,  /* TMU1 underflow */
 	0x440,  /* TMU2 underflow */
-	0x460,  /* (gint custom: TMU helper) */
 	0x9e0,  /* ETMU0 underflow */
-	0xd00,  /* ETMU4 underflow (used as helper on SH3) */
-	0xd20,  /* (gint custom: ETMU helper) */
-	0xd40,  /* (gint custom: ETMU helper) */
+	0xd00,  /* ETMU logic #1 (ETMU4 underflow) */
+	1,      /* ETMU logic #2 */
+	1,      /* ETMU logic #3 */
 	0xaa0,  /* RTC Periodic Interrupt */
-	1,	/* (Filler to maintain the gap between 0xaa0 and 0xae0) */
-	0xae0,  /* (gint custom: RTC helper) */
 	0
 };
 
@@ -171,6 +168,19 @@ void *intc_handler(int event_code, const void *handler, size_t size)
 	}
 
 	return memcpy(dest, handler, size);
+}
+
+bool intc_handler_function(int event_code, void (*function)(void))
+{
+	/* Install the genric handler */
+	extern void intc_generic_handler(void);
+	void *h = intc_handler(event_code, intc_generic_handler, 32);
+	if(!h) return false;
+
+	/* Set the function to be called */
+	*(void **)(h + 24) = function;
+
+	return true;
 }
 
 //---

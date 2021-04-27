@@ -160,9 +160,9 @@ _gint_inth_7705:
 
    VBR offset  SH3 events       Description
    -------------------------------------------------------------------
-   0x200       400 420 440 ---  TMU0, TMU1, TMU2 and a helper
-   0x280       f00 --- --- ---  ETMU0, ETMU1, ETMU2 and a helper
-   0x300       4a0 [ ] ---      RTC Periodic Interrupt, gap and helper
+   0x200       400 420 440      TMU0, TMU1, TMU2
+   0x260       f00 --- --- ---  ETMU0, 3-gate logic at ETMU4
+   0x2e0       4a0              RTC Periodic Interrupt
    -------------------------------------------------------------------
    0x600       --- ---          Entry gate
    -------------------------------------------------------------------
@@ -171,7 +171,7 @@ _gint_inth_7705:
    the interrupt entry gate at VBR + 0x640. */
 
 _inth_remap:
-	.byte	   0,    1,    2, 0xff, 0xff,    8, 0xff, 0xff
+	.byte	   0,    1,    2, 0xff, 0xff,    7, 0xff, 0xff
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
@@ -182,9 +182,11 @@ _inth_remap:
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 	.byte	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
-	.byte	   4, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
+	.byte	   3, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 
 #endif
+
+.section .gint.mapped, "ax"
 
 /* CALLBACK HELPER
    This function implements the callback with context saving. It is a general
@@ -193,15 +195,9 @@ _inth_remap:
    switches back to user bank and executes the callback. It does not save other
    registers (pr/mach/macl/gbr) which are managed by the handler entry. */
 
-/* gint_inth_callback()
-   Calls the specified function with the given argument after saving the user
-   context, enabling interrupts and going to user bank.
-
-   @r4  Callback function (volatile void * -> int)
-   @r5  Argument (volatile void *)
-   Returns the return value of the callback (int). */
-
-.section .gint.mapped, "ax"
+/* gint_inth_callback: Indirect call from kernel space to userland
+   @r4  Address of callback function
+   -> Returns the return value of the callback (int). */
 _gint_inth_callback_reloc:
 	stc.l	r0_bank, @-r15
 	stc.l	r1_bank, @-r15
@@ -218,7 +214,6 @@ _gint_inth_callback_reloc:
 	/* Save some values to user bank; once we enable interrupts, the kernel
 	   bank might be overwritten at any moment. */
 	ldc	r4, r0_bank
-	ldc	r5, r4_bank
 
 	/* Enable interrupts and go back to user bank. On SH4, SR.IMASK is set
 	   to the level of the current interrupt, which makes sure we can only
@@ -248,10 +243,15 @@ _gint_inth_callback_reloc:
 .load_sr:
 	ldc	r1, sr
 
-	/* We are now in the user bank with r0 and r4 set. Call back. We want
+	/* We are now in the user bank with r0 set. Perform the call. We want
 	   to forward the return value to kernel bank, but this bank can be
 	   changed at any moment since interrupts are enabled. */
 	sts.l	pr, @-r15
+	mov.l	@(4, r0), r4
+	mov.l	@(8, r0), r5
+	mov.l	@(12, r0), r6
+	mov.l	@(16, r0), r7
+	mov.l	@r0, r0
 	jsr	@r0
 	nop
 	lds.l	@r15+, pr

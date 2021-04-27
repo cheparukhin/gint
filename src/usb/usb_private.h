@@ -205,7 +205,8 @@ void usb_pipe_init_transfers(void);
 /* usb_while(): A while loop with a timeout */
 #define usb_while(condition) ({ \
 	volatile int __f = 0; \
-	int __t = timer_setup(TIMER_ANY, 100000 /*µs*/, timer_timeout, &__f); \
+	int __t = timer_configure(TIMER_ANY, 100000 /*µs*/, \
+		GINT_CALL_SET_STOP(&__f)); \
 	if(__t >= 0) timer_start(__t); \
 	while((condition) && __f == 0) {} \
 	if(__f) usb_log("%s: %d: (" #condition ") holds\n", \

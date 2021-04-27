@@ -9,7 +9,8 @@ static void do_sleep(uint64_t delay_us, int spin)
 {
 	volatile int flag = 0;
 
-	int timer = timer_setup(TIMER_ANY, delay_us, timer_timeout, &flag);
+	int timer = timer_configure(TIMER_ANY, delay_us,
+		GINT_CALL_SET_STOP(&flag));
 	if(timer < 0) return;
 
 	timer_start(timer);

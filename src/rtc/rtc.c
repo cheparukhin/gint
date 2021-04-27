@@ -13,19 +13,9 @@
 
 #include <stdarg.h>
 
-#undef rtc_start_timer
-
-//---
-//	Real-Time Clock peripheral registers
-//---
-
 /* RTC address on SH7305, adjusted at startup on SH7337 and SH7355 */
 static rtc_t *RTC = &SH7305_RTC;
-/* Address of interrupt handler parameters */
-GBSS static struct {
-	void *function;
-	uint32_t arg;
-} GPACKED(4) *timer_params;
+
 
 //---
 //	Time management
@@ -94,40 +84,65 @@ void rtc_set_time(rtc_time_t const *time)
 }
 
 //---
-//	RTC timer
+//	RTC periodic interrupt
 //---
 
-/* rtc_start_timer(): Configure the RTC timer */
-int rtc_start_timer(int freq, timer_callback_t f, ...)
-{
-	/* Refuse to override an existing callback */
-	if(RTC->RCR2.PES != RTC_NONE) return 1;
-	if(freq == RTC_NONE) return 1;
+static gint_call_t rtc_periodic_callback;
 
-	/* Get the argument */
-	va_list args;
-	va_start(args, f);
-	uint32_t arg = va_arg(args, uint32_t);
-	va_end(args);
+bool rtc_periodic_enable(int frequency, gint_call_t callback)
+{
+	/* Refuse to override an existing interrupt */
+	if(RTC->RCR2.PES != RTC_NONE) return false;
+	if(frequency == RTC_NONE)
+	{
+		rtc_periodic_disable();
+		return true;
+	}
 
 	/* Temporarily disable the interrupt and set up the callback */
 	RTC->RCR2.PES = RTC_NONE;
-	timer_params->function = f.v;
-	timer_params->arg = arg;
+	rtc_periodic_callback = callback;
 
 	/* Clear the interrupt flag */
 	do RTC->RCR2.PEF = 0;
 	while(RTC->RCR2.PEF);
 
 	/* Enable the interrupt */
-	RTC->RCR2.PES = freq;
-	return 0;
+	RTC->RCR2.PES = frequency;
+	return true;
 }
 
-/* rtc_stop_timer(): Stop the RTC timer */
-void rtc_stop_timer(void)
+void rtc_periodic_interrupt(void)
+{
+	int rc = gint_call(rtc_periodic_callback);
+
+	/* Clear the interrupt flag */
+	do RTC->RCR2.PEF = 0;
+	while(RTC->RCR2.PEF);
+
+	/* Stop the interrupt if the callback returns non-zero */
+	if(rc) rtc_periodic_disable();
+}
+
+void rtc_periodic_disable(void)
 {
 	RTC->RCR2.PES = RTC_NONE;
+}
+
+/* Deprecated versions */
+#undef rtc_start_timer
+int rtc_start_timer(int frequency, timer_callback_t function, ...)
+{
+	va_list args;
+	va_start(args, function);
+	uint32_t arg = va_arg(args, uint32_t);
+	va_end(args);
+
+	return !rtc_periodic_enable(frequency, GINT_CALL(function.v, arg));
+}
+void rtc_stop_timer(void)
+{
+	return rtc_periodic_disable();
 }
 
 //---
@@ -148,19 +163,8 @@ static void configure(void)
 	/* Clear the periodic interrupt flag */
 	RTC->RCR2.PEF = 0;
 
-	/* Interrupt handlers provided by rtc/inth.s */
-	extern void inth_rtc_pri(void);
-	extern void inth_rtc_pri_helper(void);
-
 	/* Install the RTC interrupt handler */
-	GUNUSED void *h0, *h1;
-	h0 = intc_handler(0xaa0, inth_rtc_pri, 32);
-	h1 = intc_handler(0xae0, inth_rtc_pri_helper, 32);
-
-	timer_params = h0 + 20;
-
-	volatile uint8_t **RCR2_pointer = h1 + 28;
-	*RCR2_pointer = &RTC->RCR2.byte;
+	intc_handler_function(0xaa0, rtc_periodic_interrupt);
 
 	/* Disable the RTC interrupts for now. Give them priority 1; higher
 	   priorities cause freezes when going back to the system on SH3

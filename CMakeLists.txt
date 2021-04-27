@@ -26,6 +26,7 @@ set(SOURCES_COMMON
   src/dma/memcpy.c
   src/dma/memset.c
   src/intc/intc.c
+  src/intc/inth.s
   src/kernel/exch.c
   src/kernel/exch.s
   src/kernel/hardware.c
@@ -55,7 +56,6 @@ set(SOURCES_COMMON
   src/render/dtext.c
   src/render/dvline.c
   src/render/topti.c
-  src/rtc/inth.s
   src/rtc/rtc.c
   src/rtc/rtc_ticks.c
   src/spu/spu.c
@@ -74,7 +74,6 @@ set(SOURCES_COMMON
   src/tmu/tmu.c
   src/usb/classes/ff-bulk.c
   src/usb/configure.c
-  src/usb/inth.s
   src/usb/pipes.c
   src/usb/setup.c
   src/usb/string.c
