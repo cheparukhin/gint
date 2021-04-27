@@ -74,7 +74,11 @@ static void hpoweron(void)
 
 	SH7305_POWER.MSTPCR2.USB0 = 0;
 	SH7305_USB_UPONCR.word = 0x0600;
+}
 
+/* Finish the poweron procedure by enabling writes in the registers */
+static void hpoweron_write(void)
+{
 	/* Turn on SCKE, which activates all other registers. The existing
 	   BUSWAIT delay might not be high enough, so wait a little bit before
 	   modifying registers; a couple CPU cycles is enough. */
@@ -120,6 +124,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 
 	usb_open_callback = callback;
 	if(!hpowered()) hpoweron();
+	hpoweron_write();
 
 	*(uint16_t volatile *)0xa4d800c2 = 0x0020;
 
@@ -283,6 +288,8 @@ void hsave(usb_state_t *s)
 
 static void hrestore(usb_state_t const *s)
 {
+	hpoweron_write();
+
 	USB.DVSTCTR.word        = s->DVSTCTR;
 	USB.TESTMODE.word       = s->TESTMODE;
 	USB.REG_C2              = s->REG_C2;
@@ -313,6 +320,7 @@ static void hrestore(usb_state_t const *s)
 
 gint_driver_t drv_usb = {
 	.name         = "USB",
+	/* TODO: Wait for remaining transfers in unbind() */
 	.hpowered     = hpowered,
 	.hpoweron     = hpoweron,
 	.hpoweroff    = hpoweroff,

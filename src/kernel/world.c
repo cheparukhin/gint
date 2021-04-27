@@ -104,6 +104,9 @@ void gint_world_switch_out(gint_world_t world_addin, gint_world_t world_os)
 		gint_driver_t *d = &gint_drivers[i];
 		uint8_t *f = &gint_driver_flags[i];
 
+		/* Power the device if it was unpowered previously */
+		if(d->hpowered && !d->hpowered() && d->hpoweron) d->hpoweron();
+
 		/* For non-shared devices, save previous device state and
 		   consider restoring the preserved one */
 		if(!(*f & GINT_DRV_SHARED))
