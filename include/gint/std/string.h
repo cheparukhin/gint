@@ -8,7 +8,7 @@
 #include <stddef.h>
 
 /* memcpy(): Copy a chunk of memory to a non-overlapping destination */
-void *memcpy(void * restrict dest, void const * restrict src, size_t n);
+void *memcpy(void * __restrict dest, void const * __restrict src, size_t n);
 
 /* memset(): Fill a chunk of memory with a single byte */
 void *memset(void *dest, int byte, size_t n);

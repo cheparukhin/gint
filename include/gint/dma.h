@@ -104,6 +104,7 @@ void *dma_memset(void *dst, uint32_t pattern, size_t size);
    @dst   Destination address (32-aligned)
    @dst   Source addresss (32-aligned)
    @size  Size of region (32-aligned) */
-void *dma_memcpy(void * restrict dst, const void * restrict src, size_t size);
+void *dma_memcpy(void * __restrict dst, const void * __restrict src,
+   size_t size);
 
 #endif /* GINT_DMA */

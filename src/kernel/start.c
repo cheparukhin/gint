@@ -50,7 +50,7 @@ void gint_setrestart(int restart)
    @l  Source pointer (load address)
    @s  Size of area (should be a multiple of 16)
    @r  Destination pointer (relocation address) */
-static void regcpy(uint32_t * restrict l, int32_t s, uint32_t * restrict r)
+static void regcpy(uint32_t * __restrict l, int32_t s, uint32_t * __restrict r)
 {
 	while(s > 0)
 	{
