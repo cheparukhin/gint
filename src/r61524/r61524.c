@@ -150,18 +150,18 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 	   appear. */
 	int blocks = 99 * (height >> 2);
 
-	/* Now roll! */
-	if(method == R61524_DMA)
-	{
-		/* If the previous transfer is still running, wait for it */
+	if(method == R61524_DMA) {
+		/* If the previous transfer is still running, wait for it; then
+		   start sending asynchronously and return. */
 		dma_transfer_wait(0);
-		/* Usa a normal, interrupt-based transfer */
-		dma_transfer(0, DMA_32B, blocks, src, DMA_INC, dst, DMA_FIXED);
-
-		/* Function returns early so that rendering can continue on
-		   another VRAM while the transfer is still being done */
+		dma_transfer_async(0, DMA_32B, blocks, src, DMA_INC, dst,
+			DMA_FIXED, GINT_CALL_NULL);
 	}
-	else dma_transfer_noint(0, DMA_32B, blocks, src,DMA_INC,dst,DMA_FIXED);
+	else {
+		/* Transfer atomically */
+		dma_transfer_atomic(0, DMA_32B, blocks, src, DMA_INC, dst,
+			DMA_FIXED);
+	}
 }
 
 //---

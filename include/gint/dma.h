@@ -6,6 +6,7 @@
 #define GINT_DMA
 
 #include <gint/defs/types.h>
+#include <gint/defs/call.h>
 
 /* dma_size_t - Transfer block size */
 typedef enum
@@ -38,11 +39,12 @@ typedef enum
 
 } dma_address_t;
 
-/* dma_transfer() - Start a data transfer on channel 0
-   This function returns just when the transfer starts. The transfer will end
-   later on and the DMA will be stopped by an interrupt. Call
-   dma_transfer_wait() if you need to wait for the transfer to finish. Don't
-   start a new transfer until the current one is finished!
+/* dma_transfer_async(): Perform an asynchronous DMA data transfer
+
+   This function starts a DMA data transfer and returns immediately. The
+   provided callback will be invoked once the transfer is finish. You can also
+   call dma_transfer_wait() to wait until the transfer completes. You can
+   create a callback with GINT_CALL() or pass GINT_CALL_NULL.
 
    @channel   DMA channel (0..5)
    @size      Transfer size
@@ -50,31 +52,39 @@ typedef enum
    @src       Source pointer, must be aligned with transfer size
    @src_mode  Source address mode
    @dst       Destination address, must be aligned with transfer size
-   @dst_mode  Destination address mode */
-void dma_transfer(int channel, dma_size_t size, uint length,
-	void const *src, dma_address_t src_mode,
-	void *dst, dma_address_t dst_mode);
+   @dst_mode  Destination address mode
+   @callback  Function to invoke when the transfer finishes
+   -> Returns true on success. */
+bool dma_transfer_async(int channel, dma_size_t size, uint length,
+	void const *src, dma_address_t src_mode, void *dst,
+	dma_address_t dst_mode, gint_call_t callback);
 
-/* dma_transfer_wait() - Wait for a transfer to finish
-
-   You should call this function when you need to transfer to be complete
-   before continuing execution. If you are sure that the transfer is finished,
-   this is not necessary (the only way to know is to look at the DMA registers
-   or record interrupts).
-
+/* dma_transfer_wait(): Wait for an asynchronous transfer to finish
    @channel   DMA channel (0..5) */
 void dma_transfer_wait(int channel);
 
-/* dma_transfer_noint() - Perform a data transfer without interrupts
-   This function performs a transfer much like dma_transfer(), but doesn't use
-   interrupts and *actively waits* for the transfer to finish, returning when
-   it's finished. Don't call dma_transfer_wait() after using this function.
+/* dma_transfer_sync(): Perform an synchronous DMA data transfer
+   Like dma_transfer_async(), but only returns once the transfer completes. */
+bool dma_transfer_sync(int channel, dma_size_t size, uint length,
+	void const *src, dma_address_t src_mode, void *dst,
+	dma_address_t dst_mode);
 
-   Not using interrupts is a bad design idea for a majority of programs, and is
-   only ever needed to display panic messages inside exception handlers. */
-void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
+/* dma_transfer_atomic(): Perform a data transfer without interrupts
+
+   This function performs a transfer much like dma_transfer_sync(), but doesn't
+   use interrupts and actively waits for the transfer to finish. Not using
+   interrupts is a bad design idea for a majority of programs, and is only ever
+   needed to display panic messages inside exception handlers. */
+void dma_transfer_atomic(int channel, dma_size_t size, uint blocks,
 	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode);
+
+/* Deprecated version of dma_transfer_async() that did not have a callback */
+__attribute__((deprecated("Use dma_transfer_async() instead")))
+void dma_transfer(int channel, dma_size_t size, uint length, void const *src,
+	dma_address_t src_mode, void *dst, dma_address_t dst_mode);
+/* Old name for dma_transfer_atomic() */
+#define dma_transfer_noint dma_transfer_atomic
 
 //---
 //	DMA-based memory manipulation functions

@@ -14,7 +14,6 @@ void *dma_memset(void *dst, uint32_t l, size_t size)
 	   different memory regions, making the DMA faster than the CPU. */
 	for(int i = 0; i < 8; i++) ILbuf[i] = l;
 
-	dma_transfer(1, DMA_32B, size >> 5, ILbuf, DMA_FIXED, dst, DMA_INC);
-	dma_transfer_wait(1);
+	dma_transfer_sync(1, DMA_32B, size>>5, ILbuf, DMA_FIXED, dst, DMA_INC);
 	return dst;
 }

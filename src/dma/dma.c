@@ -14,6 +14,9 @@
 
 typedef volatile sh7305_dma_channel_t channel_t;
 
+/* Callbacks for all channels */
+static gint_call_t dma_callbacks[6] = { 0 };
+
 /* dma_channel(): Get address of a DMA channel */
 static channel_t *dma_channel(int channel)
 {
@@ -60,8 +63,8 @@ static uint32_t dma_translate(void const *address)
 //---
 
 /* dma_setup(): Setup the DMA in interrupt or no-interrupt mode.
-   The first parameters are as for dma_transfer() and dma_transfer_noint(). The
-   last parameter indicates whether interrupts should be used.
+   The first parameters are as for dma_transfer() and dma_transfer_atomic().
+   The last parameter indicates whether interrupts should be used.
    Returns non-zero if the DMA is busy or a configuration error occurs. */
 static int dma_setup(int channel, dma_size_t size, uint blocks,
 	void const *src, dma_address_t src_mode,
@@ -103,17 +106,36 @@ static int dma_setup(int channel, dma_size_t size, uint blocks,
 	return 0;
 }
 
-/* dma_transfer(): Perform a data transfer */
-void dma_transfer(int channel, dma_size_t size, uint blocks,
-	void const *src, dma_address_t src_mode,
-	void *dst, dma_address_t dst_mode)
+bool dma_transfer_async(int channel, dma_size_t size, uint blocks,
+	void const *src, dma_address_t src_mode, void *dst,
+	dma_address_t dst_mode, gint_call_t callback)
 {
 	if(dma_setup(channel, size, blocks, src, src_mode, dst, dst_mode, 1))
-		return;
+		return false;
+
+	dma_callbacks[channel] = callback;
 
 	/* Enable channel, starting the DMA transfer. */
 	channel_t *ch = dma_channel(channel);
 	ch->CHCR.DE = 1;
+	return true;
+}
+
+/* Interrupt handler for all finished DMA transfers */
+static void dma_interrupt_transfer_ended(int channel)
+{
+	channel_t *ch = dma_channel(channel);
+	ch->CHCR.DE = 0;
+	ch->CHCR.TE = 0;
+
+	DMA.OR.AE = 0;
+	DMA.OR.NMIF = 0;
+
+	if(dma_callbacks[channel].function)
+	{
+		gint_call(dma_callbacks[channel]);
+		dma_callbacks[channel] = GINT_CALL_NULL;
+	}
 }
 
 /* dma_transfer_wait(): Wait for a transfer to finish */
@@ -144,8 +166,18 @@ void dma_transfer_wait(int channel)
 	}
 }
 
-/* dma_transfer_noint(): Perform a data transfer without interruptions */
-void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
+bool dma_transfer_sync(int channel, dma_size_t size, uint length,
+	void const *src, dma_address_t src_mode, void *dst,
+	dma_address_t dst_mode)
+{
+	if(!dma_transfer_async(channel, size, length, src, src_mode, dst,
+		dst_mode, GINT_CALL_NULL)) return false;
+	dma_transfer_wait(channel);
+	return true;
+}
+
+/* dma_transfer_atomic(): Perform a data transfer without interruptions */
+void dma_transfer_atomic(int channel, dma_size_t size, uint blocks,
 	void const *src, dma_address_t src_mode,
 	void *dst, dma_address_t dst_mode)
 {
@@ -169,6 +201,14 @@ void dma_transfer_noint(int channel, dma_size_t size, uint blocks,
 	DMA.OR.NMIF = 0;
 }
 
+/* Deprecated version of dma_transfer_async() that did not have a callback */
+void dma_transfer(int channel, dma_size_t size, uint length, void const *src,
+	dma_address_t src_mode, void *dst, dma_address_t dst_mode)
+{
+	dma_transfer_async(channel, size, length, src, src_mode, dst, dst_mode,
+		GINT_CALL_NULL);
+}
+
 //---
 //	Initialization
 //---
@@ -183,14 +223,11 @@ static void configure(void)
 
 	for(int i = 0; i < 6; i++)
 	{
-		/* Install interrupt handler */
-		void *h = intc_handler(codes[i], inth_dma_te, 32);
-		channel_t *ch = dma_channel(i);
+		intc_handler_function(codes[i],
+			GINT_CALL(dma_interrupt_transfer_ended, i));
 
-		/* Set its CHCR address */
-		*(volatile uint32_t **)(h + 24) = &ch->CHCR.lword;
-		/* Clear the enable flag */
-		ch->CHCR.DE = 0;
+		/* Disable the channel */
+		dma_channel(i)->CHCR.DE = 0;
 	}
 
 	/* Install the address error gate */
