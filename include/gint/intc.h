@@ -6,6 +6,7 @@
 #define GINT_INTC
 
 #include <gint/defs/types.h>
+#include <gint/defs/call.h>
 
 //---
 //	Interrupt names
@@ -120,7 +121,7 @@ void *intc_handler(int event_code, void const *handler, size_t size);
 /* intc_handler_function(): Install a function as an interrupt handler
 
    This function can be used to install simple interrupt handlers. It installs
-   a pre-written interrupt handler that calls back the provided function.
+   a pre-written interrupt handler that performs the provided indirect call.
    Essentially it means that the interrupt handler can be written in C without
    the numerous constraints of intc_handler(), at the cost of always going back
    to userspace and a small time overhead.
@@ -128,6 +129,6 @@ void *intc_handler(int event_code, void const *handler, size_t size);
    @event_code  Identifier of the interrupt block
    @function    Function to use as a handler
    Returns true on success, false if the event code is invalid. */
-bool intc_handler_function(int event_code, void (*function)(void));
+bool intc_handler_function(int event_code, gint_call_t function);
 
 #endif /* GINT_INTC */

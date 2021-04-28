@@ -169,7 +169,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.NRDYENB.word = 0x0000;
 	USB.BEMPENB.word = 0x0000;
 
-	intc_handler_function(0xa20, usb_interrupt_handler);
+	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
 	intc_priority(INTC_USB, 15);
 
 	usb_open_status = true;

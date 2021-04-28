@@ -1,3 +1,5 @@
+#include <gint/intc.h>
+#include <gint/gint.h>
 #include <gint/drivers.h>
 #include <gint/drivers/states.h>
 #include <gint/hardware.h>
@@ -170,15 +172,17 @@ void *intc_handler(int event_code, const void *handler, size_t size)
 	return memcpy(dest, handler, size);
 }
 
-bool intc_handler_function(int event_code, void (*function)(void))
+bool intc_handler_function(int event_code, gint_call_t function)
 {
-	/* Install the genric handler */
+	/* Install the generic handler */
 	extern void intc_generic_handler(void);
 	void *h = intc_handler(event_code, intc_generic_handler, 32);
 	if(!h) return false;
 
-	/* Set the function to be called */
-	*(void **)(h + 24) = function;
+	/* Copy the call */
+	memcpy(h + 8, &function, 20);
+	/* Copy the runtime address of gint_inth_callback() */
+	*(void **)(h + 28) = gint_inth_callback;
 
 	return true;
 }

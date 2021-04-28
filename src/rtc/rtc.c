@@ -164,7 +164,7 @@ static void configure(void)
 	RTC->RCR2.PEF = 0;
 
 	/* Install the RTC interrupt handler */
-	intc_handler_function(0xaa0, rtc_periodic_interrupt);
+	intc_handler_function(0xaa0, GINT_CALL(rtc_periodic_interrupt));
 
 	/* Disable the RTC interrupts for now. Give them priority 1; higher
 	   priorities cause freezes when going back to the system on SH3
