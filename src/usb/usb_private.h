@@ -38,26 +38,6 @@ void usb_configure_log(void);
    successful usb_open(), or a context restore in the USB driver. */
 void usb_configure(void);
 
-/* Error codes for USB functions */
-enum {
-	/* There are no interfaces */
-	USB_OPEN_NO_INTERFACE = 1,
-	/* There are more interfaces than supported (16) */
-	USB_OPEN_TOO_MANY_INTERFACES,
-	/* There are not enough endpoint numbers for every interface, or there
-	   are not enough pipes to set them up */
-	USB_OPEN_TOO_MANY_ENDPOINTS,
-	/* There is not enough FIFO memory to use the requested buffer sizes */
-	USB_OPEN_NOT_ENOUGH_MEMORY,
-	/* Information is missing, such as buffer size for some endpoints */
-	USB_OPEN_MISSING_DATA,
-	/* Invalid parameters: bad endpoint numbers, bad buffer sizes... */
-	USB_OPEN_INVALID_PARAMS,
-
-	/* A write is already pending on this pipe */
-	USB_WRITE_BUSY,
-};
-
 /* endpoint_t: Driver information for each open endpoint in the device
 
    There is one such structure for all 16 configurable endpoints, for each
@@ -103,6 +83,28 @@ endpoint_t *usb_configure_endpoint(int endpoint);
 
 //---
 // Pipe operations
+//
+// When writing to a pipe, the general workflow is as follows:
+//
+// 1. The user performs a write of a block of memory of any size. Because the
+//    FIFO for the pipe only has a limited size, the driver splits the write
+//    into "rounds" of the size of the FIFO.
+//
+//    The rounds are written to the FIFO. If the FIFO is full, the write
+//    continues until the FIFO can be accessed again (often after the contents
+//    of the FIFO have been transmitted, except in double-buffer mode).
+//
+//    If the last round is smaller than the size of the FIFO, the data is not
+//    transmitted; this allows the user to perform another write immediately.
+//
+// 2. The user performs more writes, each of which are split into rounds, with
+//    each round possibly triggering a transfer (if the FIFO is full). Each
+//    write only finishes after all the data is written and the pipe is
+//    available for more writing.
+//
+// 3. After the last write, the user *commits* the pipe, causing any data
+//    remaining in the FIFO to be transferred even if the FIFO is not full. The
+//    commit operation finishes when the pipe is writable again.
 //---
 
 /* usb_pipe_configure(): Configure a pipe when opening the connection */
@@ -116,81 +118,6 @@ void usb_pipe_mode_read(int pipe, int read_size);
 
 /* usb_pipe_mode_write(): Set a pipe in write mode */
 void usb_pipe_mode_write(int pipe, int write_size);
-
-/* usb_write_sync(): Synchronously write to a USB pipe
-
-   This functions writes (size) bytes of (data) into the specified pipe, by
-   units of (unit_size) bytes. The unit size must be 1, 2 or 4, and both (data)
-   and (size) must be multiples of the unit size. In general, you should try to
-   use the largest possible unit size, as it will be much faster. In a sequence
-   of writes that concludes with a commit, all the writes must use the same
-   unit size.
-
-   If the data fits into the pipe, this function returns right away, and the
-   data is *not* transmitted. Otherwise, data is written until the pipe is
-   full, at which point it is automatically transmitted. After the transfer,
-   this function resumes writing, returning only once everything is written.
-   Even then the last bytes will still not have been transmitted, to allow for
-   other writes to follow. After the last write in a sequence, use
-   usb_commit_sync() or usb_commit_async() to transmit the last bytes.
-
-   If (use_dma=true), the write is performed wita the DMA instead of the CPU,
-   which is generally faster.
-
-   If the pipe is busy due to a previous asynchronous write, this function
-   waits for the previous write to finish before proceeding normally.
-
-   @pipe       Pipe to write into
-   @data       Source data (unit_size-aligned)
-   @size       Size of source (multiple of unit_size)
-   @unit_size  FIFO access size (must be 1, 2, or 4)
-   @dma        Whether to use the DMA to perform the write
-   -> Returns an error code (0 on success). */
-int usb_write_sync(int pipe, void const *data, int size, int unit_size,
-   bool use_dma);
-
-/* usb_write_async(): Asynchronously write to a USB pipe
-
-   This function is similar to usb_write_sync(), but it only starts the writing
-   and returns immediately without ever waiting. The writing then occurs in the
-   background of the calling code, and the caller is notified through a
-   callback when it completes. Use GINT_CALL() to create a callback or pass
-   GINT_CALL_NULL.
-
-   If the pipe is busy due to a previous asynchronous write, this function
-   returns USB_PIPE_BUSY. When called with (use_dma=true), it returns as soon
-   as the DMA starts, without even a guarantee that the first few bytes have
-   been written.
-
-   There is no guarantee that the write is complete until the callback is
-   called, however calling again with data=NULL and size=0 can be used to
-   determine whether the write has finished, since it will return 0 if the pipe
-   is idle and USB_PIPE_BUSY otherwise.
-
-   @pipe       Pipe to write into
-   @data       Source data (unit_size-aligned)
-   @size       Size of source (multiple of unit_size)
-   @unit_size  FIFO access size (must be 1, 2, or 4)
-   @dma        Whether to use the DMA to perform the write
-   @callback   Optional callback to invoke when the write completes
-   -> Returns an error code (0 on success). */
-int usb_write_async(int pipe, void const *data, int size, int unit_size,
-	bool use_dma, gint_call_t callback);
-
-/* usb_commit_sync(): Synchronously commit a write
-
-   This function waits for any pending write on the pipe to finish, then
-   transfers whatever data is left, and returns when the transfer completes.
-
-   @pipe  Pipe that has been used in previous usb_write_*() calls */
-void usb_commit_sync(int pipe);
-
-/* usb_commit_async(): Asynchronously commit a write
-
-   This function commits the specified pipe, causing the pipe to transfer
-   written data as soon as all the writes complete. It returns immediately and
-   instead the specified callback is invoked when the transfer completes. */
-void usb_commit_async(int pipe, gint_call_t callback);
 
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe);

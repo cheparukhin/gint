@@ -1,6 +1,7 @@
 #include <gint/usb.h>
 #include <gint/mpu/usb.h>
 #include <gint/clock.h>
+#include <gint/dma.h>
 #include <gint/defs/util.h>
 #include <gint/std/string.h>
 #include "usb_private.h"
@@ -84,9 +85,7 @@ static void pipe_mode(pipect_t ct, int pipe, int mode, int size)
 		return;
 	}
 
-	/* Set PID to NAK to clear the toggle bit, then BUF */
-	USB.PIPECTR[pipe-1].PID = 0;
-	USB.PIPECTR[pipe-1].SQCLR = 1;
+	/* Set PID to BUF */
 	USB.PIPECTR[pipe-1].PID = 1;
 
 	/* RCNT=0 REW=0 DCLRM=0 DREQE=0 MBW=size BIGEND=1 */
@@ -116,17 +115,20 @@ struct transfer {
 	/* Size of data left to transfer */
 	int size;
 	/* Size of data currently in the FIFO (less than the FIFO capacity) */
-	int used;
+	uint16_t used;
+	/* Data sent in the last transfer not yet finished by finish_round() */
+	uint16_t flying;
 	/* Write size */
 	uint8_t unit_size;
 	/* Whether the data has been committed to a transfer */
 	bool committed;
 	/* Whether to use the DMA */
 	bool dma;
-	/* Callback at the end of the transfer */
+	/* Callback to be invoked at the end of the current write or commit
+	   (both cannot exist at the same time) */
 	gint_call_t callback;
 };
-/* Operations to be continued whenever buffers get empty */
+/* Multi-round operations to be continued whenever buffers are ready */
 GBSS static struct transfer volatile pipe_transfers[10];
 
 void usb_pipe_init_transfers(void)
@@ -147,31 +149,60 @@ static void write_32(uint32_t const *data, int size, uint32_t volatile *FIFO)
 	for(int i = 0; i < size; i++) *FIFO = data[i];
 }
 
-/* Commit the pipe if there is no data left and the commit flag is set */
-static void maybe_commit(struct transfer volatile *t, int pipe)
+/* Check whether a pipe is busy with a multi-round write or a transfer */
+GINLINE static bool pipe_busy(int pipe)
 {
-	/* The DCP is always committed immediately and with CCPL */
-	if(pipe == 0) return;
-	pipect_t ct = pipect(pipe);
+	/* Multi-round write still not finished */
+	if(pipe_transfers[pipe].data) return true;
+	/* Transfer in progress */
+	if(pipe && !USB.PIPECTR[pipe-1].BSTS) return true;
+	/* Callback for a just-finished transfer not yet called */
+	if(pipe_transfers[pipe].flying) return true;
+	/* All good */
+	return false;
+}
 
-	/* The buffer is committed automatically if full because continuous
-	   mode is enabled. Manually commit if no data is left. */
-	if(t->committed && !t->data)
+/* Size of a pipe's buffer area, in bytes */
+static int pipe_bufsize(int pipe)
+{
+	if(pipe == 0) return USB.DCPMAXP.MXPS;
+
+	USB.PIPESEL.PIPESEL = pipe;
+	return (USB.PIPEBUF.BUFSIZE + 1) * 64;
+}
+
+/* finish_round(): Update transfer logic after a write round completes
+
+   This function is called when a write round completes, either by the handler
+   of the BEMP interrupt if the round filled the FIFO, or by the handler of the
+   DMA transfer the or write_round() function itself if it didn't.
+
+   It the current write operation has finished with this round, this function
+   invokes the write_async callback. */
+static void finish_round(struct transfer volatile *t, int pipe)
+{
+	/* Update the pointer as a result of the newly-finished write */
+	t->used += t->flying;
+	t->data += t->flying;
+	t->size -= t->flying;
+	t->flying = 0;
+
+	/* Account for auto-transfers */
+	if(t->used == pipe_bufsize(pipe)) t->used = 0;
+
+	/* Invoke the callback at the end */
+	if(t->size == 0)
 	{
-		if(ct == D0F) USB.D0FIFOCTR.BVAL = 1;
-		if(ct == D1F) USB.D1FIFOCTR.BVAL = 1;
-
-		t->committed = false;
-		usb_log("[PIPE%d] Committed transfer\n", pipe);
+		t->data = NULL;
+		if(t->callback.function) gint_call(t->callback);
 	}
 }
 
 /* write_round(): Write up to a FIFO's worth of data to a pipe
-
-   Returns true if this last write will empty the queue, false if further
-   writes are required. When writing with the DMA, returning true does not
-   imply that the pipe can be accessed. */
-static bool write_round(struct transfer volatile *t, int pipe)
+   If this is a partial round (FIFO not going to be full), finish_round() is
+   invoked after the write. Otherwise the FIFO is transmitted automatically and
+   the BEMP handler will call finish_round() after the transfer. */
+static void write_round(struct transfer volatile *t, int pipe)
 {
 	pipect_t ct = pipect(pipe);
 	void volatile *FIFO = NULL;
@@ -183,52 +214,45 @@ static bool write_round(struct transfer volatile *t, int pipe)
 	if(pipe) pipe_mode(ct, pipe, 1, t->unit_size);
 
 	/* Amount of data that can be transferred in a single run */
-	int bufsize=64, available=64;
-	if(pipe != 0)
-	{
-		USB.PIPESEL.PIPESEL = pipe;
-		bufsize = (USB.PIPEBUF.BUFSIZE + 1) * 64;
-		available = bufsize - t->used;
-	}
+	int available = pipe_bufsize(pipe) - (pipe == 0 ? 0 : t->used);
 	int size = min(t->size, available);
+	t->flying = size;
+
+	/* If this is a partial write (size < available), call finish_round()
+	   after the copy to notify the user that the pipe is ready. Otherwise,
+	   a USB transfer will occur and the BEMP handler will do it. */
+	bool partial = (size < available);
 
 	if(t->dma)
 	{
-		/* TODO: DMA support in usb_pipe_write(), write_round() */
-		/* After the DMA starts the code below will update pointers for
-		   the next iteration */
-		// dma_start(X, Y, Z,
-		//	GINT_CALL(maybe_commit, (void *)t, pipe));
+		/* TODO: USB: Can we use 32-byte DMA transfers? */
+		int block_size = DMA_1B;
+		if(t->unit_size == 2) block_size = DMA_2B, size >>= 1;
+		if(t->unit_size == 4) block_size = DMA_4B, size >>= 2;
+
+		gint_call_t callback = !partial ? GINT_CALL_NULL :
+			GINT_CALL(finish_round, (void *)t, pipe);
+
+		/* TODO: DMA support in usb_write_async()/write_round() */
+		/* TODO: USB: Don't use a fixed DMA channel */
+		dma_transfer_async(3, block_size, size,
+			t->data, DMA_INC, (void *)FIFO, DMA_FIXED, callback);
 	}
 	else
 	{
 		if(t->unit_size == 1) write_8(t->data, size, FIFO);
 		if(t->unit_size == 2) write_16(t->data, size >> 1, FIFO);
 		if(t->unit_size == 4) write_32(t->data, size >> 2, FIFO);
+		if(partial) finish_round(t, pipe);
 	}
-
-	t->used += size;
-	t->data += size;
-	t->size -= size;
-	if(t->used == bufsize || t->committed) t->used = 0;
-	if(t->size == 0) t->data = NULL;
-
-	/* After a CPU write, commit if needed */
-	if(!t->dma) maybe_commit(t, pipe);
-	return (t->data == NULL);
 }
 
-/* usb_write_async(): Asynchronously write to a USB pipe */
 int usb_write_async(int pipe, void const *data, int size, int unit_size,
 	bool use_dma, gint_call_t callback)
 {
+	if(pipe_busy(pipe)) return USB_WRITE_BUSY;
+
 	struct transfer volatile *t = &pipe_transfers[pipe];
-
-	/* Do not initiate a write if a previous write is unfinished or an
-	   ongoing transfer is awaiting completion */
-	if(t->data || (pipe && !USB.PIPECTR[pipe-1].BSTS))
-		return USB_WRITE_BUSY;
-
 	if(!data || !size) return 0;
 
 	t->data = data;
@@ -238,54 +262,89 @@ int usb_write_async(int pipe, void const *data, int size, int unit_size,
 	t->committed = false;
 	t->callback = callback;
 
-	// TODO: Support callback in usb_write_async()
-
-	write_round(t, pipe);
-
 	/* Set up the Buffer Empty interrupt to refill the buffer when it gets
 	   empty, and be notified when the transfer completes. */
 	if(pipe) USB.BEMPENB.word |= (1 << pipe);
+
+	write_round(t, pipe);
 	return 0;
 }
 
-/* usb_write_sync(): Synchronously write to a USB pipe */
 int usb_write_sync(int pipe, void const *data, int size, int unit_size,
-   bool use_dma)
+	bool use_dma)
 {
-	struct transfer volatile *t = &pipe_transfers[pipe];
-
 	/* Wait for a previous write and/or transfer to finish */
-	while(t->data || (pipe && !USB.PIPECTR[pipe-1].BSTS)) sleep();
+	while(pipe_busy(pipe)) sleep();
 
-	usb_write_async(pipe, data, size, unit_size, use_dma, GINT_CALL_NULL);
+	volatile int flag = 0;
+	usb_write_async(pipe, data, size, unit_size, use_dma,
+		GINT_CALL_SET(&flag));
 
-	/* Wait for the write to finish (but not the transfer) */
-	while(t->data) sleep();
+	while(!flag) sleep();
+
 	return 0;
 }
 
-void usb_commit_async(int pipe, gint_call_t callback)
+
+int usb_commit_async(int pipe, gint_call_t callback)
 {
 	struct transfer volatile *t = &pipe_transfers[pipe];
+	if(pipe_busy(pipe)) return USB_COMMIT_BUSY;
+
+	/* TODO: USB: Commit on the DCP? */
+	if(pipe == 0) return 0;
+
+	/* Commiting an empty pipe is a no-op */
+	if(t->used == 0)
+	{
+		if(callback.function) gint_call(callback);
+		return 0;
+	}
+
+	/* Set BVAL=1 and inform the BMEP handler of the commitment with the
+	   committed flag; the handler will invoke the commit callback */
 	t->committed = true;
 	t->callback = callback;
 
-	/* Commit the pipe if writes have been completed already */
-	maybe_commit(t, pipe);
+	pipect_t ct = pipect(pipe);
+	if(ct == D0F) USB.D0FIFOCTR.BVAL = 1;
+	if(ct == D1F) USB.D1FIFOCTR.BVAL = 1;
+	usb_log("[PIPE%d] Committed transfer\n", pipe);
+
+	return 0;
+}
+
+void usb_commit_sync(int pipe)
+{
+	volatile int flag = 0;
+	int rc = 0;
+
+	/* Wait until the pipe is free, then commit */
+	do rc = usb_commit_async(pipe, GINT_CALL_SET(&flag));
+	while(rc == USB_COMMIT_BUSY);
+
+	/* Wait until the commit completes */
+	while(!flag) sleep();
 }
 
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe)
 {
-	/* Eliminate interrupts that occur when the pipe is set up but no
-	   transfer is occurring */
 	struct transfer volatile *t = &pipe_transfers[pipe];
-	if(!t->data) return;
 
-	bool complete = write_round(t, pipe);
-	if(!complete) return;
+	if(t->committed)
+	{
+		/* Finish transfer, disable interrupt, reset logic */
+		t->committed = false;
+		t->used = 0;
+		USB.BEMPENB.word &= ~(1 << pipe);
 
-	USB.BEMPENB.word &= ~(1 << pipe);
-
-	if(t->callback.function) gint_call(t->callback);
+		if(t->callback.function) gint_call(t->callback);
+	}
+	else
+	{
+		/* Finish a round; if there is more data, keep going */
+		finish_round(t, pipe);
+		if(t->data) write_round(t, pipe);
+	}
 }
