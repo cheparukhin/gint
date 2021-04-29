@@ -55,7 +55,7 @@ typedef enum
    @dst_mode  Destination address mode
    @callback  Function to invoke when the transfer finishes
    -> Returns true on success. */
-bool dma_transfer_async(int channel, dma_size_t size, uint length,
+bool dma_transfer_async(int channel, dma_size_t size, uint blocks,
 	void const *src, dma_address_t src_mode, void *dst,
 	dma_address_t dst_mode, gint_call_t callback);
 
@@ -65,7 +65,7 @@ void dma_transfer_wait(int channel);
 
 /* dma_transfer_sync(): Perform an synchronous DMA data transfer
    Like dma_transfer_async(), but only returns once the transfer completes. */
-bool dma_transfer_sync(int channel, dma_size_t size, uint length,
+bool dma_transfer_sync(int channel, dma_size_t size, uint blocks,
 	void const *src, dma_address_t src_mode, void *dst,
 	dma_address_t dst_mode);
 
@@ -81,7 +81,7 @@ void dma_transfer_atomic(int channel, dma_size_t size, uint blocks,
 
 /* Deprecated version of dma_transfer_async() that did not have a callback */
 __attribute__((deprecated("Use dma_transfer_async() instead")))
-void dma_transfer(int channel, dma_size_t size, uint length, void const *src,
+void dma_transfer(int channel, dma_size_t size, uint blocks, void const *src,
 	dma_address_t src_mode, void *dst, dma_address_t dst_mode);
 /* Old name for dma_transfer_atomic() */
 #define dma_transfer_noint dma_transfer_atomic

@@ -13,7 +13,7 @@
 /* Timer types and numbers
 
    If you're new to timers, read this comment and then check timer_configure()
- timer_start(): most of the time you only need these.
+   and timer_start(): most of the time you only need these.
 
    There are two types of timers on the calculator: normal timers called TMU,
    and extra timers added by Casio called ETMU. The main difference is that TMU
