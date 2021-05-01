@@ -144,4 +144,8 @@ void dgray_getdelays(uint32_t *light, uint32_t *dark);
    These pointers can be used for custom rendering functions. */
 void dgray_getvram(uint32_t **light, uint32_t **dark);
 
+/* dgray_getscreen(): Get the current screen pointers
+   These pointers can be used to make screen captures. */
+void dgray_getscreen(uint32_t **light, uint32_t **dark);
+
 #endif /* GINT_GRAY */

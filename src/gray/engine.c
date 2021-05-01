@@ -258,3 +258,12 @@ void dgray_getvram(uint32_t **light, uint32_t **dark)
 	if(light) *light = vrams[base & 2];
 	if(dark) *dark = vrams[base | 1];
 }
+
+/* dgray_getscreen(): Get the current screen pointers */
+void dgray_getscreen(uint32_t **light, uint32_t **dark)
+{
+	int base = st ^ 2;
+
+	if(light) *light = vrams[base & 2];
+	if(dark) *dark = vrams[base | 1];
+}
