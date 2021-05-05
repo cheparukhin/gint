@@ -15,6 +15,8 @@
 static int rep_first = 400, rep_next = 40;
 /* Repeat profile function */
 static getkey_profile_t repeat_profile = NULL;
+/* Feature function */
+static getkey_feature_t feature_function = NULL;
 /* Repeater specification */
 static enum { NONE, ALL, ARROWS, FILTER } repeat_mode;
 
@@ -71,7 +73,15 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 			e.key == KEY_MENU && !e.shift && !e.alpha)
 			gint_osmenu();
 
-		else if(e.type == KEYEV_DOWN || e.type == KEYEV_HOLD) break;
+		else if(e.type == KEYEV_DOWN || e.type == KEYEV_HOLD)
+		{
+			/* Custom global features */
+			bool accepted = false;
+			if((opt & GETKEY_FEATURES) && feature_function)
+				accepted = feature_function(e);
+			/* Return if the even has not been accepted yet */
+			if(!accepted) break;
+		}
 	}
 
 	keydev_set_transform(d, tr0);
@@ -96,3 +106,17 @@ void getkey_set_repeat_profile(getkey_profile_t profile)
 {
 	repeat_profile = profile;
 }
+
+/* getkey_feature_function(): Get the current feature function */
+getkey_feature_t getkey_feature_function(void)
+{
+	return feature_function;
+}
+
+/* getkey_set_feature_function(): Set the global feature function */
+void getkey_set_feature_function(getkey_feature_t function)
+{
+	feature_function = function;
+}
+
+

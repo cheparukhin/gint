@@ -212,16 +212,22 @@ enum {
 	GETKEY_REP_ALL     = 0x20,
 	/* Enable custom repeat profiles; see getkey_set_repeat_profile() */
 	GETKEY_REP_PROFILE = 0x40,
+	/* Enable application shortcuts; see getkey_set_feature_function() */
+	GETKEY_FEATURES    = 0x80,
 
 	/* No modifiers */
 	GETKEY_NONE        = 0x00,
 	/* Default settings of getkey() */
-	GETKEY_DEFAULT     = 0x5f,
+	GETKEY_DEFAULT     = 0xdf,
 };
 
 /* getkey_profile_t: Custom repeat profile function
    See getkey_set_repeat_profile() for details. */
 typedef int (*getkey_profile_t)(int key, int duration, int count);
+
+/* getkey_feature_t: Custom feature function
+   See getkey_set_feature_function() for details. */
+typedef bool (*getkey_feature_t)(key_event_t event);
 
 /* getkey_opt(): Enhanced getkey()
 
@@ -287,6 +293,27 @@ getkey_profile_t getkey_repeat_profile(void);
    arrived, whereas the repeat profile is called one repeat earlier to schedule
    the repeat exactly when needed. */
 void getkey_set_repeat_profile(getkey_profile_t profile);
+
+/* getkey_feature_function(): Get the current feature function */
+getkey_feature_t getkey_feature_function(void);
+
+/* getkey_set_feature_function(): Set the global feature function
+
+   The feature function can be used to extend getkey() with application-wide
+   shortcuts, in a way similar to the CATALOG, CAPTURE or OFF functions of the
+   original getkey(). The feature function can be set globally at the
+   application level, and thus does not require every call site that uses
+   getkey() to support the shortcuts explicitly.
+
+   The feature function receives events when they are generated; if can them
+   process them, and return either true to accept the event (preventing
+   getkey() from returning it) or false to refuse the event (in which case it
+   is returned normally).
+
+   The feature function is enabled by default and be disabled by removing the
+   GETKEY_FEATURES flag in getkey_opt(). Setting function=NULL disables the
+   functionality. */
+void getkey_set_feature_function(getkey_feature_t function);
 
 //---
 //	Key code functions
