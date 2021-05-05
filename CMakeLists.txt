@@ -26,6 +26,7 @@ set(SOURCES_COMMON
   src/cpu/atomic.c
   src/cpu/cpu.c
   src/cpu/registers.s
+  src/cpu/sleep.c
   src/dma/dma.c
   src/dma/inth.s
   src/dma/memcpy.c

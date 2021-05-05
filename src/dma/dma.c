@@ -16,6 +16,8 @@ typedef volatile sh7305_dma_channel_t channel_t;
 
 /* Callbacks for all channels */
 static gint_call_t dma_callbacks[6] = { 0 };
+/* Sleep blocking flags for all channels */
+static bool dma_sleep_blocking[6] = { 0 };
 
 /* dma_channel(): Get address of a DMA channel */
 static channel_t *dma_channel(int channel)
@@ -103,6 +105,14 @@ static int dma_setup(int channel, dma_size_t size, uint blocks,
 	DMA.OR.AE = 0;
 	DMA.OR.NMIF = 0;
 
+	/* Block sleep when the transfer involves on-chip memory */
+	dma_sleep_blocking[channel] = false;
+
+	if(ch->SAR >= 0xe5007000 && ch->SAR <= 0xe5204000)
+		dma_sleep_blocking[channel] = true;
+	if(ch->DAR >= 0xe5007000 && ch->DAR <= 0xe5204000)
+		dma_sleep_blocking[channel] = true;
+
 	return 0;
 }
 
@@ -114,6 +124,9 @@ bool dma_transfer_async(int channel, dma_size_t size, uint blocks,
 		return false;
 
 	dma_callbacks[channel] = callback;
+
+	if(dma_sleep_blocking[channel])
+		sleep_block();
 
 	/* Enable channel, starting the DMA transfer. */
 	channel_t *ch = dma_channel(channel);
@@ -130,6 +143,9 @@ static void dma_interrupt_transfer_ended(int channel)
 
 	DMA.OR.AE = 0;
 	DMA.OR.NMIF = 0;
+
+	if(dma_sleep_blocking[channel])
+		sleep_unblock();
 
 	if(dma_callbacks[channel].function)
 	{
@@ -151,18 +167,10 @@ void dma_transfer_wait(int channel)
 	channel_t *ch = dma_channel(channel);
 	if(!ch) return;
 
-	/* Wait for the channel to be disabled by the interrupt handler.
-	   When the source or the destination of the transfer is X, Y or IL
-	   memory, refrain from sleeping as this also stops the transfer! */
-	int onchip = 0;
-
-	if(ch->SAR >= 0xe5007000 && ch->SAR < 0xe5204000) onchip = 1;
-	if(ch->DAR >= 0xe5007000 && ch->DAR < 0xe5204000) onchip = 1;
-
 	while(ch->CHCR.DE && !ch->CHCR.TE)
 	{
 		/* Sleep only if the interrupt is enabled to wake us up */
-		if(!onchip && ch->CHCR.IE) sleep();
+		if(ch->CHCR.IE) sleep();
 	}
 }
 

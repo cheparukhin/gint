@@ -80,6 +80,34 @@ cpu_sr_t cpu_getSR(void);
 void cpu_setSR(cpu_sr_t sr);
 
 //---
+// Miscellaneous functions
+//---
+
+/* sleep(): Put the processor to sleep
+
+   This function uses the [sleep] instruction to put the processor in sleep
+   mode. This allows reduced energy consumption while waiting for interrupts.
+
+   In some certain situations, sleeping would block the process that is being
+   waited for (generally when on-chip memory is involved). When this occurs,
+   this function will not sleep at all and instead return instantly.
+
+   The indented use for sleep() is *always* in some sort of loop, as there is
+   no guarantee about time or interrupts elapsed before this function
+   returns. */
+void sleep(void);
+
+/* sleep_block(): Block processor sleep
+
+   This function blocks processor sleep until sleep_unblock() is called. The
+   driver maintains a counter of the number of blocking sources, therefore it
+   is important that *every* sleep_block() is followed by a sleep_unblock(). */
+void sleep_block(void);
+
+/* sleep_unblock(): Cancel a processor sleep block */
+void sleep_unblock(void);
+
+//---
 // Configuration
 //---
 

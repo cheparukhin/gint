@@ -6,6 +6,9 @@
 #define GINT_CLOCK
 
 #include <gint/defs/types.h>
+/* This header used to expose the sleep() function; include <gint/cpu.h> to
+   ensure this is still the case */
+#include <gint/cpu.h>
 
 //---
 //	Clock signals
@@ -54,12 +57,6 @@ const clock_frequency_t *clock_freq(void);
 //---
 //	Sleep functions
 //---
-
-/* sleep() - halt the processor until an event occurs
-   The function stops the processor until an interrupt is accepted; the
-   duration is not known in advance. This function should be used when the
-   add-in is idle, for instance while waiting for keyboard input. */
-#define sleep() __asm__("sleep")
 
 /* sleep_us(): Sleep for a fixed duration in microseconds
    Stops the processor until the specified delay in microseconds has elapsed.
