@@ -6,41 +6,33 @@
 
 /* Value of IMASK when atomic mode is entered */
 static int saved_IMASK = 0;
-/* Number of atomic mode levels (sort of mutex) */
+/* Number of atomic mode levels */
 static unsigned int atomic_level = 0;
-/* Lock on (atomic_level) */
-static char atomic_level_lock = 0;
 
 void cpu_atomic_start(void)
 {
-	/* Get the lock on (atomic_level) */
-	while(__atomic_test_and_set(&atomic_level_lock, __ATOMIC_RELAXED)) {}
+	/* There is no access problem to IMASK here because interrupts must
+	   preserve and restore it */
+	cpu_sr_t SR = cpu_getSR();
+	cpu_sr_t SR2 = SR;
+	SR2.IMASK = 15;
+	cpu_setSR(SR2);
 
-	if(atomic_level == 0) {
-		cpu_sr_t SR = cpu_getSR();
-		saved_IMASK = SR.IMASK;
-		SR.IMASK = 15;
-		cpu_setSR(SR);
-	}
-
+	/* Now that we're alone, atomically update the atomic level */
+	if(atomic_level == 0) saved_IMASK = SR.IMASK;
 	atomic_level++;
-
-	/* Release the lock */
-	__atomic_clear(&atomic_level_lock, __ATOMIC_RELAXED);
 }
 
 void cpu_atomic_end(void)
 {
-	while(__atomic_test_and_set(&atomic_level_lock, __ATOMIC_RELAXED)) {}
+	cpu_sr_t SR = cpu_getSR();
 
+	/* Update atomic_level before restoring interrupts */
 	atomic_level--;
-
 	if(atomic_level == 0) {
-		cpu_sr_t SR = cpu_getSR();
 		SR.IMASK = saved_IMASK;
 		saved_IMASK = 0;
-		cpu_setSR(SR);
 	}
 
-	__atomic_clear(&atomic_level_lock, __ATOMIC_RELAXED);
+	cpu_setSR(SR);
 }
