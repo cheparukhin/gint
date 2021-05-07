@@ -6,16 +6,7 @@
 
 #define USB SH7305_USB
 
-/* Write a response to the DCP, and automatically set write mode */
-static void dcp_write(void const *data, size_t size)
-{
-	/* Automatically enable write mode (heuristic condition) */
-	/* TODO: dcp_write(): Try to set the mode in usb_pipe_write() */
-	if(USB.CFIFOSEL.ISEL != 1 || USB.DCPCTR.PID != 1)
-		usb_pipe_mode_write(0, 1);
-
-	usb_write_sync(0, data, size, 1, false);
-}
+#define dcp_write(data, size) usb_write_sync(0, data, size, 1, false)
 
 //---
 // SETUP requests
@@ -177,8 +168,8 @@ void usb_req_setup(void)
 	int wIndex = USB.USBINDX.word;
 	int wLength = USB.USBLENG.word;
 
-	do USB.INTSTS0.VALID = 0;
-	while(USB.INTSTS0.VALID);
+	USB.INTSTS0.VALID = 0;
+	usb_while(USB.INTSTS0.VALID);
 
 	/* Standard requests */
 
@@ -198,7 +189,7 @@ void usb_req_setup(void)
 
 	/* Push the buffer when responding to an IN request with a BUF */
 	if((bmRequestType & 0x80) && USB.DCPCTR.PID == 1)
-		USB.CFIFOCTR.BVAL = 1;
+		usb_commit_sync(0);
 
 	/* Finalize request */
 	USB.DCPCTR.CCPL = 1;

@@ -111,6 +111,7 @@ set(SOURCES_FX
   src/render-fx/topti-asm.s
   src/render-fx/topti.c
   src/t6k11/t6k11.c
+  src/usb/classes/ff-bulk-gray.c
 )
 set(SOURCES_CG
   src/r61524/r61524.c

@@ -172,8 +172,12 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
 	intc_priority(INTC_USB, 15);
 
-	usb_open_status = true;
 	return 0;
+}
+
+bool usb_is_open(void)
+{
+	return usb_open_status;
 }
 
 void usb_open_wait(void)
@@ -204,10 +208,6 @@ static void usb_interrupt_handler(void)
 	};
 	/* Save PIPESEL to avoid concurrent access issues */
 	uint16_t pipesel = USB.PIPESEL.word;
-	/* Change D0FIFOSEL to make sure that the same pipe can't be specified
-	   in D0FIFOSEL and D1FIFOSEL simultaneously */
-	uint16_t d0fifosel = USB.D0FIFOSEL.word;
-	USB.D0FIFOSEL.word = 0x0000;
 
 	if(USB.INTSTS0.VBINT)
 	{
@@ -250,9 +250,6 @@ static void usb_interrupt_handler(void)
 	}
 	else usb_log("<%04X> -> ???\n", USB.INTSTS0.word);
 
-	/* Disable D1FIFO so that concurrent access does not occur */
-	USB.D1FIFOSEL.word = 0x0000;
-	USB.D0FIFOSEL.word = d0fifosel;
 	/* Restore PIPESEL which can have been used for transfers */
 	USB.PIPESEL.word = pipesel;
 }

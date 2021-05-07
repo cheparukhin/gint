@@ -209,3 +209,16 @@ usb_interface_t const * const *usb_configure_interfaces(void)
 {
 	return conf_if;
 }
+
+//---
+// API for interfaces
+//---
+
+int usb_interface_pipe(usb_interface_t const *interface, int endpoint)
+{
+	int concrete_address = usb_configure_address(interface, endpoint);
+	endpoint_t const *ep = usb_configure_endpoint(concrete_address);
+	if(!ep) return -1;
+
+	return ep->pipe;
+}

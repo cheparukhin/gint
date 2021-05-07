@@ -113,12 +113,6 @@ void usb_pipe_configure(int address, endpoint_t const *ep);
 /* usb_pipe_clear(): Clear all data in the pipe */
 void usb_pipe_clear(int pipe);
 
-/* usb_pipe_mode_read(): Set a pipe in read mode */
-void usb_pipe_mode_read(int pipe, int read_size);
-
-/* usb_pipe_mode_write(): Set a pipe in write mode */
-void usb_pipe_mode_write(int pipe, int write_size);
-
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe);
 
