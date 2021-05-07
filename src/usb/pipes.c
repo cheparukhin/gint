@@ -234,8 +234,6 @@ static void finish_round(struct transfer volatile *t, int pipe)
 	t->size -= t->flying;
 	t->flying = 0;
 
-	if(pipe) usb_log("%d left\n", t->size);
-
 	/* Account for auto-transfers */
 	if(t->used == pipe_bufsize(pipe)) t->used = 0;
 
@@ -293,9 +291,9 @@ static void write_round(struct transfer volatile *t, int pipe)
 		/* Use DMA channel 3 for D0F and 4 for D1F */
 		int channel = (ct == D0F) ? 3 : 4;
 
-		int rc = dma_transfer_async(channel, block_size, size,
+		bool ok = dma_transfer_async(channel, block_size, size,
 			t->data, DMA_INC, (void *)FIFO, DMA_FIXED, callback);
-		usb_log("dma_transfer_async: %d, bs=%d, size=%d, fifo=%d\n", rc, block_size, size, ct);
+		if(!ok) usb_log("DMA async failed on channel %d!\n", channel);
 	}
 	else
 	{

@@ -85,8 +85,8 @@ static void hpoweron_write(void)
 	USB.SYSCFG.SCKE = 1;
 	for(int i = 0; i < 10; i++) __asm__ volatile("nop");
 
-	/* Set BUSWAIT to a safe value, hopefully avoiding overlock problems */
-	USB.BUSWAIT.word = 15;
+	/* Set BUSWAIT to a safe value */
+	USB.BUSWAIT.word = 5;
 }
 
 static void hpoweroff(void)
@@ -170,7 +170,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.BEMPENB.word = 0x0000;
 
 	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
-	intc_priority(INTC_USB, 15);
+	intc_priority(INTC_USB, 8);
 
 	return 0;
 }

@@ -242,13 +242,13 @@ static void configure(void)
 	extern void inth_dma_ae(void);
 	intc_handler(0xbc0, inth_dma_ae, 32);
 
-	/* Set interrupt priority to 3 (IPRE[15..12] for first three channels,
-	   IPRF[11..8] for last two and error gate */
+	/* Set interrupt priority to 3, except 11 for the channels that are
+	   used by the USB driver */
 	intc_priority(INTC_DMA_DEI0, 3);
 	intc_priority(INTC_DMA_DEI1, 3);
 	intc_priority(INTC_DMA_DEI2, 3);
-	intc_priority(INTC_DMA_DEI3, 3);
-	intc_priority(INTC_DMA_DEI4, 3);
+	intc_priority(INTC_DMA_DEI3, 9);
+	intc_priority(INTC_DMA_DEI4, 9);
 	intc_priority(INTC_DMA_DEI5, 3);
 	intc_priority(INTC_DMA_DADERR, 3);
 

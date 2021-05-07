@@ -8,6 +8,7 @@
 #include <gint/defs/attributes.h>
 #include <gint/timer.h>
 #include <gint/gint.h>
+#include <gint/usb.h>
 
 //---
 // Configuration of the communication surface between module and host
