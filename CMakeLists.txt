@@ -13,7 +13,12 @@ option(GINT_KMALLOC_DEBUG "Enable debug functions for kmalloc")
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
 # Generate <gint/config.h> with commit hash, version name and options
-git_version_number(SHORT_HASH "GINT_GIT_HASH" TAG_RELATIVE "GINT_GIT_VERSION")
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  git_version_number(SHORT_HASH "GINT_GIT_HASH" TAG_RELATIVE "GINT_GIT_VERSION")
+else()
+  set(GINT_GIT_HASH "")
+  set(GINT_GIT_VERSION "${PROJECT_VERSION}")
+endif()
 configure_file(include/gint/config.h.in include/gint/config.h)
 
 set(SOURCES_COMMON
