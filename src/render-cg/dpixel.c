@@ -5,6 +5,8 @@ void dpixel(int x, int y, int color)
 {
 	/* Coordinate checks */
 	if((uint)x >= 396 || (uint)y >= 224 || color == C_NONE) return;
+	int index = 396 * y + x;
 
-	gint_vram[396 * y + x] = color;
+	if(color == C_INVERT) gint_vram[index] ^= 0xffff;
+	else gint_vram[index] = color;
 }

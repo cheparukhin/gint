@@ -89,7 +89,7 @@ void dclear(color_t color);
    @x1 @y1  Top-left rectangle corner (included)
    @x2 @y2  Bottom-right rectangle corner (included)
    @color  fx-9860G: white light* dark* black none invert lighten* darken*
-           fx-CG 50: Any R5G6B5 color or C_NONE
+           fx-CG 50: Any R5G6B5 color, C_NONE or C_INVERT
 
    *: When the gray engine is on, see dgray(). */
 void drect(int x1, int y1, int x2, int y2, int color);
@@ -122,7 +122,7 @@ void drect_border(int x1, int y1, int x2, int y2,
 
    @x @y   Coordinates of the pixel to repaint
    @color  fx-9860G: white light* dark* black none invert lighten* darken*
-           fx-CG 50: Any R5G6B5 color or C_NONE
+           fx-CG 50: Any R5G6B5 color, C_NONE or C_INVERT
 
    *: When the gray engine is on, see dgray(). */
 void dpixel(int x, int y, int color);

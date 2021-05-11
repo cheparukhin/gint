@@ -31,7 +31,15 @@ void drect(int x1, int y1, int x2, int y2, int color)
 	uint32_t op = (color << 16) | color;
 	int width = (ax2 - ax1) >> 1;
 
-	for(int h = height; h; h--)
+	if(color == C_INVERT) for(int h = height; h; h--)
+	{
+		base[x1] ^= 0xffff;
+		base[x2] ^= 0xffff;
+		for(int w = 0; w < width; w++) v[w] ^= 0xffffffff;
+		v += 198;
+		base += 396;
+	}
+	else for(int h = height; h; h--)
 	{
 		base[x1] = color;
 		base[x2] = color;

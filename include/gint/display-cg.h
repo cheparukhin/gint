@@ -46,6 +46,7 @@ enum {
 	C_BLUE  = 0x001f,
 
 	C_NONE = -1,
+   C_INVERT = -2,
 };
 
 /* RGB color maker. Takes three channels of value 0..31 each (the extra bit of
