@@ -287,6 +287,9 @@ key_event_t keydev_read(keydev_t *d)
 
 		int k = e.key;
 
+		if(opt(INSTANT_SHIFT) || opt(INSTANT_ALPHA)) e.mod = 1;
+		if(opt(DELAYED_SHIFT) || opt(DELAYED_ALPHA)) e.mod = 1;
+
 		// <Instant SHIFT> and <Instant ALPHA>
 
 		if(e.type == KEYEV_DOWN || e.type == KEYEV_HOLD)
