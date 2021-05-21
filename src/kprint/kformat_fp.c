@@ -200,7 +200,7 @@ static void kformat_fp(KFORMAT_ARGS)
 	double v = va_arg(*args, double);
 	digit_buffer[0] = '0';
 	char *digits = digit_buffer + 1;
-	int length, e;
+	int length = 0, e = 0;
 
 	int is_e = (spec | 0x20) == 'e';
 	int is_f = (spec | 0x20) == 'f';
@@ -214,7 +214,8 @@ static void kformat_fp(KFORMAT_ARGS)
 	if(special_notation(v, (spec & 0x20) == 0)) return;
 
 	/* fabs(v) = int(digits) * 10^e */
-	grisu2(v, digits, &length, &e);
+	if(v == 0.0) digits[length++] = '0';
+	else grisu2(v, digits, &length, &e);
 	digits[length] = 0;
 
 	/* In %f and %e, .precision is the number of decimal places; in %g, it
