@@ -69,7 +69,7 @@ void kprint_register(int spec, kprint_formatter_t kformat)
 	/* Non-letters */
 	if(spec < 'a' || spec > 'z') return;
 	/* Size-specifying letters */
-	if(spec == 'h' || spec == 'l' || spec == 'z') return;
+	if(spec == 'h' || spec == 'l' || spec == 'L' || spec == 'z') return;
 
 	kprint_formatters[spec - 'a'] = kformat;
 }
@@ -142,7 +142,8 @@ kprint_options_t kprint_opt(char const **options_ptr)
 	for(int c; (c = *options); options++)
 	{
 		int c_low = c | 0x20;
-		if(c_low >= 'a' && c_low <= 'z' && c != 'h' && c != 'l') break;
+		if(c_low >= 'a' && c_low <= 'z' && c != 'h' && c != 'l' &&
+			c != 'L') break;
 
 		if(c == '.')
 		{
@@ -178,6 +179,7 @@ kprint_options_t kprint_opt(char const **options_ptr)
 		if(c == 'h') opt.size--;
 		if(c == 'l') opt.size++;
 		if(c == 'z') opt.size = 3;
+		if(c == 'L') {}
 
 		if(c >= '1' && c <= '9') state = length, options--;
 	}
