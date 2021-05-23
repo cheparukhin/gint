@@ -34,12 +34,6 @@
 	0;				\
 })
 
-/* abs() (without double evaluation) */
-#define abs(s) ({			\
-	GAUTOTYPE _s = (s);		\
-	_s < 0 ? -s : s;		\
-})
-
 /* swap() - exchange two variables of the same type */
 #define	swap(a, b) ({			\
 	GAUTOTYPE _tmp = (a);		\

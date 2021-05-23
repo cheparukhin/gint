@@ -41,7 +41,7 @@ void dline(int x1, int y1, int x2, int y2, int color)
 	int dx = x2 - x1, dy = y2 - y1;
 	int sx = sgn(dx), sy = sgn(dy);
 
-	dx = abs(dx), dy = abs(dy);
+	dx = (dx >= 0 ? dx : -dx), dy = (dy >= 0 ? dy : -dy);
 
 	dpixel(x1, y1, color);
 
