@@ -67,10 +67,6 @@ set(SOURCES_COMMON
   src/spu/spu.c
   src/std/aprint.c
   src/std/malloc.c
-  src/std/memcmp.s
-  src/std/memcpy.s
-  src/std/memmove.s
-  src/std/memset.s
   src/std/print.c
   src/std/string.c
   src/std/string-ext.c
