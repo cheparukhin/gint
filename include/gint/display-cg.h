@@ -36,8 +36,8 @@ typedef uint16_t color_t;
 enum {
 	/* Compatibility with fx9860g color names */
 	C_WHITE = 0xffff,
-	C_LIGHT = 0xaaaa,
-	C_DARK  = 0x5555,
+	C_LIGHT = 0xad55,
+	C_DARK  = 0x528a,
 	C_BLACK = 0x0000,
 
 	/* Other colors */
@@ -46,7 +46,7 @@ enum {
 	C_BLUE  = 0x001f,
 
 	C_NONE = -1,
-   C_INVERT = -2,
+	C_INVERT = -2,
 };
 
 /* RGB color maker. Takes three channels of value 0..31 each (the extra bit of
