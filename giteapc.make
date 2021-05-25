@@ -1,4 +1,4 @@
-# giteapc: version=1 depends=Lephenixnoir/sh-elf-gcc,Lephenixnoir/fxsdk,Lephenixnoir/OpenLibm
+# giteapc: version=1 depends=Lephenixnoir/sh-elf-gcc,Lephenixnoir/fxsdk,Lephenixnoir/OpenLibm,Vhex-Kernel-Core/fxlibc
 
 -include giteapc-config.make
 

@@ -48,6 +48,10 @@ A couple of libraries extend these features, including:
 * [libprof](/Lephenixnoir/libprof): Profiling and performance evaluation
 * [libimg](/Lephenixnoir/libimg): Versatile image transformations
 * [OpenLibm](/Lephenixnoir/OpenLibm): A port of the standard math library
+  (actually needed by gint)
+* [fxlibc](/Vhex-Kernel-Core/fxlibc/): A community standard library with
+  dedicated SuperH optimizations (in progress; needed by gint unless you're
+  trying out Newlib)
 * Integration with [a Newlib port by Memallox](/PlaneteCasio/libc) (unstable)
 
 ## Installing with GiteaPC
@@ -74,6 +78,10 @@ implementation is Tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
 needed at the very last compilation step to create the g3a file. On Arch Linux,
 you can use the [AUR/mkg3a](https://aur.archlinux.org/packages/mkg3a) package
 maintained directly by Tari.
+
+gint depends on OpenLibm and fxlibc (linked above). Both can be installed
+easily (essentially copy-paste the command from the respective READMEs). You
+can technically use another libc but there be dragons.
 
 **Building for fx-9860G II**
 
@@ -106,7 +114,9 @@ The available options are:
 
 ## Using in CMake-based add-ins
 
-Find the `Gint` module and link against `Gint::Gint`.
+Find the `Gint` module and link against `Gint::Gint`. gint declares the include
+and library paths needed to link with OpenLibm and the libc, and will
+automatically link both.
 
 ```cmake
 find_module(Gint 2.1 REQUIRED)
@@ -119,8 +129,8 @@ Projects created with the fxSDK link with gint out-of-the-box. If you're not
 using the fxSDK, you will need to:
 
 * Build with `-ffreestanding -fstrict-volatile-bitfields`;
-* Link with `-T fx9860g.ld` and `-lgint-fx` on fx-9860G;
-* Link with `-T fxcg50.ld` and `-lgint-cg` on fx-CG 50.
+* Link with `-T fx9860g.ld -lgint-fx -lopenlibm -lc` on fx-9860G;
+* Link with `-T fxcg50.ld -lgint-cg -lopenlibm -lc` on fx-CG 50.
 
 If you don't have a standard library such as
 [Memallox's port of newlib](/PlaneteCasio/libc), you also need `-nostdlib`. I
