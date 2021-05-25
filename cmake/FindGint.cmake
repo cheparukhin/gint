@@ -45,12 +45,12 @@ if(Gint_FOUND)
   if(NOT TARGET Gint::Gint)
     add_library(Gint::Gint UNKNOWN IMPORTED)
   endif()
-  # No include directory or library path to specify, GCC handles that
   set_target_properties(Gint::Gint PROPERTIES
     IMPORTED_LOCATION "${GINT_PATH}"
     INTERFACE_COMPILE_OPTIONS -fstrict-volatile-bitfields
     INTERFACE_COMPILE_DEFINITIONS "${INTF_DEFN}"
-    INTERFACE_LINK_LIBRARIES "-lopenlibm;-lgcc"
+    INTERFACE_INCLUDE_DIRECTORIES "${FXSDK_COMPILER_INSTALL}/include/openlibm"
+    INTERFACE_LINK_LIBRARIES "-lc;-lopenlibm;-lgcc"
     INTERFACE_LINK_OPTIONS "${INTF_LINK}"
   )
 endif()
