@@ -9,6 +9,8 @@
 #include <gint/gint.h>
 #include <gint/hardware.h>
 #include <gint/exc.h>
+#include <setjmp.h>
+#include <stdlib.h>
 
 #include "kernel.h"
 
@@ -45,6 +47,12 @@ void gint_setrestart(int restart)
 {
 	gint_restart = restart;
 }
+
+/* Jumping there will properly unwind and leave the add-in (CASIOWIN does not
+   have an exit syscall and simply wants you to return from main()) */
+jmp_buf gint_exitbuf;
+/* Return value of main() */
+static int gint_exitcode;
 
 /* regcpy(): Copy a memory region using symbol information
    @l  Source pointer (load address)
@@ -173,17 +181,21 @@ int start(int isappli, int optnum)
 	   hosted user application, which has its own constructors and
 	   destructors to work with. */
 
-	callarray(&bctors, &ectors);
-
-	int rc = 1;
 	while(1)
 	{
-		rc = main(isappli, optnum);
+		/* Here, we use exit() to allow the standard library to do
+		   what it wants in exit() after main() finishes executing */
+		if(!setjmp(gint_exitbuf)) {
+			callarray(&bctors, &ectors);
+			exit(main(isappli, optnum));
+		}
+		else {
+			callarray(&bdtors, &edtors);
+		}
+
 		if(!gint_restart) break;
 		gint_osmenu();
 	}
-
-	callarray(&bdtors, &edtors);
 
 	/* Before leaving the application, we need to clean everything we
 	   changed to hardware settings and peripheral modules. The OS is bound
@@ -193,5 +205,12 @@ int start(int isappli, int optnum)
 	/* Unload gint and give back control to the system. Driver settings
 	   will be restored while interrupts are disabled */
 	kquit();
-	return rc;
+	return gint_exitcode;
+}
+
+/* Standard _Exit, used by the fxlibc exit() to leave control */
+void _Exit(int rc)
+{
+	gint_exitcode = rc;
+	longjmp(gint_exitbuf, 1);
 }
