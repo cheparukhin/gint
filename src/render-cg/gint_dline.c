@@ -42,6 +42,6 @@ void gint_dvline(int y1, int y2, int x, uint16_t color)
 	uint16_t *v = gint_vram + 396 * y1 + x;
 	int height = y2 - y1 + 1;
 
-	while(height--) *v = color, v += 396;
+	while(height-- > 0) *v = color, v += 396;
 }
 
