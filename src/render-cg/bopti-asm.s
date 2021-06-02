@@ -66,6 +66,8 @@ _bopti_r5g6b5:
 	add	r3, r5
 
 	mov	r6, r10
+	tst	r6, r6
+	bt	.r5g6b5_y_end
 
 .r5g6b5_x:
 	# Copy longwords
@@ -76,7 +78,7 @@ _bopti_r5g6b5:
 	bf.s	.r5g6b5_x
 	add	#4, r5
 
-# -
+.r5g6b5_y_end:
 
 	add	r8, r4
 	dt	r7
