@@ -63,7 +63,6 @@ set(SOURCES_COMMON
   src/rtc/rtc.c
   src/rtc/rtc_ticks.c
   src/spu/spu.c
-  src/std/malloc.c
   src/tmu/inth-etmu.s
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
