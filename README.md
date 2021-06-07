@@ -12,12 +12,9 @@ new, richer API that takes advantage of the full capabilities of the machine.
 This is free software: you may use it for any purpose, share it, modify it, and
 share your changes. Credit is not required, but please let me know!
 
-gint also includes third-party code that is distributed under its own license.
-Currently, this includes:
-
-* A stripped-down version of the [TinyMT random number generator](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/TINYMT/index.html)
-  ([GitHub repository](https://github.com/MersenneTwister-Lab/TinyMT)) by
-  Mutsuo Saito and Makoto Matsumoto. See `src/3rdparty/tinymt32/LICENSE.txt`.
+gint used to include third-party code that has now been moved to the FxLibc. If
+you stumble upon it in the history, check the README file at that time for
+license details.
 
 ## Programming interface
 

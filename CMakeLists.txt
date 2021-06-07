@@ -74,8 +74,6 @@ set(SOURCES_COMMON
   src/usb/setup.c
   src/usb/string.c
   src/usb/usb.c
-  src/3rdparty/tinymt32/rand.c
-  src/3rdparty/tinymt32/tinymt32.c
 )
 set(SOURCES_FX
   src/gray/engine.c
