@@ -2,22 +2,9 @@
 //	gint:src:aprint - Allocating extensions to formatted printing
 //---
 
-#include <gint/std/stdio.h>
+#include <stdio.h>
 #include <gint/std/stdlib.h>
-#include <gint/kprint.h>
-#include <stdarg.h>
-
-/* asprintf() */
-GWEAK int asprintf(char **strp, char const *format, ...)
-{
-	va_list args;
-	va_start(args, format);
-
-	int count = vasprintf(strp, format, args);
-
-	va_end(args);
-	return count;
-}
+#include <gint/defs/attributes.h>
 
 /* vasprintf() */
 GWEAK int vasprintf(char **strp, char const *format, va_list args1)
@@ -36,3 +23,16 @@ GWEAK int vasprintf(char **strp, char const *format, va_list args1)
 	*strp = str;
 	return count;
 }
+
+/* asprintf() */
+GWEAK int asprintf(char **strp, char const *format, ...)
+{
+	va_list args;
+	va_start(args, format);
+
+	int count = vasprintf(strp, format, args);
+
+	va_end(args);
+	return count;
+}
+

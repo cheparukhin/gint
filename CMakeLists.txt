@@ -51,8 +51,6 @@ set(SOURCES_COMMON
   src/kmalloc/arena_gint.c
   src/kmalloc/arena_osheap.c
   src/kmalloc/kmalloc.c
-  src/kprint/kprint.c
-  src/kprint/kformat_fp.c
   src/mmu/mmu.c
   src/render/dhline.c
   src/render/dimage.c
@@ -67,7 +65,6 @@ set(SOURCES_COMMON
   src/spu/spu.c
   src/std/aprint.c
   src/std/malloc.c
-  src/std/print.c
   src/tmu/inth-etmu.s
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
@@ -80,7 +77,6 @@ set(SOURCES_COMMON
   src/usb/usb.c
   src/3rdparty/tinymt32/rand.c
   src/3rdparty/tinymt32/tinymt32.c
-  src/3rdparty/grisu2b_59_56/grisu2b_59_56.c
 )
 set(SOURCES_FX
   src/gray/engine.c
@@ -131,10 +127,6 @@ include_directories(
   "${PROJECT_BINARY_DIR}/include"
   "${FXSDK_COMPILER_INSTALL}/include/openlibm")
 add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields -mtas)
-
-# Silence extended warnings on Grisu2b code
-set_source_files_properties(src/3rdparty/grisu2b_59_56/grisu2b_59_56.c PROPERTIES
-  COMPILE_OPTIONS "-Wno-all;-Wno-extra")
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   add_compile_definitions(FX9860G)

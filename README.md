@@ -18,10 +18,6 @@ Currently, this includes:
 * A stripped-down version of the [TinyMT random number generator](http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/TINYMT/index.html)
   ([GitHub repository](https://github.com/MersenneTwister-Lab/TinyMT)) by
   Mutsuo Saito and Makoto Matsumoto. See `src/3rdparty/tinymt32/LICENSE.txt`.
-* A stripped-down version of the [Grisu2b floating-point representation
-  algorithm](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf)
-  with α=-59 and γ=-56, by Florian Loitsch. See `src/3rdparty/grisu2b_59_56/README`
-  for details, and [the original code here](https://drive.google.com/open?id=0BwvYOx00EwKmejFIMjRORTFLcTA).
 
 ## Programming interface
 
