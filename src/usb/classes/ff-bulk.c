@@ -1,7 +1,8 @@
 #include <gint/usb.h>
 #include <gint/usb-ff-bulk.h>
 #include <gint/display.h>
-#include <gint/std/string.h>
+
+#include <string.h>
 
 static usb_dc_interface_t dc_interface = {
 	.bLength              = sizeof(usb_dc_interface_t),

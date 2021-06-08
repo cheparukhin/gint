@@ -1,8 +1,10 @@
 #include <gint/usb.h>
 #include <gint/mpu/usb.h>
-#include <gint/std/endian.h>
-#include "usb_private.h"
+
 #include <stdarg.h>
+#include <endian.h>
+
+#include "usb_private.h"
 
 #define USB SH7305_USB
 

@@ -1,5 +1,5 @@
 #include <gint/display.h>
-#include <gint/std/stdio.h>
+#include <stdio.h>
 
 /* dprint(): Display a formatted string */
 void dprint_opt(int x, int y, int fg, int bg, int halign, int valign,

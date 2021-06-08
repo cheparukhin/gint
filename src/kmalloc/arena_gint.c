@@ -3,9 +3,10 @@
 //---
 
 #include <gint/kmalloc.h>
-#include <gint/std/string.h>
 #include <gint/defs/attributes.h>
 #include <gint/defs/util.h>
+
+#include <string.h>
 
 /* block_t: A memory block managed by the heap.
 

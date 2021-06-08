@@ -8,7 +8,8 @@
 #include <gint/defs/types.h>
 #include <gint/defs/util.h>
 #include <gint/mpu/pfc.h>
-#include <gint/std/string.h>
+
+#include <string.h>
 
 /* Holds information about the current platform */
 GBSS uint32_t gint[HW_KEYS];

@@ -5,7 +5,8 @@
 #include <gint/hardware.h>
 #include <gint/cpu.h>
 #include <gint/mpu/intc.h>
-#include <gint/std/string.h>
+
+#include <string.h>
 
 //---
 // Interrupt controllers

@@ -4,13 +4,14 @@
 
 #include <gint/gint.h>
 #include <gint/drivers.h>
-#include <gint/std/string.h>
-#include <gint/std/stdlib.h>
 #include <gint/hardware.h>
 #include <gint/mmu.h>
 #include <gint/mpu/intc.h>
 #include <gint/kmalloc.h>
 #include <gint/cpu.h>
+
+#include <string.h>
+#include <stdlib.h>
 
 #include "vbr.h"
 #include "kernel.h"

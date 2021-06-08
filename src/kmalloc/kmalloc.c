@@ -4,8 +4,9 @@
 
 #include <gint/kmalloc.h>
 #include <gint/defs/util.h>
-#include <gint/std/string.h>
 #include <gint/config.h>
+
+#include <string.h>
 
 /* Maximum number of arenas */
 #define KMALLOC_ARENA_MAX 8

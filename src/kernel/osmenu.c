@@ -1,6 +1,7 @@
 #include <gint/gint.h>
 #include <gint/display.h>
-#include <gint/std/string.h>
+
+#include <string.h>
 
 int   __Timer_Install(int id, void (*handler)(void), int delay);
 int   __Timer_Start(int id);

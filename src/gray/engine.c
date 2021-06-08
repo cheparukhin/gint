@@ -3,12 +3,12 @@
 //---
 
 #include <gint/defs/types.h>
-#include <gint/std/stdlib.h>
-
 #include <gint/drivers/t6k11.h>
 #include <gint/gray.h>
 #include <gint/display.h>
 #include <gint/timer.h>
+
+#include <stdlib.h>
 
 #include "../render-fx/render-fx.h"
 

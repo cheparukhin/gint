@@ -6,7 +6,8 @@
 #include <gint/drivers/keydev.h>
 #include <gint/defs/types.h>
 #include <gint/defs/util.h>
-#include <gint/std/string.h>
+
+#include <string.h>
 #include <stdarg.h>
 
 void keydev_init(keydev_t *d)

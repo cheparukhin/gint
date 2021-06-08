@@ -3,8 +3,9 @@
 //---
 
 #include <gint/usb.h>
-#include <gint/std/stdlib.h>
-#include <gint/std/string.h>
+
+#include <stdlib.h>
+#include <string.h>
 
 /* String descriptor array */
 static usb_dc_string_t **array = NULL;

@@ -2,7 +2,8 @@
 #include <gint/cpu.h>
 #include <gint/gint.h>
 #include <gint/defs/call.h>
-#include <gint/std/stdlib.h>
+
+#include <stdlib.h>
 
 //---
 // World buffer

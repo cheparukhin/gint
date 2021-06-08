@@ -3,7 +3,9 @@
 #include <gint/clock.h>
 #include <gint/dma.h>
 #include <gint/defs/util.h>
-#include <gint/std/string.h>
+
+#include <string.h>
+
 #include "usb_private.h"
 
 #define USB SH7305_USB
