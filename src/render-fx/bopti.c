@@ -25,6 +25,8 @@ struct command
 	uint32_t *masks;
 	/* Whether the first column is real (ie. x>=0) or not */
 	int real_start;
+	/* Whether the last column is written to VRAM */
+	int real_end;
 
 	/* Ignored elements between two rendered grid rows */
 	int vram_stride;
@@ -103,7 +105,7 @@ void bopti_grid(void **layer, int rows, struct command *c)
 			offset++;
 		}
 
-		if(c->x) v1[offset] = pret.r;
+		if(c->real_end) v1[offset] = pret.r;
 
 		*layer += c->data_stride;
 		offset += c->vram_stride;
@@ -137,7 +139,7 @@ void bopti_grid(void **layer, int rows, struct command *c)
 			offset++;
 		}
 
-		if(c->x)
+		if(c->real_end)
 		{
 			v1[offset] = qret.r1;
 			v2[offset] = qret.r2;
@@ -201,6 +203,7 @@ void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
 	  .columns      = rbox->columns,
 	  .masks        = masks + 2 * left_origin,
 	  .real_start   = (left_origin > 0),
+	  .real_end     = (rbox->x & 31) && (left_origin + img_columns < 5),
 	  .vram_stride  = 4 - rbox->columns,
 	  .data_stride  = ((img_columns - rbox->columns) << 2) * layers,
 	  .gray         = (v2 != NULL),
