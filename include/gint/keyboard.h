@@ -281,9 +281,9 @@ getkey_profile_t getkey_repeat_profile(void);
    @count     Number of previous repeats (0 on the first call)
 
    The profile function must either return a positive number of microseconds to
-   wait until the next repeat, or 0 to block the repeat indefinitely. Note that
-   the keyboard device typically updates every 7-8 ms, timings are tracked in
-   microseconds only to limit deviations.
+   wait until the next repeat, or -1 to block the repeat indefinitely. Note
+   that the keyboard device typically updates every 7-8 ms, timings are tracked
+   in microseconds only to limit deviations.
 
    Setting a repeat profile overrides GETKEY_REP_ARROWS, GETKEY_REP_ALL, and
    the repeat delays. Calling with profile=NULL restores this behavior.
