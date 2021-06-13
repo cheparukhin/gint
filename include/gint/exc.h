@@ -9,6 +9,10 @@
 #ifndef GINT_EXC
 #define GINT_EXC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/attributes.h>
 #include <stdint.h>
 
@@ -63,5 +67,9 @@ void gint_exc_catch(int (*handler)(uint32_t code));
 
    @instructions  Number of instructions to skip (usually only one) */
 void gint_exc_skip(int instructions);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_EXC */

@@ -5,6 +5,10 @@
 #ifndef GINT_TIMER
 #define GINT_TIMER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/mpu/tmu.h>
 #include <gint/hardware.h>
 #include <gint/defs/types.h>
@@ -235,5 +239,9 @@ int timer_setup(int timer, uint64_t delay_us, timer_callback_t callback, ...);
 /* timer_timeout(): Callback that sets a flag and halts the timer
    Use GINT_CALL_SET_STOP() with timer_configure() instead. */
 int timer_timeout(volatile void *arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_TIMER */

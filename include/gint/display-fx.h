@@ -11,6 +11,10 @@
 
 #ifdef FX9860G
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 /* Dimensions of the VRAM */
@@ -82,6 +86,10 @@ typedef struct
 	uint8_t data[];
 
 } GPACKED(4) bopti_image_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FX9860G */
 

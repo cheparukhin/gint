@@ -13,6 +13,10 @@
 
 #ifdef FXCG50
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 /* Dimensions of the VRAM */
@@ -122,6 +126,10 @@ void dsetvram(uint16_t *main, uint16_t *secondary);
 /* dgetvram() - Get VRAM addresses
    Returns the VRAM buffer addresses used to render on fx-CG 50. */
 void dgetvram(uint16_t **main, uint16_t **secondary);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* FXCG50 */
 

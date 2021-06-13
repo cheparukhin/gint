@@ -9,6 +9,10 @@
 #ifndef GINT_MPU_DMA
 #define GINT_MPU_DMA
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 //---
@@ -85,5 +89,9 @@ typedef volatile struct
 } GPACKED(4) sh7305_dma_t;
 
 #define SH7305_DMA (*((sh7305_dma_t *)0xfe008020))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_DMA */

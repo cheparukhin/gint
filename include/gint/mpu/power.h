@@ -5,6 +5,10 @@
 #ifndef GINT_MPU_POWER
 #define GINT_MPU_POWER
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 //---
@@ -102,5 +106,9 @@ typedef volatile struct
 } sh7305_power_t;
 
 #define SH7305_POWER (*((sh7305_power_t *)0xa4150020))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_POWER */

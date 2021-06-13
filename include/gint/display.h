@@ -9,6 +9,10 @@
 #ifndef GINT_DISPLAY
 #define GINT_DISPLAY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 /* Platform-specific functions include VRAM management and the definition of
@@ -397,5 +401,9 @@ enum {
    @flags          OR-combination of DIMAGE_* flags */
 void dsubimage(int x, int y, bopti_image_t const *image, int left, int top,
 	int width, int height, int flags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DISPLAY */

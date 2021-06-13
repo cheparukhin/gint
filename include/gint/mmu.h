@@ -5,6 +5,10 @@
 #ifndef GINT_MMU
 #define GINT_MMU
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/mpu/mmu.h>
 
 //---
@@ -93,5 +97,9 @@ void utlb_mapped_memory(uint32_t *rom, uint32_t *ram);
 
 /* utlb_translate(): Get the physical address for a virtual page */
 uint32_t utlb_translate(uint32_t page, uint32_t *size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MMU */

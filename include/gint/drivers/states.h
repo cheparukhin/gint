@@ -9,6 +9,10 @@
 #ifndef GINT_DRIVERS_STATES
 #define GINT_DRIVERS_STATES
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/mpu/dma.h>
 
 /* Clock Pulse Generator (see cpg/cpg.c) */
@@ -90,5 +94,9 @@ typedef struct {
 	/* Default Control Pipe (maybe not needed) */
 	uint16_t DCPCFG, DCPMAXP, DCPCTR;
 } usb_state_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DRIVERS_STATES */

@@ -5,6 +5,10 @@
 #ifndef GINT_USB_FF_BULK
 #define GINT_USB_FF_BULK
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/usb.h>
 
 /* The bulk transfer interface with class code 0xff provides a very simple
@@ -163,5 +167,9 @@ void usb_fxlink_screenshot_gray(bool onscreen);
    This function sends the text by blocks of 4 bytes or 2 bytes when alignment
    and size allow, and 1 byte otherwise. If size is 0, strlen(text) is used. */
 void usb_fxlink_text(char const *text, int size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_USB_FF_BULK */

@@ -7,6 +7,10 @@
 #ifndef GINT_DRIVERS_T6K11
 #define GINT_DRIVERS_T6K11
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 /* t6k11_display() - send vram data to the LCD device
@@ -50,5 +54,9 @@ void t6k11_contrast(int contrast);
 
    @setting  Requested backlight setting */
 void t6k11_backlight(int setting);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DRIVERS_T6K11 */

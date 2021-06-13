@@ -5,6 +5,10 @@
 #ifndef GINT_DRIVERS
 #define GINT_DRIVERS
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 
@@ -299,5 +303,9 @@ void gint_world_switch_in(gint_world_t world_os, gint_world_t world_addin);
 
 /* Switch from a gint-managed world to the OS world */
 void gint_world_switch_out(gint_world_t world_addin, gint_world_t world_os);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DRIVERS */

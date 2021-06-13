@@ -5,6 +5,10 @@
 #ifndef GINT_CPU
 #define GINT_CPU
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 //---
@@ -116,5 +120,9 @@ void sleep_unblock(void);
    VBR address that will be used in the next world to be initialized. After a
    configure(), this is reset to 0. */
 void cpu_configure_VBR(uint32_t VBR);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_CPU */

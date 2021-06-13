@@ -5,6 +5,10 @@
 #ifndef GINT_DMA
 #define GINT_DMA
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 #include <gint/defs/call.h>
 
@@ -116,5 +120,9 @@ void *dma_memset(void *dst, uint32_t pattern, size_t size);
    @size  Size of region (32-aligned) */
 void *dma_memcpy(void * __restrict dst, const void * __restrict src,
    size_t size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DMA */

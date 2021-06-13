@@ -11,6 +11,10 @@
 #ifndef GINT_DEFS_CALL
 #define GINT_DEFS_CALL
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* gint_call_arg_t: All types of arguments allowed in an indirect call
 
    Because a function call cannot be easily pieced together, there are
@@ -194,5 +198,9 @@ static GINLINE gint_call_t GINT_CALL_INC_STOP(int volatile *pointer)
 {
 	return GINT_CALL(GINT_CALL_INC_STOP_function, pointer);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DEFS_CALL */

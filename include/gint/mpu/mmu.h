@@ -8,6 +8,10 @@
 #ifndef GINT_MPU_MMU
 #define GINT_MPU_MMU
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 
@@ -151,5 +155,9 @@ typedef volatile struct
 } GPACKED(4) sh7305_mmu_t;
 
 #define SH7305_MMU (*(sh7305_mmu_t *)0xff000000)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_MMU */

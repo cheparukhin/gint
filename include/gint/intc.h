@@ -5,6 +5,10 @@
 #ifndef GINT_INTC
 #define GINT_INTC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 #include <gint/defs/call.h>
 
@@ -130,5 +134,9 @@ void *intc_handler(int event_code, void const *handler, size_t size);
    @function    Function to use as a handler
    Returns true on success, false if the event code is invalid. */
 bool intc_handler_function(int event_code, gint_call_t function);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_INTC */

@@ -5,6 +5,10 @@
 #ifndef GINT_USB
 #define GINT_USB
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 #include <gint/std/endian.h>
 #include <gint/gint.h>
@@ -375,5 +379,9 @@ uint16_t usb_dc_string(uint16_t const *literal, size_t len);
 /* usb_dc_string_get(): Get the descriptor for a STRING id
    This is mostly used by the driver to answer GET_DESCRIPTOR requests. */
 usb_dc_string_t *usb_dc_string_get(uint16_t id);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_USB */

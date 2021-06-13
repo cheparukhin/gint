@@ -5,6 +5,10 @@
 #ifndef GINT_MPU_CPG
 #define GINT_MPU_CPG
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 
@@ -109,5 +113,9 @@ typedef volatile struct
 } GPACKED(4) sh7305_cpg_t;
 
 #define SH7305_CPG (*((sh7305_cpg_t *)0xa4150000))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_CPG */

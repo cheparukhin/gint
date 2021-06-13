@@ -5,6 +5,10 @@
 #ifndef GINT_KEYCODES
 #define GINT_KEYCODES
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Raw matrix codes */
 enum {
 	KEY_F1		= 0x91,
@@ -82,5 +86,9 @@ enum {
 	KEY_PLUS	= KEY_ADD,
 	KEY_MINUS	= KEY_SUB,
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_KEYCODES */

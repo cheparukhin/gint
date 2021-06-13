@@ -5,6 +5,10 @@
 #ifndef GINT_GINT
 #define GINT_GINT
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 #include <gint/defs/call.h>
 #include <gint/config.h>
@@ -88,5 +92,9 @@ static GINLINE void *gint_inthandler(int code, void const *h, size_t size) {
    @call  Address of a gint_call_t object
    Returns the return value of the callback. */
 extern int (*gint_inth_callback)(gint_call_t const *call);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_GINT */

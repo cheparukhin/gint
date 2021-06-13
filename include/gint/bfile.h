@@ -9,6 +9,10 @@
 #ifndef GINT_BFILE
 #define GINT_BFILE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdint.h>
 
 /* BFile_Remove(): Remove a file
@@ -136,5 +140,9 @@ int BFile_FindNext(int shandle, uint16_t *foundfile,
    @shandle  Search handle from BFile_FindFirst
    Return 0 on success or negative value on error. */
 int BFile_FindClose(int shandle);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_BFILE */

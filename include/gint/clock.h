@@ -5,6 +5,10 @@
 #ifndef GINT_CLOCK
 #define GINT_CLOCK
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 /* This header used to expose the sleep() function; include <gint/cpu.h> to
    ensure this is still the case */
@@ -71,5 +75,9 @@ void sleep_us_spin(uint64_t delay_us);
 
 /* sleep_ms(): Sleep for a fixed duration in milliseconds */
 #define sleep_ms(delay_ms) sleep_us((delay_ms) * 1000ull)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_CLOCK */

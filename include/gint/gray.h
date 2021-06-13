@@ -5,6 +5,10 @@
 #ifndef GINT_GRAY
 #define GINT_GRAY
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 #include <gint/display.h>
 
@@ -147,5 +151,9 @@ void dgray_getvram(uint32_t **light, uint32_t **dark);
 /* dgray_getscreen(): Get the current screen pointers
    These pointers can be used to make screen captures. */
 void dgray_getscreen(uint32_t **light, uint32_t **dark);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_GRAY */

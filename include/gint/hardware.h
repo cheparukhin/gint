@@ -14,6 +14,10 @@
 #ifndef GINT_HARDWARE
 #define GINT_HARDWARE
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* For compatibility with ASM, include the following bits only in C code */
 #ifndef CPP_ASM
 
@@ -113,5 +117,9 @@ void hw_detect(void);
 #define HWKBD_WDD      0x02
 /* The keyboard uses a KEYSC-based scan method. This is only possible on SH4 */
 #define HWKBD_KSI      0x04
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_HARDWARE */

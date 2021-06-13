@@ -9,6 +9,10 @@
 #ifndef GINT_MPU_TMU
 #define GINT_MPU_TMU
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 //---
@@ -100,5 +104,9 @@ typedef volatile struct
 
 typedef volatile etmu_t sh7305_etmu_t[6];
 #define SH7305_ETMU (*(sh7305_etmu_t *)0xa44d0030)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_TMU */

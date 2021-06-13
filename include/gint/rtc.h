@@ -5,6 +5,10 @@
 #ifndef GINT_RTC
 #define GINT_RTC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 #include <gint/defs/call.h>
 #include <gint/timer.h>
@@ -95,5 +99,9 @@ int rtc_start_timer(int frequency, timer_callback_t callback, ...);
 #define rtc_start_timer(...) rtc_start_timer(__VA_ARGS__, 0)
 __attribute__((deprecated("Use rtc_periodic_disable() instead")))
 void rtc_stop_timer(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_RTC */

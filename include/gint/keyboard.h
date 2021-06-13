@@ -5,6 +5,10 @@
 #ifndef GINT_KEYBOARD
 #define GINT_KEYBOARD
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Keyboard, key events, keydown() and getkey()
 
    gint's keyboard driver regularly scans the keyboard matrix and produces *key
@@ -328,5 +332,9 @@ int keycode_function(int keycode);
    This function returns the digit associated with digit keycodes (eg. it
    returns 7 for KEY_7) and -1 for other keys. */
 int keycode_digit(int keycode);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_KEYBOARD */

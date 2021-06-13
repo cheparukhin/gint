@@ -8,6 +8,10 @@
 #ifndef GINT_MPU_PFC
 #define GINT_MPU_PFC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 
@@ -74,5 +78,9 @@ typedef volatile struct
 //---
 //	TODO: Document the SH7305 Pin Function Controller
 //---
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_PFC */

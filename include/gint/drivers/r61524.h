@@ -8,6 +8,10 @@
 #ifndef GINT_DRIVERS_R61524
 #define GINT_DRIVERS_R61524
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 enum {
@@ -42,5 +46,9 @@ void r61524_display(uint16_t *vram, int start, int height, int method);
    impacted. */
 void r61524_win_get(uint16_t *HSA, uint16_t *HEA, uint16_t *VSA,uint16_t *VEA);
 void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_DRIVERS_R61524 */

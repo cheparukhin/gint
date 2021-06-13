@@ -2,10 +2,14 @@
 //	gint:keydev - Kernel's keyboard input devices
 //---
 
-#include <gint/keyboard.h>
-
 #ifndef GINT_KEYDEV
 #define GINT_KEYDEV
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <gint/keyboard.h>
 
 /* Size of the buffer event queue */
 #define KEYBOARD_QUEUE_SIZE 32
@@ -260,5 +264,9 @@ void keydev_set_transform(keydev_t *d, keydev_transform_t tr);
 
 /* keydev_read(): Retrieve the next transformed event */
 key_event_t keydev_read(keydev_t *d);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_KEYDEV */

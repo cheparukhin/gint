@@ -5,6 +5,10 @@
 #ifndef GINT_MPU_SPU
 #define GINT_MPU_SPU
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 typedef volatile struct
@@ -93,5 +97,9 @@ typedef volatile struct
 #define SH7305_SPU  (*(spu_t *)0xfe2ffc00)
 #define SH7305_DSP0 (*(spu_dsp_t *)0xfe2ffd00)
 #define SH7305_DSP1 (*(spu_dsp_t *)0xfe3ffd00)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_SPU */

@@ -12,6 +12,10 @@
 #ifndef GINT_MPU_INTC
 #define GINT_MPU_INTC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 //---
@@ -296,5 +300,9 @@ typedef struct
 /* Provided by intc/intc.c */
 extern sh7705_intc_t SH7705_INTC;
 extern sh7305_intc_t SH7305_INTC;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_INTC */

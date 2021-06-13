@@ -5,6 +5,10 @@
 #ifndef GINT_MPU_RTC
 #define GINT_MPU_RTC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/attributes.h>
 
 //---
@@ -74,5 +78,9 @@ typedef volatile struct
 
 #define SH7705_RTC (*((rtc_t *)0xfffffec0))
 #define SH7305_RTC (*((rtc_t *)0xa413fec0))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_RTC */

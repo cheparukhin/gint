@@ -5,6 +5,10 @@
 #ifndef GINT_KMALLOC
 #define GINT_KMALLOC
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/config.h>
 #include <gint/defs/types.h>
 
@@ -163,5 +167,9 @@ bool kmallocdbg_index_class_separation(kmalloc_arena_t *a);
 int kmallocdbg_sequence_length(kmalloc_arena_t *a);
 
 #endif /* GINT_KMALLOC_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_KMALLOC */

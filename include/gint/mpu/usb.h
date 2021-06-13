@@ -5,6 +5,10 @@
 #ifndef GINT_MPU_USB
 #define GINT_MPU_USB
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <gint/defs/types.h>
 
 typedef volatile struct
@@ -436,5 +440,9 @@ typedef volatile word_union(sh7305_usb_uponcr_t,
 
 #define SH7305_USB (*(sh7305_usb_t *)0xa4d80000)
 #define SH7305_USB_UPONCR (*(sh7305_usb_uponcr_t *)0xa40501d4)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* GINT_MPU_USB */
