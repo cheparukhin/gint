@@ -136,13 +136,12 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 
 	if(method == R61524_CPU)
 	{
-		extern uint16_t *gint_vram;
-		for(int i = 396*start; i < 396*(start+height); i++)
-			write(gint_vram[i]);
+		for(int i = 0; i < 396 * height; i++)
+			write(vram[i]);
 		return;
 	}
 
-	void *src = vram + 396 * start;
+	void *src = vram;
 	void *dst = (void *)0xb4000000;
 
 	/* The amount of data sent per row, 396*2, is not a multiple of 32. For
