@@ -112,6 +112,36 @@ void sleep_block(void);
 void sleep_unblock(void);
 
 //---
+// Interrupt-cancellable sleeps
+//
+// The sleep() function has the significant drawback of not synchronizing with
+// interrupts. Programs usually run [while(<interrupt not occurred>) sleep()],
+// which fails if the interrupt occurs between the time the condition is
+// checked and time the sleep instruction is executed.
+//
+// Interrupt-cancellable sleep is a software mechanism by which the interrupt
+// disables the sleep instruction itself (by replacing it with a nop), which
+// ensures that the CPU cannot go to sleep after the interrupt occurs.
+//---
+
+/* cpu_csleep_t: A cancellable sleep function
+   This object holds sleep code that can be disabled by an interrupt. The size
+   and layout of this variable is dependent on some assembler code. This should
+   be allocated on the stack, heap, or on-chip memory, because the data segment
+   is not executable! */
+typedef GALIGNED(4) uint8_t cpu_csleep_t[20];
+
+/* cpu_csleep_init(): Create an ICS function
+   This function initializes the provided ICS routine. */
+void cpu_csleep_init(cpu_csleep_t *ics);
+
+/* cpu_csleep(): Run the sleep function until the sleep is cancelled */
+void cpu_csleep(cpu_csleep_t *ics);
+
+/* cpu_csleep_cancel(): Cancel the sleep function from within an interrupt */
+void cpu_csleep_cancel(cpu_csleep_t *ics);
+
+//---
 // Configuration
 //---
 

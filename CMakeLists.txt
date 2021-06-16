@@ -25,6 +25,7 @@ set(SOURCES_COMMON
   src/cpg/cpg.c
   src/cpu/atomic.c
   src/cpu/cpu.c
+  src/cpu/ics.s
   src/cpu/registers.s
   src/cpu/sleep.c
   src/dma/dma.c

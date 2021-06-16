@@ -8,6 +8,7 @@
 #include <gint/drivers/states.h>
 #include <gint/clock.h>
 #include <gint/exc.h>
+#include <gint/cpu.h>
 
 #define DMA SH7305_DMA
 #define POWER SH7305_POWER
@@ -18,6 +19,8 @@ typedef volatile sh7305_dma_channel_t channel_t;
 static gint_call_t dma_callbacks[6] = { 0 };
 /* Sleep blocking flags for all channels */
 static bool dma_sleep_blocking[6] = { 0 };
+/* ICS for dma_channel_wait() for all channels */
+static cpu_csleep_t *dma_wait_ics[6] = { 0 };
 
 /* dma_channel(): Get address of a DMA channel */
 static channel_t *dma_channel(int channel)
@@ -147,6 +150,10 @@ static void dma_interrupt_transfer_ended(int channel)
 	if(dma_sleep_blocking[channel])
 		sleep_unblock();
 
+	/* Cancel any sleep operation that is synchronized with this interrupt */
+	if(dma_wait_ics[channel])
+		cpu_csleep_cancel(dma_wait_ics[channel]);
+
 	if(dma_callbacks[channel].function)
 	{
 		gint_call(dma_callbacks[channel]);
@@ -167,11 +174,24 @@ void dma_transfer_wait(int channel)
 	channel_t *ch = dma_channel(channel);
 	if(!ch) return;
 
-	while(ch->CHCR.DE && !ch->CHCR.TE)
+	/* Interrupt disabled: spin-wait */
+	if(!ch->CHCR.IE)
 	{
-		/* Sleep only if the interrupt is enabled to wake us up */
-		if(ch->CHCR.IE) sleep();
+		while(ch->CHCR.DE && !ch->CHCR.TE) {}
+		return;
 	}
+
+	/* Initialize an interrupt-cancellable sleep, to ensure synchronization */
+	cpu_csleep_t ics;
+	cpu_csleep_init(&ics);
+	dma_wait_ics[channel] = &ics;
+
+	/* Now the ICS is set; if the interrupt has not occurred yet then the
+	   handler is guaranteed to cancel the sleep at some point */
+	if(ch->CHCR.DE && !ch->CHCR.TE) cpu_csleep(&ics);
+
+	/* Clear the ICS pointer for next time */
+	dma_wait_ics[channel] = NULL;
 }
 
 bool dma_transfer_sync(int channel, dma_size_t size, uint length,

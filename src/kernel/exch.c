@@ -114,6 +114,11 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 		dprint(6, 193, "DMAOR: %04x", DMA.OR);
 		#undef DMA
 	}
+	/* Illegal instruction handler */
+	if(code == 0x180)
+	{
+		dprint(6, 141, "Opcode: %04x", *(uint16_t *)PC);
+	}
 	#endif
 
 	dupdate();
