@@ -14,6 +14,17 @@ void *dma_memset(void *dst, uint32_t l, size_t size)
 	   different memory regions, making the DMA faster than the CPU. */
 	for(int i = 0; i < 8; i++) ILbuf[i] = l;
 
-	dma_transfer_sync(1, DMA_32B, size>>5, ILbuf, DMA_FIXED, dst, DMA_INC);
+	int block_size = DMA_32B;
+	int block_count = size >> 5;
+
+	/* Use 4-byte transfers to access SPU memory */
+	if((uint32_t)dst >= 0xfe200000 && (uint32_t)dst < 0xfe400000)
+	{
+		block_size = DMA_4B;
+		block_count = size >> 2;
+	}
+
+	dma_transfer_sync(1, block_size, block_count, ILbuf, DMA_FIXED, dst,
+		DMA_INC);
 	return dst;
 }

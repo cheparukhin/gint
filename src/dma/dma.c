@@ -116,6 +116,11 @@ static int dma_setup(int channel, dma_size_t size, uint blocks,
 	if(ch->DAR >= 0xe5007000 && ch->DAR <= 0xe5204000)
 		dma_sleep_blocking[channel] = true;
 
+	if(ch->SAR >= 0xfe200000 && ch->SAR <= 0xfe3fffff)
+		dma_sleep_blocking[channel] = true;
+	if(ch->DAR >= 0xfe200000 && ch->DAR <= 0xfe3fffff)
+		dma_sleep_blocking[channel] = true;
+
 	return 0;
 }
 
