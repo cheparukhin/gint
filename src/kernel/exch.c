@@ -117,7 +117,9 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	/* Illegal instruction handler */
 	if(code == 0x180)
 	{
-		dprint(6, 141, "Opcode: %04x", *(uint16_t *)PC);
+		uint16_t *opcodes = (void *)PC;
+		dprint(6, 141, "Opcodes: %04x %04x [%04x] %04x",
+			opcodes[-2], opcodes[-1], opcodes[0], opcodes[1]);
 	}
 	#endif
 
