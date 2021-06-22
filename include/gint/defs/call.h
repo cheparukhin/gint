@@ -115,19 +115,31 @@ typedef struct {
    * error: cast to union type from type not present in union
      -> This is emitted if you pass a parameter of an invalid type. */
 #define GINT_CALL(func, ...) \
-	((gint_call_t){ .function = func, .args = { \
+	((gint_call_t){ .function = (void *)func, .args = { \
 		__VA_OPT__(GINT_CALL_ARGS1(__VA_ARGS__)) \
 	}})
 #define GINT_CALL_ARGS1(a1, ...) \
-	(gint_call_arg_t)(a1), __VA_OPT__(GINT_CALL_ARGS2(__VA_ARGS__))
+	GINT_CALL_ARG(a1), __VA_OPT__(GINT_CALL_ARGS2(__VA_ARGS__))
 #define GINT_CALL_ARGS2(a2, ...) \
-	(gint_call_arg_t)(a2), __VA_OPT__(GINT_CALL_ARGS3(__VA_ARGS__))
+	GINT_CALL_ARG(a2), __VA_OPT__(GINT_CALL_ARGS3(__VA_ARGS__))
 #define GINT_CALL_ARGS3(a3, ...) \
-	(gint_call_arg_t)(a3), __VA_OPT__(GINT_CALL_ARGS4(__VA_ARGS__))
+	GINT_CALL_ARG(a3), __VA_OPT__(GINT_CALL_ARGS4(__VA_ARGS__))
 #define GINT_CALL_ARGS4(a4, ...) \
 	({ __VA_OPT__(_Static_assert(0, \
 		"GINT_CALL: too many arguments (maximum 4)");) \
-	(gint_call_arg_t)(a4); })
+	GINT_CALL_ARG(a4); })
+
+#ifdef __cplusplus
+ /* Kind of ugly but I don't have super cool templated logic right now.
+    TODO: Allow any 4-byte type using C++ magic. */
+ #define GINT_CALL_ARG(expr) ({ \
+ 	auto __arg = (expr); \
+ 	(*reinterpret_cast<gint_call_arg_t *>(&__arg)); \
+ })
+#else
+ /* GCC extension: Cast to union */
+ #define GINT_CALL_ARG(expr) (gint_call_arg_t)(expr)
+#endif
 
 /* GINT_CALL_NULL: Empty function call */
 #define GINT_CALL_NULL ((gint_call_t){ .function = NULL, .args = {} })
@@ -135,7 +147,12 @@ typedef struct {
 /* gint_call(): Perform an indirect call */
 static GINLINE int gint_call(gint_call_t cb)
 {
+#ifdef __cplusplus
+	int (*f)(int r4, int r5, int r6, int r7) = (decltype(f))cb.function;
+#else
 	int (*f)(int r4, int r5, int r6, int r7) = cb.function;
+#endif
+
 	return f(cb.args[0].i, cb.args[1].i, cb.args[2].i, cb.args[3].i);
 }
 
