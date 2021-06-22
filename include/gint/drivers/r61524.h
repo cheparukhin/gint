@@ -35,6 +35,17 @@ enum {
    @method  Transfer method, see above */
 void r61524_display(uint16_t *vram, int start, int height, int method);
 
+/* r61524_start_frame(): Prepare the display for a region update
+
+   This function sets up the display driver to receive graphics data to update
+   liens [start] to [start+height-1] (both included) of the current window.
+   This is the initial step of r61524_display(), which is normally followed by
+   writing all the data to 0xb4000000.
+
+   This function can be used to implement additional display driver update
+   methods or alternate rendering pipelines. */
+void r61524_start_frame(int start, int height);
+
 /* r162524_win_get() and r61524_win_set(): Manipulate the display window
 
    These functions change the screen rectangle where data is shown. Normally
@@ -46,6 +57,18 @@ void r61524_display(uint16_t *vram, int start, int height, int method);
    impacted. */
 void r61524_win_get(uint16_t *HSA, uint16_t *HEA, uint16_t *VSA,uint16_t *VEA);
 void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA);
+
+//---
+// Low-level functions
+//---
+
+/* r61524_get(): Read the value of an R61524 register
+   This is provided for testing and if you know what you're doing. */
+uint16_t r61524_get(int ID);
+
+/* r61524_set(): Write the value of an R61524 register
+   This is provided for testing and if you know what you're doing. */
+void r61524_set(int ID, uint16_t value);
 
 #ifdef __cplusplus
 }

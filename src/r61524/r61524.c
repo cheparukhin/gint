@@ -86,6 +86,18 @@ GINLINE static void write(uint16_t data)
 	*intf = data;
 }
 
+uint16_t r61524_get(int ID)
+{
+	select(ID);
+	return read();
+}
+
+void r61524_set(int ID, uint16_t value)
+{
+	select(ID);
+	write(value);
+}
+
 //---
 //	Window management
 //---
@@ -122,7 +134,7 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 
 /* TODO: r61524: update, backlight, brightness, gamma */
 
-void r61524_display(uint16_t *vram, int start, int height, int method)
+void r61524_start_frame(int start, int height)
 {
 	/* Move the window to the desired region, then select address 0 */
 	r61524_win_set(0, 395, start, start + height - 1);
@@ -133,6 +145,11 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 
 	/* Bind address 0xb4000000 to the data write command */
 	select(write_data);
+}
+
+void r61524_display(uint16_t *vram, int start, int height, int method)
+{
+	r61524_start_frame(start, height);
 
 	if(method == R61524_CPU)
 	{
