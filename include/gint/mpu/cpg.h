@@ -68,7 +68,15 @@ typedef volatile struct
 		uint32_t SRC	:2;	/* Clock source select */
 		uint32_t DIVA	:6;	/* Division ratio for port A */
 	);
-	pad(0x08);
+	pad(0x04);
+
+	lword_union(DDCLKCR,
+		uint32_t	:23;
+		uint32_t CLKSTP	:1;	/* Clock Stop */
+		uint32_t _	:1;	/* Unknown */
+		uint32_t	:1;
+		uint32_t DIV	:6;
+	);
 
 	lword_union(USBCLKCR,
 		uint32_t	:23;
