@@ -13,13 +13,11 @@
 #include <stdint.h>
 /* For human-readable boolean types */
 #include <stdbool.h>
+/* Common system types: ssize_t, off_t, etc. */
+#include <sys/types.h>
 
 /* Fixed-width types for bit fields are quite meaningless */
 typedef unsigned int uint;
-/* Signed size_t */
-typedef signed int ssize_t;
-/* Offset in file (used in standard functions) */
-typedef unsigned int off_t;
 
 //---
 //	Structure elements
