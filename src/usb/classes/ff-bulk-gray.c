@@ -5,7 +5,7 @@
 #include <gint/display.h>
 #include <gint/gray.h>
 
-void usb_fxlink_screenshot_gray(GUNUSED bool onscreen)
+static void capture_vram_gray(GUNUSED bool onscreen, char const *type)
 {
 	uint32_t *light, *dark;
 	if(onscreen) dgray_getscreen(&light, &dark);
@@ -14,7 +14,7 @@ void usb_fxlink_screenshot_gray(GUNUSED bool onscreen)
 	usb_fxlink_header_t header;
 	usb_fxlink_image_t subheader;
 
-	usb_fxlink_fill_header(&header, "fxlink", "image",
+	usb_fxlink_fill_header(&header, "fxlink", type,
 		2048 + sizeof subheader);
 
 	subheader.width = htole32(DWIDTH);
@@ -27,6 +27,16 @@ void usb_fxlink_screenshot_gray(GUNUSED bool onscreen)
 	usb_write_sync(pipe, light, 1024, 4, false);
 	usb_write_sync(pipe, dark, 1024, 4, false);
 	usb_commit_sync(pipe);
+}
+
+void usb_fxlink_screenshot_gray(bool onscreen)
+{
+	capture_vram_gray(onscreen, "image");
+}
+
+void usb_fxlink_videocapture_gray(bool onscreen)
+{
+	capture_vram_gray(onscreen, "video");
 }
 
 #endif /* FX9860G */

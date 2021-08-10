@@ -59,6 +59,7 @@ set(SOURCES_COMMON
   src/render/dprint.c
   src/render/drect_border.c
   src/render/dtext.c
+  src/render/dupdate_hook.c
   src/render/dvline.c
   src/render/topti.c
   src/rtc/rtc.c

@@ -14,6 +14,7 @@ extern "C" {
 #endif
 
 #include <gint/defs/types.h>
+#include <gint/defs/call.h>
 
 /* Platform-specific functions include VRAM management and the definition of
    the color_t type. */
@@ -61,6 +62,25 @@ extern "C" {
    fx-9860G: ~30% of CPU time (gray engine on)
    fx-CG 50: 11 ms */
 void dupdate(void);
+
+/* dupdate_set_hook(): Define a function to be called after each dupdate()
+
+   This functions configures the update hook, which is called after each
+   dupdate() has sent VRAM to the display (but before VRAMs are switched when
+   triple-buffering is used on fx-CG 50).
+
+   The hook is mostly useful to send a copy of the frame to another medium,
+   typically through a USB connection to a projector-style application. See
+   usb_fxlink_videocapture() in <gint/usb-ff-bulk.h> for an example.
+
+   The function is an indirect call; create one with the GINT_CALL() macro from
+   <gint/defs/call.h>. Pass GINT_CALL_NULL to disable the feature.
+
+   @function  Indirect call to perform after each dupdate(). */
+void dupdate_set_hook(gint_call_t function);
+
+/* dupdate_get_hook(): Get a copy of the dupdate() hook */
+gint_call_t dupdate_get_hook(void);
 
 //---
 //	Area rendering functions

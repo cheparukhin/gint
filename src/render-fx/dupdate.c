@@ -11,16 +11,23 @@ uint32_t *gint_vram = fx_vram;
 /* The current rendering mode */
 struct rendering_mode const *dmode = NULL;
 
-/* dupdate() - push the video RAM to the display driver */
+/* dupdate(): Push the video RAM to the display driver */
 void dupdate(void)
 {
+	bool run_default = true;
+
 	if(dmode && dmode->dupdate)
 	{
-		/* Call the overridden dupdate(), but continue if itreturns
+		/* Call the overridden dupdate(), but continue if it returns
 		   non-zero (this is used when stopping the gray engine) */
 		int rc = dmode->dupdate();
-		if(rc == 0) return;
+		run_default = (rc != 0);
+	}
+	if(run_default)
+	{
+		t6k11_display(gint_vram, 0, 64, 16);
 	}
 
-	t6k11_display(gint_vram, 0, 64, 16);
+	gint_call_t hook = dupdate_get_hook();
+	if(hook.function) gint_call(hook);
 }

@@ -60,8 +60,8 @@ int usb_ff_bulk_output(void)
 // fxlink protocol
 //---
 
-bool usb_fxlink_fill_header(usb_fxlink_header_t *header, char *application,
-   char *type, uint32_t data_size)
+bool usb_fxlink_fill_header(usb_fxlink_header_t *header,
+	char const *application, char const *type, uint32_t data_size)
 {
 	if(strlen(application) > 16 || strlen(type) > 16) return false;
 
@@ -77,7 +77,7 @@ bool usb_fxlink_fill_header(usb_fxlink_header_t *header, char *application,
 	return true;
 }
 
-void usb_fxlink_screenshot(GUNUSED bool onscreen)
+static void capture_vram(GUNUSED bool onscreen, char const *type)
 {
 	void *source = gint_vram;
 	int size, format;
@@ -100,7 +100,7 @@ void usb_fxlink_screenshot(GUNUSED bool onscreen)
 	usb_fxlink_header_t header;
 	usb_fxlink_image_t subheader;
 
-	usb_fxlink_fill_header(&header, "fxlink", "image",
+	usb_fxlink_fill_header(&header, "fxlink", type,
 		size + sizeof subheader);
 
 	subheader.width = htole32(DWIDTH);
@@ -112,6 +112,11 @@ void usb_fxlink_screenshot(GUNUSED bool onscreen)
 	usb_write_sync(pipe, &subheader, sizeof subheader, 4, false);
 	usb_write_sync(pipe, source, size, 4, false);
 	usb_commit_sync(pipe);
+}
+
+void usb_fxlink_screenshot(bool onscreen)
+{
+	capture_vram(onscreen, "image");
 }
 
 void usb_fxlink_text(char const *text, int size)
@@ -129,4 +134,9 @@ void usb_fxlink_text(char const *text, int size)
 	usb_write_sync(pipe, &header, sizeof header, unit_size, false);
 	usb_write_sync(pipe, text, size, unit_size, false);
 	usb_commit_sync(pipe);
+}
+
+void usb_fxlink_videocapture(bool onscreen)
+{
+	capture_vram(onscreen, "video");
 }

@@ -97,8 +97,8 @@ typedef struct
 
    Returns false if the parameters are invalid or don't fit, in this case the
    contents of the header are unchanged. */
-bool usb_fxlink_fill_header(usb_fxlink_header_t *header, char *application,
-   char *type, uint32_t data_size);
+bool usb_fxlink_fill_header(usb_fxlink_header_t *header,
+	char const *application, char const *type, uint32_t data_size);
 
 //---
 // Short functions for fxlink built-in types
@@ -167,6 +167,23 @@ void usb_fxlink_screenshot_gray(bool onscreen);
    This function sends the text by blocks of 4 bytes or 2 bytes when alignment
    and size allow, and 1 byte otherwise. If size is 0, strlen(text) is used. */
 void usb_fxlink_text(char const *text, int size);
+
+/* usb_fxlink_videocapture(): Send a frame for a video recording
+
+   This function is essentially the same as usb_fxlink_screenshot(). It sends a
+   capture of the VRAM to fxlink but uses the "video" type, which fxlink
+   displays in real-time or saves as a video file. The meaning of the onscreen
+   setting is identical to usb_fxlink_screenshot().
+
+   This function can be called with onscreen=false as a dupdate() hook to
+   automatically send new frames to fxlink. */
+void usb_fxlink_videocapture(bool onscreen);
+
+#ifdef FX9860G
+/* usb_fxlink_videocapture_gray(): Send a gray frame for a video recording
+   Like usb_fxlink_videocapture(), but uses VRAM data from the gray engine. */
+void usb_fxlink_videocapture_gray(bool onscreen);
+#endif
 
 #ifdef __cplusplus
 }
