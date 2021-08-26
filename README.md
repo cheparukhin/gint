@@ -89,6 +89,7 @@ Run without `-c` to build. This configures automatically.
 
 ```
 % fxsdk build-fx
+% fxsdk build-fx install
 ```
 
 The available options are:
@@ -104,6 +105,11 @@ build-fx`.
 The available options are:
 
 * `-DGINT_USER_VRAM=1`: Store all VRAMs in the user stack (takes up 350k/512k)
+
+```
+% fxsdk build-cg
+% fxsdk build-cg install
+```
 
 ## Using in CMake-based add-ins
 
