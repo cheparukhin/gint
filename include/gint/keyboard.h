@@ -246,6 +246,15 @@ typedef bool (*getkey_feature_t)(key_event_t event);
    value whenever you want to interrupt the call; using a timer with
    [timer_timeout] as callback is suitable. See <gint/timer.h>.
 
+   Event transforms in getkey_opt() (SHIFT, ALPHA and repetitions) are handled
+   by changing the transform settings on the keyboard device. These settings
+   are restored when getkey_opt() returns, so if they are originally disabled
+   (which they are unless set manually) then the status of the SHIFT and ALPHA
+   keys is lost between calls (this has an effect it getkey_opt() is
+   interrupted by timeout). Therefore, in order to use modifiers across several
+   calls to getkey_opt(), make sure to enable the transforms on the keyboard
+   device; see <gint/drivers/keydev.h> for details.
+
    @options  An or-combination of values from the GETKEY_* enumeration
    @timeout  Optional pointer to a timeout value
    Returns a key event of type KEYEV_DOWN or KEYEV_HOLD with [mod=1]. */
