@@ -34,7 +34,7 @@ void gint_dhline(int x1, int x2, int y, uint16_t color)
 void gint_dvline(int y1, int y2, int x, uint16_t color)
 {
 	/* Order and bounds */
-	if((uint)x >= 395) return;
+	if((uint)x >= 396) return;
 	if(y1 > y2) swap(y1, y2);
 	if(y1 < 0) y1 = 0;
 	if(y2 >= 224) y2 = 223;
