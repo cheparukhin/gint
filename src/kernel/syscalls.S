@@ -138,9 +138,9 @@ _BFile_Write:
 _BFile_Read:
 	syscall(0x1dac)
 _BFile_FindFirst:
-	syscall(0x1db7)
+	syscall(0x1db6)
 _BFile_FindNext:
-	syscall(0x1db9)
+	syscall(0x1db8)
 _BFile_FindClose:
 	syscall(0x1dba)
 
