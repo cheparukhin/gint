@@ -61,7 +61,7 @@ void bopti_render(bopti_image_t const *img, struct box *box)
 
 		/* Due to nibble alignment being a hassle, in this function the
 		   input stride is expressed in pixels. */
-		int in = img->width - w;
+		int in = img->width - w + (img->width & 1);
 		/* Also we don't move pointers, we just use pixel offsets. */
 		int offset = img->width * box->top + box->left;
 

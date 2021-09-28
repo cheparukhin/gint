@@ -69,18 +69,29 @@ typedef struct
 	   later on */
 	uint16_t profile;
 
-	/* Color code assigned to transparent pixels (unused in 16-bit) */
+	/* Color code assigned to transparent pixels (unused in 16-bit). In
+	   P8_RGB565A, the value assigned to alpha is always 0. */
 	uint16_t alpha;
 
 	/* Full width and height, in pixels */
 	uint16_t width;
 	uint16_t height;
 
-	/* Color palette:
-	   * 16-bit and 16-bit alpha: none
-	   * 8-bit: 256 colors (total 512 bytes)
-	   * 4-bit: 16 colors (total 32 bytes)
-	   Then raw pixel data in row-major order. */
+	/* Here we lose structure because of the flexible array.
+
+	   RGB565, RGB565A:
+	     * Pixels in row-major order, 16 bits per pixel
+	   P8:
+        * Palette with 256 entries (512 bytes total)
+        * Pixels in row-major order, 8 bits per pixel
+      P8_RGB565A, P8_RGB565:
+        * Number of entries in palette, N (2 bytes)
+        * Palette with N entries (2N bytes)
+        * Pixels in row-major order, 8 bits per pixel (signed indices in an
+          uint16_t array starting at <palette>+<256 bytes>)
+      P4/P4_RGB565A, P4_RGB565:
+        * Palette with 16 entries (32 bytes total)
+        * Pixels in row-major order, 4 bits per pixel, each row byte-padded */
 	uint16_t data[];
 
 } GPACKED(4) bopti_image_t;
