@@ -13,12 +13,14 @@ static void do_sleep(uint64_t delay_us, int spin)
 		GINT_CALL_SET_STOP(&flag));
 	if(timer < 0) return;
 
-	timer_start(timer);
 	if(spin) {
 		timer_spinwait(timer);
 		timer_stop(timer);
 	}
-	else timer_wait(timer);
+	else {
+		timer_start(timer);
+		timer_wait(timer);
+	}
 }
 
 /* sleep_us(): Sleep for a fixed duration in microseconds */

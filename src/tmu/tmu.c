@@ -209,6 +209,7 @@ void timer_stop(int id)
 	if(id < 3)
 	{
 		TMU[id].TCR.UNIE = 0;
+		TMU[id].TCR.UNF = 0;
 		TMU[id].TCOR = 0xffffffff;
 		TMU[id].TCNT = 0xffffffff;
 	}
@@ -240,17 +241,21 @@ void timer_wait(int id)
 	}
 }
 
-/* timer_spinwait(): Actively wait for a timer to raise UNF */
+/* timer_spinwait(): Start a timer and actively wait for UNF */
 void timer_spinwait(int id)
 {
 	if(id < 3)
 	{
 		tmu_t *T = &TMU[id];
+		T->TCR.UNIE = 0;
+		timer_start(id);
 		while(!T->TCR.UNF) {}
 	}
 	else
 	{
 		etmu_t *T = &ETMU[id-3];
+		set(T->TCR.UNIE, 0);
+		timer_start(id);
 		while(!T->TCR.UNF) {}
 	}
 }

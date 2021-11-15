@@ -162,10 +162,11 @@ void timer_stop(int timer);
    it may have only paused. If the timer never stops, you're in trouble. */
 void timer_wait(int timer);
 
-/* timer_spinwait(): Actively wait for a timer to raise UNF
+/* timer_spinwait(): Start a timer and actively wait for UNF
    Waits until the timer raises UNF, without sleeping. This is useful for
-   delays in driver code that is run when interrupts are disabled. This relies
-   neither on the interrupt signal nor on the UNIE flag. */
+   delays in driver code that is run when interrupts are disabled. UNIE is
+   disabled before starting the timer and waiting, so the callback is never
+   called. */
 void timer_spinwait(int timer);
 
 //---
