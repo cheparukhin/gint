@@ -149,6 +149,10 @@ void r61524_start_frame(int start, int height)
 
 void r61524_display(uint16_t *vram, int start, int height, int method)
 {
+	/* Wait for any transfer to finish before using the screen, otherwise
+	   the DMA might write data *while* we're sending commands! */
+	dma_transfer_wait(0);
+
 	r61524_start_frame(start, height);
 
 	if(method == R61524_CPU)
@@ -167,9 +171,6 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 	int blocks = 99 * (height >> 2);
 
 	if(method == R61524_DMA) {
-		/* If the previous transfer is still running, wait for it; then
-		   start sending asynchronously and return. */
-		dma_transfer_wait(0);
 		dma_transfer_async(0, DMA_32B, blocks, src, DMA_INC, dst,
 			DMA_FIXED, GINT_CALL_NULL);
 	}
