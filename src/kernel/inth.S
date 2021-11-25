@@ -134,8 +134,8 @@ _gint_inth_7705:
 	nop
 
 	/* Restore saved registers */
-	lds.l	@r15+, mach
 	lds.l	@r15+, macl
+	lds.l	@r15+, mach
 	ldc.l	@r15+, gbr
 	lds.l	@r15+, pr
 
