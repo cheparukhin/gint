@@ -39,15 +39,18 @@ void kinit(void)
 
 	#ifdef FX9860G
 	/* On fx-9860G, VBR is loaded at the end of the user RAM. On SH4, the
-	   end of the user RAM hosts the stack, for which we leave 8 kB
-	   (0x2000 bytes). The VBR space takes about 0x600 bytes on SH3 due to
+	   end of the user RAM hosts the stack, for which we leave 12 kB
+	   (0x3000 bytes). The VBR space takes about 0x600 bytes on SH3 due to
 	   the compact scheme, while it uses about 0x1100 bytes for the whole
 	   expanded region. */
 	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size();
-	if(isSH4()) uram_end -= 0x2000;
-	uram_end -= (isSH3() ? 0x600 : 0x1100);
+
+	/* Stack space on SH4. 12 kB is a lot, but BFile is known to overflow
+	   from the previous 8 kB design */
+	if(isSH4()) uram_end -= 0x3000;
 
 	/* VBR is advanced 0x100 bytes because of an unused gap */
+	uram_end -= (isSH3() ? 0x600 : 0x1100);
 	VBR = uram_end - 0x100;
 	#endif /* FX9860G */
 
