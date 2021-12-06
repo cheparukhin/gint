@@ -70,6 +70,7 @@ void hw_detect(void);
 #define HWKBD    8    /* Keyboard */
 #define HWKBDSF       /* Deprecated: use keysc_scan_frequency() */
 #define HWDD          /* Deprecated: use the T6K11/R61524 API */
+#define HWFS    11    /* Filesystem type */
 
 /*
 **  MPU type
@@ -117,6 +118,17 @@ void hw_detect(void);
 #define HWKBD_WDD      0x02
 /* The keyboard uses a KEYSC-based scan method. This is only possible on SH4 */
 #define HWKBD_KSI      0x04
+
+/*
+**  Filesystem type
+*/
+
+/* Unknown or no filesystem. */
+#define HWFS_NONE        0
+/* CASIO's in-house filesystem, now deprecated. */
+#define HWFS_CASIOWIN    1
+/* Wrapper around Kyoto Software Research's Fugue VFAT implementation. */
+#define HWFS_FUGUE       2
 
 #ifdef __cplusplus
 }

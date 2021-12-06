@@ -78,7 +78,15 @@ void hw_detect(void)
 	   be real, is enough for now.
 	   TODO: Try to detect Graph 35+E II from amount of ROM in BSC? */
 	char *version = (void *)0x80010020;
-	if(version[1] == '3') gint[HWCALC] = HWCALC_G35PE2;
+	if(version[1] == '3')
+	{
+		gint[HWCALC] = HWCALC_G35PE2;
+		gint[HWFS] = HWFS_FUGUE;
+	}
+	else
+	{
+		gint[HWFS] = HWFS_CASIOWIN;
+	}
 
 	/* Detect RAM by checking if 8804'0000 is the same as 8800'0000. */
 
@@ -121,7 +129,8 @@ void hw_detect(void)
 	/* Tell Prizms apart from fx-CG 50 by checking the stack address*/
 	uint32_t stack;
 	__asm__("mov r15, %0" : "=r"(stack));
-	gint[HWCALC]  = (stack < 0x8c000000) ? HWCALC_PRIZM : HWCALC_FXCG50;
+	gint[HWCALC] = (stack < 0x8c000000) ? HWCALC_PRIZM : HWCALC_FXCG50;
+	gint[HWFS] = HWFS_FUGUE;
 
 	/* Tell the fx-CG emulator apart using the product ID */
 	uint8_t *productID = (void *)0x8001ffd0;
