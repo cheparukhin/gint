@@ -23,6 +23,8 @@
 .global	_BFile_Open
 .global	_BFile_Close
 .global	_BFile_Size
+.global	_BFile_Seek
+.global	_BFile_GetPos
 .global	_BFile_Write
 .global	_BFile_Read
 .global	_BFile_FindFirst
@@ -64,6 +66,7 @@ ___realloc:
 /* BFile driver */
 
 _BFile_Remove:
+	mov #0, r5
 	syscall(0x0439)
 _BFile_Create:
 	syscall(0x0434)
@@ -73,6 +76,11 @@ _BFile_Close:
 	syscall(0x042d)
 _BFile_Size:
 	syscall(0x042f)
+_BFile_Seek:
+	syscall(0x0431)
+_BFile_GetPos:
+	rts
+	mov	#-1, r0
 _BFile_Write:
 	syscall(0x0435)
 _BFile_Read:
@@ -122,7 +130,6 @@ ___realloc:
 /* BFile driver */
 
 _BFile_Remove:
-	mov #0, r5
 	syscall(0x1db4)
 _BFile_Create:
 	syscall(0x1dae)
@@ -133,6 +140,10 @@ _BFile_Close:
 	syscall(0x1da4)
 _BFile_Size:
 	syscall(0x1da6)
+_BFile_Seek:
+	syscall(0x1da9)
+_BFile_GetPos:
+	syscall(0x1dab)
 _BFile_Write:
 	syscall(0x1daf)
 _BFile_Read:
