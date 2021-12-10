@@ -22,18 +22,34 @@ endif()
 configure_file(include/gint/config.h.in include/gint/config.h)
 
 set(SOURCES_COMMON
+  # Clock Pulse Generator driver
   src/cpg/cpg.c
+  # CPU driver
   src/cpu/atomic.c
   src/cpu/cpu.c
   src/cpu/ics.s
   src/cpu/registers.s
   src/cpu/sleep.c
+  # Direct Memory Access driver
   src/dma/dma.c
   src/dma/inth.s
   src/dma/memcpy.c
   src/dma/memset.c
+  # Filesystem interface (Fugue only)
+  src/fs/close.c
+  src/fs/creat.c
+  src/fs/lseek.c
+  src/fs/open.c
+  src/fs/pread.c
+  src/fs/pwrite.c
+  src/fs/read.c
+  src/fs/unlink.c
+  src/fs/util.c
+  src/fs/write.c
+  # Interrupt Controller driver
   src/intc/intc.c
   src/intc/inth.s
+  # Kernel
   src/kernel/exch.c
   src/kernel/exch.s
   src/kernel/hardware.c
@@ -44,15 +60,19 @@ set(SOURCES_COMMON
   src/kernel/syscalls.S
   src/kernel/tlbh.S
   src/kernel/world.c
+  # Key Scan Interface driver
   src/keysc/getkey.c
   src/keysc/iokbd.c
   src/keysc/keycodes.c
   src/keysc/keydev.c
   src/keysc/keysc.c
+  # Memory allocator
   src/kmalloc/arena_gint.c
   src/kmalloc/arena_osheap.c
   src/kmalloc/kmalloc.c
+  # MMU driver
   src/mmu/mmu.c
+  # Rendering
   src/render/dhline.c
   src/render/dimage.c
   src/render/dline.c
@@ -62,13 +82,17 @@ set(SOURCES_COMMON
   src/render/dupdate_hook.c
   src/render/dvline.c
   src/render/topti.c
+  # RTC driver
   src/rtc/rtc.c
   src/rtc/rtc_ticks.c
+  # Sound Processing Unit driver
   src/spu/spu.c
+  # Timer Unit driver
   src/tmu/inth-etmu.s
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
   src/tmu/tmu.c
+  # USB driver
   src/usb/classes/ff-bulk.c
   src/usb/configure.c
   src/usb/pipes.c
@@ -77,6 +101,7 @@ set(SOURCES_COMMON
   src/usb/usb.c
 )
 set(SOURCES_FX
+  # Gray engine
   src/gray/engine.c
   src/gray/gclear.c
   src/gray/gint_gline.c
@@ -84,6 +109,7 @@ set(SOURCES_FX
   src/gray/grect.c
   src/gray/gsubimage.c
   src/gray/gtext.c
+  # Rendering
   src/render-fx/bopti-asm-gray-scsp.s
   src/render-fx/bopti-asm-gray.s
   src/render-fx/bopti-asm-mono-scsp.s
@@ -98,11 +124,15 @@ set(SOURCES_FX
   src/render-fx/masks.c
   src/render-fx/topti-asm.s
   src/render-fx/topti.c
+  # T6K11 driver
   src/t6k11/t6k11.c
+
   src/usb/classes/ff-bulk-gray.c
 )
 set(SOURCES_CG
+  # R61524 driver
   src/r61524/r61524.c
+  # Rendering
   src/render-cg/bopti-asm.s
   src/render-cg/bopti.c
   src/render-cg/dclear.c
