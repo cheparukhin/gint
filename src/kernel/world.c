@@ -1,6 +1,7 @@
 #include <gint/drivers.h>
 #include <gint/cpu.h>
 #include <gint/gint.h>
+#include <gint/exc.h>
 #include <gint/defs/call.h>
 
 #include <stdlib.h>
@@ -126,8 +127,24 @@ void gint_world_switch_out(gint_world_t world_addin, gint_world_t world_os)
 
 int gint_world_switch(gint_call_t call)
 {
+	extern void *gint_stack_top;
 	gint_world_switch_out(gint_world_addin, gint_world_os);
+
+	/* Watch out for stack overflows */
+	uint32_t *canary = gint_stack_top;
+	if(canary)
+		*canary = 0xb7c0ffee;
+
 	int rc = call.function ? gint_call(call) : 0;
+
+	/* The canary check needs to occur before switching in the gint world;
+	   otherwise we just crash due to the overflow. gint_panic() isn't
+	   really designed to work from the OS world, but it does fine on the
+	   fx-9860G series and sometimes also on the fx-CG series; better crash
+	   attempting to show a panic message than just crash */
+	if(canary && *canary != 0xb7c0ffee)
+		gint_panic(0x1080);
+
 	gint_world_switch_in(gint_world_os, gint_world_addin);
 	return rc;
 }

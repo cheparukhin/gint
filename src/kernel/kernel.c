@@ -9,6 +9,7 @@
 #include <gint/mpu/intc.h>
 #include <gint/kmalloc.h>
 #include <gint/cpu.h>
+#include <gint/exc.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -28,6 +29,9 @@ gint_world_t gint_world_addin = NULL;
 /* Dynamic flags for all drivers */
 uint8_t *gint_driver_flags = NULL;
 
+/* Top of the stack */
+void *gint_stack_top = NULL;
+
 //---
 //	Initialization and unloading
 //---
@@ -45,9 +49,12 @@ void kinit(void)
 	   expanded region. */
 	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size();
 
-	/* Stack space on SH4. 12 kB is a lot, but BFile is known to overflow
-	   from the previous 8 kB design */
-	if(isSH4()) uram_end -= 0x3000;
+	/* Stack space on SH4. 14 kB is a lot, but Fugue's BFile has been seen
+	   overflowing both 8 kB and 12 kB */
+	if(isSH4()) {
+		uram_end -= (gint[HWFS] == HWFS_FUGUE) ? 0x3800 : 0x2000;
+		gint_stack_top = (void *)uram_end;
+	}
 
 	/* VBR is advanced 0x100 bytes because of an unused gap */
 	uram_end -= (isSH3() ? 0x600 : 0x1100);
@@ -61,6 +68,7 @@ void kinit(void)
 	   leave 16 kB. */
 	VBR = (uint32_t)mmu_uram();
 	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size() - 0x4000;
+	gint_stack_top = (void *)uram_end;
 	#endif
 
 	/* Event handler entry points */
@@ -93,10 +101,7 @@ void kinit(void)
 	gint_driver_flags = malloc(gint_driver_count());
 
 	if(!gint_world_os || !gint_world_addin || !gint_driver_flags)
-	{
-		extern void gint_panic(uint32_t code);
 		gint_panic(0x1060);
-	}
 
 	/* Initialize drivers */
 	for(int i = 0; i < gint_driver_count(); i++)
