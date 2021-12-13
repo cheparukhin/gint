@@ -1,14 +1,19 @@
 #include <unistd.h>
-#include "util.h"
+#include <gint/fs.h>
+#include <errno.h>
 
 int close(int fd)
 {
-	ENOTSUP_IF_NOT_FUGUE(-1);
-
-	int err = BFile_Close(fd);
-	if(err < 0) {
-		errno = bfile_error_to_errno(err);
-		return -1;
+	fs_descriptor_t const *d = fs_get_descriptor(fd);
+	if(!d) {
+		errno = EBADF;
+		return (ssize_t)-1;
 	}
-	return 0;
+
+	int rc = 0;
+	if(d->type->close)
+		rc = d->type->close(d->data);
+
+	fs_free_descriptor(fd);
+	return rc;
 }

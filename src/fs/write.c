@@ -1,14 +1,18 @@
 #include <unistd.h>
-#include "util.h"
+#include <gint/fs.h>
+#include <errno.h>
 
 ssize_t write(int fd, const void *buf, size_t size)
 {
-	ENOTSUP_IF_NOT_FUGUE(-1);
-
-	int rc = BFile_Write(fd, buf, size);
-	if(rc < 0) {
-		errno = bfile_error_to_errno(rc);
-		return -1;
+	fs_descriptor_t const *d = fs_get_descriptor(fd);
+	if(!d) {
+		errno = EBADF;
+		return (ssize_t)-1;
 	}
-	return rc;
+
+	if(d->type->write)
+		return d->type->write(d->data, buf, size);
+
+	/* No write function: discard the contents but show no error */
+	return size;
 }

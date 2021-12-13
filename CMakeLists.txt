@@ -35,17 +35,20 @@ set(SOURCES_COMMON
   src/dma/inth.s
   src/dma/memcpy.c
   src/dma/memset.c
-  # Filesystem interface (Fugue only)
+  # Filesystem interface
   src/fs/close.c
   src/fs/creat.c
+  src/fs/fs.c
   src/fs/lseek.c
   src/fs/open.c
   src/fs/pread.c
   src/fs/pwrite.c
   src/fs/read.c
   src/fs/unlink.c
-  src/fs/util.c
   src/fs/write.c
+  # Filesystem interface to Fugue
+  src/fs/fugue/fugue.c
+  src/fs/fugue/util.c
   # Interrupt Controller driver
   src/intc/intc.c
   src/intc/inth.s

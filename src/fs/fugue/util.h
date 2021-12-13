@@ -7,13 +7,7 @@ extern "C" {
 
 #include <stdint.h>
 #include <stddef.h>
-#include <errno.h>
-#include <bfile.h>
 #include <stdlib.h>
-#include <gint/hardware.h>
-
-#define ENOTSUP_IF_NOT_FUGUE(rc) \
-   if(gint[HWFS] != HWFS_FUGUE) { errno = ENOTSUP; return rc; }
 
 /* Translate common BFile error codes to errno values. */
 extern int bfile_error_to_errno(int bfile_error_code);

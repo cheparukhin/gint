@@ -1,6 +1,8 @@
 #include "util.h"
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
+#include <bfile.h>
 
 int bfile_error_to_errno(int e)
 {

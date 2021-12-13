@@ -129,6 +129,11 @@ int BFile_Write(int fd, void const *data, int even_size);
    * If [whence >= 0], it is taken as an absolute location within the file;
    * If [whence == -1], BFile_Read() reads from the current position.
 
+   With Fugue this function can read past end of file and return the requested
+   amount of bytes even when the file does not have enough data to read that
+   much. It seems that extra bytes read as zeros. Reading past the end does
+   *not* extend the file size.
+
    With CASIOWIN, returns how much data can be read from the updated file
    offset (ie. how many bytes until end of file), or an error code.
    With Fugue, returns the amount of data read (or an error code). */
