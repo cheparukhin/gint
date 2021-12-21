@@ -294,6 +294,17 @@ int BFile_FindNext(int shandle, uint16_t *foundfile,
 /* Close a search handle (with or without exhausting the matches). */
 int BFile_FindClose(int shandle);
 
+//---
+// Additional functions
+//
+// The following functions are implemented in gint using lower-level BFile
+// functions. They add abstraction/convenience to the API, but can be pretty
+// slow as they result in more BFile calls being made.
+//---
+
+/* BFile_Ext_Stat(): Stat an entry for type and size */
+int BFile_Ext_Stat(uint16_t const *path, int *type, int *size);
+
 #ifdef __cplusplus
 }
 #endif

@@ -71,7 +71,7 @@ fs_descriptor_t const *fs_get_descriptor(int fd);
    errno = ENFILE. */
 int fs_create_descriptor(fs_descriptor_t const *data);
 
-/* fs_free_descriptor(): Clsoe a file descriptor's slot
+/* fs_free_descriptor(): Close a file descriptor's slot
 
    This function frees the specified file descriptor. It is automatically
    called by close() after the descriptor type's close() function, so there is

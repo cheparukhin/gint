@@ -37,17 +37,31 @@ set(SOURCES_COMMON
   src/dma/memset.c
   # Filesystem interface
   src/fs/close.c
+  src/fs/closedir.c
   src/fs/creat.c
+  src/fs/fdopendir.c
   src/fs/fs.c
   src/fs/lseek.c
+  src/fs/mkdir.c
   src/fs/open.c
+  src/fs/opendir.c
   src/fs/pread.c
   src/fs/pwrite.c
   src/fs/read.c
+  src/fs/readdir.c
+  src/fs/rewinddir.c
+  src/fs/rmdir.c
+  src/fs/seekdir.c
+  src/fs/telldir.c
   src/fs/unlink.c
   src/fs/write.c
   # Filesystem interface to Fugue
+  src/fs/fugue/BFile_Ext_Stat.c
   src/fs/fugue/fugue.c
+  src/fs/fugue/fugue_dir.c
+  src/fs/fugue/fugue_open.c
+  src/fs/fugue/fugue_mkdir.c
+  src/fs/fugue/fugue_unlink.c
   src/fs/fugue/util.c
   # Interrupt Controller driver
   src/intc/intc.c

@@ -4,6 +4,11 @@
 
 off_t lseek(int fd, off_t offset, int whence)
 {
+	if(whence != SEEK_SET && whence != SEEK_CUR && whence != SEEK_END) {
+		errno = EINVAL;
+		return (off_t)-1;
+	}
+
 	fs_descriptor_t const *d = fs_get_descriptor(fd);
 	if(!d) {
 		errno = EBADF;
