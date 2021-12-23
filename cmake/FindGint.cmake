@@ -21,6 +21,11 @@ execute_process(
   OUTPUT_VARIABLE GINT_CONFIG_PATH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
+execute_process(
+  COMMAND ${CMAKE_C_COMPILER} -print-file-name=libc.a
+  OUTPUT_VARIABLE FXLIBC_PATH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 if("${GINT_PATH}" STREQUAL "libgint-${PC}.a")
   unset(PATH_TO_LIBGINT)
@@ -35,13 +40,27 @@ else()
   endif()
 endif()
 
+if("${FXLIBC_PATH}" STREQUAL "libc.a")
+  unset(PATH_TO_FXLIBC)
+else()
+  set(PATH_TO_FXLIBC TRUE)
+endif()
+
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Gint
-  REQUIRED_VARS PATH_TO_LIBGINT
+  REQUIRED_VARS PATH_TO_FXLIBC PATH_TO_LIBGINT
   VERSION_VAR GINT_VERSION
 )
 
 if(Gint_FOUND)
+  if(NOT TARGET Gint::Fxlibc)
+    add_library(Gint::Fxlibc UNKNOWN IMPORTED)
+  endif()
+  set_target_properties(Gint::Fxlibc PROPERTIES
+    IMPORTED_LOCATION "${FXLIBC_PATH}"
+    INTERFACE_LINK_OPTIONS "-lgcc"
+  )
+
   if(NOT TARGET Gint::Gint)
     add_library(Gint::Gint UNKNOWN IMPORTED)
   endif()
@@ -50,7 +69,10 @@ if(Gint_FOUND)
     INTERFACE_COMPILE_OPTIONS -fstrict-volatile-bitfields
     INTERFACE_COMPILE_DEFINITIONS "${INTF_DEFN}"
     INTERFACE_INCLUDE_DIRECTORIES "${FXSDK_COMPILER_INSTALL}/include/openlibm"
-    INTERFACE_LINK_LIBRARIES "-lc;-lopenlibm;-lgcc"
+    INTERFACE_LINK_LIBRARIES "-lopenlibm;-lgcc"
     INTERFACE_LINK_OPTIONS "${INTF_LINK}"
   )
+
+  target_link_libraries(Gint::Gint INTERFACE Gint::Fxlibc)
+  target_link_libraries(Gint::Fxlibc INTERFACE Gint::Gint)
 endif()
