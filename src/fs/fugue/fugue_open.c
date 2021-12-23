@@ -2,6 +2,7 @@
 #include <gint/bfile.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <string.h>
 #include "util.h"
 #include "fugue.h"
 
@@ -11,7 +12,7 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 {
 	ENOTSUP_IF_NOT_FUGUE(-1);
 
-	uint16_t *fcpath = utf8_to_fc_alloc(u"\\\\fls0\\", path, NULL);
+	uint16_t *fcpath = fs_path_normalize_fc(path);
 	int fugue_fd, err, rc=-1, type, fd=-1;
 
 	if(!fcpath) {
@@ -31,21 +32,32 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 	/* Truncation requires the file to be removed/recreated */
 	bool trunc = (flags & O_TRUNC) && (flags & O_CREAT);
 
-	/* Stat the entry */
-	bool exists = (BFile_Ext_Stat(fcpath, &type, NULL) == 0);
-	if(!exists) type = -1;
+	/* Stat the entry. A special case is needed for the root, which doesn't
+	   respond well. fs_path_normalize_fc() normalizes the path so we just
+	   have to check for the fixed string "\\fls0\". */
+	bool exists;
+	if(!memcmp(fcpath, u"\\\\fls0\\", 16)) {
+		exists = true;
+		type = BFile_Type_Directory;
+	}
+	else {
+		exists = (BFile_Ext_Stat(fcpath, &type, NULL) == 0);
+		if(!exists) type = -1;
+	}
 
 	/* If the entry exists and O_EXCL was requested, fail. */
 	if(exists && excl) {
 		errno = EEXIST;
-		return -1;
+		rc = -1;
+		goto end;
 	}
 
 	/* If the entry is not a directory but O_DIRECTORY is set, fail. If the
 	   directory doesn't exist, we fail regardless of O_CREAT. */
 	if((flags & O_DIRECTORY) && type != BFile_Type_Directory) {
 		errno = (exists ? ENOTDIR : ENOENT);
-		return -1;
+		rc = -1;
+		goto end;
 	}
 
 	/* If the entry is a directory, open it as such */
@@ -83,6 +95,7 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 		err = BFile_Create(fcpath, BFile_File, &size);
 		if(err < 0) {
 			errno = bfile_error_to_errno(err);
+			rc = -1;
 			goto end;
 		}
 		fugue_fd = BFile_Open(fcpath, bfile_mode);
@@ -104,7 +117,7 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 		.type = &fugue_descriptor_type,
 		.data = (void *)fugue_fd,
 	};
-	fd = fs_create_descriptor(&data);
+	rc = fd = fs_create_descriptor(&data);
 
 	if(fd == -1) {
 		BFile_Close(fugue_fd);
@@ -112,7 +125,6 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 		goto end;
 	}
 
-	rc = fd;
 end:
 	free(fcpath);
 	return rc;

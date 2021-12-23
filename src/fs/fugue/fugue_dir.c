@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include "util.h"
 #include "fugue.h"
 
@@ -63,7 +64,8 @@ off_t fugue_dir_lseek(void *data, off_t offset, int whence)
 	if(whence == SEEK_END)
 		offset += dp->count;
 
-	if(offset < 0 || offset >= dp->count) {
+	/* dp->count, being at the end of the enumeration, is a valid offset */
+	if(offset < 0 || offset >= dp->count + 1) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -97,6 +99,7 @@ const fs_descriptor_type_t fugue_dir_descriptor_type = {
 void *fugue_dir_explore(char const *path)
 {
 	struct BFile_FileInfo info;
+	char *wildcard=NULL;
 	uint16_t *fc_path=NULL, *search=NULL;
 
 	dir_t *dp = malloc(sizeof *dp);
@@ -111,7 +114,12 @@ void *fugue_dir_explore(char const *path)
 	fc_path = malloc(512 * sizeof *fc_path);
 	if(!fc_path) goto alloc_failure;
 
-	search = utf8_to_fc_alloc(u"\\\\fls0\\", path, u"\\*");
+	wildcard = malloc(strlen(path) + 3);
+	if(!wildcard) goto alloc_failure;
+	strcpy(wildcard, path);
+	strcat(wildcard, "/*");
+
+	search = fs_path_normalize_fc(wildcard);
 	if(!search) goto alloc_failure;
 
 	rc = BFile_FindFirst(search, &sd, fc_path, &info);
@@ -142,6 +150,8 @@ void *fugue_dir_explore(char const *path)
 
 		if(info.type == BFile_Type_File)
 			ent->d_type = DT_REG;
+		if(info.type == BFile_Type_Archived)
+			ent->d_type = DT_REG;
 		if(info.type == BFile_Type_Directory)
 			ent->d_type = DT_DIR;
 		if(info.type == BFile_Type_Dot)
@@ -160,6 +170,7 @@ alloc_failure:
 	errno = ENOMEM;
 	fugue_dir_close(dp);
 end:
+	free(wildcard);
 	free(search);
 	free(fc_path);
 	if(sd >= 0)

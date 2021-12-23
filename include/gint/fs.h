@@ -87,6 +87,26 @@ void fs_free_descriptor(int fd);
    itself. */
 int open_generic(fs_descriptor_type_t *type, void *data, int reuse_fd);
 
+/* fs_path_normalize(): Normalize a path to eliminate ., .. and redundant /
+
+   This function creates a copy of the specified path which is an absolute path
+   with redundant / removed and . and .. components resolved. For instance:
+
+     "" -> "/"
+     "/subfolder/./" -> "/subfolder"
+     "/../subfolder/../subfolder" -> "/subfolder"
+     "/../../x/y/../t" -> "/x/t"
+
+   The new string is created with malloc() and should be free()'d after use. */
+char *fs_path_normalize(char const *path);
+
+/* fs_path_normalize_fc(): Normalize a path and translate it to FONTCHARACTER
+
+   This function is similar to fs_path_normalize(), but it creates a 16-bit
+   string that starts with \\fls0\ rather than /, and can be used in direct
+   calls to BFile. */
+uint16_t *fs_path_normalize_fc(char const *path);
+
 #ifdef __cplusplus
 }
 #endif
