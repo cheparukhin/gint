@@ -52,6 +52,7 @@ set(SOURCES_COMMON
   src/fs/rewinddir.c
   src/fs/rmdir.c
   src/fs/seekdir.c
+  src/fs/stat.c
   src/fs/telldir.c
   src/fs/unlink.c
   src/fs/write.c
@@ -61,6 +62,8 @@ set(SOURCES_COMMON
   src/fs/fugue/fugue_dir.c
   src/fs/fugue/fugue_open.c
   src/fs/fugue/fugue_mkdir.c
+  src/fs/fugue/fugue_stat.c
+  src/fs/fugue/fugue_rmdir.c
   src/fs/fugue/fugue_unlink.c
   src/fs/fugue/util.c
   # Interrupt Controller driver

@@ -5,6 +5,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <sys/stat.h>
 
 /* File descriptor type */
 extern const fs_descriptor_type_t fugue_descriptor_type;
@@ -20,6 +21,8 @@ int fugue_unlink(char const *path);
 int fugue_mkdir(char const *path, mode_t mode);
 
 int fugue_rmdir(char const *path);
+
+int fugue_stat(char const * restrict path, struct stat * restrict statbuf);
 
 /* Other functions */
 

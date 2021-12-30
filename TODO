@@ -2,7 +2,8 @@ Extensions on existing code:
 * usb:       add PC->calc reading, and interrupt pipes
 * fs:        support RAM files
 * fs:        support USB streams as generic file descriptors
-* fugue:     support glob() and stat() to abstract away BFile entirely
+* fugue:     support glob() to abstract away BFile entirely
+* fugue/fs:  offer a primitive to remove recursively, which is native in Fugue
 * bfile:     implement the optimization-restart as realized by Kbd2
 * kernel:    better restore to userspace before panic (ensure BL=0 IMASK=0)
 * project:   add license file

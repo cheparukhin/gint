@@ -2,6 +2,7 @@
 #include <gint/bfile.h>
 #include <gint/fs.h>
 #include <errno.h>
+#include <sys/stat.h>
 #include "util.h"
 
 int fugue_unlink(char const *path)
@@ -14,18 +15,27 @@ int fugue_unlink(char const *path)
 		return -1;
 	}
 
-	int err = BFile_Remove(fcpath);
-	if(err < 0) {
-		errno = bfile_error_to_errno(err);
-		free(fcpath);
-		return -1;
+	int type, size, rc;
+	rc = BFile_Ext_Stat(fcpath, &type, &size);
+	if(rc < 0) {
+		errno = bfile_error_to_errno(rc);
+		rc = -1;
+		goto end;
+	}
+	if(bfile_type_to_mode_t(type) != S_IFREG) {
+		errno = ENOTDIR;
+		rc = -1;
+		goto end;
 	}
 
-	free(fcpath);
-	return 0;
-}
+	rc = BFile_Remove(fcpath);
+	if(rc < 0) {
+		errno = bfile_error_to_errno(rc);
+		rc = -1;
+	}
+	else rc = 0;
 
-int fugue_rmdir(char const *path)
-{
-	return fugue_unlink(path);
+end:
+	free(fcpath);
+	return rc;
 }

@@ -16,6 +16,12 @@ extern "C" {
 /* Translate common BFile error codes to errno values. */
 int bfile_error_to_errno(int bfile_error_code);
 
+/* Translate BFile file types to st_mode values. */
+int bfile_type_to_mode_t(int bfile_type);
+
+/* Translate BFile file types to struct dirent values. */
+int bfile_type_to_dirent(int bfile_type);
+
 /* TODO: These functions do not actually translate special characters between
    encodings, they simply strip them. */
 

@@ -145,20 +145,8 @@ void *fugue_dir_explore(char const *path)
 		if(!ent) goto alloc_failure;
 
 		ent->d_ino = 0;
-		ent->d_type = DT_UNKNOWN;
+		ent->d_type = bfile_type_to_dirent(info.type);
 		fc_to_utf8(ent->d_name, fc_path, name_length + 1);
-
-		if(info.type == BFile_Type_File)
-			ent->d_type = DT_REG;
-		if(info.type == BFile_Type_Archived)
-			ent->d_type = DT_REG;
-		if(info.type == BFile_Type_Directory)
-			ent->d_type = DT_DIR;
-		if(info.type == BFile_Type_Dot)
-			ent->d_type = DT_DIR;
-		if(info.type == BFile_Type_DotDot)
-			ent->d_type = DT_DIR;
-
 		dp->entries[dp->count++] = ent;
 
 		rc = BFile_FindNext(sd, fc_path, &info);
