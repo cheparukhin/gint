@@ -82,16 +82,17 @@ typedef struct
 	   RGB565, RGB565A:
 	     * Pixels in row-major order, 16 bits per pixel
 	   P8:
-        * Palette with 256 entries (512 bytes total)
-        * Pixels in row-major order, 8 bits per pixel
-      P8_RGB565A, P8_RGB565:
-        * Number of entries in palette, N (2 bytes)
-        * Palette with N entries (2N bytes)
-        * Pixels in row-major order, 8 bits per pixel (signed indices in an
-          uint16_t array starting at <palette>+<256 bytes>)
-      P4/P4_RGB565A, P4_RGB565:
-        * Palette with 16 entries (32 bytes total)
-        * Pixels in row-major order, 4 bits per pixel, each row byte-padded */
+	     * Palette with 256 entries (512 bytes total)
+	     * Pixels in row-major order, 8 bits per pixel
+	   P8_RGB565A, P8_RGB565:
+	     * Number of entries in palette, N (2 bytes)
+	     * Palette with N entries (2N bytes)
+	     * Pixels in row-major order, 8 bits per pixel (signed indices in
+	       an uint16_t array starting at <palette>+<256 bytes>)
+	   P4/P4_RGB565A, P4_RGB565:
+	     * Palette with 16 entries (32 bytes total)
+	     * Pixels in row-major order, 4 bits per pixel, each row
+	       byte-padded */
 	uint16_t data[];
 
 } GPACKED(4) bopti_image_t;
