@@ -76,7 +76,6 @@ int open_generic(fs_descriptor_type_t *type, void *data, int fd)
 
 static fs_descriptor_type_t devnull = {
 	.read   = NULL,
-	.pread  = NULL,
 	.write  = NULL,
 	.lseek  = NULL,
 	.close  = NULL,
@@ -92,5 +91,4 @@ GCONSTRUCTOR static void init_standard_streams(void)
 
 	fdtable[STDERR_FILENO].type = &devnull;
 	fdtable[STDERR_FILENO].data = NULL;
-
 }

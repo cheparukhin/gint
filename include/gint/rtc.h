@@ -17,7 +17,11 @@ extern "C" {
 //	Time management
 //---
 
-/* rtc_time_t: A point in time, representable in the RTC registers */
+/* rtc_time_t: A point in time, representable in the RTC registers
+
+   WARNING: A copy of this definition is used in fxlibc, make sure to keep it
+   in sync. (We don't install kernel headers before compiling the fxlibc, it's
+   kind of a nightmare for the modest build system.) */
 typedef struct
 {
 	uint16_t year;		/* Years (exact value, e.g. 2018) */

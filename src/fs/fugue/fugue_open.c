@@ -113,14 +113,23 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 		BFile_Seek(fugue_fd, BFile_Size(fugue_fd));
 
 	/* Return the now-open file descriptor */
-	fs_descriptor_t data = {
+	fugue_fd_t *data = malloc(sizeof *data);
+	if(!data) {
+		BFile_Close(fugue_fd);
+		goto end;
+	}
+	data->fd = fugue_fd;
+	data->pos = 0;
+
+	fs_descriptor_t fd_data = {
 		.type = &fugue_descriptor_type,
-		.data = (void *)fugue_fd,
+		.data = data,
 	};
-	rc = fd = fs_create_descriptor(&data);
+	rc = fd = fs_create_descriptor(&fd_data);
 
 	if(fd == -1) {
 		BFile_Close(fugue_fd);
+		free(data);
 		errno = ENFILE;
 		goto end;
 	}

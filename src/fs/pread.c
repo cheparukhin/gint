@@ -4,15 +4,21 @@
 
 ssize_t pread(int fd, void *buf, size_t size, off_t offset)
 {
-	fs_descriptor_t const *d = fs_get_descriptor(fd);
-	if(!d) {
-		errno = EBADF;
+	off_t current = lseek(fd, 0, SEEK_CUR);
+	if(current == (off_t)-1)
 		return (ssize_t)-1;
-	}
 
-	if(d->type->pread)
-		return d->type->pread(d->data, buf, size, offset);
+	ssize_t rc = -1;
 
-	/* No seek function: cannot seek */
-	return 0;
+	if(lseek(fd, offset, SEEK_SET) == (off_t)-1)
+		goto end;
+
+	rc = read(fd, buf, size);
+	if(rc < 0)
+		goto end;
+
+end:
+	/* At the end, always try to restore the current position */
+	lseek(fd, current, SEEK_CUR);
+	return rc;
 }

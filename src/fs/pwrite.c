@@ -3,8 +3,6 @@
 ssize_t pwrite(int fd, const void *buf, size_t size, off_t offset)
 {
 	off_t current = lseek(fd, 0, SEEK_CUR);
-
-	/* This fails on G-III BFile and non-seekable file descriptors */
 	if(current == (off_t)-1)
 		return (ssize_t)-1;
 

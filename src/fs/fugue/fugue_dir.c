@@ -41,13 +41,6 @@ ssize_t fugue_dir_read(void *data, void *buf, GUNUSED size_t size)
 	return sizeof *dirent_ptr;
 }
 
-ssize_t fugue_dir_pread(GUNUSED void *data, GUNUSED void *buf,
-	GUNUSED size_t size, GUNUSED off_t offset)
-{
-	errno = EISDIR;
-	return -1;
-}
-
 ssize_t fugue_dir_write(GUNUSED void *data, GUNUSED const void *buf,
 	GUNUSED size_t size)
 {
@@ -90,7 +83,6 @@ int fugue_dir_close(void *data)
 
 const fs_descriptor_type_t fugue_dir_descriptor_type = {
 	.read   = fugue_dir_read,
-	.pread  = fugue_dir_pread,
 	.write  = fugue_dir_write,
 	.lseek  = fugue_dir_lseek,
 	.close  = fugue_dir_close,

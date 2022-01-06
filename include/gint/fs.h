@@ -20,17 +20,10 @@ extern "C" {
    This structure provides the base functions for every type of file
    descriptor. The prototypes are standard, except that the first argument
    (int fd) is replaced by (void *data) which points to the custom data
-   allocator for the descriptor.
-
-   pread() is normally implemented in terms of lseek() and read(), however on
-   Fugue file descriptors on the G-III series there is no way to determine the
-   current position so this method won't work, and pread() is instead provided
-   by a non-standard parameter of BFile_Read(). The overloaded entry supports
-   this alternative. */
+   allocator for the descriptor. */
 typedef struct {
     /* See <unistd.h> for a description of these functions */
     ssize_t (*read)(void *data, void *buf, size_t size);
-    ssize_t (*pread)(void *data, void *buf, size_t size, off_t offset);
     ssize_t (*write)(void *data, void const *buf, size_t size);
     off_t (*lseek)(void *data, off_t offset, int whence);
     int (*close)(void *data);
