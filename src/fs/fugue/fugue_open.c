@@ -6,7 +6,7 @@
 #include "util.h"
 #include "fugue.h"
 
-/* TODO: fugue_open(): Handle trailing '/' and filesystem root */
+static int new_file_size;
 
 int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 {
@@ -91,8 +91,8 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 
 	/* If the file does not exist and O_CREAT is set, create it */
 	if((flags & O_CREAT) && ((flags & O_TRUNC) || fugue_fd < 0)) {
-		int size = 0;
-		err = BFile_Create(fcpath, BFile_File, &size);
+		new_file_size = 0;
+		err = BFile_Create(fcpath, BFile_File, &new_file_size);
 		if(err < 0) {
 			errno = bfile_error_to_errno(err);
 			rc = -1;
