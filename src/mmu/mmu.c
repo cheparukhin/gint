@@ -38,6 +38,21 @@ uint32_t mmu_uram_size(void)
 	return size;
 }
 
+/* mmu_is_rom(): Determine if an address points to ROM */
+bool mmu_is_rom(void const *ptr)
+{
+	uint32_t a = (uint32_t)ptr;
+
+	if(a >= 0x80000000 && a < 0x88000000)
+		return true;
+	if(a >= 0xa0000000 && a < 0xa8000000)
+		return true;
+	if(a >= 0x00300000 && a < 0x00800000)
+		return true;
+
+	return false;
+}
+
 //---
 //	SH7705 TLB
 //---

@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include <gint/mpu/mmu.h>
+#include <stdbool.h>
 
 //---
 //	Unified interface
@@ -39,6 +40,17 @@ void *mmu_uram(void);
    returned by mmu_uram(). This is typically 8k on SH3 fx-9860G, 32k on SH4
    fx-9860G, and 512k on fx-CG 50. */
 uint32_t mmu_uram_size(void);
+
+/* mmu_is_rom(): Determine if an address points to ROM
+
+   Checks whether the supplied pointer points to ROM or to a virtualized
+   portion of ROM. For the sake of efficiency, this function uses heuristics
+   about the structure of P0 rather than actually checking the TLB.
+
+   This is useful during filesystem accesses because only data outside of ROM
+   can be written to files. Pointers for which this function returns true
+   cannot be used as a source for BFile_Write(). */
+bool mmu_is_rom(void const *ptr);
 
 //---
 //	SH7705 TLB
