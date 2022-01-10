@@ -167,27 +167,36 @@ static void dma_interrupt_transfer_ended(int channel)
 	}
 }
 
-/* dma_transfer_wait(): Wait for a transfer to finish */
-void dma_transfer_wait(int channel)
-{
-	if(channel < 0)
-	{
-		for(int channel = 0; channel < 6; channel++)
-			dma_transfer_wait(channel);
-		return;
-	}
+/* dma_channel_wait(): Wait for a particular channel's transfer to finish
 
+   This function is used both during normal gint operation and during foreign
+   unbinds of the DMA driver. The waiting method varies with interrupt settings
+   and device ownership. */
+static void dma_channel_wait(int channel, bool foreign)
+{
 	channel_t *ch = dma_channel(channel);
 	if(!ch) return;
 
-	/* Interrupt disabled: spin-wait */
-	if(!ch->CHCR.IE)
+	/* If interrupts are disabled or we don't own the device, spin-wait by
+	   checking either for TE to be set (Transfere Ended) or DE to be gone
+	   (channel disabled).
+
+	   There are definitely race conditions if the DMA is restarted between
+	   our checks; only the context of the calls guarantee soundness.
+
+	   * If interrupts are disabled, we assume there is no one that could
+	     start the DMA again, since we are the only thread of execution.
+	   * If the device is owned by another kernel, then we're transitioning
+	     so we have to wait for *all* tasks to complete anyway. The risk is
+	     rather to stop too early. */
+	if(!ch->CHCR.IE || foreign)
 	{
 		while(ch->CHCR.DE && !ch->CHCR.TE) {}
 		return;
 	}
 
-	/* Initialize an interrupt-cancellable sleep, to ensure synchronization */
+	/* Initialize an interrupt-cancellable sleep, to ensure
+	   synchronization */
 	cpu_csleep_t ics;
 	cpu_csleep_init(&ics);
 	dma_wait_ics[channel] = &ics;
@@ -198,6 +207,12 @@ void dma_transfer_wait(int channel)
 
 	/* Clear the ICS pointer for next time */
 	dma_wait_ics[channel] = NULL;
+}
+
+/* dma_transfer_wait(): Wait for a transfer to finish */
+void dma_transfer_wait(int channel)
+{
+	dma_channel_wait(channel, false);
 }
 
 bool dma_transfer_sync(int channel, dma_size_t size, uint length,
@@ -284,10 +299,18 @@ static void configure(void)
 	DMA.OR.DME = 1;
 }
 
-static void universal_unbind(void)
+static void funbind(void)
 {
-	/* Make sure any DMA transfer is finished before leaving the app */
-	dma_transfer_wait(-1);
+	/* Wait for all OS transfers to finish before taking over */
+	for(int channel = 0; channel < 6; channel++)
+		dma_channel_wait(channel, true);
+}
+
+static void unbind(void)
+{
+	/* Make sure all DMA transfers are finished before leaving gint */
+	for(int channel = 0; channel < 6; channel++)
+		dma_channel_wait(channel, false);
 }
 
 static bool hpowered(void)
@@ -348,8 +371,8 @@ static void hrestore(dma_state_t const *s)
 gint_driver_t drv_dma0 = {
 	.name         = "DMA",
 	.configure    = configure,
-	.funbind      = universal_unbind,
-	.unbind       = universal_unbind,
+	.funbind      = funbind,
+	.unbind       = unbind,
 	.hpowered     = hpowered,
 	.hpoweron     = hpoweron,
 	.hpoweroff    = hpoweroff,
