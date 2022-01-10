@@ -17,7 +17,7 @@ MEMORY
 	/* Static RAM; stack grows down from the end of this region.
 	   The first 5k (0x1400 bytes) are reserved by gint for the VBR space,
 	   which is loaded dynamically and accessed through P1 */
-	ram   (rw):   o = 0x08101400, l = 507k
+	ram   (rw):   o = 0x08101400, l = 491k
 	/* On-chip IL memory */
 	ilram (rwx):  o = 0xe5200000, l = 4k
 	/* On-chip X and Y memory */
