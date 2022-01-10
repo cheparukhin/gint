@@ -146,6 +146,7 @@ bool dma_transfer_async(int channel, dma_size_t size, uint blocks,
 static void dma_interrupt_transfer_ended(int channel)
 {
 	channel_t *ch = dma_channel(channel);
+	ch->CHCR.IE = 0;
 	ch->CHCR.DE = 0;
 	ch->CHCR.TE = 0;
 
