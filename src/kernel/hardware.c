@@ -138,7 +138,7 @@ void hw_detect(void)
 		gint[HWCALC] = HWCALC_FXCG_MANAGER;
 
 	/* Basic memory information */
-	gint[HWRAM] = (2 << 20);
+	gint[HWRAM] = (gint[HWCALC] == HWCALC_PRIZM) ? (2 << 20) : (8 << 20);
 	gint[HWROM] = (32 << 20);
 
 	/* Mapped memory */
