@@ -59,11 +59,13 @@ void bopti_render(bopti_image_t const *img, struct box *box)
 		uint16_t const *palette = data;
 		data += 32;
 
+		int true_width = img->width + (img->width & 1);
+
 		/* Due to nibble alignment being a hassle, in this function the
 		   input stride is expressed in pixels. */
-		int in = img->width - w + (img->width & 1);
+		int in = true_width - w;
 		/* Also we don't move pointers, we just use pixel offsets. */
-		int offset = img->width * box->top + box->left;
+		int offset = true_width * box->top + box->left;
 
 		bopti_p4(data, target, w, h, in, out, palette, img->alpha,
 			offset);
