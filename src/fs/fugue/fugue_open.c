@@ -109,8 +109,11 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 
 	/* If O_APPEND is set, move to the end of the file */
 	// TODO: O_APPEND should move the cursor before *each* write
-	if((flags & O_APPEND))
-		BFile_Seek(fugue_fd, BFile_Size(fugue_fd));
+	int pos = 0;
+	if((flags & O_APPEND)) {
+		pos = BFile_Size(fugue_fd);
+		BFile_Seek(fugue_fd, pos);
+	}
 
 	/* Return the now-open file descriptor */
 	fugue_fd_t *data = malloc(sizeof *data);
@@ -119,7 +122,7 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 		goto end;
 	}
 	data->fd = fugue_fd;
-	data->pos = 0;
+	data->pos = pos;
 
 	fs_descriptor_t fd_data = {
 		.type = &fugue_descriptor_type,
