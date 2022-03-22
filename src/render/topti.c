@@ -169,7 +169,6 @@ char const *drsize(char const *str_char, font_t const *f, int width, int *w)
 		code_point = topti_utf8_next(&str);
 		if(!code_point)
 		{
-			str_char = (void *)str;
 			break;
 		}
 
