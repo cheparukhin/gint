@@ -158,11 +158,11 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 	if(method == R61524_CPU)
 	{
 		for(int i = 0; i < 396 * height; i++)
-			write(vram[i]);
+			write(vram[i + 396 * start]);
 		return;
 	}
 
-	void *src = vram;
+	void *src = (void *)vram + start * 396*2;
 	void *dst = (void *)0xb4000000;
 
 	/* The amount of data sent per row, 396*2, is not a multiple of 32. For
