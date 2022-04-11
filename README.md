@@ -66,12 +66,6 @@ CMake environment for the calculator. gint is always installed in the
 compiler's install path (as given by `sh-elf-gcc --print-search-dirs`) which is
 detected automatically, so normally you don't need to set the install prefix.
 
-fx-CG 50 developers probably want a g3a wrapper as well; the reference
-implementation is Tari's [mkg3a](https://gitlab.com/taricorp/mkg3a). This is
-needed at the very last compilation step to create the g3a file. On Arch Linux,
-you can use the [AUR/mkg3a](https://aur.archlinux.org/packages/mkg3a) package
-maintained directly by Tari.
-
 gint depends on OpenLibm and fxlibc (linked above). Both can be installed
 easily (essentially copy-paste the command from the respective READMEs). You
 can technically use another libc but there be dragons.
