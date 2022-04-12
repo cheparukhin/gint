@@ -82,7 +82,7 @@ static void sh7305_probe(void)
 {
 	/* The meaning of the PLL setting on SH7305 differs from the
 	   documentation of SH7224; the value must not be doubled. */
-	int pll = CPG.FRQCRA.STC + 1;
+	int pll = CPG.FRQCR.STC + 1;
 	freq.PLL = pll;
 
 	/* The FLL ratio is the value of the setting, halved if SELXM=1 */
@@ -93,9 +93,9 @@ static void sh7305_probe(void)
 	/* On SH7724, the divider ratio is given by 1 / (setting + 1), but on
 	   the SH7305 it is 1 / (2^setting + 1). */
 
-	int divb = CPG.FRQCRA.BFC;
-	int divi = CPG.FRQCRA.IFC;
-	int divp = CPG.FRQCRA.P1FC;
+	int divb = CPG.FRQCR.BFC;
+	int divi = CPG.FRQCR.IFC;
+	int divp = CPG.FRQCR.P1FC;
 
 	freq.Bphi_div = 1 << (divb + 1);
 	freq.Iphi_div = 1 << (divi + 1);

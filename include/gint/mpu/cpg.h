@@ -47,7 +47,7 @@ typedef volatile struct
    documentation. */
 typedef volatile struct
 {
-	lword_union(FRQCRA,
+	lword_union(FRQCR,
 		uint32_t KICK	:1;	/* Flush FRQCRA modifications */
 		uint32_t	:1;
 		uint32_t STC	:6;	/* PLL multiplication [*] */
