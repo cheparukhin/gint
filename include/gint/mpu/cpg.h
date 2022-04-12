@@ -94,7 +94,9 @@ typedef volatile struct
 		uint32_t CKOFF	:1;	/* CKO Output Stop */
 		uint32_t	:1;
 	);
-	pad(0x14);
+
+	uint32_t PLL2CR;
+	pad(0x10);
 
 	lword_union(SPUCLKCR,
 		uint32_t	:23;
@@ -117,6 +119,9 @@ typedef volatile struct
 		uint32_t	:3;
 		uint32_t FLF	:11;	/* FLL Multiplication Ratio */
 	);
+	pad(0x0c);
+
+	uint32_t LSTATS;
 
 } GPACKED(4) sh7305_cpg_t;
 
