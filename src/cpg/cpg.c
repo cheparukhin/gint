@@ -29,7 +29,7 @@ const clock_frequency_t *clock_freq(void)
 #if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
 #define CPG SH7705_CPG
 
-static void sh7705_probe(void)
+void sh7705_probe(void)
 {
 	/* According to Sentaro21 in the sources of Ftune 1.0.1, the clock mode
 	   is thought to be 5, which means that:
@@ -115,9 +115,20 @@ static void sh7305_probe(void)
 
 #undef CPG
 
+
 //---
 // Initialization
 //---
+
+void cpg_compute_freq(void)
+{
+	/* This avoids warnings about sh7705_probe() being undefined when
+	   building for fxcg50 */
+	#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
+	isSH3() ? sh7705_probe() :
+	#endif
+	sh7305_probe();
+}
 
 static void configure(void)
 {
@@ -127,12 +138,7 @@ static void configure(void)
 		SH7305_CPG.SSCGCR.SSEN = 0;
 	}
 
-	/* This avoids warnings about sh7705_probe() being undefined when
-	   building for fxcg50 */
-	#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
-	isSH3() ? sh7705_probe() :
-	#endif
-	sh7305_probe();
+	cpg_compute_freq();
 }
 
 //---

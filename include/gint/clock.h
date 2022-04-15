@@ -52,6 +52,11 @@ typedef struct
    module; this address never changes. */
 const clock_frequency_t *clock_freq(void);
 
+/* cpg_compute_freq(): Compute the current clock frequency
+   This function updates the data structure returned by clock_freq() by
+   determining the current clock frequencies from the CPG. */
+void cpg_compute_freq(void);
+
 //---
 //	Overclock
 //---
