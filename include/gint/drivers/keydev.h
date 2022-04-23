@@ -14,19 +14,6 @@ extern "C" {
 /* Size of the buffer event queue */
 #define KEYBOARD_QUEUE_SIZE 32
 
-/* keydev_event_t: Change of state in a full row */
-typedef struct {
-	/* Device time for the event */
-	uint16_t time;
-	/* Keys that changed state */
-	uint8_t changed;
-	/* Row number */
-	uint8_t row :4;
-	/* Type of change, either KEYEV_DOWN or KEYEV_UP */
-	uint8_t kind :4;
-
-} keydev_event_t;
-
 /* Event transforms
 
    Every keyboard input device has a built-in event stream editor that can
@@ -84,14 +71,26 @@ typedef struct {
 enum {
 	/* Delayed SHIFT: Pressing then immediately releasing SHIFT when the
 	   keyboard is idle applies SHIFT to the next repeat streak. */
-	KEYDEV_TR_DELAYED_SHIFT    = 0x01,
+	KEYDEV_TR_DELAYED_SHIFT    = 0x01, /* = GETKEY_MOD_SHIFT */
 	/* Delayed ALPHA: Idem with the ALPHA key */
-	KEYDEV_TR_DELAYED_ALPHA    = 0x02,
+	KEYDEV_TR_DELAYED_ALPHA    = 0x02, /* = GETKEY_MOD_ALPHA */
+	/* Combination of the delayed modifiers */
+	KEYDEV_TR_DELAYED_MODS     = KEYDEV_TR_DELAYED_SHIFT
+	                           | KEYDEV_TR_DELAYED_ALPHA,
+
 	/* Instant SHIFT: Each individual event of every repeat streak gets
 	   SHIFT applied if SHIFT is pressed at the time of the repeat. */
 	KEYDEV_TR_INSTANT_SHIFT    = 0x04,
 	/* Instant ALPHA: Idem with the ALPHA key */
 	KEYDEV_TR_INSTANT_ALPHA    = 0x08,
+	/* Combination of the instance modifiers */
+	KEYDEV_TR_INSTANT_MODS     = KEYDEV_TR_INSTANT_SHIFT
+	                           | KEYDEV_TR_INSTANT_ALPHA,
+
+	/* Combination of all modifiers */
+	KEYDEV_TR_ALL_MODS         = KEYDEV_TR_DELAYED_MODS
+	                           | KEYDEV_TR_INSTANT_MODS,
+
 	/* Repeats: Keys are repeated according to a repeat filter function */
 	KEYDEV_TR_REPEATS          = 0x10,
 	/* Delete Modifiers: Remove modifier keys from generated events, which
@@ -143,31 +142,16 @@ typedef struct {
    keydown() are shortcuts for keydev functions using the physical keyboard as
    their input. */
 typedef struct {
-	/* Latest state of keys we are aware of. At every processing step, the
-	   different between this and the fresh information is queued and this
-	   is updated. state_now is identical to the real state obtained from
-	   the device unless earlier events failed to be queued, in which case
-	   a difference is maintained so they will be reconsidered later. */
-	GALIGNED(4) uint8_t state_now[12];
-	/* State of keys based on produced events. (state_queue + queue) is
-	   always identical to (state_now). When the queue is empty both states
-	   are the same. This is the user's view of the keyboard. */
-	GALIGNED(4) uint8_t state_queue[12];
 	/* Current device time in scanning-ticks */
 	uint time;
 	/* Last time when repeats were considered */
 	uint time_repeats;
 
-	/* Event queue (circular buffer) */
-	keydev_event_t queue[KEYBOARD_QUEUE_SIZE];
 	/* Next event in queue, position after last event in queue */
 	int8_t queue_next;
 	int8_t queue_end;
 	/* Number of events lost because of missing queue space */
 	uint events_lost;
-	/* Crafted events waiting to be picked up */
-	key_event_t out[8];
-	int out_size;
 
 	/* Event transforms */
 	keydev_transform_t tr;
@@ -192,6 +176,19 @@ typedef struct {
 	int rep_time;
 	/* Delay until next repeat, set by the repeat planner (us) */
 	int rep_delay;
+
+	/* Latest state of keys we are aware of. At every processing step, the
+	   different between this and the fresh information is queued and this
+	   is updated. state_now is identical to the real state obtained from
+	   the device unless earlier events failed to be queued, in which case
+	   a difference is maintained so they will be reconsidered later. */
+	GALIGNED(4) uint8_t state_now[12];
+	/* State of keys based on produced events. (state_queue + queue) is
+	   always identical to (state_now). When the queue is empty both states
+	   are the same. This is the user's view of the keyboard. */
+	GALIGNED(4) uint8_t state_queue[12];
+	/* Event queue (circular buffer) */
+	key_event_t queue[KEYBOARD_QUEUE_SIZE];
 
 } keydev_t;
 
@@ -218,6 +215,12 @@ void keydev_process_state(keydev_t *d, uint8_t state[12]);
    devices (such as demo replays) to feed in new events. */
 void keydev_process_key(keydev_t *d, int keycode, bool state);
 
+/* keydev_repeat_event(): Generate a repeat event if applicable
+   At the end of every scan tick, this source will generate a repeat event if
+   the repeat transform is enabled and the conditions for a repeat are
+   satisfied. */
+key_event_t keydev_repeat_event(keydev_t *d);
+
 /* keydev_tick(): Prepare the next tick
    This function maintains time trackers in the device and should be called in
    each frame after the scanning is finished and the keydev_process_*()
@@ -236,13 +239,6 @@ void keydev_tick(keydev_t *d, uint us);
    KEYEV_HOLD events though, keyev_repeat_event() must be used to obtain these
    at the end of every tick. */
 key_event_t keydev_unqueue_event(keydev_t *d);
-
-/* keydev_repeat_event(): Generate a repeat event if applicable
-
-   At the end of every scan tick (or later if the application is unable to keep
-   up), this source will generate a repeat event if the repeat transform is
-   enabled and the conditions for a repeat are satisfied. */
-key_event_t keydev_repeat_event(keydev_t *d);
 
 /* keydev_idle(): Check if all keys are released
    A list of keys to ignore can be specified as variable arguments. The list

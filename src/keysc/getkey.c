@@ -44,11 +44,10 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 	keydev_transform_t tr0 = keydev_transform(d);
 	key_event_t e;
 
-	int o = KEYDEV_TR_REPEATS |
-		KEYDEV_TR_DELETE_MODIFIERS |
-		KEYDEV_TR_DELETE_RELEASES |
-		((opt & GETKEY_MOD_SHIFT) ? KEYDEV_TR_DELAYED_SHIFT : 0) |
-		((opt & GETKEY_MOD_ALPHA) ? KEYDEV_TR_DELAYED_ALPHA : 0);
+	int o = KEYDEV_TR_REPEATS +
+		KEYDEV_TR_DELETE_MODIFIERS +
+		KEYDEV_TR_DELETE_RELEASES +
+		(opt & (GETKEY_MOD_SHIFT + GETKEY_MOD_ALPHA));
 	keydev_set_transform(d, (keydev_transform_t){ o, getkey_repeater });
 
 	repeat_mode = NONE;
@@ -118,5 +117,3 @@ void getkey_set_feature_function(getkey_feature_t function)
 {
 	feature_function = function;
 }
-
-

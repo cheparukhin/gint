@@ -85,7 +85,12 @@ set(SOURCES_COMMON
   src/keysc/iokbd.c
   src/keysc/keycodes.c
   src/keysc/keydev.c
+  src/keysc/keydev_idle.c
+  src/keysc/keydev_process_key.c
+  src/keysc/keydown_all.c
+  src/keysc/keydown_any.c
   src/keysc/keysc.c
+  src/keysc/scan_frequency.c
   # Memory allocator
   src/kmalloc/arena_gint.c
   src/kmalloc/arena_osheap.c
