@@ -169,6 +169,35 @@ set(SOURCES_CG
   src/render-cg/gint_dline.c
   src/render-cg/topti-asm.s
   src/render-cg/topti.c
+  # Fast image renderer
+  src/render-cg/image/image.c
+  src/render-cg/image/image_rgb16.S
+  src/render-cg/image/image_rgb16_normal.S
+  src/render-cg/image/image_rgb16_clearbg_dye.S
+  src/render-cg/image/image_rgb16_swapcolor.S
+  src/render-cg/image/image_p8.S
+  src/render-cg/image/image_p8_normal.S
+  src/render-cg/image/image_p8_clearbg.S
+  src/render-cg/image/image_p8_swapcolor.S
+  src/render-cg/image/image_p8_dye.S
+  src/render-cg/image/image_p4.S
+  src/render-cg/image/image_p4_normal.S
+  src/render-cg/image/image_p4_clearbg.S
+  src/render-cg/image/image_p4_swapcolor.S
+  src/render-cg/image/image_p4_dye.S
+  # Interface to the fast image renderer
+  src/render-cg/image/image_rgb16.c
+  src/render-cg/image/image_rgb16_effect.c
+  src/render-cg/image/image_rgb16_swapcolor.c
+  src/render-cg/image/image_rgb16_dye.c
+  src/render-cg/image/image_p8.c
+  src/render-cg/image/image_p8_effect.c
+  src/render-cg/image/image_p8_swapcolor.c
+  src/render-cg/image/image_p8_dye.c
+  src/render-cg/image/image_p4.c
+  src/render-cg/image/image_p4_effect.c
+  src/render-cg/image/image_p4_swapcolor.c
+  src/render-cg/image/image_p4_dye.c
 )
 
 set(ASSETS_FX src/font5x7.png)

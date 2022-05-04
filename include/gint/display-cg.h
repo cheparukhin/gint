@@ -1,11 +1,15 @@
 //---
-//	gint:display-cg - fxcg50 rendering functions
+// gint:display-cg - fx-CG 50 rendering functions
 //
-//	This module covers all 16-bit opaque rendering functions. For
-//	gamma-related functions, color composition, check out a color library.
+// This module covers rendering functions specific to the fx-CG 50. In addition
+// to triple-buffering management, this mainly includes image manipulation
+// tools as well as the very versatile dimage_effect() and dsubimage_effect()
+// functions that support high-performance image rendering with a number of
+// geometric and color effects.
 //
-//	All the functions in this module work on a 396x224 resolution - gint
-//	lets you use the full surface!
+// The fx-CG OS restricts the display to a 384x216 rectangle rougly around the
+// center, leaving margins on three sides. However, gint configures the display
+// to use the full 396x224 surface!
 //---
 
 #ifndef GINT_DISPLAY_CG
@@ -18,6 +22,7 @@ extern "C" {
 #endif
 
 #include <gint/defs/types.h>
+#include <gint/image.h>
 
 /* Dimensions of the VRAM */
 #define DWIDTH 396
@@ -57,49 +62,9 @@ enum {
    green is not used). */
 #define C_RGB(r,g,b) (((r) << 11) | ((g) << 6) | (b))
 
-//---
-//	Image rendering (bopti)
-//---
+/* See <gint/image.h> for the details on image manipulation. */
+typedef image_t bopti_image_t;
 
-/* bopti_image_t: Image files encoded for bopti
-   This format is created by the fxSDK's [fxconv] tool from standard images. */
-typedef struct
-{
-	/* Color profile (type of palette), could be extended into a bit field
-	   later on */
-	uint16_t profile;
-
-	/* Color code assigned to transparent pixels (unused in 16-bit). In
-	   P8_RGB565A, the value assigned to alpha is always 0. */
-	uint16_t alpha;
-
-	/* Full width and height, in pixels */
-	uint16_t width;
-	uint16_t height;
-
-	/* Here we lose structure because of the flexible array.
-
-	   RGB565, RGB565A:
-	     * Pixels in row-major order, 16 bits per pixel
-	   P8:
-	     * Palette with 256 entries (512 bytes total)
-	     * Pixels in row-major order, 8 bits per pixel
-	   P8_RGB565A, P8_RGB565:
-	     * Number of entries in palette, N (2 bytes)
-	     * Palette with N entries (2N bytes)
-	     * Pixels in row-major order, 8 bits per pixel (signed indices in
-	       an uint16_t array starting at <palette>+<256 bytes>)
-	   P4/P4_RGB565A, P4_RGB565:
-	     * Palette with 16 entries (32 bytes total)
-	     * Pixels in row-major order, 4 bits per pixel, each row
-	       byte-padded */
-	uint16_t data[];
-
-} GPACKED(4) bopti_image_t;
-
-/* Old alias to image_t, now deprecated because of libimg */
-typedef bopti_image_t image_t __attribute__((deprecated(
-	"image_t has been renamed to bopti_image_t")));
 
 //---
 //	Video RAM management
