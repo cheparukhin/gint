@@ -1,8 +1,6 @@
 gint 2.8 image things:
-* Margins around the VRAM, and around XYRAM fragments
 * Design the new image formats, inspired from libimg
 * Replace the [profile] attribute with [format]
-* Single VRAM
 
 Extensions on existing code:
 * usb:       add PC->calc reading, and interrupt pipes

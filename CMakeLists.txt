@@ -158,8 +158,6 @@ set(SOURCES_CG
   # R61524 driver
   src/r61524/r61524.c
   # Rendering
-  src/render-cg/bopti-asm.s
-  src/render-cg/bopti.c
   src/render-cg/dclear.c
   src/render-cg/dpixel.c
   src/render-cg/drect.c

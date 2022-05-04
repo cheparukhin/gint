@@ -15,7 +15,7 @@ bool gint_image_clip_input(image_t const *img, struct gint_image_box *b,
 		return false;
 	if(b->x + b->w <= 0 || b->x >= out_w)
 		return false;
-	if(b->y + b->w <= 0 || b->y >= out_h)
+	if(b->y + b->h <= 0 || b->y >= out_h)
 		return false;
 
 	return true;
