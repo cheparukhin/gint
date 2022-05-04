@@ -33,9 +33,10 @@ void bopti_render(bopti_image_t const *img, struct box *box)
 	if(profile == PX_R5G6B5 || profile == PX_R5G6B5A)
 	{
 		/* Input stride */
-		int in = 2 * (img->width - w);
+		int true_width = img->width + (img->width & 1);
+		int in = 2 * (true_width - w);
 
-		data += 2 * (img->width * box->top + box->left);
+		data += 2 * (true_width * box->top + box->left);
 
 		if(profile == PX_R5G6B5)
 			bopti_r5g6b5(data, target, w, h, in, out);
