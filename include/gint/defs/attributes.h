@@ -14,8 +14,8 @@
 #define GBSS3		__attribute__((section(".gint.bss.sh3")))
 /* Objects for the ILRAM, XRAM and YRAM regions */
 #define GILRAM		__attribute__((section(".ilram")))
-#define GXRAM		__attribute__((section(".xram")))
-#define GYRAM		__attribute__((section(".yram")))
+#define GXRAM		__attribute__((section(".xyram")))
+#define GYRAM		__attribute__((section(".xyram")))
 
 /* Unused parameters or variables */
 #define GUNUSED		__attribute__((unused))

@@ -23,8 +23,7 @@ extern uint32_t
 	brom, srom,			/* Limits of ROM mappings */
 	ldata,  sdata,  rdata,		/* User's data section */
 	lilram, silram, rilram,		/* IL memory section */
-	lxram,  sxram,  rxram,		/* X memory section */
-	lyram,  syram,  ryram,		/* Y memory section */
+	lxyram, sxyram, rxyram,		/* X and Y memory section */
 	sbss, rbss;			/* User's BSS section */
 #ifdef FX9860G
 extern uint32_t
@@ -151,8 +150,7 @@ int start(int isappli, int optnum)
 	if(!isSH3())
 	{
 		regcpy(&lilram, &silram, &rilram);
-		regcpy(&lxram,  &sxram,  &rxram);
-		regcpy(&lyram,  &syram,  &ryram);
+		regcpy(&lxyram, &sxyram, &rxyram);
 	}
 
 	#ifdef FX9860G

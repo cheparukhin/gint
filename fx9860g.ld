@@ -35,8 +35,7 @@ MEMORY
 	/* On-chip IL memory */
 	ilram (rwx):  o = 0xe5200000, l = 4k
 	/* On-chip X and Y memory */
-	xram  (rwx):  o = 0xe5007000, l = 8k
-	yram  (rwx):  o = 0xe5017000, l = 8k
+	xyram (rwx):  o = 0xe500e000, l = 16k
 }
 
 SECTIONS
@@ -188,29 +187,18 @@ SECTIONS
 		. = ALIGN(16);
 	} > ilram AT> rom
 
-	. = ORIGIN(xram);
-	.xram ALIGN(4) : ALIGN(4) {
-		_lxram = LOADADDR(.xram);
-		_rxram = . ;
+	. = ORIGIN(xyram);
+	.xyram ALIGN(4) : ALIGN(4) {
+		_lxyram = LOADADDR(.xyram);
+		_rxyram = . ;
 
-		*(.xram)
-
-		. = ALIGN(16);
-	} > xram AT> rom
-
-	. = ORIGIN(yram);
-	.yram ALIGN(4) : ALIGN(4) {
-		_lyram = LOADADDR(.yram);
-		_ryram = . ;
-
-		*(.yram)
+		*(.xram .yram .xyram)
 
 		. = ALIGN(16);
-	} > yram AT> rom
+	} > xyram AT> rom
 
 	_silram = SIZEOF(.ilram);
-	_sxram  = SIZEOF(.xram);
-	_syram  = SIZEOF(.yram);
+	_sxyram = SIZEOF(.xyram);
 
 
 
