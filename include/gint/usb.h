@@ -40,7 +40,7 @@ enum {
 
 	/* This pipe is busy (returned by usb_write_async()) */
 	USB_WRITE_BUSY,
-	/* Both FIFO controlles are busy, none is available to transfer */
+	/* Both FIFO controllers are busy, none is available to transfer */
 	USB_WRITE_NOFIFO,
 
 	/* This pipe is busy (returned by usb_commit_async()) */

@@ -55,7 +55,7 @@ int usb_ff_bulk_output(void);
 
 /* usb_fxlink_header_t: Message header for fxlink
 
-   fxlink supports a minimalistic protocol to receive data sent from the
+   fxlink supports a minimalist protocol to receive data sent from the
    calculator and automatically process it (such as save it to file, convert
    to an image, etc). It is designed as a convenience feature, and it can be
    extended with custom types rather easily.

@@ -15,6 +15,8 @@
 #include <stdbool.h>
 /* Common system types: ssize_t, off_t, etc. */
 #include <sys/types.h>
+/* For va_list */
+#include <stdarg.h>
 
 /* Fixed-width types for bit fields are quite meaningless */
 typedef unsigned int uint;
