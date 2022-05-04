@@ -6,7 +6,7 @@ project(Gint VERSION 2.7.1 LANGUAGES C ASM)
 include(GitVersionNumber)
 include(Fxconv)
 
-option(GINT_USER_VRAM "Put all VRAMs into the user stack (fx-CG 50 only)")
+option(GINT_NO_OS_STACK "Do not use the OS stack as a memory pool (fx-CG only)")
 option(GINT_STATIC_GRAY "Use static memory instead of malloc for gray buffers (fx-9860G only)")
 option(GINT_KMALLOC_DEBUG "Enable debug functions for kmalloc")
 

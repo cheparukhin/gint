@@ -1,67 +1,62 @@
 #include <gint/display.h>
-#include <gint/hardware.h>
-#include <gint/config.h>
+#include <stdlib.h>
 
-#ifdef GINT_USER_VRAM
-/* We want to put the VRAM in the user section, however we can't use the
-   virtualized P0 address as this will mess up the DMA. As the static RAM is
-   always fully mapped at a fixed place, we can use the target P1 address. We
-   just need to allocate the space for the linker. This special section ensures
-   that the first address of the user stack will be used */
-GALIGNED(4) GSECTION(".bss.vram") int8_t _gint_vram_buffers[396*224*2];
+/* Up to two VRAM pointers can be set, for triple buffering. */
+static uint16_t *vram_1 = NULL, *vram_2 = NULL;
+/* Current VRAM pointer, always equal to either vram_1 or vram_2. */
+uint16_t *gint_vram = NULL;
 
-/* In this case, we can define pointers to our user stack directly, these will
-   be the physical address associated with _gint_vram_buffers */
-static uint16_t *main = (void *)0xac161400;
-static uint16_t *scnd = (void *)0xac18c900;
-
-/* Shared VRAM pointer, the one exposed by <gint/display.h> */
-uint16_t *gint_vram = (void *)0xac161400;
-
-#else
-
-/* Otherwise, just put both VRAMs in the system stack! */
-static uint16_t *main = (void *)0xac0f0000;
-static uint16_t *scnd = (void *)0xac11b500;
-uint16_t *gint_vram = (void *)0xac0f0000;
-#endif
-
-/* On Prizm: should be: 0xa80f0000 and 0xa811b500 */
-
-__attribute__((constructor))
-static void init_vram(void)
+bool dvram_init(void)
 {
-	/* On Prizm and fx-CG Manager, move address to 0xa8000000 */
-	/* TODO: Detect base RAM address in BSC rather than hardcoding it */
-	if(gint[HWCALC] == HWCALC_PRIZM || gint[HWCALC] == HWCALC_FXCG_MANAGER)
-	{
-		main = (void *)main - 0x04000000;
-		scnd = (void *)scnd - 0x04000000;
-		gint_vram = (void *)gint_vram - 0x04000000;
-	}
+	int const MARGIN = 32;
+
+	/* Leave MARGIN bytes on each side of the region; this enables some
+	   important optimisations in the image renderer. We also add another
+	   32 bytes so we can manually 32-align the region */
+	uint32_t region = (uint32_t)malloc(DWIDTH * DHEIGHT * 2 + MARGIN + 32);
+	if(region == 0)
+		return false;
+
+	/* 32-align the region */
+	region = (region + 31) & -32;
+	/* Skip a MARGIN */
+	region += MARGIN;
+	/* Use an uncached address */
+	region = (region & 0x1fffffff) | 0xa0000000;
+
+	/* Don't enable triple buffering by default */
+	vram_1 = (void *)region;
+	vram_2 = vram_1;
+	gint_vram = vram_1;
+	return true;
 }
 
-/* dsetvram() - Control video RAM address and triple buffering */
-void dsetvram(uint16_t *new_main, uint16_t *new_secondary)
+/* dsetvram(): Control video RAM address and triple buffering */
+void dsetvram(uint16_t *new_vram_1, uint16_t *new_vram_2)
 {
-	if(gint_vram == main) gint_vram = new_main;
-	else if(gint_vram == scnd) gint_vram = new_secondary;
+	if(!new_vram_1 && !new_vram_2) return;
+	if(!new_vram_1) new_vram_1 = new_vram_2;
+	if(!new_vram_2) new_vram_2 = new_vram_1;
 
-	main = new_main;
-	scnd = new_secondary;
+	if(gint_vram == vram_1)
+		gint_vram = new_vram_1;
+	else if(gint_vram == vram_2)
+		gint_vram = new_vram_2;
+
+	vram_1 = new_vram_1;
+	vram_2 = new_vram_2;
 }
 
-/* dgetvram() - Get VRAM addresses */
-void dgetvram(uint16_t **ptr_main, uint16_t **ptr_scnd)
+/* dgetvram(): Get VRAM addresses */
+void dgetvram(uint16_t **ptr_vram_1, uint16_t **ptr_vram_2)
 {
-	if(ptr_main) *ptr_main = main;
-	if(ptr_scnd) *ptr_scnd = scnd;
+	if(ptr_vram_1) *ptr_vram_1 = vram_1;
+	if(ptr_vram_2) *ptr_vram_2 = vram_2;
 }
 
-/* dvram_switch() - Triple buffering switch
-   This function is not public, it is used only by dupdate(). */
+/* dvram_switch(): Triple buffering switch
+   This function is not part of the API; it is used only by dupdate(). */
 void dvram_switch(void)
 {
-	if(gint_vram == main) gint_vram = scnd;
-	else gint_vram = main;
+	gint_vram = (gint_vram == vram_1) ? vram_2 : vram_1;
 }

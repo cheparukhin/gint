@@ -10,6 +10,7 @@
 #include <gint/kmalloc.h>
 #include <gint/cpu.h>
 #include <gint/exc.h>
+#include <gint/config.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -91,14 +92,34 @@ void kinit(void)
 	static_ram.is_default = isSH4();
 	static_ram.start = mmu_uram() + ((uint32_t)&euram - 0x08100000);
 	static_ram.end = (void *)uram_end;
-
 	kmalloc_init_arena(&static_ram, true);
 	kmalloc_add_arena(&static_ram);
+
+	/* Create an arena in the OS stack as well, for VRAM and more data */
+	#if defined(FXCG50) && !defined(GINT_NO_OS_STACK)
+	static kmalloc_arena_t os_stack = { 0 };
+	os_stack.name = "_ostk";
+	os_stack.is_default = true;
+	if(gint[HWCALC] == HWCALC_PRIZM || gint[HWCALC] == HWCALC_FXCG_MANAGER)
+		os_stack.start = (void *)0x880f0000;
+	else
+		os_stack.start = (void *)0x8c0f0000;
+	os_stack.end = os_stack.start + (350 * 1024);
+	kmalloc_init_arena(&os_stack, true);
+	kmalloc_add_arena(&os_stack);
+	#endif /* FXCG50 && !GINT_NO_OS_STACK */
 
 	/* Allocate world buffers for the OS and for gint */
 	gint_world_os = gint_world_alloc();
 	gint_world_addin = gint_world_alloc();
 	gint_driver_flags = malloc(gint_driver_count());
+
+	#ifdef FXCG50
+	/* Allocate VRAMs, which is important for panic screens */
+	extern bool dvram_init(void);
+	if(!dvram_init())
+		abort();
+	#endif
 
 	if(!gint_world_os || !gint_world_addin || !gint_driver_flags)
 		gint_panic(0x1060);
