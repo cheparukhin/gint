@@ -16,7 +16,6 @@ void dsubimage_rgb16_swapcolor(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.effect += 8;
 	cmd.color_1 = old_color;
 	cmd.color_2 = new_color;
 	cmd.loop = gint_image_rgb16_swapcolor;
@@ -38,7 +37,6 @@ void dsubimage_rgb16_addbg(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.effect += 8;
 	cmd.color_1 = img->alpha;
 	cmd.color_2 = bg_color;
 	cmd.loop = gint_image_rgb16_swapcolor;

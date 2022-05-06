@@ -263,10 +263,9 @@ struct gint_image_cmd
 {
 	/* Shader ID. This is used in Azur, and ignored in gint */
 	uint8_t shader_id;
-	/* Dynamic effects
-	    Bit 0:     VFLIP
-	    Bit 1:     HFLIP
-	    Bits 2-7:  0=NONE, 1=CLEARBG, 2=SWAPCOLOR, 3=DYE */
+	/* Dynamic effects not already dispatched by renderer
+	    Bit 0: VFLIP
+	    Bit 1: HFLIP */
 	uint8_t effect;
 
 	/* Number of pixels to render per line. For formats that force either x

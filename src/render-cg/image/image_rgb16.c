@@ -36,7 +36,6 @@ void dsubimage_rgb16_clearbg(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.effect += 4;
 	cmd.color_1 = bg_color;
 	cmd.loop = gint_image_rgb16_clearbg;
 	gint_image_rgb16_loop(DWIDTH, &cmd);

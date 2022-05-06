@@ -15,7 +15,6 @@ void dsubimage_p4_clearbg_alt(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, true, true, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.effect += 16;
 	cmd.color_1 = bg_color;
 	cmd.loop = gint_image_p4_clearbg_alt;
 	gint_image_p4_loop(DWIDTH, &cmd);

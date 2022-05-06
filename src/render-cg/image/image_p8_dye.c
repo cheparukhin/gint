@@ -15,7 +15,6 @@ void dsubimage_p8_dye(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, false, true, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.effect += 12;
 	cmd.color_1 = img->alpha;
 	cmd.color_2 = dye_color;
 	cmd.loop = gint_image_p8_dye;

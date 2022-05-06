@@ -35,7 +35,6 @@ void dsubimage_p8_clearbg(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, false, true, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.effect += 4;
 	cmd.color_1 = bg_color;
 	cmd.loop = gint_image_p8_clearbg;
 	gint_image_p8_loop(DWIDTH, &cmd);
