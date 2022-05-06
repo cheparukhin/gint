@@ -181,6 +181,7 @@ set(SOURCES_CG
   src/render-cg/image/image_p4.S
   src/render-cg/image/image_p4_normal.S
   src/render-cg/image/image_p4_clearbg.S
+  src/render-cg/image/image_p4_clearbg_alt.S
   src/render-cg/image/image_p4_swapcolor.S
   src/render-cg/image/image_p4_dye.S
   # Interface to the fast image renderer
@@ -193,6 +194,7 @@ set(SOURCES_CG
   src/render-cg/image/image_p8_swapcolor.c
   src/render-cg/image/image_p8_dye.c
   src/render-cg/image/image_p4.c
+  src/render-cg/image/image_p4_clearbg_alt.c
   src/render-cg/image/image_p4_effect.c
   src/render-cg/image/image_p4_swapcolor.c
   src/render-cg/image/image_p4_dye.c

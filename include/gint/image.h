@@ -197,6 +197,12 @@ DIMAGE_SIG(_addbg, int effects, int bg_color)
 /* d[sub]image_{rgb16,p8,p4}_dye(..., effects, dye_color) */
 DIMAGE_SIG(_dye, int effects, int dye_color)
 
+/* d[sub]image_p4_clearbg_alt(..., effects, bg_index)
+   This is functionally identical to CLEARBG, but it uses an alternative
+   rendering method that is faster for larger images with wide transparent
+   areas. You can swap it with the normal CLEARBG freely. */
+DIMAGE_SIG1(p4_clearbg_alt, int effects, int bg_index)
+
 #define dimage_rgb16_effect(x, y, img, eff, ...) \
 	dsubimage_rgb16_effect(x, y, img, 0, 0, (img)->width, (img)->height, \
 		eff, ##__VA_ARGS__)
@@ -353,6 +359,7 @@ void gint_image_p8_dye(void);
 
 void gint_image_p4_normal(void);
 void gint_image_p4_clearbg(void);
+void gint_image_p4_clearbg_alt(void);
 void gint_image_p4_swapcolor(void);
 void gint_image_p4_dye(void);
 
