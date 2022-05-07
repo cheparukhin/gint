@@ -13,7 +13,7 @@ bool dvram_init(void)
 	/* Leave MARGIN bytes on each side of the region; this enables some
 	   important optimisations in the image renderer. We also add another
 	   32 bytes so we can manually 32-align the region */
-	uint32_t region = (uint32_t)malloc(DWIDTH * DHEIGHT * 2 + MARGIN + 32);
+	uint32_t region = (uint32_t)malloc(DWIDTH*DHEIGHT*2 + MARGIN*2 + 32);
 	if(region == 0)
 		return false;
 
