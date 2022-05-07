@@ -79,6 +79,9 @@
 	nop
  .endif
 
+	exts.b	r8, r8
+	nop
+
 	START
 
 	mov.b	@r3+, \TMP2

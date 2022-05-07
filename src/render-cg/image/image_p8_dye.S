@@ -56,10 +56,13 @@
 	nop
  .endif
 
-	mov.w	@(2,r8), r0	/* cmd.color_2 (dye value) */
+	mov.w	@r8+, r11	/* cmd.color_1 ≤ 255, thus zero-extended */
 	nop
 
-	mov.w	@r8, r8		/* cmd.color_1 ≤ 255, thus zero-extended */
+	mov.w	@r8+, r0	/* cmd.color_2 (dye value) */
+	nop
+
+	exts.b	r11, r8
 	mov	#0, r11
 
 	START
