@@ -54,16 +54,13 @@ _gint_image_p4_loop:
 	add	r6, r6
 
 	mov.b	@r8+, r1	/* cmd.lines */
-	shlr	r4
+	nop
 
 	mov.l	r10, @-r15
 	extu.b	r1, r1
 
 	mov.b	@r8+, r10	/* cmd.edge_1 */
 	nop
-
-	mov	#0, r9
-	addc	r9, r4		/* r4 = (img.width + 1) >> 1 */
 
 	mov.l	@r8+, r9
 	shlr	r0		/* T bit is now VFLIP */

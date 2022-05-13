@@ -1,6 +1,6 @@
 .global _gint_image_rgb16_loop
 
-/* gint's image renderer: 16-bit RGB entry piont
+/* gint's image renderer: 16-bit RGB entry point
 
    These formats are the simplest of the bunch. RGB565 can use longword access
    in cases when alignment is favorable and no geometric effect is applied. In
@@ -52,10 +52,10 @@ _gint_image_rgb16_loop:
 	nop
 
 	mov.l	@r8+, r3	/* cmd.input */
-	nop
+	add	#4, r8		/* cmd.palette (don't care) */
 
 	bf.s	_NO_VFLIP
-	add	#4, r8		/* cmd.palette (don't care) */
+	shlr	r4
 
 _VFLIP:
 	neg	r4, r4

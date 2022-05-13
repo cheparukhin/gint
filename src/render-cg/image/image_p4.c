@@ -9,7 +9,7 @@ void dimage_p4(int x, int y, image_t const *img, int eff)
 void dsubimage_p4(int x, int y, image_t const *img,
 	int left, int top, int w, int h, int eff)
 {
-	if(img->profile == IMAGE_P4_RGB565A)
+	if(img->format == IMAGE_P4_RGB565A)
 		return dsubimage_p4_clearbg(x, y, img, left, top, w, h, eff,
 			img->alpha);
 

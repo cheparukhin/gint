@@ -47,28 +47,28 @@ bool gint_image_mkcmd(struct gint_image_box *box, image_t const *img,
 
 	cmd->effect = (effects & (IMAGE_VFLIP | IMAGE_HFLIP)) >> 8;
 	cmd->columns = box->w;
-	cmd->input_stride = img->width;
+	cmd->input_stride = img->stride;
 	cmd->x = box->x;
 	cmd->edge_1 = -1;
 	cmd->edge_2 = -1;
 
-	int p = img->profile;
+	int f = img->format;
 	int input_row = (effects & IMAGE_VFLIP) ? box->top+box->h-1 : box->top;
 
-	if(p == IMAGE_RGB565 || p == IMAGE_RGB565A) {
+	if(IMAGE_IS_RGB16(f)) {
 		cmd->input_stride += (cmd->input_stride & 1);
 		cmd->input = (void *)img->data +
-			(input_row * cmd->input_stride + box->left) * 2;
+			input_row * img->stride + (box->left * 2);
 	}
-	else if(p == IMAGE_P8_RGB565 || p == IMAGE_P8_RGB565A) {
-		cmd->input = (void *)img->data + img->data[0] * 2 + 2 +
-			(input_row * img->width + box->left);
-		cmd->palette = (void *)img->data + 258;
+	else if(IMAGE_IS_P8(f)) {
+		cmd->input = (void *)img->data +
+			(input_row * img->stride) + box->left;
+		cmd->palette = (void *)img->palette + 256;
 	}
 	else {
-		cmd->input = (void *)img->data + 32 +
-			input_row * ((img->width + 1) >> 1) + (box->left >> 1);
-		cmd->palette = img->data;
+		cmd->input = (void *)img->data +
+			input_row * img->stride + (box->left >> 1);
+		cmd->palette = (void *)img->palette;
 		/* By default, use edge_1 to indicate (box->left & 1), so that
 		   functions that don't use edge_1 can still work properly */
 		if(!left_edge)

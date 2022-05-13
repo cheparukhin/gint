@@ -4,11 +4,10 @@
 void dsubimage(int x, int y, image_t const *img, int left, int top,
 	int w, int h, int flags)
 {
-	int p = img->profile;
-	if(p == IMAGE_RGB565 || p == IMAGE_RGB565A)
+	if(IMAGE_IS_RGB16(img->format))
 		return dsubimage_rgb16(x, y, img, left, top, w, h, flags);
-	if(p == IMAGE_P8_RGB565 || p == IMAGE_P8_RGB565A)
+	else if(IMAGE_IS_P8(img->format))
 		return dsubimage_p8(x, y, img, left, top, w, h, flags);
-	if(p == IMAGE_P4_RGB565 || p == IMAGE_P4_RGB565A)
+	else if(IMAGE_IS_P4(img->format))
 		return dsubimage_p4(x, y, img, left, top, w, h, flags);
 }

@@ -9,7 +9,7 @@ void dimage_rgb16(int x, int y, image_t const *img, int eff)
 void dsubimage_rgb16(int x, int y, image_t const *img,
 	int left, int top, int w, int h, int eff)
 {
-	if(img->profile == IMAGE_RGB565A)
+	if(img->format == IMAGE_RGB565A)
 		return dsubimage_rgb16_clearbg(x, y, img, left, top, w, h, eff,
 			img->alpha);
 

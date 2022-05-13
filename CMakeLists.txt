@@ -157,6 +157,23 @@ set(SOURCES_FX
 set(SOURCES_CG
   # R61524 driver
   src/r61524/r61524.c
+  # Image library
+  src/image/image_alloc.c
+  src/image/image_clear.c
+  src/image/image_copy.c
+  src/image/image_copy_palette.c
+  src/image/image_create.c
+  src/image/image_create_vram.c
+  src/image/image_data_size.c
+  src/image/image_decode_pixel.c
+  src/image/image_fill.c
+  src/image/image_free.c
+  src/image/image_get_pixel.c
+  src/image/image_palette_size.c
+  src/image/image_set_pixel.c
+  src/image/image_sub.c
+  src/image/image_target.c
+  src/image/image_valid.c
   # Rendering
   src/render-cg/dclear.c
   src/render-cg/dpixel.c
