@@ -12,7 +12,7 @@
 //
 // This module supports 3 bit depths: full-color 16-bit (RGB565), indexed 8-bit
 // (P8) and indexed 4-bit (P4). All three have an "alpha" variation where one
-// color is  treated as transparent, leading to 6 total formats.
+// color is treated as transparent, leading to 6 total formats.
 //
 // The image renderers support so-called *dynamic effects*, which are image
 // transformations performed on-the-fly while rendering, without generating an
@@ -92,8 +92,10 @@ typedef struct
     uint8_t format;
     /* Additional flags, a combination of IMAGE_FLAGS_* values */
     uint8_t flags;
-    /* For formats with alpha, value or index used for transparency */
-    uint16_t alpha;
+    /* For P8 and P4, number of colors in the palette; this includes alpha for
+       transparent images, since alpha is always the first entry. For valid P4
+       images this is always 16, while for P8 it ranges between 1 and 256. */
+    int16_t color_count;
     /* Full width and height, in pixels */
     uint16_t width;
     uint16_t height;
@@ -107,17 +109,15 @@ typedef struct
        - Each 2-byte value is an RGB565 color
        P8:
        - 1 byte per entry
-       - Each byte is a shifted palette index (to access the palette, use:
-         palette.colors[<value>+128])
+       - Each byte is a palette index shifted by 128 (to access the color, use
+         palette[<value>+128])
        P4:
        - 4 bits per entry, each row padded to a full byte
        - Each entry is a palette index (0...15) */
     void *data;
 
-    /* For P8 and P4, palette. The color count does not account for alpha
-       (which is usually the last entry, but not materialized) and instead
-       indicates how much memory is allocated. */
-    int color_count;
+    /* For P8 and P4, color palette. The number of entries allocated in the
+       array is equal to the color_count attribute. */
     uint16_t *palette;
 
 } GPACKED(4) image_t;
@@ -183,15 +183,13 @@ enum {
 
    By default, a new palette is allocated for formats with palettes; the new
    image owns the palette and frees it when freed. This can be overriden by
-   setting the [palette] pointer to the desired palette; in this case, the new
-   image does not own the palette and does not free it when freed.
+   setting the [palette] argument to the desired palette; in this case, the new
+   image does not own the palette and does not free it when freed. For formats
+   with alpha the first entry of the palette is the alpha color.
 
    Regardless of whether the palette is allocated or specified by hand, for P8
    the palette size must be indicated. A value of -1 can be specified to use
    the default (256 colors). For all other formats, set a value of -1.
-
-   For images with alpha, the last parameter [alpha] indicates the palette
-   index or color value that denotes transparent pixels.
 
    The returned image structure must be freed with image_free() after use.
 
@@ -199,10 +197,9 @@ enum {
    @height        Height of the new image
    @format        Pixel format; one of the IMAGE_* formats defined above
    @palette       If not NULL, specifies the palette instead of allocating it
-   @palette_size  For P8, indicates the palette size to use
-   @alpha         For formats with alpha, color or index denoting alpha */
+   @palette_size  For P8, indicates the palette size to use */
 image_t *image_alloc(int width, int height, int format,
-    void *palette, int palette_size, int alpha);
+    void *palette, int palette_size);
 
 /* image_create(): Create a bare image with no data/palette
 
@@ -217,11 +214,8 @@ image_t *image_alloc(int width, int height, int format,
    the image if the user wishes for the image to free its data and palette when
    freed.
 
-   For images with alpha, the last parameter [alpha] indicates the palette
-   index or color value that denotes transparent pixels.
-
    The returned image structure must be freed with image_free() after use. */
-image_t *image_create(int width, int height, int format, int alpha);
+image_t *image_create(int width, int height, int format);
 
 /* image_create_vram(): Create a reference to gint_vram
 
@@ -234,7 +228,7 @@ image_t *image_create(int width, int height, int format, int alpha);
    account for this option. (Using this function twice then replacing one of
    the [data] pointers is allowed.)
 
-   The VRAM image ows no data but it does own its own structure so it must
+   The VRAM image owns no data but it does own its own structure so it must
    still be freed with image_free() after use. */
 image_t *image_create_vram(void);
 
@@ -268,6 +262,17 @@ uint16_t *image_copy_palette(image_t const *img);
    An image is considered valid if it has a valid profile, a non-NULL data
    pointer, and for palette formats a valid palette pointer. */
 bool image_valid(image_t const *img);
+
+/* image_alpha(): Get the alpha value for an image format
+
+   This function returns the alpha value for any specific image format:
+   * RGB16: 0x0001
+   * P8: -128 (0x80)
+   * P4: 0
+   For non-transparent formats, it returns a value that is different from all
+   valid pixel values of the format, which means it is always safe to compare a
+   pixel value to the image_alpha() of the format. */
+int image_alpha(int format);
 
 /* image_get_pixel(): Read a pixel from the data array
 
@@ -318,11 +323,10 @@ int image_palette_size(image_t const *img);
    Formats: RGB16, P8, P4 */
 void image_set_pixel(image_t const *img, int x, int y, int value);
 
-/* image_copy(): Copy an image into another one
+/* image_copy(): Convert and copy an image
 
-   This function copies an image into another image. The target must be a valid
-   image with the same format as the source, otherwise this function is a
-   no-op. Unlike transforms, this function does clip, so there are no
+   This function copies an image into another image while converting certain
+   formats. Unlike transforms, this function does clip, so there are no
    conditions on the size of the target.
 
    If [copy_alpha] is true, transparent pixels are copied verbatim, which
@@ -330,14 +334,23 @@ void image_set_pixel(image_t const *img, int x, int y, int value);
    transparent pixels of [src] are skipped, effectively rendering [src] over
    the top-left corner of [src].
 
-   The color scheme of src and dst should normally match. In RGB16, if
-   src->alpha and dst->alpha differ, this function adopts a resonable behavior;
-   inputs of value src->alpha are turned into dst->alpha if copy_alpha is true,
-   ignored otherwise; and opaque inputs of value dst->alpha are turned into
-   [dst->alpha ^ 1] to keep the visuals consistent. In P8, no attempt is made
-   to merge the palettes.
+   This function converts between all formats except from RGB16 to P8/P4, since
+   this requires generating a palette (which is a complex endeavour).
+   Conversions from P8/P4 to RGB16 simply decode the palette. Conversions
+   between P8/P4 preserve the contents but renumber the palette entries. From
+   P4 to P8, the image is always preserved. From P8 to P4, the image is only
+   preserved if it has less than 16 colors (this is intended to allow P4 images
+   to be converted to P8 for edition by this library, and then back to P4). The
+   following table summarizes the conversions:
 
-   Formats: RGB16, P8 */
+     Source format →      RGB16           P8                P4
+     Target format ↓  +-----------+----------------+------------------+
+               RGB16  |    Copy     Decode palette    Decode palette  |
+                  P8  |     -            Copy        Enlarge palette  |
+                  P4  |     -       Narrow palette         Copy       |
+                      +-----------+----------------+------------------+
+
+   Formats: RGB16 → RGB16, P8 → Anything, P4 → Anything */
 void image_copy(image_t const *src, image_t *dst, bool copy_alpha);
 
 /* image_fill(): Fill an image with a single pixel value */

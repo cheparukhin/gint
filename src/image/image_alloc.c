@@ -3,9 +3,9 @@
 #include <gint/defs/util.h>
 
 image_t *image_alloc(int width, int height, int format,
-    void *palette, int palette_size, int alpha)
+    void *palette, int palette_size)
 {
-    image_t *img = image_create(width, height, format, alpha);
+    image_t *img = image_create(width, height, format);
     if(!img)
         return NULL;
 

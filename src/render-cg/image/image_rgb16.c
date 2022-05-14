@@ -11,7 +11,7 @@ void dsubimage_rgb16(int x, int y, image_t const *img,
 {
 	if(img->format == IMAGE_RGB565A)
 		return dsubimage_rgb16_clearbg(x, y, img, left, top, w, h, eff,
-			img->alpha);
+			image_alpha(img->format));
 
 	struct gint_image_box box = { x, y, w, h, left, top };
 	struct gint_image_cmd cmd;

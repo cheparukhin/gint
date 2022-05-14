@@ -15,7 +15,7 @@ void dsubimage_rgb16_dye(int x, int y, image_t const *img,
 
 	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, DWIDTH,
 		DHEIGHT)) return;
-	cmd.color_1 = img->alpha;
+	cmd.color_1 = image_alpha(img->format);
 	cmd.color_2 = dye_color;
 	cmd.loop = gint_image_rgb16_dye;
 	gint_image_rgb16_loop(DWIDTH, &cmd);

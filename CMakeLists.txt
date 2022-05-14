@@ -159,6 +159,7 @@ set(SOURCES_CG
   src/r61524/r61524.c
   # Image library
   src/image/image_alloc.c
+  src/image/image_alpha.c
   src/image/image_clear.c
   src/image/image_copy.c
   src/image/image_copy_palette.c

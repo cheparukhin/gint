@@ -16,26 +16,20 @@ void image_copy(image_t const *src, image_t *dst, bool copy_alpha)
 
     void *src_px = src->data;
     void *dst_px = dst->data;
+    int src_alpha = copy_alpha ? 0x10000 : image_alpha(src->format);
 
     if(IMAGE_IS_RGB16(src->format)) {
-        int src_alpha = copy_alpha ? -1 : src->alpha;
-        int dst_alpha = IMAGE_IS_ALPHA(dst->format) ? -1 : dst->alpha;
-
         do {
             for(int x = 0; x < w; x++) {
                 int px = ((uint16_t *)src_px)[x];
-                if(px != src_alpha) {
-                    px ^= (px == dst_alpha);
+                if(px != src_alpha)
                     ((uint16_t *)dst_px)[x] = px;
-                }
             }
             src_px += src->stride;
             dst_px += dst->stride;
         } while(--h > 0);
     }
     else if(IMAGE_IS_P8(src->format)) {
-        int src_alpha = copy_alpha ? 256 : src->alpha;
-
         do {
             for(int x = 0; x < w; x++) {
                 int px = ((int8_t *)src_px)[x];

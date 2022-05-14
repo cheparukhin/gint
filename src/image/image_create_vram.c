@@ -3,7 +3,7 @@
 
 image_t *image_create_vram(void)
 {
-    image_t *img = image_create(DWIDTH, DHEIGHT, IMAGE_RGB565, 0);
+    image_t *img = image_create(DWIDTH, DHEIGHT, IMAGE_RGB565);
     if(!img)
         return NULL;
 

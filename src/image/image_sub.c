@@ -24,7 +24,6 @@ image_t *image_sub(image_t const *src, int left, int top, int w, int h,
     int const ro_flags = IMAGE_FLAGS_DATA_RO | IMAGE_FLAGS_PALETTE_RO;
     dst->format = src->format;
     dst->flags = src->flags & ro_flags;
-    dst->alpha = src->alpha;
     dst->stride = src->stride;
     dst->width = box.w;
     dst->height = box.h;

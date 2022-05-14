@@ -13,7 +13,7 @@ int image_get_pixel(image_t const *img, int x, int y)
         return data_u16[x];
     }
     else if(IMAGE_IS_P8(img->format)) {
-        return data_u8[x];
+        return (int8_t)data_u8[x];
     }
     else if(IMAGE_IS_P4(img->format)) {
         if(x & 1)
