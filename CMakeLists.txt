@@ -159,6 +159,7 @@ set(SOURCES_CG
   src/r61524/r61524.c
   # Image library
   src/image/image_alloc.c
+  src/image/image_alloc_palette.c
   src/image/image_alpha.c
   src/image/image_clear.c
   src/image/image_copy.c
@@ -171,11 +172,15 @@ set(SOURCES_CG
   src/image/image_fill.c
   src/image/image_free.c
   src/image/image_get_pixel.c
-  src/image/image_palette_size.c
+  src/image/image_hflip.c
+  src/image/image_hflip_alloc.c
+  src/image/image_set_palette.c
   src/image/image_set_pixel.c
   src/image/image_sub.c
   src/image/image_target.c
   src/image/image_valid.c
+  src/image/image_vflip.c
+  src/image/image_vflip_alloc.c
   # Rendering
   src/render-cg/dclear.c
   src/render-cg/dpixel.c

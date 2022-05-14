@@ -314,11 +314,6 @@ int image_decode_pixel(image_t const *img, int pixel);
    image's data array, and might be much larger than the sub-image. */
 int image_data_size(image_t const *img);
 
-/* image_palette_size(): Compute the size of the [palette] array
-   This function returns the size of the palette array, in bytes. This can be
-   used to duplicate the palette. For images without a palette, returns -1. */
-int image_palette_size(image_t const *img);
-
 //---
 // Basic image modifications
 //---
@@ -456,6 +451,10 @@ image_t *image_sub(image_t const *src, int x, int y, int w, int h,
 /* image_hflip(): Flip horizontally (supports in-place) */
 void image_hflip(image_t const *src, image_t *dst);
 image_t *image_hflip_alloc(image_t const *src);
+
+/* image_vflip(): Flip vertically (supports in-place) */
+void image_vflip(image_t const *src, image_t *dst);
+image_t *image_vflip_alloc(image_t const *src);
 
 /* TODO: Geometric transforms */
 
