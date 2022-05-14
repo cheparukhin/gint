@@ -162,6 +162,7 @@ set(SOURCES_CG
   src/image/image_alpha.c
   src/image/image_clear.c
   src/image/image_copy.c
+  src/image/image_copy_alloc.c
   src/image/image_copy_palette.c
   src/image/image_create.c
   src/image/image_create_vram.c

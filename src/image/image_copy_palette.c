@@ -1,16 +1,18 @@
 #include <gint/image.h>
-#include <stdlib.h>
+#include <gint/defs/util.h>
 #include <string.h>
 
-uint16_t *image_copy_palette(image_t const *img)
+bool image_copy_palette(image_t const *src, image_t *dst, int size)
 {
-    int size = image_palette_size(img);
-    if(size < 0 || !img->palette)
-        return NULL;
+    if(!image_valid(src) || !dst)
+        return false;
 
-    void *palette = malloc(size);
-    if(!palette)
-        return NULL;
+    if(size < 0)
+        size = src->color_count;
+    if(!image_alloc_palette(dst, size))
+        return false;
 
-    return memcpy(palette, img->palette, size);
+    int N = min(src->color_count, dst->color_count);
+    memcpy(dst->palette, src->palette, 2*N);
+    return true;
 }

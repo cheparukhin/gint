@@ -92,9 +92,11 @@ typedef struct
     uint8_t format;
     /* Additional flags, a combination of IMAGE_FLAGS_* values */
     uint8_t flags;
-    /* For P8 and P4, number of colors in the palette; this includes alpha for
-       transparent images, since alpha is always the first entry. For valid P4
-       images this is always 16, while for P8 it ranges between 1 and 256. */
+    /* Number of colors in the palette; this includes alpha for transparent
+       images, as alpha is always the first entry.
+       RGB16: 0
+       P8: Ranges between 1 and 256
+       P4: 16 */
     int16_t color_count;
     /* Full width and height, in pixels */
     uint16_t width;
@@ -103,17 +105,12 @@ typedef struct
     int stride;
 
     /* Pixel data in row-major order, left to right.
-
-       RGB16:
-       - 2 bytes per entry, each row padded to 4 bytes for alignment
-       - Each 2-byte value is an RGB565 color
-       P8:
-       - 1 byte per entry
-       - Each byte is a palette index shifted by 128 (to access the color, use
-         palette[<value>+128])
-       P4:
-       - 4 bits per entry, each row padded to a full byte
-       - Each entry is a palette index (0...15) */
+       - RGB16: 2 bytes per entry, each row padded to 4 bytes for alignment.
+         Each 2-byte value is an RGB565 color.
+       - P8: 1 signed byte per entry. Each byte is a palette index shifted by
+         128 (to access the color, use palette[<value>+128]).
+       - P4: 4 bits per entry, each row padded to a full byte. Each entry is a
+         direct palette index between 0 and 15. */
     void *data;
 
     /* For P8 and P4, color palette. The number of entries allocated in the
@@ -173,46 +170,67 @@ enum {
 /* image_alloc(): Create a new (uninitialized) image
 
    This function allocates a new image of the specified dimensions and format.
-   It always allocates a new data array, though a palette from another image
-   can be reused. (If you need to reuse a data array, see image_create() below
-   or use img_create_sub().)
+   It always allocates a new data array; if you need to reuse a data array, use
+   the lower-level image_create() or image_create_sub().
 
    The first parameters [width] and [height] specify the dimensions of the new
    image in pixels. The [format] should be one of the IMAGE_* formats, for
    example IMAGE_RGB565A or IMAGE_P4_RGB565.
 
-   By default, a new palette is allocated for formats with palettes; the new
-   image owns the palette and frees it when freed. This can be overriden by
-   setting the [palette] argument to the desired palette; in this case, the new
-   image does not own the palette and does not free it when freed. For formats
-   with alpha the first entry of the palette is the alpha color.
-
-   Regardless of whether the palette is allocated or specified by hand, for P8
-   the palette size must be indicated. A value of -1 can be specified to use
-   the default (256 colors). For all other formats, set a value of -1.
+   This function does not specify or initialize the palette of the new image;
+   use image_set_palette(), image_alloc_palette() or image_copy_palette()
+   after calling this function.
 
    The returned image structure must be freed with image_free() after use.
 
    @width         Width of the new image
    @height        Height of the new image
-   @format        Pixel format; one of the IMAGE_* formats defined above
-   @palette       If not NULL, specifies the palette instead of allocating it
-   @palette_size  For P8, indicates the palette size to use */
-image_t *image_alloc(int width, int height, int format,
-    void *palette, int palette_size);
+   @format        Pixel format; one of the IMAGE_* formats defined above */
+image_t *image_alloc(int width, int height, int format);
+
+/* image_set_palette(): Specify an external palette for an image
+
+   This function sets the image's palette to the provided address. The number
+   of entries allocated must be specified in size. It is also the caller's
+   responsibility to ensure that the palette covers all the indices used in the
+   image data.
+
+   The old palette, if owned by the image, is freed. If [owns=true] the
+   palette's ownership is given to the image, otherwise it is kept external. */
+void image_set_palette(image_t *img, uint16_t *palette, int size, bool owns);
+
+/* image_alloc_palette(): Allocate a new palette for an image
+
+   This function allocates a new palette for an image. The number of entries is
+   specified in size; for P8 it can vary between 1 and 256, for P4 it is
+   ignored (P4 images always have 16 colors).
+
+   The old palette, if owned by the image, is freed. The entries of the new
+   palette are all initialized to 0. If size is -1, the format's default
+   palette size is used. Returns true on success. */
+bool image_alloc_palette(image_t *img, int size);
+
+/* image_copy_palette(): Copy another image's palette
+
+   This function allocates a new palette for an image, and initializes it with
+   a copy of another image's palette. For P8 the palette can be resized by
+   specifying a value other than -1 as the size; by default, the source image's
+   palette size is used (within the limits of the new format). Retuns true on
+   success. */
+bool image_copy_palette(image_t const *src, image_t *dst, int size);
 
 /* image_create(): Create a bare image with no data/palette
 
    This function allocates a new image structure but without data or palette.
-   The [data] and [palette] members are NULL, and [color_count] is either 0 or
-   -1 depending on whether the format normally has a palette.
+   The [data] and [palette] members are NULL, [color_count] and [stride] are 0.
 
    This function is useful to create images that reuse externally-provided
-   information. It is intended that the user of this function sets the [data],
-   [stride] and [palette] and [color_count] members themselves. The
-   IMAGE_FLAGS_DATA_ALLOC and the IMAGE_FLAGS_PALETTE_ALLOC flags can be set on
-   the image if the user wishes for the image to free its data and palette when
-   freed.
+   information. It is intended that the user of this function sets the [data]
+   and [stride] fields themselves, along with the IMAGE_FLAGS_DATA_ALLOC flag
+   if the image should own its data.
+
+   The [palette] and [color_count] members can be set with image_set_palette(),
+   image_alloc_palette(), image_copy_palette(), or manually.
 
    The returned image structure must be freed with image_free() after use. */
 image_t *image_create(int width, int height, int format);
@@ -244,15 +262,6 @@ image_t *image_create_vram(void);
    palette is freed. Make sure to not free images when references to them still
    exist, as this could cause the reference's pointers to become dangling. */
 void image_free(image_t *img);
-
-/* image_copy_palette(): Duplicate an image's palette
-
-   This function duplicates the palette and returns a new one allocated with
-   malloc(). If the input image is not in a palette format or has no palette
-   assigned, returns NULL. If the returned pointer is not NULL, free() after
-   use or set the IMAGE_FLAGS_PALETTE_ALLOC flag on the image holding it so
-   that free() is automatically called when the image is freed. */
-uint16_t *image_copy_palette(image_t const *img);
 
 //---
 // Basic image access and information
@@ -350,8 +359,18 @@ void image_set_pixel(image_t const *img, int x, int y, int value);
                   P4  |     -       Narrow palette         Copy       |
                       +-----------+----------------+------------------+
 
+   Note that conversions to RGB16 are not lossless because RGB565, P8 and P4
+   can represent any color; if a color equal to image_alpha(IMAGE_RGB565A) is
+   found during conversion, this function transforms it slightly to look
+   similar instead of being transparent.
+
    Formats: RGB16 → RGB16, P8 → Anything, P4 → Anything */
 void image_copy(image_t const *src, image_t *dst, bool copy_alpha);
+
+/* image_copy_alloc(): Convert and copy into a new image
+   This function is similar to image_copy(), but it allocates a target image of
+   the desired format before copying. */
+image_t *image_copy_alloc(image_t const *src, int new_format);
 
 /* image_fill(): Fill an image with a single pixel value */
 void image_fill(image_t *img, int value);
@@ -403,7 +422,40 @@ image_t *image_sub(image_t const *src, int x, int y, int w, int h,
 
 //---
 // Geometric image transforms
+//
+// All geometric transforms render to position (0,0) of the target image and
+// fail if the target image is not large enough to hold the transformed result
+// (unlike the rendering functions which render only the visible portion).
+//
+// To render at position (x,y) of the target image, use img_at(). For instance:
+//   image_hflip(src, image_at(dst, x, y));
+//
+// Each transform function has an [_alloc] variant which does the same
+// transform but allocates the target image on the fly and returns it. Remember
+// that allocation can fail, so you need to check whether the returned image is
+// valid.
+//
+// (You can still pass an invalid image to libimg functions when chaining
+//  transforms. The invalid image will be ignored or returned unchanged, so you
+//  can check for it at the end of any large chain.)
+//
+// Some functions support in-place transforms. This means they can be called
+// with the source as destination, and will transform the image without needing
+// new memory. For instance, image_hflip(src, src) flips in-place and replaces
+// src with a flipped version of itself.
+//
+// (However, it is not possible to transform in-place if the source and
+//  destination intersect in non-trivial ways. The result will be incorrect.)
+//
+// When transforming to a new image, transparent pixels are ignored, so if the
+// destination already has some data, it will not be erased automatically. Use
+// image_clear() beforehand to achieve that effect. This allows alpha blending
+// while transforming, which is especially useful on the VRAM.
 //---
+
+/* image_hflip(): Flip horizontally (supports in-place) */
+void image_hflip(image_t const *src, image_t *dst);
+image_t *image_hflip_alloc(image_t const *src);
 
 /* TODO: Geometric transforms */
 

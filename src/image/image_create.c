@@ -14,13 +14,11 @@ image_t *image_create(int width, int height, int format)
 
     img->format = format;
     img->flags = 0;
-
+    img->color_count = 0;
     img->width = width;
     img->height = height;
-
     img->stride = 0;
     img->data = NULL;
-    img->color_count = IMAGE_IS_INDEXED(format) ? 0 : -1;
     img->palette = NULL;
 
     return img;
