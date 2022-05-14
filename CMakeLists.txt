@@ -174,6 +174,10 @@ set(SOURCES_CG
   src/image/image_get_pixel.c
   src/image/image_hflip.c
   src/image/image_hflip_alloc.c
+  src/image/image_rotate.c
+  src/image/image_rotate_around.c
+  src/image/image_rotate_around_scale.c
+  src/image/image_scale.c
   src/image/image_set_palette.c
   src/image/image_set_pixel.c
   src/image/image_sub.c

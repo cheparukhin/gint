@@ -11,7 +11,6 @@ image_t *image_hflip_alloc(image_t const *src)
         return NULL;
     }
 
-    image_clear(dst);
-    image_hflip(src, dst);
+    image_hflip(src, dst, true);
     return dst;
 }

@@ -11,7 +11,6 @@ image_t *image_vflip_alloc(image_t const *src)
         return NULL;
     }
 
-    image_clear(dst);
-    image_vflip(src, dst);
+    image_vflip(src, dst, true);
     return dst;
 }

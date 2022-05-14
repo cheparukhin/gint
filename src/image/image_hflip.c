@@ -1,14 +1,14 @@
 #include <gint/image.h>
 
-void image_hflip(image_t const *src, image_t *dst)
+void image_hflip(image_t const *src, image_t *dst, bool copy_alpha)
 {
     if(!image_target(src, dst, DATA_RW, SAME_DEPTH, SAME_SIZE))
         return;
 
     void *src_px = src->data;
     void *dst_px = dst->data;
-    int src_alpha = image_alpha(src->format);
-    int dst_alpha = image_alpha(dst->format);
+    int src_alpha = image_alpha_2(src->format, copy_alpha);
+    int dst_alpha = image_alpha_2(dst->format, copy_alpha);
     int h = src->height;
 
     if(IMAGE_IS_RGB16(src->format)) {

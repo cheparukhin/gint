@@ -16,8 +16,8 @@ void image_copy(image_t const *src, image_t *dst, bool copy_alpha)
 
     void *src_px = src->data;
     void *dst_px = dst->data;
-    int src_alpha = copy_alpha ? 0x10000 : image_alpha(src->format);
-    int dst_alpha = copy_alpha ? 0x10000 : image_alpha(dst->format);
+    int src_alpha = image_alpha_2(src->format, copy_alpha);
+    int dst_alpha = image_alpha_2(dst->format, copy_alpha);
 
     if(IMAGE_IS_RGB16(src->format) && IMAGE_IS_RGB16(dst->format)) {
         do {

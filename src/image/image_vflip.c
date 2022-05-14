@@ -21,7 +21,7 @@ static void copy_row_p8(int8_t *src, int8_t *dst, int src_alpha, int width)
     }
 }
 
-void image_vflip(image_t const *src, image_t *dst)
+void image_vflip(image_t const *src, image_t *dst, bool copy_alpha)
 {
     if(!image_target(src, dst, DATA_RW, SAME_DEPTH, SAME_SIZE))
         return;
@@ -32,8 +32,8 @@ void image_vflip(image_t const *src, image_t *dst)
     void *dst_top = dst->data;
     void *dst_bot = dst->data + (h - 1) * dst->stride;
 
-    int src_alpha = image_alpha(src->format);
-    int dst_alpha = image_alpha(dst->format);
+    int src_alpha = image_alpha_2(src->format, copy_alpha);
+    int dst_alpha = image_alpha_2(dst->format, copy_alpha);
 
     int row_length = src->stride;
     void *row = malloc(row_length);

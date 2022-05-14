@@ -448,15 +448,101 @@ image_t *image_sub(image_t const *src, int x, int y, int w, int h,
 // while transforming, which is especially useful on the VRAM.
 //---
 
-/* image_hflip(): Flip horizontally (supports in-place) */
-void image_hflip(image_t const *src, image_t *dst);
+/* image_hflip(): Flip horizontally
+   Formats: RGB16, P8
+   Size requirement: destination at least as large as source (no clipping)
+   Supports in-place: Yes */
+void image_hflip(image_t const *src, image_t *dst, bool copy_alpha);
 image_t *image_hflip_alloc(image_t const *src);
 
-/* image_vflip(): Flip vertically (supports in-place) */
-void image_vflip(image_t const *src, image_t *dst);
+/* image_vflip(): Flip vertically
+   Formats: RGB16, P8
+   Size requirement: destination at least as large as source (no clipping)
+   Supports in-place: Yes */
+void image_vflip(image_t const *src, image_t *dst, bool copy_alpha);
 image_t *image_vflip_alloc(image_t const *src);
 
-/* TODO: Geometric transforms */
+/* image_linear(): Linear transformation
+
+   This function implements a generic linear transformation. This is a powerful
+   function that can perform any combination of rotation, mirroring and scaling
+   with nearest-neighbor sampling.
+
+   The [image_linear_opt] structure defines the settings for the transform.
+   Users familiar with linear algebra might want to use it directly, but they
+   are most conveniently generated with the rotation and scaling functions
+   listed below.
+
+   Formats: RGB16, P8
+   Size requirement: none (clipping through image_linear_opt settings)
+   Supports in-place: No */
+
+struct image_linear_map {
+    /* The following parameters define the linear transformation as a mapping
+       from coordinates in the destination image (x and y) into coordinates in
+       the source image (u and v).
+       - (u, v) indicate where the top-left corner of the destination lands in
+         the source image.
+       - (dx_u, dx_v) indicate the source-image movement for each movement of
+         x += 1 in the destination.
+       - (dy_u, dy_v) indicate the source-image movement for each movement of
+         y += 1 in the destination.
+       All of these values are specified as 16:16 fixed-point, ie. they encode
+       decimal values by multiplying them by 65536. */
+    int u, v, dx_u, dx_v, dy_u, dy_v;
+
+    /* Dimensions of the source and destination */
+    int src_w, src_h, dst_w, dst_h;
+};
+
+void image_linear(image_t const *src, image_t *dst,
+    struct image_linear_map const *map);
+image_t *image_linear_alloc(image_t const *src,
+    struct image_linear_map const *map);
+
+/* image_scale(): Upscale or downscale an image
+
+   This function generates a linear map to be used in image_linear() to scale
+   the input image. The scaling factor gamma can be specified independently for
+   the x and y dimensions. It is expressed as 16:16 fixed-point; you can set
+   any decimal value multiplied by 65536, for instance 1.5*65536 to increase
+   the width and height by 50%. */
+void image_scale(image_t const *src, int gamma_x, int gamma_y,
+    struct image_linear_map *map);
+
+/* image_rotate(): Rotate an image around its center
+
+   This function generates a linear map to be used in image_linear() to perform
+   a rotation around the center of an image. If [resize=true], the target is
+   enlarged to make sure all the rotated pixels can be represented. This can
+   increase the final surface by a factor of up to 2. If the original image
+   doesn't extend to its corners, it is recommended to leave [resize=false] as
+   it noticeably affects performance. */
+void image_rotate(image_t const *src, float angle, bool resize,
+    struct image_linear_map *map);
+
+/* image_rotate_around(): Rotate an image around any point
+
+   This function generalizes image_rotate() by allowing rotations around any
+   center, even a point not within the image. The center is specified through
+   two coordinates (*center_x, *center_y). If the center is near the side of
+   the image, a normal rotation would move most of the pixels out of frame;
+   this function moves the frame to make sure the whole image remains visible.
+   *center_x and *center_y are updated to indicate the position of the center
+   of rotation within the new frame (the target image). */
+void image_rotate_around(image_t const *src, float angle, bool resize,
+    int *center_x, int *center_y, struct image_linear_map *map);
+
+/* image_rotate_around_scale(): Rotate an image around any point and scale it
+
+   This function generalizes image_rotate_around() by adding a scaling factor
+   to the transformation. The scaling factor gamma is expressed as 16:16
+   fixed-point. If [resize=true] the image is further extended to make sure no
+   parts are cut out, as in other rotation functions. */
+void image_rotate_around_scale(
+    image_t const *src, float angle, int gamma,
+    bool resize, int *center_x, int *center_y,
+    struct image_linear_map *map);
 
 //---
 // Color transforms
@@ -732,6 +818,10 @@ bool image_target(image_t const *src, image_t *dst, ...);
     IMAGE_TARGET_ ## c __VA_OPT__(, image_target_arg6(__VA_ARGS__))
 #define image_target_arg6(c, ...) \
     IMAGE_TARGET_ ## c __VA_OPT__(, image_target_too_many_args(__VA_ARGS__))
+
+/* image_alpha_2(): Conditional alpha */
+#define image_alpha_2(fmt, copy_alpha) \
+        ((copy_alpha) ? 0x10000 : image_alpha(fmt))
 
 #endif /* FXCG50 */
 
