@@ -6,6 +6,8 @@ bool image_copy_palette(image_t const *src, image_t *dst, int size)
 {
     if(!image_valid(src) || !dst)
         return false;
+    if(!IMAGE_IS_INDEXED(dst->format))
+        return true;
 
     if(size < 0)
         size = src->color_count;

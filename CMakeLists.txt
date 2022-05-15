@@ -176,6 +176,7 @@ set(SOURCES_CG
   src/image/image_hflip_alloc.c
   src/image/image_linear.c
   src/image/image_linear.S
+  src/image/image_linear_alloc.c
   src/image/image_rotate.c
   src/image/image_rotate_around.c
   src/image/image_rotate_around_scale.c
