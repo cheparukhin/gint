@@ -1,8 +1,5 @@
-gint 2.8 image things:
-* Design the new image formats, inspired from libimg
-* Replace the [profile] attribute with [format]
-
 Extensions on existing code:
+* clock:     mono support
 * usb:       add PC->calc reading, and interrupt pipes
 * fs:        support RAM files
 * fs:        support USB streams as generic file descriptors
@@ -19,7 +16,6 @@ Extensions on existing code:
 * core:      run destructors when a task-switch results in leaving the app
 
 Future directions:
-* Integrate overclock management
 * Audio playback using TSWilliamson's libsnd method
 * Serial communication
 * Make fx9860g projects work out of the box on fxcg50

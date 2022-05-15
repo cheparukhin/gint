@@ -39,6 +39,20 @@ void gint_world_free(gint_world_t world)
 }
 
 //---
+// Synchronization
+//---
+
+void gint_world_sync(void)
+{
+	/* Unbind all drivers, which waits for async tasks to complete */
+	for(int i = gint_driver_count() - 1; i >= 0; i--)
+	{
+		gint_driver_t *d = &gint_drivers[i];
+		if(d->unbind) d->unbind();
+	}
+}
+
+//---
 // World switch with driver state saves
 //---
 

@@ -485,7 +485,7 @@ image_t *image_vflip_alloc(image_t const *src);
    top-left corner of the full output is actually rendered.
 
    Formats: RGB16, P8
-   Size requirement: none (clipping through image_linear_opt settings)
+   Size requirement: none (clipping is performed)
    Supports in-place: No */
 
 struct image_linear_map {

@@ -24,6 +24,7 @@ configure_file(include/gint/config.h.in include/gint/config.h)
 set(SOURCES_COMMON
   # Clock Pulse Generator driver
   src/cpg/cpg.c
+  src/cpg/overclock.c
   # CPU driver
   src/cpu/atomic.c
   src/cpu/cpu.c

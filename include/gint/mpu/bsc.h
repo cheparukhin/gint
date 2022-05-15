@@ -142,8 +142,6 @@ typedef volatile struct
 } GPACKED(4) sh7305_bsc_t;
 
 #define SH7305_BSC (*(sh7305_bsc_t *)0xfec10000)
-#define SH7305_BSC_SDMR2 (*(uint8_t *)0xfec14000)
-#define SH7305_BSC_SDMR3 (*(uint8_t *)0xfec15000)
 
 #ifdef __cplusplus
 }

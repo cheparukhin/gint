@@ -41,6 +41,13 @@ int gint_world_switch(gint_call_t function);
 __attribute__((deprecated("Use gint_world_switch() instead")))
 void gint_switch(void (*function)(void));
 
+/* gint_world_sync(): Synchronize asynchronous drivers
+
+   This function waits for asynchronous tasks to complete by unbinding all
+   drivers. This is useful in certain hardware operations while remaining in
+   gint. */
+void gint_world_sync(void);
+
 /* gint_osmenu(): Call the calculator's main menu
 
    This function safely invokes the calculator's main menu with gint_switch().

@@ -261,6 +261,29 @@ void timer_spinwait(int id)
 }
 
 //---
+// Overclock adjustment
+//---
+
+void timer_rescale(uint32_t old_Pphi, uint32_t new_Pphi_0)
+{
+	uint64_t new_Pphi = new_Pphi_0;
+
+	for(int id = 0; id < 3; id++)
+	{
+		tmu_t *T = &TMU[id];
+		/* Skip timers that are not running */
+		if(T->TCNT == 0xffffffff && T->TCOR == 0xffffffff)
+			continue;
+
+		/* For libprof: keep timers with max TCOR as they are */
+		if(T->TCOR != 0xffffffff) {
+			T->TCOR = ((uint64_t)T->TCOR * new_Pphi) / old_Pphi;
+		}
+		T->TCNT = ((uint64_t)T->TCNT * new_Pphi) / old_Pphi;
+	}
+}
+
+//---
 // Deprecated API
 //---
 
