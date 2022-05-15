@@ -11,19 +11,37 @@
 /* Multiplication */
 static inline int fmul(int x, int y)
 {
-    return ((int64_t)x * (int64_t)y) >> 32;
-}
-
-/* Multiplication with a scalar */
-static inline int fmuls(int x, int s)
-{
-    return ((int64_t)x * (int64_t)s) >> 16;
+    return ((int64_t)x * (int64_t)y) >> 16;
 }
 
 /* Division */
 static inline int fdiv(int x, int y)
 {
     return ((int64_t)x << 16) / y;
+}
+
+/* Integer square root */
+static inline int isqrt(int n)
+{
+    if(n <= 0) return 0;
+    if(n < 4) return 1;
+
+    int low_bound = isqrt(n / 4) * 2;
+    int high_bound = low_bound + 1;
+
+    return (high_bound * high_bound <= n) ? high_bound : low_bound;
+}
+
+/* Floor operation */
+static inline int ffloor(int x)
+{
+    return (x >> 16);
+}
+
+/* Round operation */
+static inline int fround(int x)
+{
+    return ffloor(x + fconst(0.5));
 }
 
 #endif /* GINT_IMAGE_FIXED */

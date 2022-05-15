@@ -7,8 +7,8 @@ void image_scale(image_t const *src, int gamma_x, int gamma_y,
     if(!image_valid(src))
         return;
 
-    int inv_gamma_x = fdiv(fconst(1), gamma_x);
-    int inv_gamma_y = fdiv(fconst(1), gamma_y);
+    int inv_gamma_x = fdiv(fconst(1.0), gamma_x);
+    int inv_gamma_y = fdiv(fconst(1.0), gamma_y);
 
     map->u = fconst(0);
     map->v = fconst(0);
@@ -19,6 +19,6 @@ void image_scale(image_t const *src, int gamma_x, int gamma_y,
 
     map->src_w = src->width;
     map->src_h = src->height;
-    map->dst_w = fmuls(src->width, gamma_x);
-    map->dst_h = fmuls(src->height, gamma_y);
+    map->dst_w = fround(src->width * gamma_x);
+    map->dst_h = fround(src->height * gamma_y);
 }

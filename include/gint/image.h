@@ -357,9 +357,11 @@ void image_set_pixel(image_t const *img, int x, int y, int value);
    Note that conversions to RGB16 are not lossless because RGB565, P8 and P4
    can represent any color; if a color equal to image_alpha(IMAGE_RGB565A) is
    found during conversion, this function transforms it slightly to look
-   similar instead of being transparent.
+   similar instead of erroneously generating a transparent pixel.
 
-   Formats: RGB16 → RGB16, P8 → Anything, P4 → Anything */
+   Formats: RGB16 → RGB16, P8 → Anything, P4 → Anything
+   Size requirement: none (clipping is performed)
+   Supports in-place: No (useless) */
 void image_copy(image_t const *src, image_t *dst, bool copy_alpha);
 
 /* image_copy_alloc(): Convert and copy into a new image
@@ -372,8 +374,6 @@ void image_fill(image_t *img, int value);
 
 /* image_clear(): Fill a transparent image with its transparent value */
 void image_clear(image_t *img);
-
-/* TODO: Expand by taking from libimg */
 
 //---
 // Sub-image extraction
@@ -400,7 +400,9 @@ void image_clear(image_t *img);
      image_hflip(src, image_sub(dst, x, y, w, h));
 
    However, another call to image_sub() or image_at() will override the
-   sub-image, so you should only use this in such temporary settings.
+   sub-image, so you should only use this in such temporary settings. If you
+   need multiple image_sub() or image_at() calls in the same statement, only
+   one can use the short form.
 
    If the requested rectangle does not intersect the source, the sub-image will
    be of dimension 0x0. If the image format does not support sub-images (P4),
@@ -468,16 +470,30 @@ image_t *image_vflip_alloc(image_t const *src);
    function that can perform any combination of rotation, mirroring and scaling
    with nearest-neighbor sampling.
 
-   The [image_linear_opt] structure defines the settings for the transform.
+   The [image_linear_map] structure defines the settings for the transform.
    Users familiar with linear algebra might want to use it directly, but they
    are most conveniently generated with the rotation and scaling functions
    listed below.
+
+   Note: Currently the structure for the transform is modified by the
+   operation and cannot be reused.
+
+   The image_linear_alloc() variant allocates a new image in addition to
+   performing the transform. The image is created with size (map->dst_w,
+   map->dst_h) which is always a reasonable default. If a target image of
+   smaller size is supplied to image_linear(), clipping is performed; only the
+   top-left corner of the full output is actually rendered.
 
    Formats: RGB16, P8
    Size requirement: none (clipping through image_linear_opt settings)
    Supports in-place: No */
 
 struct image_linear_map {
+    /* Dimensions of the source and destination */
+    int src_w, src_h, dst_w, dst_h;
+    /* Input and output stride in bytes */
+    int src_stride, dst_stride;
+
     /* The following parameters define the linear transformation as a mapping
        from coordinates in the destination image (x and y) into coordinates in
        the source image (u and v).
@@ -490,15 +506,12 @@ struct image_linear_map {
        All of these values are specified as 16:16 fixed-point, ie. they encode
        decimal values by multiplying them by 65536. */
     int u, v, dx_u, dx_v, dy_u, dy_v;
-
-    /* Dimensions of the source and destination */
-    int src_w, src_h, dst_w, dst_h;
 };
 
 void image_linear(image_t const *src, image_t *dst,
-    struct image_linear_map const *map);
+    struct image_linear_map *map);
 image_t *image_linear_alloc(image_t const *src,
-    struct image_linear_map const *map);
+    struct image_linear_map *map);
 
 /* image_scale(): Upscale or downscale an image
 
