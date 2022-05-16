@@ -14,10 +14,12 @@ extern "C" {
 #endif
 
 #include <gint/mpu/dma.h>
+#include <gint/clock.h>
 
 /* Clock Pulse Generator (see cpg/cpg.c) */
 typedef struct {
 	uint32_t SSCGCR;
+	struct cpg_overclock_setting speed;
 } cpg_state_t;
 
 /* CPU (see cpu/cpu.c) */

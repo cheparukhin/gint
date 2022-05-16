@@ -15,10 +15,74 @@
 #include <gint/mpu/cpg.h>
 #include <gint/mpu/bsc.h>
 
-#ifdef FXCG50
-
 #define CPG SH7305_CPG
 #define BSC SH7305_BSC
+
+//---
+// Low-level clock speed access
+//---
+
+#define SDMR3_CL2 ((volatile uint8_t *)0xFEC15040)
+#define SDMR3_CL3 ((volatile uint8_t *)0xFEC15060)
+
+void cpg_get_overclock_setting(struct cpg_overclock_setting *s)
+{
+    if(!isSH4())
+        return;
+
+    s->FLLFRQ = CPG.FLLFRQ.lword;
+    s->FRQCR = CPG.FRQCR.lword;
+
+    s->CS0BCR = BSC.CS0BCR.lword;
+    s->CS0WCR = BSC.CS0WCR.lword;
+    s->CS2BCR = BSC.CS2BCR.lword;
+    s->CS2WCR = BSC.CS2WCR.lword;
+
+    if(gint[HWCALC] == HWCALC_FXCG50) {
+        s->CS3BCR = BSC.CS3BCR.lword;
+        s->CS3WCR = BSC.CS3WCR.lword;
+    }
+
+    s->CS5aBCR = BSC.CS5ABCR.lword;
+    s->CS5aWCR = BSC.CS5AWCR.lword;
+}
+
+void cpg_set_overclock_setting(struct cpg_overclock_setting const *s)
+{
+    if(!isSH4())
+        return;
+
+    BSC.CS0WCR.WR = 11; /* 18 cycles */
+
+    CPG.FLLFRQ.lword = s->FLLFRQ;
+    CPG.FRQCR.lword = s->FRQCR;
+    CPG.FRQCR.KICK = 1;
+    while(CPG.LSTATS != 0) {}
+
+    BSC.CS0BCR.lword = s->CS0BCR;
+    BSC.CS0WCR.lword = s->CS0WCR;
+    BSC.CS2BCR.lword = s->CS2BCR;
+    BSC.CS2WCR.lword = s->CS2WCR;
+
+    if(gint[HWCALC] == HWCALC_FXCG50) {
+        BSC.CS3BCR.lword = s->CS3BCR;
+        BSC.CS3WCR.lword = s->CS3WCR;
+
+        if(BSC.CS3WCR.A3CL == 1)
+            *SDMR3_CL2 = 0;
+        else
+            *SDMR3_CL3 = 0;
+    }
+
+    BSC.CS5ABCR.lword = s->CS5aBCR;
+    BSC.CS5AWCR.lword = s->CS5aWCR;
+}
+
+//---
+// Predefined clock speeds
+//---
+
+#ifdef FXCG50
 
 #define PLL_32x  0b011111
 #define PLL_26x  0b011001
@@ -28,19 +92,8 @@
 #define DIV_8    2
 #define DIV_16   3
 #define DIV_32   4
-#define WAIT18   0b1011
 
-struct overclock_setting
-{
-    uint32_t FLLFRQ, FRQCR;
-    uint32_t CS0BCR, CS2BCR, CS3BCR, CS5aBCR;
-    uint32_t CS0WCR, CS2WCR, CS3WCR, CS5aWCR;
-};
-
-#define SDMR3_CL2 ((volatile uint8_t *)0xFEC15040)
-#define SDMR3_CL3 ((volatile uint8_t *)0xFEC15060)
-
-static struct overclock_setting settings_cg50[5] = {
+static struct cpg_overclock_setting settings_cg50[5] = {
     /* CLOCK_SPEED_F1 */
     { .FLLFRQ  = 0x00004000 + 900,
       .FRQCR   = 0x0F011112,
@@ -98,7 +151,7 @@ static struct overclock_setting settings_cg50[5] = {
       .CS5aWCR = 0x000203C1 },
 };
 
-static struct overclock_setting settings_cg20[5] = {
+static struct cpg_overclock_setting settings_cg20[5] = {
     /* CLOCK_SPEED_F1 */
     { .FLLFRQ  = 0x00004000 + 900,
       .FRQCR   = 0x0F102203,
@@ -146,7 +199,7 @@ static struct overclock_setting settings_cg20[5] = {
       .CS5aWCR = 0x00010240 },
 };
 
-static struct overclock_setting *get_settings(void)
+static struct cpg_overclock_setting *get_settings(void)
 {
     if(gint[HWCALC] == HWCALC_FXCG50)
         return settings_cg50;
@@ -157,12 +210,12 @@ static struct overclock_setting *get_settings(void)
 
 int clock_get_speed(void)
 {
-    struct overclock_setting *settings = get_settings();
+    struct cpg_overclock_setting *settings = get_settings();
     if(!settings)
         return CLOCK_SPEED_UNKNOWN;
 
     for(int i = 0; i < 5; i++) {
-        struct overclock_setting *s = &settings[i];
+        struct cpg_overclock_setting *s = &settings[i];
 
         if(CPG.FLLFRQ.lword == s->FLLFRQ
             && CPG.FRQCR.lword == s->FRQCR
@@ -187,11 +240,11 @@ void clock_set_speed(int level)
     if(clock_get_speed() == level)
         return;
 
-    struct overclock_setting *settings = get_settings();
+    struct cpg_overclock_setting *settings = get_settings();
     if(!settings)
         return;
 
-    struct overclock_setting *s = &settings[level - CLOCK_SPEED_F1];
+    struct cpg_overclock_setting *s = &settings[level - CLOCK_SPEED_F1];
     uint32_t old_Pphi = clock_freq()->Pphi_f;
 
     /* Wait for asynchronous tasks to complete */
@@ -201,31 +254,7 @@ void clock_set_speed(int level)
     cpu_atomic_start();
 
     /* Set the clock settings */
-
-    BSC.CS0WCR.WR = WAIT18;
-
-    CPG.FLLFRQ.lword = s->FLLFRQ;
-    CPG.FRQCR.lword = s->FRQCR;
-    CPG.FRQCR.KICK = 1;
-    while(CPG.LSTATS != 0) {}
-
-    BSC.CS0BCR.lword = s->CS0BCR;
-    BSC.CS0WCR.lword = s->CS0WCR;
-    BSC.CS2BCR.lword = s->CS2BCR;
-    BSC.CS2WCR.lword = s->CS2WCR;
-
-    if(gint[HWCALC] == HWCALC_FXCG50) {
-        BSC.CS3BCR.lword = s->CS3BCR;
-        BSC.CS3WCR.lword = s->CS3WCR;
-
-        if(BSC.CS3WCR.A3CL == 1)
-            *SDMR3_CL2 = 0;
-        else
-            *SDMR3_CL3 = 0;
-    }
-
-    BSC.CS5ABCR.lword = s->CS5aBCR;
-    BSC.CS5AWCR.lword = s->CS5aWCR;
+    cpg_set_overclock_setting(s);
 
     /* Determine the change in frequency for Pϕ and recompute CPG data */
     cpg_compute_freq();
