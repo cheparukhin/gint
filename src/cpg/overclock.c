@@ -216,16 +216,17 @@ int clock_get_speed(void)
 
     for(int i = 0; i < 5; i++) {
         struct cpg_overclock_setting *s = &settings[i];
+        bool cg20 = (gint[HWCALC] == HWCALC_PRIZM);
 
         if(CPG.FLLFRQ.lword == s->FLLFRQ
             && CPG.FRQCR.lword == s->FRQCR
             && BSC.CS0BCR.lword == s->CS0BCR
             && BSC.CS2BCR.lword == s->CS2BCR
-            && BSC.CS3BCR.lword == s->CS3BCR
+            && (BSC.CS3BCR.lword == s->CS3BCR || cg20)
             && BSC.CS5ABCR.lword == s->CS5aBCR
             && BSC.CS0WCR.lword == s->CS0WCR
             && BSC.CS2WCR.lword == s->CS2WCR
-            && BSC.CS3WCR.lword == s->CS3WCR
+            && (BSC.CS3WCR.lword == s->CS3WCR || cg20)
             && BSC.CS5AWCR.lword == s->CS5aWCR)
             return CLOCK_SPEED_F1 + i;
     }
