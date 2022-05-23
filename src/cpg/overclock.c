@@ -10,8 +10,8 @@
 //---
 
 #include <gint/clock.h>
-#include <gint/hardware.h>
 #include <gint/gint.h>
+#include <gint/hardware.h>
 #include <gint/mpu/cpg.h>
 #include <gint/mpu/bsc.h>
 
@@ -37,12 +37,8 @@ void cpg_get_overclock_setting(struct cpg_overclock_setting *s)
     s->CS0WCR = BSC.CS0WCR.lword;
     s->CS2BCR = BSC.CS2BCR.lword;
     s->CS2WCR = BSC.CS2WCR.lword;
-
-    if(gint[HWCALC] == HWCALC_FXCG50) {
-        s->CS3BCR = BSC.CS3BCR.lword;
-        s->CS3WCR = BSC.CS3WCR.lword;
-    }
-
+    s->CS3BCR = BSC.CS3BCR.lword;
+    s->CS3WCR = BSC.CS3WCR.lword;
     s->CS5aBCR = BSC.CS5ABCR.lword;
     s->CS5aWCR = BSC.CS5AWCR.lword;
 }
@@ -63,16 +59,13 @@ void cpg_set_overclock_setting(struct cpg_overclock_setting const *s)
     BSC.CS0WCR.lword = s->CS0WCR;
     BSC.CS2BCR.lword = s->CS2BCR;
     BSC.CS2WCR.lword = s->CS2WCR;
+    BSC.CS3BCR.lword = s->CS3BCR;
+    BSC.CS3WCR.lword = s->CS3WCR;
 
-    if(gint[HWCALC] == HWCALC_FXCG50) {
-        BSC.CS3BCR.lword = s->CS3BCR;
-        BSC.CS3WCR.lword = s->CS3WCR;
-
-        if(BSC.CS3WCR.A3CL == 1)
-            *SDMR3_CL2 = 0;
-        else
-            *SDMR3_CL3 = 0;
-    }
+    if(BSC.CS3WCR.A3CL == 1)
+        *SDMR3_CL2 = 0;
+    else
+        *SDMR3_CL3 = 0;
 
     BSC.CS5ABCR.lword = s->CS5aBCR;
     BSC.CS5AWCR.lword = s->CS5aWCR;
@@ -157,45 +150,55 @@ static struct cpg_overclock_setting settings_cg20[5] = {
       .FRQCR   = 0x0F102203,
       .CS0BCR  = 0x24920400,
       .CS2BCR  = 0x24923400,
+      .CS3BCR  = 0x24924400,
       .CS5aBCR = 0x15140400,
       .CS0WCR  = 0x000001C0,
       .CS2WCR  = 0x00000140,
+      .CS3WCR  = 0x000024D0,
       .CS5aWCR = 0x00010240 },
     /* CLOCK_SPEED_F2 */
     { .FLLFRQ  = 0x00004000 + 900,
       .FRQCR   = (PLL_32x<<24)+(DIV_8<<20)+(DIV_16<<12)+(DIV_16<<8)+DIV_32,
       .CS0BCR  = 0x04900400,
       .CS2BCR  = 0x04903400,
+      .CS3BCR  = 0x24924400,
       .CS5aBCR = 0x15140400,
       .CS0WCR  = 0x00000140,
       .CS2WCR  = 0x000100C0,
+      .CS3WCR  = 0x000024D0,
       .CS5aWCR = 0x00010240 },
     /* CLOCK_SPEED_F3 */
     { .FLLFRQ  = 0x00004000 + 900,
       .FRQCR   = (PLL_32x<<24)+(DIV_4<<20)+(DIV_8<<12)+(DIV_8<<8)+DIV_32,
       .CS0BCR  = 0x24900400,
       .CS2BCR  = 0x04903400,
+      .CS3BCR  = 0x24924400,
       .CS5aBCR = 0x15140400,
       .CS0WCR  = 0x000002C0,
       .CS2WCR  = 0x000201C0,
+      .CS3WCR  = 0x000024D0,
       .CS5aWCR = 0x00010240 },
     /* CLOCK_SPEED_F4 */
     { .FLLFRQ  = 0x00004000 + 900,
       .FRQCR   = (PLL_32x<<24)+(DIV_4<<20)+(DIV_4<<12)+(DIV_4<<8)+DIV_32,
       .CS0BCR  = 0x44900400,
       .CS2BCR  = 0x04903400,
+      .CS3BCR  = 0x24924400,
       .CS5aBCR = 0x15140400,
       .CS0WCR  = 0x00000440,
       .CS2WCR  = 0x00040340,
+      .CS3WCR  = 0x000024D0,
       .CS5aWCR = 0x00010240 },
     /* CLOCK_SPEED_F5 */
     { .FLLFRQ  = 0x00004000 + 900,
       .FRQCR   = (PLL_26x<<24)+(DIV_2<<20)+(DIV_4<<12)+(DIV_4<<8)+DIV_16,
       .CS0BCR  = 0x34900400,
       .CS2BCR  = 0x04903400,
+      .CS3BCR  = 0x24924400,
       .CS5aBCR = 0x15140400,
       .CS0WCR  = 0x000003C0,
       .CS2WCR  = 0x000402C0,
+      .CS3WCR  = 0x000024D0,
       .CS5aWCR = 0x00010240 },
 };
 
@@ -216,17 +219,16 @@ int clock_get_speed(void)
 
     for(int i = 0; i < 5; i++) {
         struct cpg_overclock_setting *s = &settings[i];
-        bool cg20 = (gint[HWCALC] == HWCALC_PRIZM);
 
         if(CPG.FLLFRQ.lword == s->FLLFRQ
             && CPG.FRQCR.lword == s->FRQCR
             && BSC.CS0BCR.lword == s->CS0BCR
             && BSC.CS2BCR.lword == s->CS2BCR
-            && (BSC.CS3BCR.lword == s->CS3BCR || cg20)
+            && BSC.CS3BCR.lword == s->CS3BCR
             && BSC.CS5ABCR.lword == s->CS5aBCR
             && BSC.CS0WCR.lword == s->CS0WCR
             && BSC.CS2WCR.lword == s->CS2WCR
-            && (BSC.CS3WCR.lword == s->CS3WCR || cg20)
+            && BSC.CS3WCR.lword == s->CS3WCR
             && BSC.CS5AWCR.lword == s->CS5aWCR)
             return CLOCK_SPEED_F1 + i;
     }
