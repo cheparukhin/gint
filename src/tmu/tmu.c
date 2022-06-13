@@ -63,7 +63,7 @@ static void conf(int id, uint32_t delay, int clock, gint_call_t call)
 }
 
 /* matches(): Check if a timer matches the provided specification and delay */
-static int matches(int id, int spec, uint32_t delay)
+static int matches(int id, int spec, uint64_t delay)
 {
 	/* A specific idea only matches the exact timer */
 	if(spec >= 0) return id == (spec & 0xf);
