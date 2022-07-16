@@ -134,10 +134,10 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 
 /* TODO: r61524: update, backlight, brightness, gamma */
 
-void r61524_start_frame(int start, int height)
+void r61524_start_frame(int xmin, int xmax, int ymin, int ymax)
 {
 	/* Move the window to the desired region, then select address 0 */
-	r61524_win_set(0, 395, start, start + height - 1);
+	r61524_win_set(xmin, xmax, ymin, ymax);
 	select(ram_address_horizontal);
 	write(0);
 	select(ram_address_vertical);
@@ -153,7 +153,7 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 	   the DMA might write data *while* we're sending commands! */
 	dma_transfer_wait(0);
 
-	r61524_start_frame(start, height);
+	r61524_start_frame(0, 395, start, start + height - 1);
 
 	if(method == R61524_CPU)
 	{
@@ -178,6 +178,21 @@ void r61524_display(uint16_t *vram, int start, int height, int method)
 		/* Transfer atomically */
 		dma_transfer_atomic(0, DMA_32B, blocks, src, DMA_INC, dst,
 			DMA_FIXED);
+	}
+}
+
+void r61524_display_rect(uint16_t *vram, int xmin, int xmax, int ymin,
+	int ymax)
+{
+	dma_transfer_wait(0);
+	r61524_start_frame(xmin, xmax, ymin, xmax);
+
+	vram += 396 * ymin + xmin;
+
+	for(int y = 0; y < ymax - ymin + 1; y++) {
+		for(int x = 0; x < xmax - xmin + 1; x++)
+			write(vram[x]);
+		vram += 396;
 	}
 }
 

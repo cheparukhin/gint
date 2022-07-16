@@ -35,16 +35,33 @@ enum {
    @method  Transfer method, see above */
 void r61524_display(uint16_t *vram, int start, int height, int method);
 
+/* r61524_display_rect(): Send a rectangular section of VRAM to the display
+
+   This function updates the rectangle going from (xmin,ymin) to (xmax,ymax) in
+   the VRAM to the display (both ends included). This can be faster than a full
+   dupdate() or a striped r61524_display() depending on the situation. However,
+   because the source VRAM is not contiguous, the transfer is only possible by
+   CPU, so this is only interesting for small regions.
+
+   @vram        Source VRAM with a stride of 396*2 bytes
+   @xmin @xmax  Horizontal range to be updated (both included)
+   @ymin @ymax  Vertical range to be updated (both included) */
+void r61524_display_rect(uint16_t *vram, int xmin, int xmax, int ymin,
+   int ymax);
+
 /* r61524_start_frame(): Prepare the display for a region update
 
    This function sets up the display driver to receive graphics data to update
-   liens [start] to [start+height-1] (both included) of the current window.
-   This is the initial step of r61524_display(), which is normally followed by
-   writing all the data to 0xb4000000.
+   the rectangle going from (xmin,ymin) to (xmax,ymax) (both included). This is
+   the initial step of r61524_display(), which is normally followed by writing
+   all the data to 0xb4000000.
+
+   In order to write with the DMA, it is necessary to write the full horizontal
+   range and select ymin and ymax to be congruent to 0 and 3 modulo 4.
 
    This function can be used to implement additional display driver update
    methods or alternate rendering pipelines. */
-void r61524_start_frame(int start, int height);
+void r61524_start_frame(int xmin, int xmax, int ymin, int ymax);
 
 /* r162524_win_get() and r61524_win_set(): Manipulate the display window
 
