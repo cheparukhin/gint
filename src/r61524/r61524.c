@@ -137,7 +137,7 @@ void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 void r61524_start_frame(int xmin, int xmax, int ymin, int ymax)
 {
 	/* Move the window to the desired region, then select address 0 */
-	r61524_win_set(xmin, xmax, ymin, ymax);
+	r61524_win_set(395-xmax, 395-xmin, ymin, ymax);
 	select(ram_address_horizontal);
 	write(0);
 	select(ram_address_vertical);
@@ -185,7 +185,7 @@ void r61524_display_rect(uint16_t *vram, int xmin, int xmax, int ymin,
 	int ymax)
 {
 	dma_transfer_wait(0);
-	r61524_start_frame(xmin, xmax, ymin, xmax);
+	r61524_start_frame(xmin, xmax, ymin, ymax);
 
 	vram += 396 * ymin + xmin;
 
