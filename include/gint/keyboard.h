@@ -225,10 +225,6 @@ enum {
 	GETKEY_DEFAULT     = 0xdf,
 };
 
-/* getkey_profile_t: Custom repeat profile function
-   See getkey_set_repeat_profile() for details. */
-typedef int (*getkey_profile_t)(int key, int duration, int count);
-
 /* getkey_feature_t: Custom feature function
    See getkey_set_feature_function() for details. */
 typedef bool (*getkey_feature_t)(key_event_t event);
@@ -259,53 +255,6 @@ typedef bool (*getkey_feature_t)(key_event_t event);
    @timeout  Optional pointer to a timeout value
    Returns a key event of type KEYEV_DOWN or KEYEV_HOLD with [mod=1]. */
 key_event_t getkey_opt(int options, volatile int *timeout);
-
-/* getkey_repeat(): Set repeat delays for getkey()
-
-   This function updates the repeat delays of getkey() and getkey_opt(). The
-   unit of the argument is in milliseconds, but the granularity of the delay is
-   dependent on the keyboard scan frequency.
-
-   In the default setting (128 Hz scans), the possible repeat delays are
-   approximately 8 ms, 16 ms, 23 ms, 31 ms... the provided arguments will be
-   rounded to the closest feasible delays to ensure that repetitions are
-   perfectly regular, rather than approximating the requested frequency.
-
-   The system default is (500 ms, 125 ms). With the 128 Hz setting, this
-   default is reached exactly without approximation. gint's default is (400 ms,
-   40 ms) for more reactivity.
-
-   @first  Delay between key press and first repeat (no more than one hour)
-   @next   Delay between subsequent repeats (no more than one hour) */
-void getkey_repeat(int first, int next);
-
-/* getkey_repeat_profile(): Get the current repeat profile function */
-getkey_profile_t getkey_repeat_profile(void);
-
-/* getkey_set_repeat_profile(): Set the repeat profile function
-
-   The repeat profile is called by getkey() and getkey_opt() when a key is
-   pressed or held, and getkey() is planning to repeat it. The profile decides
-   whether such repetition is allowed, and if so, how long it shoud take. The
-   profile has access to the following information:
-
-   @key       Key for which a repetition is being considered
-   @duration  Duration since the key was first pressed (us)
-   @count     Number of previous repeats (0 on the first call)
-
-   The profile function must either return a positive number of microseconds to
-   wait until the next repeat, or -1 to block the repeat indefinitely. Note
-   that the keyboard device typically updates every 7-8 ms, timings are tracked
-   in microseconds only to limit deviations.
-
-   Setting a repeat profile overrides GETKEY_REP_ARROWS, GETKEY_REP_ALL, and
-   the repeat delays. Calling with profile=NULL restores this behavior.
-
-   This mechanism replaces a "repeat filter" that existed until gint 2.4. The
-   main difference is that the repeat filter was called when the repeat event
-   arrived, whereas the repeat profile is called one repeat earlier to schedule
-   the repeat exactly when needed. */
-void getkey_set_repeat_profile(getkey_profile_t profile);
 
 /* getkey_feature_function(): Get the current feature function */
 getkey_feature_t getkey_feature_function(void);
@@ -345,5 +294,33 @@ int keycode_digit(int keycode);
 #ifdef __cplusplus
 }
 #endif
+
+//---
+// Deprecated functions for repeat control
+//
+// The following types and functions have been deprecated. The handling of
+// repeats is done inside the keyboard device (see <gint/drivers/keydev.h>).
+// Until gint 2.9, the device had repeats disabled by default and getkey()
+// enabled them. The problem is that repeats usually occur while getkey() is
+// not running, so repeats wouldn't work as expected.
+//
+// Thus, getkey()-specific APIs related to repeat settings are now deprecated
+// in favor of the ones provided by <gint/drivers/keydev.h>, which apply
+// globally instead of just when getkey() is being run.
+//---
+
+typedef void *getkey_profile_t;
+
+__attribute__((deprecated(
+    "Use keydev_set_standard_repeats(), which is permanent, instead")))
+void getkey_repeat(int first, int next);
+
+__attribute__((deprecated(
+    "Use keydev_transform(keydev_std()).repeater instead")))
+getkey_profile_t getkey_repeat_profile(void);
+
+__attribute__((deprecated(
+    "Set the [repeater] attribute with keydev_set_transform() instead")))
+void getkey_set_repeat_profile(getkey_profile_t profile);
 
 #endif /* GINT_KEYBOARD */

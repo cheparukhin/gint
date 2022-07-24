@@ -99,8 +99,10 @@ static void configure(void)
 {
 	keydev_init(&keysc_dev);
 
-	/* Set the default repeat times (milliseconds) */
-	getkey_repeat(400, 40);
+	/* Set the default repeat to 400/40 ms */
+	keydev_t *d = keydev_std();
+	keydev_set_transform(d, (keydev_transform_t){ KEYDEV_TR_REPEATS, NULL });
+	keydev_set_standard_repeats(d, 400 * 1000, 40 * 1000);
 
 	/* The timer will be stopped when the timer driver is unloaded */
 	keysc_tid = timer_configure(TIMER_ANY, keysc_scan_us,

@@ -100,6 +100,9 @@ enum {
 	KEYDEV_TR_DELETE_RELEASES  = 0x40,
 };
 
+/* keydev_repeat_profile_t: Function deciding when and how to repeat keys. */
+typedef int (*keydev_repeat_profile_t)(int key, int duration, int count);
+
 /* keydev_transform_t: Full specification for transforms on the event stream */
 typedef struct {
 	/* List of enabled transforms. The order is cannot be changed because
@@ -121,7 +124,7 @@ typedef struct {
 	   that the precision of the delay is limited by the speed at which the
 	   keyboard is scanned, which is nowhere near microsecond-level. By
 	   default (128 Hz) the precision is about 7.8 ms. */
-	int (*repeater)(int key, int duration, int count);
+   keydev_repeat_profile_t repeater;
 
 } GPACKEDENUM keydev_transform_t;
 
@@ -190,6 +193,9 @@ typedef struct {
 	/* Event queue (circular buffer) */
 	key_event_t queue[KEYBOARD_QUEUE_SIZE];
 
+   /* Parameters for the standard repeat function */
+   int rep_standard_first, rep_standard_next;
+
 } keydev_t;
 
 /* keydev_std(): Standard keyboard input device
@@ -234,10 +240,9 @@ void keydev_tick(keydev_t *d, uint us);
 
 /* keydev_unqueue_event(): Retrieve the next keyboard event in queue
 
-   This source provides the queued KEYEV_UP and KEYEV_DOWN events generated
-   from the regular scans in chronological order. It does not generate the
-   KEYEV_HOLD events though, keyev_repeat_event() must be used to obtain these
-   at the end of every tick. */
+   This source provides the queued KEYEV_UP, KEYEV_DOWN and KEYEV_HOLD events
+   generated from the regular scans in chronological order. It does not apply
+   transforms; to do this, use keydev_read(). */
 key_event_t keydev_unqueue_event(keydev_t *d);
 
 /* keydev_idle(): Check if all keys are released
@@ -257,6 +262,27 @@ keydev_transform_t keydev_transform(keydev_t *d);
 
 /* keydev_set_transform(): Set transform parameters */
 void keydev_set_transform(keydev_t *d, keydev_transform_t tr);
+
+/* keydev_set_standard_repeats(): Enable a simple repeater
+
+   This function changes the [repeater] member of the devices's transform. It
+   loads the default repeat profile which applies one delay (in us) before the
+   first repeat, and then a second, usually shorter delay, between subsequent
+   repeats.
+
+   The unit of the argument is in microseconds, but the granularity of the
+   delay is dependent on the keyboard scan frequency. In the default setting
+   (128 Hz scans), the possible repeat delays are approximately 8 ms, 16 ms,
+   23 ms, 31 ms. The system default is (500 ms, 125 ms). With the 128 Hz
+   setting, this default is reached exactly without approximation. gint's
+   default is (400 ms, 40 ms) for more reactivity.
+
+   Note: Due to a current API limitation, every input device uses the delays
+   for the physical keyboard.
+
+   @first_us  Delay between key press and first repeat (microseconds)
+   @next_us   Delay between subsequent repeats (microseconds) */
+void keydev_set_standard_repeats(keydev_t *d, int first_us, int next_us);
 
 /* keydev_read(): Retrieve the next transformed event */
 key_event_t keydev_read(keydev_t *d);

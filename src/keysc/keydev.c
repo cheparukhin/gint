@@ -15,6 +15,13 @@ void keydev_init(keydev_t *d)
 	memset(d, 0, sizeof *d);
 }
 
+static int standard_repeater(GUNUSED int key, GUNUSED int duration, int count)
+{
+	/* FIXME: Do not use the delays from keydev_std() on every device */
+	keydev_t *d = keydev_std();
+	return count ? d->rep_standard_next : d->rep_standard_first;
+}
+
 //---
 // Driver event generation
 //---
@@ -221,6 +228,14 @@ void keydev_set_transform(keydev_t *d, keydev_transform_t tr)
 	}
 
 	d->tr = tr;
+}
+
+/* keydev_set_standard_repeats(): Enable a simple repeater */
+void keydev_set_standard_repeats(keydev_t *d, int first, int next)
+{
+	d->rep_standard_first = first;
+	d->rep_standard_next = next;
+	d->tr.repeater = standard_repeater;
 }
 
 /* keydev_read(): Retrieve the next transformed event */

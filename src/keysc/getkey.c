@@ -11,25 +11,8 @@
 #include <gint/drivers/t6k11.h>
 #endif
 
-/* Delay before first repeat and subsequent repeats, in milliseconds */
-static int rep_first = 400, rep_next = 40;
-/* Repeat profile function */
-static getkey_profile_t repeat_profile = NULL;
 /* Feature function */
 static getkey_feature_t feature_function = NULL;
-/* Repeater specification */
-static enum { NONE, ALL, ARROWS, FILTER } repeat_mode;
-
-static int getkey_repeater(int key, int duration, int count)
-{
-	if(repeat_mode == NONE) return -1;
-	if(repeat_mode == FILTER) return repeat_profile(key, duration, count);
-
-	if(repeat_mode == ARROWS && key != KEY_LEFT && key != KEY_RIGHT
-		&& key != KEY_UP && key != KEY_DOWN) return -1;
-
-	return (count ? rep_next : rep_first) * 1000;
-}
 
 /* getkey(): Wait for a key press */
 key_event_t getkey(void)
@@ -41,69 +24,62 @@ key_event_t getkey(void)
 key_event_t getkey_opt(int opt, volatile int *timeout)
 {
 	keydev_t *d = keydev_std();
-	keydev_transform_t tr0 = keydev_transform(d);
+	keydev_transform_t tr = keydev_transform(d);
 	key_event_t e;
 
 	int o = KEYDEV_TR_REPEATS +
 		KEYDEV_TR_DELETE_MODIFIERS +
 		KEYDEV_TR_DELETE_RELEASES +
 		(opt & (GETKEY_MOD_SHIFT + GETKEY_MOD_ALPHA));
-	keydev_set_transform(d, (keydev_transform_t){ o, getkey_repeater });
-
-	repeat_mode = NONE;
-	if(opt & GETKEY_REP_ARROWS) repeat_mode = ARROWS;
-	if(opt & GETKEY_REP_ALL) repeat_mode = ALL;
-	if(opt & GETKEY_REP_PROFILE && repeat_profile) repeat_mode = FILTER;
+	keydev_set_transform(d, (keydev_transform_t){ o, tr.repeater });
 
 	while(1)
 	{
 		e = keydev_read(d);
 		if(e.type == KEYEV_NONE && timeout && *timeout) break;
 
+		/* Skip repeat events that are not enabled by options */
+		if(e.type == KEYEV_HOLD && !(opt & GETKEY_REP_ALL))
+		{
+			if(!(opt & GETKEY_REP_ARROWS))
+				continue;
+			if(e.key != KEY_LEFT && e.key != KEY_RIGHT &&
+			   e.key != KEY_UP && e.key != KEY_DOWN)
+				continue;
+		}
+
 		#ifdef FX9860G
 		/* Backlight toggle */
-		else if((opt & GETKEY_BACKLIGHT) && e.type == KEYEV_DOWN &&
+		if((opt & GETKEY_BACKLIGHT) && e.type == KEYEV_DOWN &&
 			e.key == KEY_OPTN && e.shift && !e.alpha)
+		{
 			t6k11_backlight(-1);
+			continue;
+		}
 		#endif
 
 		/* Return-to-menu */
-		else if((opt & GETKEY_MENU) && e.type == KEYEV_DOWN &&
+		if((opt & GETKEY_MENU) && e.type == KEYEV_DOWN &&
 			e.key == KEY_MENU && !e.shift && !e.alpha)
+		{
 			gint_osmenu();
+			continue;
+		}
 
-		else if(e.type == KEYEV_DOWN || e.type == KEYEV_HOLD)
+		if(e.type == KEYEV_DOWN || e.type == KEYEV_HOLD)
 		{
 			/* Custom global features */
 			bool accepted = false;
 			if((opt & GETKEY_FEATURES) && feature_function)
 				accepted = feature_function(e);
-			/* Return if the even has not been accepted yet */
+			/* Return if the event has not been accepted yet */
 			if(!accepted) break;
 		}
 	}
 
-	keydev_set_transform(d, tr0);
+	/* Restore previous transform settings */
+	keydev_set_transform(d, tr);
 	return e;
-}
-
-/* getkey_repeat(): Set repeat delays for getkey() */
-void getkey_repeat(int first, int next)
-{
-	rep_first = first;
-	rep_next = next;
-}
-
-/* getkey_repeat_profile(): Get the current repeat profile function */
-getkey_profile_t getkey_repeat_profile(void)
-{
-	return repeat_profile;
-}
-
-/* getkey_set_repeat_profile(): Set the repeat profile function */
-void getkey_set_repeat_profile(getkey_profile_t profile)
-{
-	repeat_profile = profile;
 }
 
 /* getkey_feature_function(): Get the current feature function */
@@ -116,4 +92,24 @@ getkey_feature_t getkey_feature_function(void)
 void getkey_set_feature_function(getkey_feature_t function)
 {
 	feature_function = function;
+}
+
+/* Deprecated repeat functions */
+
+void getkey_repeat(int first, int next)
+{
+	keydev_set_standard_repeats(keydev_std(), first * 1000, next * 1000);
+}
+
+getkey_profile_t getkey_repeat_profile(void)
+{
+	return keydev_transform(keydev_std()).repeater;
+}
+
+/* getkey_set_repeat_profile(): Set the repeat profile function */
+void getkey_set_repeat_profile(getkey_profile_t profile)
+{
+	keydev_transform_t tr = keydev_transform(keydev_std());
+	tr.repeater = profile;
+	keydev_set_transform(keydev_std(), tr);
 }
