@@ -238,8 +238,7 @@ fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
-  "${PROJECT_BINARY_DIR}/include"
-  "${FXSDK_COMPILER_INSTALL}/include/openlibm")
+  "${PROJECT_BINARY_DIR}/include")
 add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields -mtas)
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
@@ -259,16 +258,16 @@ endif()
 set_target_properties("${NAME}" PROPERTIES OUTPUT_NAME "${NAME}")
 
 # Library file
-install(TARGETS "${NAME}" DESTINATION "${FXSDK_COMPILER_INSTALL}")
+install(TARGETS "${NAME}" DESTINATION "${FXSDK_LIB}")
 # Linker script
 install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}"
-  DESTINATION "${FXSDK_COMPILER_INSTALL}")
+  DESTINATION "${FXSDK_LIB}")
 # Headers
-install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include"
-  DESTINATION "${FXSDK_COMPILER_INSTALL}"
+install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
+  DESTINATION "${FXSDK_INCLUDE}"
   FILES_MATCHING PATTERN "*.h")
 # Auto-generated config header
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/include/gint/config.h"
-  DESTINATION "${FXSDK_COMPILER_INSTALL}/include/gint")
+  DESTINATION "${FXSDK_INCLUDE}/gint")
 # CMake module to find gint
 install(FILES cmake/FindGint.cmake DESTINATION "${FXSDK_CMAKE_MODULE_PATH}")
