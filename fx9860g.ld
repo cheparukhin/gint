@@ -127,7 +127,7 @@ SECTIONS
 	.bss (NOLOAD) : {
 		_rbss = . ;
 
-		*(.bss COMMON)
+		*(.bss .bss.* COMMON)
 		*(B R)
 
 		. = ALIGN(16);

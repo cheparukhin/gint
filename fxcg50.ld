@@ -101,7 +101,7 @@ SECTIONS
 	.bss (NOLOAD) : {
 		_rbss = . ;
 
-		*(.bss COMMON)
+		*(.bss .bss.* COMMON)
 
 		. = ALIGN(16);
 	} > ram :NONE
