@@ -50,6 +50,7 @@ set(SOURCES_COMMON
   src/fs/pwrite.c
   src/fs/read.c
   src/fs/readdir.c
+  src/fs/rename.c
   src/fs/rewinddir.c
   src/fs/rmdir.c
   src/fs/seekdir.c
@@ -64,6 +65,7 @@ set(SOURCES_COMMON
   src/fs/fugue/fugue_open.c
   src/fs/fugue/fugue_mkdir.c
   src/fs/fugue/fugue_stat.c
+  src/fs/fugue/fugue_rename.c
   src/fs/fugue/fugue_rmdir.c
   src/fs/fugue/fugue_unlink.c
   src/fs/fugue/util.c

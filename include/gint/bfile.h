@@ -73,6 +73,9 @@ extern "C" {
 /* Remove a file or folder (also works if the entry does not exist). */
 int BFile_Remove(uint16_t const *path);
 
+/* Rename a file (can move folders; Fugue only). */
+int BFile_Rename(uint16_t const *oldpath, uint16_t const *newpath);
+
 #define BFile_File    1
 #define BFile_Folder  5
 

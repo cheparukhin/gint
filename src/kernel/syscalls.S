@@ -19,6 +19,7 @@
 
 /* Bfile driver */
 .global	_BFile_Remove
+.global	_BFile_Rename
 .global	_BFile_Create
 .global	_BFile_Open
 .global	_BFile_Close
@@ -131,6 +132,8 @@ ___realloc:
 
 _BFile_Remove:
 	syscall(0x1db4)
+_BFile_Rename:
+	syscall(0x1db3)
 _BFile_Create:
 	syscall(0x1dae)
 _BFile_Open:

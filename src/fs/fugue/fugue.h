@@ -25,6 +25,8 @@ int fugue_open(char const *path, int flags, mode_t mode);
 
 int fugue_unlink(char const *path);
 
+int fugue_rename(char const *oldpath, char const *newpath);
+
 int fugue_mkdir(char const *path, mode_t mode);
 
 int fugue_rmdir(char const *path);
