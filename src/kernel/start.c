@@ -94,11 +94,7 @@ static void callarray(void (**f)(void), void (**l)(void))
 	while(f < l) (*(*f++))();
 }
 
-/* start(): Where it all starts
-   Returns a status code. Invoking main menu is better than returning, see
-   gint_setrestart() for that. */
-GSECTION(".text.entry")
-int start(int isappli, int optnum)
+static int start2(int isappli, int optnum)
 {
 	/* We are currently in a dynamic userspace mapping of an add-in run
 	   from the storage memory. We are running in privileged mode with one
@@ -179,20 +175,14 @@ int start(int isappli, int optnum)
 	   hosted user application, which has its own constructors and
 	   destructors to work with. */
 
-	while(1)
-	{
-		/* Here, we use exit() to allow the standard library to do
-		   what it wants in exit() after main() finishes executing */
-		if(!setjmp(gint_exitbuf)) {
-			callarray(&bctors, &ectors);
-			exit(main(isappli, optnum));
-		}
-		else {
-			callarray(&bdtors, &edtors);
-		}
-
-		if(!gint_restart) break;
-		gint_osmenu();
+	/* Here, we use exit() to allow the standard library to do
+	   what it wants in exit() after main() finishes executing */
+	if(!setjmp(gint_exitbuf)) {
+		callarray(&bctors, &ectors);
+		exit(main(isappli, optnum));
+	}
+	else {
+		callarray(&bdtors, &edtors);
 	}
 
 	/* Before leaving the application, we need to clean everything we
@@ -204,6 +194,18 @@ int start(int isappli, int optnum)
 	   will be restored while interrupts are disabled */
 	kquit();
 	return gint_exitcode;
+}
+
+GSECTION(".text.entry")
+int start(int isappli, int optnum)
+{
+	int rc;
+	while(1) {
+		rc = start2(isappli, optnum);
+		if(!gint_restart) break;
+		gint_osmenu_native();
+	}
+	return rc;
 }
 
 /* Standard _Exit, used by the fxlibc exit() to leave control */

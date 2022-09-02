@@ -23,7 +23,7 @@ static void __osmenu_handler(void)
 	__Timer_Deinstall(__osmenu_id);
 }
 
-static void __osmenu(void)
+void gint_osmenu_native(void)
 {
 	__ClearKeyBuffer();
 
@@ -70,5 +70,5 @@ static void __osmenu(void)
 /* gint_osmenu() - switch out of gint and call the calculator's main menu */
 void gint_osmenu(void)
 {
-	gint_world_switch(GINT_CALL(__osmenu));
+	gint_world_switch(GINT_CALL(gint_osmenu_native));
 }

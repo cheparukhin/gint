@@ -59,14 +59,23 @@ void gint_world_sync(void);
    call to getkey(), but can also be called manually. */
 void gint_osmenu(void);
 
+/* gint_osmenu_native(): Like gint_osmenu() without the world switch
+   This is a replacement for gint_osmenu() which can be used when the current
+   kernel is already the native OS kernel. */
+void gint_osmenu_native(void);
+
 /* gint_setrestart(): Set whether to restart the add-in after exiting
 
-   An add-in that reaches the end of its code exits. On the calculator, except
-   using OS-dependent settings, it cannot be started again unless another
-   application is launched first.
+   An add-in that returns from its main() function automatically exits to the
+   OS' main menu. However, when this happens the OS does not allow the add-in
+   to be restarted unless another add-in is launched first. (This is because
+   the OS tries to *resume* the current add-in, which then proceeds to exit
+   again immediately.)
 
-   This setting allows the add-in to restart by calling gint_osmenu() instead
-   of exiting. This can give a proper illusion of restarting if used correctly.
+   This function enables a gint trick where after main() returns the add-in
+   will invoke the main menu with gint_osmenu() rather than exiting. If the
+   add-in is selected again, gint will jump back to the entry point, creating
+   the illusion that the add-in exited and was then restarted.
 
    @restart  0 to exit, 1 to restart by using gint_osmenu() */
 void gint_setrestart(int restart);
