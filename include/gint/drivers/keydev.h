@@ -284,8 +284,11 @@ void keydev_set_transform(keydev_t *d, keydev_transform_t tr);
    @next_us   Delay between subsequent repeats (microseconds) */
 void keydev_set_standard_repeats(keydev_t *d, int first_us, int next_us);
 
-/* keydev_read(): Retrieve the next transformed event */
-key_event_t keydev_read(keydev_t *d);
+/* keydev_read(): Retrieve the next transformed event
+   If there is no event, returns an event with type KEYEV_NONE, unless
+   [wait=true], in which case waits for an event to occur or *timeout to
+   become non-zero (if timeout is not NULL), whichever comes first. */
+key_event_t keydev_read(keydev_t *d, bool wait, volatile int *timeout);
 
 #ifdef __cplusplus
 }

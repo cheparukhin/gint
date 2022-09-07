@@ -3,6 +3,7 @@
 //---
 
 #include <gint/keyboard.h>
+#include <gint/cpu.h>
 #include <gint/drivers/keydev.h>
 #include <gint/defs/types.h>
 #include <gint/defs/util.h>
@@ -239,7 +240,7 @@ void keydev_set_standard_repeats(keydev_t *d, int first, int next)
 }
 
 /* keydev_read(): Retrieve the next transformed event */
-key_event_t keydev_read(keydev_t *d)
+key_event_t keydev_read(keydev_t *d, bool wait, volatile int *timeout)
 {
 	#define opt(NAME) (d->tr.enabled & KEYDEV_TR_ ## NAME)
 	key_event_t e;
@@ -248,7 +249,12 @@ key_event_t keydev_read(keydev_t *d)
 	{
 		e = keydev_unqueue_event(d);
 		if(e.type == KEYEV_NONE)
-			return e;
+		{
+			if(!wait || (timeout && *timeout))
+				return e;
+			sleep();
+			continue;
+		}
 
 		int k = e.key;
 		e.mod = (opt(ALL_MODS) != 0);

@@ -35,7 +35,7 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 
 	while(1)
 	{
-		e = keydev_read(d);
+		e = keydev_read(d, true, timeout);
 		if(e.type == KEYEV_NONE && timeout && *timeout) break;
 
 		/* Skip repeat events that are not enabled by options */
