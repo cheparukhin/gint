@@ -70,31 +70,27 @@ typedef image_t bopti_image_t;
 //	Video RAM management
 //---
 
-/* dsetvram() - Control video RAM address and triple buffering
+/* dsetvram(): Control video RAM address and triple buffering
 
    Normal rendering under gint uses double-buffering: there is one image
    displayed on the screen and one in memory, in a region called the video RAM
    (VRAM). The application draws frames in the VRAM then sends them to the
    screen only when they are finished, using dupdate().
 
-   On fxcg50, the performance bottleneck is almost always the graphical
-   rendering (especially in games) because the high amount of data, 173 kB per
-   frame in full-resolution, makes graphics manipulation computationally
-   expensive. The transfer also takes about 10 ms in itself.
+   On fx-CG, sending frames with dupdate() is a common bottleneck because it
+   takes about 11 ms. Fortunately, while the DMA is sending the frame to the
+   display, the CPU is available to do work in parallel. This function sets up
+   triple buffering (ie. a second VRAM) so that the CPU can start working on
+   the next frame while the DMA is sending the current one.
 
-   Since gint transfers data to the screen using the DMA, it is possible to run
-   the application while the finished frame is being transferred. However,
-   writing to the VRAM during this period will cause display artifacts since
-   the VRAM it is still being read by the DMA.
+   However, experience shows minimal performance improvements, because writing
+   to main RAM does not parallelize with DMA transfers. Since gint 2.8, this
+   is no longer the default, and the memory for the extra VRAM is instead
+   available via malloc().
 
-   The solution to this is to use triple-buffering with the display and two
-   VRAMs that are alternately being written to while the other is being
-   transferred. The VRAM switching is handled by dupdate() and is activated
-   whenever two VRAMs are configured.
-
-   By default gint uses triple buffering with two VRAMs in the system stack.
-
-   VRAMs must be contiguous, 32-aligned, (2*396*224)-byte buffers.
+   VRAMs must be contiguous, 32-aligned, (2*396*224)-byte buffers with 32 bytes
+   of extra data on each side (ie. 32 bytes into a 32-aligned buffer of size
+   177472).
 
    @main       Main VRAM area, used alone if [secondary] is NULL
    @secondary  Additional VRAM area, enables triple buffering if non-NULL */

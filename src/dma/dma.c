@@ -178,7 +178,7 @@ static void dma_channel_wait(int channel, bool foreign)
 	if(!ch) return;
 
 	/* If interrupts are disabled or we don't own the device, spin-wait by
-	   checking either for TE to be set (Transfere Ended) or DE to be gone
+	   checking either for TE to be set (Transfer Ended) or DE to be gone
 	   (channel disabled).
 
 	   There are definitely race conditions if the DMA is restarted between
