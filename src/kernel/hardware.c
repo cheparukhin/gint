@@ -69,7 +69,8 @@ void hw_detect(void)
 	gint[HWCALC] = HWCALC_FX9860G_SH4;
 	if(gint[HWMPU] == HWMPU_SH7337 || gint[HWMPU] == HWMPU_SH7355)
 	{
-		gint[HWCALC] = HWCALC_FX9860G_SH3;
+		gint[HWCALC] = (SH7705_PFC.PEDR & 0x08) ? HWCALC_FX9860G_SH3 :
+				HWCALC_FX9860G_SLIM;
 	}
 
 	/* Tell Graph 35+E II from OS version (this is accurate unless someone

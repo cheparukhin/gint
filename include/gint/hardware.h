@@ -105,6 +105,8 @@ void hw_detect(void);
 #define HWCALC_FXCG50        5
 /* fx-CG 50 emulator, hardcoded in kernel/inth.S */
 #define HWCALC_FXCG_MANAGER  6
+/* fx-9860G Slim, SH-3-based fx-9860G with hardware differences */
+#define HWCALC_FX9860G_SLIM  7
 
 /*
 **  Keyboard
