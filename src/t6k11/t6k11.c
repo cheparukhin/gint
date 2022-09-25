@@ -168,7 +168,7 @@ void t6k11_backlight(int setting)
 	   TODO: Document the PFC to remove these addresses */
 	if(isSH3())
 	{
-		if (gint[HWCALC] == HWCALC_FX9860G_SLIM)
+		if (isSlim())
 		{
 			port = (void *)0xa4000126;
 			mask = 0x20;

@@ -148,7 +148,7 @@ void iokbd_scan(uint8_t *scan)
 	for(int i = 0; i < 12; i++) scan[i] = iokbd_row(i);
 
 	/* Translate fx-9860G Slim scancodes to standard scancodes */
-	if (gint[HWCALC] == HWCALC_FX9860G_SLIM)
+	if (isSlim())
 	{
 		uint8_t slim_scan[12];
 		for (uint i = 0; i < 10; i++)

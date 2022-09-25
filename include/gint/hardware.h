@@ -45,6 +45,12 @@ void hw_detect(void);
 #define isSH4() (!isSH3())
 #endif
 
+#if defined(FX9860G)
+#define isSlim() (gint[HWCALC] == HWCALC_FX9860G_SLIM)
+#else
+#define isSlim() 0
+#endif
+
 #ifdef FXCG50
 #define isSH3() 0
 #define isSH4() 1
