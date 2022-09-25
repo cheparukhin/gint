@@ -18,7 +18,7 @@ static int __osmenu_id;
 
 static void __osmenu_handler(void)
 {
-	if (isSlim())
+	if(isSlim())
 		__PutKeyCode(0x07, 0x0A, 0);
 	else
 		__PutKeyCode(0x04, 0x09, 0);

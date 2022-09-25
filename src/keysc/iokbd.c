@@ -148,18 +148,18 @@ void iokbd_scan(uint8_t *scan)
 	for(int i = 0; i < 12; i++) scan[i] = iokbd_row(i);
 
 	/* Translate fx-9860G Slim scancodes to standard scancodes */
-	if (isSlim())
+	if(isSlim())
 	{
 		uint8_t slim_scan[12];
-		for (uint i = 0; i < 10; i++)
+		for(uint i = 0; i < 10; i++)
 		{
 			slim_scan[i] = scan[i];
 			scan[i] = 0x00;
 		}
 
-		for (uint i = 0; i < SCANCODE_COUNT; ++i)
+		for(uint i = 0; i < SCANCODE_COUNT; ++i)
 		{
-			if (slim_scan[SLIM_SC[i] >> 8] & (SLIM_SC[i] & 0xFF))
+			if(slim_scan[SLIM_SC[i] >> 8] & (SLIM_SC[i] & 0xFF))
 				scan[SLIM_TR[i] >> 8] |= (SLIM_TR[i] & 0xFF);
 		}
 	}
