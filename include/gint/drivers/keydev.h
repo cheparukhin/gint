@@ -135,9 +135,9 @@ typedef struct {
    is useful for demo/replays that input events without the physical keyboard,
    and a couple of corner uses like control over USB.
 
-   The keyboard device has built-in event transformations, which modifty the
+   The keyboard device has built-in event transformations, which modify the
    stream of events by adding information, combining modifiers, and removing
-   undesired events. Because the event transformation reky on the current state
+   undesired events. Because the event transformation rely on the current state
    of the keyboard, they must be run by the driver whenever events are read, so
    they are tied to the device.
 
@@ -173,7 +173,7 @@ typedef struct {
 
 	/* Candidate key for repeats (or 0 if no key is candidate yet) */
 	int rep_key;
-	/* Number of repeats alreay sent */
+	/* Number of repeats already sent */
 	int rep_count;
 	/* Time since key was first pressed (us) */
 	int rep_time;
@@ -181,7 +181,7 @@ typedef struct {
 	int rep_delay;
 
 	/* Latest state of keys we are aware of. At every processing step, the
-	   different between this and the fresh information is queued and this
+	   difference between this and the fresh information is queued and this
 	   is updated. state_now is identical to the real state obtained from
 	   the device unless earlier events failed to be queued, in which case
 	   a difference is maintained so they will be reconsidered later. */

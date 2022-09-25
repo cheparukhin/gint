@@ -207,7 +207,7 @@ enum {
 	/* Enable modifiers keys */
 	GETKEY_MOD_SHIFT   = 0x01,
 	GETKEY_MOD_ALPHA   = 0x02,
-	/* SHIFT + OPTN toggles backlight (requires GETKEY_MOD_SHIFT) */
+	/* SHIFT + OPTN (requires GETKEY_MOD_SHIFT) or LIGHT toggles backlight */
 	GETKEY_BACKLIGHT   = 0x04,
 	/* MENU triggers a task switch and displays the main menu */
 	GETKEY_MENU        = 0x08,
