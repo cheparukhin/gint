@@ -168,8 +168,16 @@ void t6k11_backlight(int setting)
 	   TODO: Document the PFC to remove these addresses */
 	if(isSH3())
 	{
-		port = (void *)0xa400012c;
-		mask = 0x80;
+		if(isSlim())
+		{
+			port = (void *)0xa4000126;
+			mask = 0x20;
+		}
+		else
+		{
+			port = (void *)0xa400012c;
+			mask = 0x80;
+		}
 	}
 	else
 	{

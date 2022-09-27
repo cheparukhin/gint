@@ -51,7 +51,8 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 		#ifdef FX9860G
 		/* Backlight toggle */
 		if((opt & GETKEY_BACKLIGHT) && e.type == KEYEV_DOWN &&
-			e.key == KEY_OPTN && e.shift && !e.alpha)
+			((e.key == KEY_LIGHT) ||
+				(e.key == KEY_OPTN && e.shift && !e.alpha)))
 		{
 			t6k11_backlight(-1);
 			continue;

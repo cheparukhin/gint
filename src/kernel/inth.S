@@ -102,7 +102,7 @@ _gint_inth_7305:
 
 #ifdef FX9860G
 
-/* SH7705-TYPE INTERRUT HANDLER ENTRY - 56 BYTES */
+/* SH7705-TYPE INTERRUPT HANDLER ENTRY - 56 BYTES */
 
 _gint_inth_7705:
 	/* Save caller-saved registers as before */

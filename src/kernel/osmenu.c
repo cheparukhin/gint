@@ -1,5 +1,6 @@
 #include <gint/gint.h>
 #include <gint/display.h>
+#include <gint/hardware.h>
 
 #include <string.h>
 
@@ -17,7 +18,10 @@ static int __osmenu_id;
 
 static void __osmenu_handler(void)
 {
-	__PutKeyCode(0x04, 0x09, 0);
+	if(isSlim())
+		__PutKeyCode(0x07, 0x0A, 0);
+	else
+		__PutKeyCode(0x04, 0x09, 0);
 
 	__Timer_Stop(__osmenu_id);
 	__Timer_Deinstall(__osmenu_id);

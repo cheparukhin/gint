@@ -45,6 +45,12 @@ void hw_detect(void);
 #define isSH4() (!isSH3())
 #endif
 
+#if defined(FX9860G)
+#define isSlim() (gint[HWCALC] == HWCALC_FX9860G_SLIM)
+#else
+#define isSlim() 0
+#endif
+
 #ifdef FXCG50
 #define isSH3() 0
 #define isSH4() 1
@@ -105,6 +111,8 @@ void hw_detect(void);
 #define HWCALC_FXCG50        5
 /* fx-CG 50 emulator, hardcoded in kernel/inth.S */
 #define HWCALC_FXCG_MANAGER  6
+/* fx-9860G Slim, SH-3-based fx-9860G with hardware differences */
+#define HWCALC_FX9860G_SLIM  7
 
 /*
 **  Keyboard

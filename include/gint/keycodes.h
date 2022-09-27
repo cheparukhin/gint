@@ -75,6 +75,10 @@ enum {
 	   of the matrix one could use a ghosting effect to boot the calc. */
 	KEY_ACON	= 0x07,
 
+	/* Virtual key codes */
+	KEY_HELP	= 0x20, /* fx-9860G Slim: 0x75 */
+	KEY_LIGHT	= 0x10, /* fx-9860G Slim: 0x76 */
+
 	/* Key aliases (handle with care =D) */
 	KEY_X2		= KEY_SQUARE,
 	KEY_CARET	= KEY_POWER,
