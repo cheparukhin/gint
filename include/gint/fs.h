@@ -13,7 +13,7 @@ extern "C" {
 #include <stddef.h>
 
 /* Maximum number of file descriptors */
-#define FS_FD_MAX 32
+#define FS_FD_MAX 16
 
 /* fs_descriptor_type_t: Overloaded file descriptor functions
 

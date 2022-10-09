@@ -1,5 +1,6 @@
 #include <gint/usb.h>
 #include "usb_private.h"
+#include <stdlib.h>
 
 //---
 // Endpoint assignment
@@ -7,7 +8,12 @@
 
 /* Current configuration: list of interfaces and endpoint assignments */
 static usb_interface_t const *conf_if[16];
-static endpoint_t conf_ep[32];
+static endpoint_t *conf_ep;
+
+GCONSTRUCTOR static void usb_alloc(void)
+{
+	 conf_ep = malloc(32 * sizeof *conf_ep);
+}
 
 /* usb_configure_endpoint(): Get endpoint data for a concrete address */
 endpoint_t *usb_configure_endpoint(int endpoint)
