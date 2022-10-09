@@ -55,7 +55,6 @@ static void iokbd_delay(void)
 uint8_t iokbd_row(int row)
 {
 	if((unsigned)row > 9) return 0x00;
-	row ^= 1;
 
 	int orig_PBCR = PFC.PBCR;
 	int orig_PMCR = PFC.PMCR;
