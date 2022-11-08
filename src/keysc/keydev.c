@@ -31,6 +31,9 @@ static int standard_repeater(GUNUSED int key, GUNUSED int duration, int count)
    Returns false if the event cannot be pushed. */
 bool keydev_queue_push(keydev_t *d, key_event_t ev)
 {
+	if(d->async_filter && !d->async_filter(ev))
+		return true;
+
 	int next = (d->queue_end + 1) % KEYBOARD_QUEUE_SIZE;
 	if(next == d->queue_next)
 	{
@@ -145,6 +148,16 @@ void keydev_tick(keydev_t *d, uint us)
 			d->rep_delay = max(d->rep_delay - (int)us, 0);
 		d->rep_time += us;
 	}
+}
+
+keydev_async_filter_t keydev_async_filter(keydev_t const *d)
+{
+	return d->async_filter;
+}
+
+void keydev_set_async_filter(keydev_t *d, keydev_async_filter_t filter)
+{
+	d->async_filter = filter;
 }
 
 //---

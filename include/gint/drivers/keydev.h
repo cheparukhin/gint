@@ -10,6 +10,7 @@ extern "C" {
 #endif
 
 #include <gint/keyboard.h>
+#include <stdbool.h>
 
 /* Size of the buffer event queue */
 #define KEYBOARD_QUEUE_SIZE 32
@@ -128,6 +129,9 @@ typedef struct {
 
 } GPACKEDENUM keydev_transform_t;
 
+/* keydev_async_filter_t: Low-level asynchronous event filter. */
+typedef bool (*keydev_async_filter_t)(key_event_t event);
+
 /* keydev_t: Keyboard device
 
    This structure represents the state and settings of a keyboard device that
@@ -158,6 +162,13 @@ typedef struct {
 
 	/* Event transforms */
 	keydev_transform_t tr;
+
+	/* Asynchronous event filter. This is a low-level filter which is
+	   called when events are generated to process and filter them. It
+	   provides the unique ability to run keyboard-triggered code even if
+	   the program's main thread is busy, for instance running some sort of
+	   infinite loop. */
+	keydev_async_filter_t async_filter;
 
 	// <Delayed Modifiers>
 
@@ -249,6 +260,12 @@ key_event_t keydev_unqueue_event(keydev_t *d);
    A list of keys to ignore can be specified as variable arguments. The list
    must be terminated by a 0 keycode. */
 bool keydev_idle(keydev_t *d, ...);
+
+/* keydev_async_filter(): Obtain current async filter */
+keydev_async_filter_t keydev_async_filter(keydev_t const *d);
+
+/* keydev_set_async_filter(): Set low-level async filter */
+void keydev_set_async_filter(keydev_t *d, keydev_async_filter_t filter);
 
 //---
 //	High-level API to read from the device
