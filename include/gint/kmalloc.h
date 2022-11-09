@@ -39,6 +39,20 @@ void *krealloc(void *ptr, size_t size);
 /* kfree(): Free memory allocated with kalloc() */
 void kfree(void *ptr);
 
+/* kmalloc_max(): Allocate the largest block available in an arena
+
+   This function is like kmalloc(), but it find the largest block in the arena
+   and returns it whole after setting its size in *size. This is useful if you
+   need memory to manage with another allocator, or you don't yet know the size
+   of the data to be generated. The block can later be shrunk with realloc().
+
+   Currently only gint-managed arenas support this operation.
+
+   @size        Will be set to size of returned block (if there is one)
+   @arean_name  Name of arena to allocate in (*cannot* be NULL)
+   Returns the address of the largest block available, NULL on error. */
+void *kmalloc_max(size_t *size, char const *arena_name);
+
 //---
 // Extension API for new areas and statistics
 //---
@@ -53,6 +67,8 @@ typedef struct {
 	void * (*realloc)(void *ptr, size_t newsize, void *data);
 	/* kfree() handles ptr == NULL*/
 	void (*free)(void *ptr, void *data);
+	/* kmalloc_max() backend */
+	void * (*malloc_max)(size_t *size, void *data);
 
 	/* Name, should be unique; gint reserves names starting with "_" */
 	char const *name;

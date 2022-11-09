@@ -178,6 +178,25 @@ static block_t *best_fit(block_t *list, size_t size)
 	return best_match;
 }
 
+/* Find a worst fit in the list */
+static block_t *worst_fit(block_t *list)
+{
+	block_t *best_match = NULL;
+	size_t best_size = 0;
+
+	while(list)
+	{
+		if(list->size >= best_size)
+		{
+			best_match = list;
+			best_size = list->size;
+		}
+		list = next_link(list);
+	}
+
+	return best_match;
+}
+
 //---
 // Index-level operations
 //---
@@ -366,6 +385,35 @@ static void *gint_realloc(void *ptr, size_t size, void *data)
 	return new_ptr;
 }
 
+static void *gint_malloc_max(size_t *size, void *data)
+{
+	index_t *index = data;
+	stats_t *s = index->stats;
+
+	/* Find the largest available block in the largest possible class */
+	block_t *alloc;
+	for(int c = 15; c >= 0; c--)
+	{
+		block_t *list = index->classes[c];
+		alloc = (c < 14) ? list : worst_fit(list);
+		if(alloc) break;
+	}
+	if(!alloc) return NULL;
+
+	remove_link(alloc, index);
+
+	/* Mark the block as allocated and return it */
+	block_t *next = next_block(alloc);
+	alloc->used = true;
+	if(next) next->previous_used = true;
+
+	if(s) s->used_memory += alloc->size;
+	if(s) s->peak_used_memory = max(s->peak_used_memory, s->used_memory);
+
+	*size = alloc->size;
+	return (void *)alloc + sizeof(block_t);
+}
+
 /* kmalloc_init_arena(): Initialize an arena with gint's allocator */
 void kmalloc_init_arena(kmalloc_arena_t *a, bool enable_statistics)
 {
@@ -375,6 +423,7 @@ void kmalloc_init_arena(kmalloc_arena_t *a, bool enable_statistics)
 	a->malloc = gint_malloc;
 	a->free = gint_free;
 	a->realloc = gint_realloc;
+	a->malloc_max = gint_malloc_max;
 
 	/* The index is located at the very start of the arena */
 	index_t *index = a->start;

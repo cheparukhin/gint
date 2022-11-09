@@ -131,6 +131,36 @@ void kfree(void *ptr)
 	a->stats.live_blocks--;
 }
 
+/* kmalloc_max(): Allocate the largest block available in an arena */
+void *kmalloc_max(size_t *size, char const *name)
+{
+	for(int i = 0; i < KMALLOC_ARENA_MAX; i++) if(arenas[i])
+	{
+		kmalloc_arena_t *a = arenas[i];
+		if(strcmp(a->name, name)) continue;
+
+		void *rc = a->malloc_max ? a->malloc_max(size, a->data) : NULL;
+
+		/* Maintain statistics */
+		struct kmalloc_stats *s = &a->stats;
+		if(rc)
+		{
+			s->live_blocks++;
+			s->peak_live_blocks = max(s->live_blocks,
+				s->peak_live_blocks);
+			s->total_volume += *size;
+			s->total_blocks++;
+			return rc;
+		}
+		else
+		{
+			s->total_failures++;
+		}
+	}
+
+	return NULL;
+}
+
 /* kmalloc_add_arena(): Add a new arena to the heap source */
 bool kmalloc_add_arena(kmalloc_arena_t *arena)
 {
