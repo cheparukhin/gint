@@ -112,6 +112,16 @@ void *krealloc(void *ptr, size_t size)
 	else
 	{
 		a->stats.total_failures++;
+
+		/* If reallocation within the original arena fails, try another
+		   one. The memory copy behavior is sub-optimal (we copy the
+		   new size which might be more than the original size) but
+		   it's all we can do with this arena interface. */
+		rc = kmalloc(size, NULL);
+		if(rc)
+		{
+			memcpy(rc, ptr, size);
+		}
 	}
 
 	return rc;
