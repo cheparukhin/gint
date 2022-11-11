@@ -401,7 +401,10 @@ void usb_commit_sync(int pipe)
 	while(rc == USB_COMMIT_BUSY);
 
 	/* Wait until the commit completes */
-	while(!flag) sleep();
+	if(rc == 0)
+	{
+		while(!flag) sleep();
+	}
 }
 
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
