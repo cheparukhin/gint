@@ -87,8 +87,10 @@ static void fifo_bind(fifo_t ct, int pipe, int mode, int size)
 {
 	size = (size - (size == 4) - 1) & 3;
 
-	if(ct == CF)
+	if(pipe == 0)
 	{
+		if(USB.CFIFOSEL.ISEL == 1 && USB.DCPCTR.PID == 1) return;
+
 		if(mode == FIFO_WRITE) USB.DCPCTR.PID = 1;
 		/* RCNT=0 REW=0 MBW=size BIGEND=1 ISEL=mode CURPIPE=0 */
 		USB.CFIFOSEL.word = 0x0100 | (mode << 5) | (size << 10);
@@ -129,9 +131,13 @@ static void fifo_unbind(fifo_t ct)
 /* Current operation waiting to be performed on each pipe. There are two
    possible states for a pipe's transfer data:
    -> Either there is a transfer going on, in which case (data != NULL),
-      (size != 0), (controller != NOF), and (used) has no meaning.
-   -> Either there is no transfer going on, and (data = NULL), (size = 0), and
-      (controller = NOF).
+      (size != 0), and (used) has no meaning.
+   -> Either there is no transfer going on, and (data = NULL), (size = 0).
+
+   A controller is assigned to t->ct when a write first occurs until the pipe
+   is fully committed. (ct = NOF) indicates an unused pipe, while (ct != NOF)
+   indicates that stuff has been written and is waiting a commit.
+
    Additionally, between a call to write_round() and the corresponding
    finish_write(), the (flying) attribute is set to a non-zero value indicating
    how many bytes are waiting for write completion. */
@@ -224,7 +230,7 @@ static void finish_transfer(struct transfer volatile *t, int pipe)
 
    This function is called when a write round completes, either by the handler
    of the BEMP interrupt if the round filled the FIFO, or by the handler of the
-   DMA transfer the or write_round() function itself if it didn't.
+   DMA transfer or the write_round() function itself if it didn't.
 
    It the current write operation has finished with this round, this function
    invokes the write_async callback. */
@@ -261,13 +267,7 @@ static void write_round(struct transfer volatile *t, int pipe)
 	if(ct == CF)  FIFO = &USB.CFIFO;
 	if(ct == D0F) FIFO = &USB.D0FIFO;
 	if(ct == D1F) FIFO = &USB.D1FIFO;
-
-	if(pipe == 0)
-	{
-		if(USB.CFIFOSEL.ISEL != 1 || USB.DCPCTR.PID != 1)
-			fifo_bind(ct, 0, FIFO_WRITE, 1);
-	}
-	else fifo_bind(ct, pipe, FIFO_WRITE, t->unit_size);
+	fifo_bind(ct, pipe, FIFO_WRITE, t->unit_size);
 
 	/* Amount of data that can be transferred in a single run */
 	int available = pipe_bufsize(pipe) - (pipe == 0 ? 0 : t->used);
@@ -323,7 +323,7 @@ int usb_write_async(int pipe, void const *data, int size, int unit_size,
 
 	t->data = data;
 	t->size = size;
-	t->unit_size = unit_size;
+	t->unit_size = (pipe == 0) ? 1 : unit_size;
 	t->dma = use_dma;
 	t->committed = false;
 	t->ct = ct;
@@ -375,7 +375,7 @@ int usb_commit_async(int pipe, gint_call_t callback)
 		return 0;
 	}
 
-	/* Commiting an empty pipe ends the transfer on the spot */
+	/* Committing an empty pipe ends the transfer on the spot */
 	if(t->used == 0)
 	{
 		finish_transfer(t, pipe);
@@ -384,6 +384,7 @@ int usb_commit_async(int pipe, gint_call_t callback)
 
 	/* Set BVAL=1 and inform the BEMP handler of the commitment with the
 	   committed flag; the handler will invoke finish_transfer() */
+	fifo_bind(t->ct, pipe, FIFO_WRITE, t->unit_size);
 	if(t->ct == D0F) USB.D0FIFOCTR.BVAL = 1;
 	if(t->ct == D1F) USB.D1FIFOCTR.BVAL = 1;
 	usb_log("[PIPE%d] Committed transfer\n", pipe);

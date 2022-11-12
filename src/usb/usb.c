@@ -287,6 +287,9 @@ static void hrestore(usb_state_t const *s)
 {
 	hpoweron_write();
 
+	/* We will need to reconnect with the PC */
+	usb_open_status = false;
+
 	USB.DVSTCTR.word        = s->DVSTCTR;
 	USB.TESTMODE.word       = s->TESTMODE;
 	USB.REG_C2              = s->REG_C2;
