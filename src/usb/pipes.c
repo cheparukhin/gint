@@ -337,24 +337,38 @@ int usb_write_async(int pipe, void const *data, int size, int unit_size,
 	return 0;
 }
 
-int usb_write_sync(int pipe, void const *data, int size, int unit_size,
-	bool use_dma)
+int usb_write_sync_timeout(int pipe, void const *data, int size, int unit_size,
+	bool use_dma, timeout_t const *timeout)
 {
 	volatile int flag = 0;
-	int rc;
 
 	while(1)
 	{
-		rc = usb_write_async(pipe, data, size, unit_size, use_dma,
+		int rc = usb_write_async(pipe, data, size, unit_size, use_dma,
 			GINT_CALL_SET(&flag));
-		if(rc == 0) break;
+		if(rc == 0)
+			break;
 		if(rc == USB_WRITE_NOFIFO)
 			usb_log("USB_WRITE_NOFIFO\n");
+		if(rc != USB_WRITE_BUSY)
+			return rc;
+		if(timeout_elapsed(timeout))
+			return USB_WRITE_TIMEOUT;
 		sleep();
 	}
 
-	while(!flag) sleep();
+	while(!flag)
+	{
+		if(timeout_elapsed(timeout))
+			return USB_WRITE_TIMEOUT;
+		sleep();
+	}
 	return 0;
+}
+
+int usb_write_sync(int pipe, void const *data, int size, int unit, bool dma)
+{
+	return usb_write_sync_timeout(pipe, data, size, unit, dma, NULL);
 }
 
 int usb_commit_async(int pipe, gint_call_t callback)
@@ -392,20 +406,36 @@ int usb_commit_async(int pipe, gint_call_t callback)
 	return 0;
 }
 
-void usb_commit_sync(int pipe)
+int usb_commit_sync_timeout(int pipe, timeout_t const *timeout)
 {
-	volatile int flag = 0;
-	int rc = 0;
+	int volatile flag = 0;
 
 	/* Wait until the pipe is free, then commit */
-	do rc = usb_commit_async(pipe, GINT_CALL_SET(&flag));
-	while(rc == USB_COMMIT_BUSY);
+	while(1)
+	{
+		int rc = usb_commit_async(pipe, GINT_CALL_SET(&flag));
+		if(rc == 0)
+			break;
+		if(rc != USB_COMMIT_BUSY)
+			return rc;
+		if(timeout_elapsed(timeout))
+			return USB_COMMIT_TIMEOUT;
+		sleep();
+	}
 
 	/* Wait until the commit completes */
-	if(rc == 0)
+	while(!flag)
 	{
-		while(!flag) sleep();
+		if(timeout_elapsed(timeout))
+			return USB_COMMIT_TIMEOUT;
+		sleep();
 	}
+	return 0;
+}
+
+void usb_commit_sync(int pipe)
+{
+	usb_commit_sync_timeout(pipe, NULL);
 }
 
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */

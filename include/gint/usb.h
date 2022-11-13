@@ -10,9 +10,10 @@ extern "C" {
 #endif
 
 #include <gint/defs/types.h>
-#include <gint/std/endian.h>
+#include <gint/defs/timeout.h>
 #include <gint/gint.h>
 #include <stdarg.h>
+#include <endian.h>
 
 /* See "Interfaces to communicate with USB transfers" below for details */
 typedef struct usb_interface usb_interface_t;
@@ -42,11 +43,15 @@ enum {
 	USB_WRITE_BUSY,
 	/* Both FIFO controllers are busy, none is available to transfer */
 	USB_WRITE_NOFIFO,
+	/* Timeout */
+	USB_WRITE_TIMEOUT,
 
 	/* This pipe is busy (returned by usb_commit_async()) */
 	USB_COMMIT_BUSY,
 	/* This pipe has no ongoing transfer to commit */
 	USB_COMMIT_INACTIVE,
+	/* Timeout */
+	USB_COMMIT_TIMEOUT,
 };
 
 /* usb_open(): Open the USB link
@@ -204,7 +209,11 @@ int usb_interface_pipe(usb_interface_t const *interface, int endpoint);
    @dma        Whether to use the DMA to perform the write
    -> Returns an error code (0 on success). */
 int usb_write_sync(int pipe, void const *data, int size, int unit_size,
-   bool use_dma);
+	bool use_dma);
+
+/* usb_write_sync_timeout(): Synchronously write, with a timeout */
+int usb_write_sync_timeout(int pipe, void const *data, int size,
+	int unit_size, bool use_dma, timeout_t const *timeout);
 
 /* usb_write_async(): Asynchronously write to a USB pipe
 
@@ -240,6 +249,9 @@ int usb_write_async(int pipe, void const *data, int size, int unit_size,
    This function waits for any pending write on the pipe to finish, then
    transfers whatever data is left, and returns when the transfer completes. */
 void usb_commit_sync(int pipe);
+
+/* usb_commit_sync_timeout(): Synchronously commit a write, with timeout */
+int usb_commit_sync_timeout(int pipe, timeout_t const *timeout);
 
 /* usb_commit_async(): Asynchronously commit a write
 
