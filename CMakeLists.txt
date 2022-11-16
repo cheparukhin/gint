@@ -132,6 +132,7 @@ set(SOURCES_FX
   # Gray engine
   src/gray/engine.c
   src/gray/gclear.c
+  src/gray/ggetpixel.c
   src/gray/gint_gline.c
   src/gray/gpixel.c
   src/gray/grect.c
@@ -144,6 +145,7 @@ set(SOURCES_FX
   src/render-fx/bopti-asm.s
   src/render-fx/bopti.c
   src/render-fx/dclear.c
+  src/render-fx/dgetpixel.c
   src/render-fx/dpixel.c
   src/render-fx/drect.c
   src/render-fx/dsubimage.c
@@ -193,6 +195,7 @@ set(SOURCES_CG
   src/image/image_vflip_alloc.c
   # Rendering
   src/render-cg/dclear.c
+  src/render-cg/dgetpixel.c
   src/render-cg/dpixel.c
   src/render-cg/drect.c
   src/render-cg/dsubimage.c

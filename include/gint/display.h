@@ -151,6 +151,11 @@ void drect_border(int x1, int y1, int x2, int y2,
    *: When the gray engine is on, see dgray(). */
 void dpixel(int x, int y, int color);
 
+/* dgetpixel(): Get a pixel's color
+   Returns the current color of any pixel in the VRAM. This function ignores
+   the rendering window. Returns -1 if (x,y) is out of bounds. */
+int dgetpixel(int x, int y);
+
 /* dline(): Render a straight line
 
    This function draws a line using a Bresenham-style algorithm. Please note

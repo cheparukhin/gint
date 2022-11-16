@@ -69,6 +69,7 @@ struct rendering_mode
 	void (*drect)(int x1, int y1, int x2, int y2, color_t color);
 	/* Point rendering */
 	void (*dpixel)(int x, int y, color_t color);
+	int (*dgetpixel)(int x, int y);
 	void (*gint_dhline)(int x1, int x2, int y, int color);
 	void (*gint_dvline)(int y1, int y2, int x, int color);
 	/* Text and image rendering */
@@ -87,6 +88,7 @@ int gupdate(void);
 void gclear(color_t color);
 void grect(int x1, int y1, int x2, int y2, color_t color);
 void gpixel(int x, int y, color_t color);
+int ggetpixel(int x, int y);
 void gint_ghline(int x1, int x2, int y, int color);
 void gint_gvline(int y1, int y2, int x, int color);
 void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
@@ -94,10 +96,9 @@ void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 void gsubimage(bopti_image_t const *image, struct rbox *r, int flags);
 
 /* Short macro to call the alternate rendering function when available */
-#define DMODE_OVERRIDE(func, ...)		\
-	if(dmode && dmode->func) {		\
-		dmode->func(__VA_ARGS__);	\
-		return;				\
+#define DMODE_OVERRIDE(func, ...)			\
+	if(dmode && dmode->func) {			\
+		return dmode->func(__VA_ARGS__);	\
 	}
 
 #endif /* RENDER_FX */
