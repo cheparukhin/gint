@@ -33,8 +33,9 @@ void drect(int x1, int y1, int x2, int y2, int color)
 
 	if(color == C_INVERT) for(int h = height; h; h--)
 	{
-		base[x1] ^= 0xffff;
-		base[x2] ^= 0xffff;
+		/* We can't double-draw on base[x1] and base[x2] here */
+		if(x1 & 1) base[x1] ^= 0xffff;
+		if(!(x2 & 1)) base[x2] ^= 0xffff;
 		for(int w = 0; w < width; w++) v[w] ^= 0xffffffff;
 		v += 198;
 		base += 396;
