@@ -1,5 +1,6 @@
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
+#include <gint/defs/util.h>
 #include <gint/display.h>
 
 #include <string.h>
@@ -56,12 +57,19 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 	int height = f->data_height, top = 0;
 
 	/* Vertical clipping */
-	if(x > 395 || y > 223 || y + height <= 0) return;
-	if(y + height > 224) height = 224 - y;
-	if(y < 0) top = -y, height += y, y = 0;
+	if(x >= dwindow.right || y >= dwindow.bottom) return;
+	if(y + height <= dwindow.top) return;
+	height = min(height, dwindow.bottom - y);
+
+	int top_overflow = y - dwindow.top;
+	if(top_overflow < 0) {
+		top = -top_overflow;
+		height += top_overflow;
+		y -= top_overflow;
+	}
 
 	/* Move to top row */
-	uint16_t *target = gint_vram + 396 * y;
+	uint16_t *target = gint_vram + DWIDTH * y;
 
 	/* Character spacing waiting to be drawn, in pixels */
 	int space = 0;
@@ -80,7 +88,7 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 		/* Draw character spacing if background is opaque */
 		if(space && bg >= 0) drect(x, y, x+space-1, y+height-1, bg);
 		x += space;
-		if(x >= 396) break;
+		if(x >= dwindow.right) break;
 
 		int index = topti_offset(f, glyph);
 
@@ -88,14 +96,17 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 
 		int width = dataw, left = 0;
 
-		if(x + dataw <= 0)
+		if(x + dataw <= dwindow.left)
 		{
 			x += dataw;
 			space = f->char_spacing;
 			continue;
 		}
-		if(x < 0) left = -x, width += x;
-		if(x + width > 396) width = 396 - x;
+		if(x < dwindow.left) {
+			left = dwindow.left - x;
+			width -= left;
+		}
+		width = min(width, dwindow.right - x);
 
 		/* Render glyph */
 

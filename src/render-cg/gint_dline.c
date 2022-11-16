@@ -4,14 +4,13 @@
 /* gint_dhline(): Optimized horizontal line */
 void gint_dhline(int x1, int x2, int y, uint16_t color)
 {
-	/* Order and bounds */
-	if((uint)y >= 224) return;
+	if(y < dwindow.top || y >= dwindow.bottom) return;
 	if(x1 > x2) swap(x1, x2);
-	if(x1 >= 396 || x2 < 0) return;
-	if(x1 < 0) x1 = 0;
-	if(x2 >= 396) x2 = 395;
+	if(x1 >= dwindow.right || x2 < dwindow.left) return;
+	x1 = max(x1, dwindow.left);
+	x2 = min(x2, dwindow.right - 1);
 
-	int offset = 396 * y;
+	int offset = DWIDTH * y;
 
 	/* Use longwords to do the copy, but first paint the endpoints to heed
 	   for odd x1 and x2. Checking the parity may be a waste of time. */
@@ -33,15 +32,14 @@ void gint_dhline(int x1, int x2, int y, uint16_t color)
 /* gint_dvline(): Optimized vertical line */
 void gint_dvline(int y1, int y2, int x, uint16_t color)
 {
-	/* Order and bounds */
-	if((uint)x >= 396) return;
+	if(x < dwindow.left || x >= dwindow.right) return;
 	if(y1 > y2) swap(y1, y2);
-	if(y1 < 0) y1 = 0;
-	if(y2 >= 224) y2 = 223;
+	y1 = max(y1, dwindow.top);
+	y2 = min(y2, dwindow.bottom - 1);
 
-	uint16_t *v = gint_vram + 396 * y1 + x;
+	uint16_t *v = gint_vram + DWIDTH * y1 + x;
 	int height = y2 - y1 + 1;
 
-	while(height-- > 0) *v = color, v += 396;
+	while(height-- > 0) *v = color, v += DWIDTH;
 }
 

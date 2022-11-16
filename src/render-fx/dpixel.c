@@ -5,8 +5,8 @@
 /* dpixel() - change a pixel's color */
 void dpixel(int x, int y, int color)
 {
-	/* Sanity checks */
-	if((uint)x >= 128 || (uint)y >= 64) return;
+	if(x < dwindow.left || x >= dwindow.right) return;
+	if(y < dwindow.top || y >= dwindow.bottom) return;
 
 	DMODE_OVERRIDE(dpixel, x, y, color);
 

@@ -1,4 +1,5 @@
 #include <gint/defs/types.h>
+#include <gint/defs/util.h>
 #include <gint/display.h>
 #include "render-fx.h"
 #include "bopti-asm.h"
@@ -271,18 +272,29 @@ int bopti_clip(bopti_image_t const *img, struct rbox *r)
 	int x = r->visual_x, y = r->y;
 	int left = r->left, top = r->top;
 	int width = r->width, height = r->height;
+	int diff;
 
 	/* Adjust the bounding box of the input image */
 	if(left < 0) width  += left, x -= left, left = 0;
 	if(top  < 0) height += top,  y -= top,  top  = 0;
-	if(left + width  > img->width)  width  = img->width  - left;
-	if(top  + height > img->height) height = img->height - top;
+	width = min(width, img->width - left);
+	height = min(height, img->height - top);
 
 	/* Intersect with the bounding box on-screen */
-	if(x < 0) width  += x, left -= x, x = 0;
-	if(y < 0) height += y, top  -= y, y = 0;
-	if(x + width  > DWIDTH)  width  = DWIDTH  - x;
-	if(y + height > DHEIGHT) height = DHEIGHT - y;
+	if((diff = dwindow.left - x) > 0)
+	{
+		width -= diff;
+		left += diff;
+		x += diff;
+	}
+	if((diff = dwindow.top - y) > 0)
+	{
+		height -= diff;
+		top += diff;
+		y += diff;
+	}
+	width = min(width, dwindow.right - x);
+	height = min(height, dwindow.bottom - y);
 
 	r->visual_x = x;
 	r->y = y;

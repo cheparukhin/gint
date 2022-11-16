@@ -2,18 +2,19 @@
 #include <gint/display.h>
 #include "render-fx.h"
 
-/* drect() - fill a rectangle of the screen */
 void drect(int x1, int y1, int x2, int y2, int color)
 {
 	if(x1 > x2) swap(x1, x2);
 	if(y1 > y2) swap(y1, y2);
 
-	/* Argument checking */
-	if(x1 >= 128 || x2 < 0 || y1 >= 64 || y2 < 0) return;
-	if(x1 < 0) x1 = 0;
-	if(x2 >= 128) x2 = 127;
-	if(y1 < 0) y1 = 0;
-	if(y2 >= 64) y2 = 63;
+	/* Rectangle is completely outside the rendering window */
+	if(x1 >= dwindow.right || x2 < dwindow.left) return;
+	if(y1 >= dwindow.bottom || y2 < dwindow.top) return;
+	/* Clipping */
+	x1 = max(x1, dwindow.left);
+	x2 = min(x2, dwindow.right - 1);
+	y1 = max(y1, dwindow.top);
+	y2 = min(y2, dwindow.bottom - 1);
 
 	DMODE_OVERRIDE(drect, x1, y1, x2, y2, color);
 

@@ -11,7 +11,7 @@ bool dvram_init(void)
 	int const MARGIN = 32;
 
 	/* Leave MARGIN bytes on each side of the region; this enables some
-	   important optimisations in the image renderer. We also add another
+	   important optimizations in the image renderer. We also add another
 	   32 bytes so we can manually 32-align the region */
 	uint32_t region = (uint32_t)malloc(DWIDTH*DHEIGHT*2 + MARGIN*2 + 32);
 	if(region == 0)

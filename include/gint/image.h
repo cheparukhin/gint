@@ -41,6 +41,8 @@ extern "C" {
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 
+struct dwindow;
+
 //---
 // Image structures
 //---
@@ -653,13 +655,14 @@ struct gint_image_box
 };
 
 /* Clip the provided box against the input. If, after clipping, the box no
-   longer intersects the output (whose size is specified as out_w/out_h),
-   returns false. Otherwise, returns true. */
+   longer intersects the output window, returns false. Otherwise, returns
+   true. */
 bool gint_image_clip_input(image_t const *img, struct gint_image_box *box,
-    int out_w, int out_h);
+    struct dwindow const *window);
 
 /* Clip the provided box against the output. */
-void gint_image_clip_output(struct gint_image_box *b, int out_w, int out_h);
+void gint_image_clip_output(struct gint_image_box *b,
+   struct dwindow const *window);
 
 //---
 // Internal image rendering routines
@@ -745,15 +748,14 @@ struct gint_image_cmd
    @left_edge   Whether to force 2-alignment on the input (box->left)
    @right_edge  Whether to force 2-alignment on the width
    @cmd         Command to be filled
-   @out_width   Output width (usually DWIDTH)
-   @out_height  Output height (usually DHEIGHT)
+   @window      Rendering window (usually {0, 0, DWIDTH, DHEIGHT})
 
    Returns false if there is nothing to render because of clipping (in which
    case [cmd] is unchanged), true otherwise. [*box] is also updated to reflect
    the final box after clipping but not accounting for edges.  */
 bool gint_image_mkcmd(struct gint_image_box *box, image_t const *img,
     int effects, bool left_edge, bool right_edge,
-    struct gint_image_cmd *cmd, int out_width, int out_height);
+    struct gint_image_cmd *cmd, struct dwindow const *window);
 
 /* Entry point of the renderers. These functions can be called normally as long
    as you can build the commands (eg. by using gint_image_mkcmd() then filling

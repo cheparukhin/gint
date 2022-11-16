@@ -109,6 +109,7 @@ set(SOURCES_COMMON
   src/render/dtext.c
   src/render/dupdate_hook.c
   src/render/dvline.c
+  src/render/dwindow.c
   src/render/topti.c
   # RTC driver
   src/rtc/rtc.c

@@ -4,7 +4,8 @@
 
 int dgetpixel(int x, int y)
 {
-	if((uint)x >= DWIDTH || (uint)y >= DHEIGHT) return -1;
+	if(x < dwindow.left || x >= dwindow.right) return -1;
+	if(y < dwindow.top || y >= dwindow.bottom) return -1;
 
 	DMODE_OVERRIDE(dgetpixel, x, y);
 

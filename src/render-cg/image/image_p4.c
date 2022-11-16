@@ -16,8 +16,8 @@ void dsubimage_p4(int x, int y, image_t const *img,
 	struct gint_image_box box = { x, y, w, h, left, top };
 	struct gint_image_cmd cmd;
 
-	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, DWIDTH,
-		DHEIGHT)) return;
+	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, &dwindow))
+		return;
 	cmd.loop = gint_image_p4_normal;
 	gint_image_p4_loop(DWIDTH, &cmd);
 }
@@ -33,8 +33,8 @@ void dsubimage_p4_clearbg(int x, int y, image_t const *img,
 	struct gint_image_box box = { x, y, w, h, left, top };
 	struct gint_image_cmd cmd;
 
-	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, DWIDTH,
-		DHEIGHT)) return;
+	if(!gint_image_mkcmd(&box, img, eff, false, false, &cmd, &dwindow))
+		return;
 	cmd.color_1 = bg_color;
 	cmd.loop = gint_image_p4_clearbg;
 	gint_image_p4_loop(DWIDTH, &cmd);

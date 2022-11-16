@@ -27,8 +27,6 @@ extern "C" {
 #include <gint/display-cg.h>
 #endif
 
-/* TODO: dinfo() or similar */
-
 //---
 //	Video RAM management
 //---
@@ -81,6 +79,31 @@ void dupdate_set_hook(gint_call_t function);
 
 /* dupdate_get_hook(): Get a copy of the dupdate() hook */
 gint_call_t dupdate_get_hook(void);
+
+//---
+// Rendering mode control
+//---
+
+/* dmode: Rendering mode settings
+
+   This structure indicates the current window settings. Rendering is limited
+   to the rectangle spanning from (left,top) included, to (right,bottom)
+   excluded. The default is from (0,0) to (DWIDTH,DHEIGHT). */
+struct dwindow {
+   int left, top;
+   int right, bottom;
+};
+extern struct dwindow dwindow;
+
+/* dwindow_set(): Set the rendering window
+
+   This function changes [dwindow] settings to limit rendering to a sub-surface
+   of the VRAM. Note that this doesn't change the coordinate system; the pixel
+   at (DWIDTH/2, DHEIGHT/2) is always in the middle of the screen regardless of
+   the window setting. However, it might be masked out by the window.
+
+   Returns the old dwindow settings (if it needs to be restored later). */
+struct dwindow dwindow_set(struct dwindow new_mode);
 
 //---
 //	Area rendering functions

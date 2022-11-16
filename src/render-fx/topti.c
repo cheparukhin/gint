@@ -1,5 +1,6 @@
 #include <gint/defs/types.h>
 #include <gint/defs/attributes.h>
+#include <gint/defs/util.h>
 #include <gint/display.h>
 
 #include "../render/render.h"
@@ -97,12 +98,20 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 	uint32_t const *data = f->data;
 
 	/* Basic clipping */
-	if(x > 127 || y > 63 || y + height <= 0) return;
-	if(y + height > 64) height = 64 - y;
+	if(x >= dwindow.right || y >= dwindow.bottom) return;
+	if(y + height <= dwindow.top) return;
+	height = min(height, dwindow.bottom - y);
 
-	/* How much we need to skip vertically if we render text at y < 0 */
+	/* How much we skip vertically if we render at y < dwindow.top */
 	int vdisp = 0;
-	if(y < 0) vdisp = -y, y = 0;
+	if(y < dwindow.top)
+	{
+		vdisp = dwindow.top - y;
+		y = dwindow.top;
+	}
+
+	uint32_t bg_mask[4];
+	masks(dwindow.left, dwindow.right, bg_mask);
 
 	/* Operator data and background */
 	uint32_t operators[height];
@@ -146,6 +155,12 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 
 		if(x >= 0)
 		{
+			for(int i = 0; i < height; i++)
+			{
+				operators[i] &= bg_mask[x];
+				bg[i] &= bg_mask[x];
+			}
+
 			asm_bg(v1, v2, bg + vdisp, height - vdisp);
 			asm_fg(v1, v2, operators + vdisp, height - vdisp);
 		}
@@ -171,7 +186,11 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 	/* Put the final longwords */
 	if(x >= 0 && x < 4 && free < 32)
 	{
-		for(int i = 0; i < height; i++) bg[i] &= ~((1 << free) - 1);
+		for(int i = 0; i < height; i++)
+		{
+			operators[i] &= bg_mask[x];
+			bg[i] &= bg_mask[x] & ~((1 << free) - 1);
+		}
 		asm_bg(v1, v2, bg + vdisp, height - vdisp);
 		asm_fg(v1, v2, operators + vdisp, height - vdisp);
 	}

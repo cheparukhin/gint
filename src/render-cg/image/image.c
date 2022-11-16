@@ -1,8 +1,9 @@
 #include <gint/image.h>
 #include <gint/display.h>
+#include <gint/defs/util.h>
 
 bool gint_image_clip_input(image_t const *img, struct gint_image_box *b,
-	int out_w, int out_h)
+	struct dwindow const *window)
 {
 	/* Adjust the bounding box of the input image */
 	if(b->left < 0) b->w += b->left, b->x -= b->left, b->left = 0;
@@ -13,37 +14,50 @@ bool gint_image_clip_input(image_t const *img, struct gint_image_box *b,
 	/* Check whether the box intersects the screen */
 	if(b->w <= 0 || b->h <= 0)
 		return false;
-	if(b->x + b->w <= 0 || b->x >= out_w)
+	if(b->x + b->w <= window->left || b->x >= window->right)
 		return false;
-	if(b->y + b->h <= 0 || b->y >= out_h)
+	if(b->y + b->h <= window->top || b->y >= window->bottom)
 		return false;
 
 	return true;
 }
 
-void gint_image_clip_output(struct gint_image_box *b, int out_w, int out_h)
+void gint_image_clip_output(struct gint_image_box *b,
+	struct dwindow const *window)
 {
 	/* Intersect with the bounding box on-screen */
-	if(b->y < 0) b->top -= b->y, b->h += b->y, b->y = 0;
-	if(b->y + b->h > out_h) b->h = (out_h - b->y);
-	if(b->x < 0) b->left -= b->x, b->w += b->x, b->x = 0;
-	if(b->x + b->w > out_w) b->w = (out_w - b->x);
+
+	if(b->y < window->top) {
+		int d = window->top - b->y; /* > 0 */
+		b->top += d;
+		b->h -= d;
+		b->y += d;
+	}
+	b->h = min(b->h, window->bottom - b->y);
+
+	if(b->x < window->left) {
+		int d = window->left - b->x; /* > 0 */
+		b->left += d;
+		b->w -= d;
+		b->x += d;
+	}
+	b->w = min(b->w, window->right - b->x);
 }
 
 bool gint_image_mkcmd(struct gint_image_box *box, image_t const *img,
 	int effects, bool left_edge, bool right_edge,
-	struct gint_image_cmd *cmd, int out_width, int out_height)
+	struct gint_image_cmd *cmd, struct dwindow const *window)
 {
 	/* Convert the old DIMAGE_NOCLIP flag */
 	if(effects & DIMAGE_NOCLIP)
 		effects |= IMAGE_NOCLIP;
 
 	if(!(effects & IMAGE_NOCLIP_INPUT)) {
-		if(!gint_image_clip_input(img, box, out_width, out_height))
+		if(!gint_image_clip_input(img, box, window))
 			return false;
 	}
 	if(!(effects & IMAGE_NOCLIP_OUTPUT))
-		gint_image_clip_output(box, out_width, out_height);
+		gint_image_clip_output(box, window);
 
 	cmd->effect = (effects & (IMAGE_VFLIP | IMAGE_HFLIP)) >> 8;
 	cmd->columns = box->w;
