@@ -225,10 +225,6 @@ SECTIONS
 	*/
 
 	/DISCARD/ : {
-		/* Debug sections (often from libgcc) */
-		*(.debug_info .debug_abbrev .debug_loc .debug_aranges
-		  .debug_ranges .debug_line .debug_str .debug_frame
-		  .debug_loclists .debug_rnglists)
 		/* Java class registration (why are they even here?!) */
 		*(.jcr)
 		/* Asynchronous unwind tables: no C++ exception handling */
