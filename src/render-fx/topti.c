@@ -109,6 +109,7 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 		vdisp = dwindow.top - y;
 		y = dwindow.top;
 	}
+	if(vdisp >= height) return;
 
 	uint32_t bg_mask[4];
 	masks(dwindow.left, dwindow.right, bg_mask);

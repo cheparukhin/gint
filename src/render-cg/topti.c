@@ -59,7 +59,6 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 	/* Vertical clipping */
 	if(x >= dwindow.right || y >= dwindow.bottom) return;
 	if(y + height <= dwindow.top) return;
-	height = min(height, dwindow.bottom - y);
 
 	int top_overflow = y - dwindow.top;
 	if(top_overflow < 0) {
@@ -67,6 +66,8 @@ static void topti_render(int x, int y, char const *str_char, font_t const *f,
 		height += top_overflow;
 		y -= top_overflow;
 	}
+	height = min(height, dwindow.bottom - y);
+	if(height <= 0) return;
 
 	/* Move to top row */
 	uint16_t *target = gint_vram + DWIDTH * y;
