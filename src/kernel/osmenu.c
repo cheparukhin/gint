@@ -13,6 +13,7 @@ int   __GetKeyWait(int *col,int *row,int type,int time,int menu,uint16_t *key);
 void  __ClearKeyBuffer(void); /* ? */
 void *__GetVRAMAddress(void);
 void  __ConfigureStatusArea(int mode);
+void __SetQuitHandler(void (*callback)(void));
 
 static int __osmenu_id;
 
@@ -75,4 +76,29 @@ void gint_osmenu_native(void)
 void gint_osmenu(void)
 {
 	gint_world_switch(GINT_CALL(gint_osmenu_native));
+}
+
+static gint_call_t __gcall;
+static bool __do_world_switch;
+
+static void __handler()
+{
+	if(__do_world_switch){
+		gint_call(__gcall);
+	}else{
+		/* TODO: quit the world switch */
+		gint_call(__gcall);
+	}
+}
+
+static void __sethandler()
+{
+	__SetQuitHandler((void *)__handler);
+}
+
+void gint_set_quit_handler(gint_call_t gcall, bool do_world_switch)
+{
+	__gcall = gcall;
+	__do_world_switch = do_world_switch;
+	gint_world_switch(GINT_CALL(__sethandler));
 }
