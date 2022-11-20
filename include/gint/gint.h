@@ -109,6 +109,16 @@ static GINLINE void *gint_inthandler(int code, void const *h, size_t size) {
    Returns the return value of the callback. */
 extern int (*gint_inth_callback)(gint_call_t const *call);
 
+/* gint_set_quit_handler(): Call a GINT_CALL when the user open another add-in
+   
+   This function use the SetQuitHandler syscall to call a function when the
+   user open another add-in.
+
+   @call  A GINT_CALL
+   @do_world_switch  1 to execute @call in a world_switch. */
+
+void gint_set_quit_handler(gint_call_t gcall, bool do_world_switch);
+
 #ifdef __cplusplus
 }
 #endif
