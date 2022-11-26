@@ -1,5 +1,6 @@
 #include <gint/display.h>
-#include <stdlib.h>
+#include <gint/kmalloc.h>
+#include <gint/config.h>
 
 /* Up to two VRAM pointers can be set, for triple buffering. */
 static uint16_t *vram_1 = NULL, *vram_2 = NULL;
@@ -13,7 +14,13 @@ bool dvram_init(void)
 	/* Leave MARGIN bytes on each side of the region; this enables some
 	   important optimizations in the image renderer. We also add another
 	   32 bytes so we can manually 32-align the region */
-	uint32_t region = (uint32_t)malloc(DWIDTH*DHEIGHT*2 + MARGIN*2 + 32);
+	uint32_t region = (uint32_t)kmalloc(DWIDTH*DHEIGHT*2 + MARGIN*2 + 32,
+#if !defined(GINT_NO_OS_STACK)
+		"_ostk"
+#else
+		NULL
+#endif
+	);
 	if(region == 0)
 		return false;
 
