@@ -109,15 +109,25 @@ static GINLINE void *gint_inthandler(int code, void const *h, size_t size) {
    Returns the return value of the callback. */
 extern int (*gint_inth_callback)(gint_call_t const *call);
 
-/* gint_set_quit_handler(): Call a GINT_CALL when the user open another add-in
-   
-   This function use the SetQuitHandler syscall to call a function when the
-   user open another add-in.
+/* gint_set_quit_handler(): Setup a call to be invoked when leaving the add-in
 
-   @call  A GINT_CALL
-   @do_world_switch  1 to execute @call in a world_switch. */
+   This function sets up the provided GINT_CALL() to be invoked when the
+   add-in is unloaded, which is either when we exit from main() or when
+   starting another application from the main menu. Crucially, this is only
+   *after* selecting an application, not before opening the main menu. The
+   quit handler is not invoked if the user re-enters the add-in.
 
-void gint_set_quit_handler(gint_call_t gcall, bool do_world_switch);
+   This is based on the SetQuitHandler() syscall, and therefore the callback
+   runs in the OS world by default. If [run_in_os_world] is set to false, a
+   world switch will be performed to run the callback in the gint world.
+
+   TODO: Currently the quit handler is not called when exiting from main().
+   TODO: Detail how this interacts with destructor functions!
+   TODO: [run_in_os_world == false] is not honored yet (because unstable)
+
+   @call             Callback to be performed when leaving add-in
+   @run_in_os_world  true to stay in OS world, false to use gint world */
+void gint_set_quit_handler(gint_call_t gcall, bool run_in_os_world);
 
 #ifdef __cplusplus
 }
