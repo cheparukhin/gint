@@ -42,6 +42,7 @@
 .global ___ClearKeyBuffer
 .global ___GetVRAMAddress
 .global ___ConfigureStatusArea
+.global ___SetQuitHandler
 
 #define syscall_(id, syscall_table)	\
 	mov.l	syscall_table, r2	;\
@@ -111,6 +112,8 @@ ___ClearKeyBuffer:
 	syscall(0x241)
 ___GetVRAMAddress:
 	syscall(0x135)
+___SetQuitHandler:
+	syscall(0x494)
 
 syscall_table:
 	.long	0x80010070
@@ -178,6 +181,8 @@ ___GetVRAMAddress:
 	syscall(0x1e6)
 ___ConfigureStatusArea:
 	syscall(0x2b7)
+___SetQuitHandler:
+	syscall(0x1e6e)
 
 .global ___SpecialMatrixCodeProcessing
 ___SpecialMatrixCodeProcessing:
