@@ -177,25 +177,27 @@ int usb_configure_solve(usb_interface_t const **interfaces)
 	return 0;
 }
 
-/* usb_configure_log(): Print configuration results in the usb_log() */
+/* usb_configure_log(): Print configuration results in the USB_LOG() */
 void usb_configure_log(void)
 {
+#ifdef GINT_USB_DEBUG
 	/* Log the final configuration */
 	for(int i = 0; i < 16 && conf_if[i]; i++)
-		usb_log("Interface #%d: %p\n", i, conf_if[i]);
+		USB_LOG("Interface #%d: %p\n", i, conf_if[i]);
 
 	for(int i = 0; i < 32; i++)
 	{
 		if(!conf_ep[i].intf) continue;
 
 		endpoint_t *ep = &conf_ep[i];
-		usb_log("Endpoint %02x\n",
+		USB_LOG("Endpoint %02x\n",
 			(i & 15) + (i >= 16 ? 0x80 : 0));
-		usb_log("  Interface %p address %02x\n",
+		USB_LOG("  Interface %p address %02x\n",
 			ep->intf, ep->dc->bEndpointAddress);
-		usb_log("  Pipe %d (FIFO: %02x..%02x)\n",
+		USB_LOG("  Pipe %d (FIFO: %02x..%02x)\n",
 			ep->pipe, ep->bufnmb, ep->bufnmb + ep->bufsize);
 	}
+#endif
 }
 
 /* usb_configure(): Load the generated configuration to the USB module */

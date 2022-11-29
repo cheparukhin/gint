@@ -76,7 +76,7 @@ static fifo_t fifo_access(int pipe)
 	if(pipe == 0) return CF;
 	/* Find a free controller */
 	if(USB.D0FIFOSEL.CURPIPE == 0) return D0F;
-	usb_log("Wait D0 is unavailable\n");
+	USB_LOG("Wait D0 is unavailable\n");
 	if(USB.D1FIFOSEL.CURPIPE == 0) return D1F;
 
 	return NOF;
@@ -295,7 +295,7 @@ static void write_round(struct transfer volatile *t, int pipe)
 
 		bool ok = dma_transfer_async(channel, block_size, size,
 			t->data, DMA_INC, (void *)FIFO, DMA_FIXED, callback);
-		if(!ok) usb_log("DMA async failed on channel %d!\n", channel);
+		if(!ok) USB_LOG("DMA async failed on channel %d!\n", channel);
 	}
 	else
 	{
@@ -349,7 +349,7 @@ int usb_write_sync_timeout(int pipe, void const *data, int size, int unit_size,
 		if(rc == 0)
 			break;
 		if(rc == USB_WRITE_NOFIFO)
-			usb_log("USB_WRITE_NOFIFO\n");
+			USB_LOG("USB_WRITE_NOFIFO\n");
 		if(rc != USB_WRITE_BUSY)
 			return rc;
 		if(timeout_elapsed(timeout))
@@ -401,7 +401,7 @@ int usb_commit_async(int pipe, gint_call_t callback)
 	fifo_bind(t->ct, pipe, FIFO_WRITE, t->unit_size);
 	if(t->ct == D0F) USB.D0FIFOCTR.BVAL = 1;
 	if(t->ct == D1F) USB.D1FIFOCTR.BVAL = 1;
-	usb_log("[PIPE%d] Committed transfer\n", pipe);
+	USB_LOG("[PIPE%d] Committed transfer\n", pipe);
 
 	return 0;
 }

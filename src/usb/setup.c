@@ -88,7 +88,7 @@ static void write_configuration_descriptor(int wLength)
 		uint8_t const *dc = interfaces[i]->dc[k];
 		total_length += dc[0];
 	}
-	usb_log("Configuration descriptor size: %d\n", (int)total_length);
+	USB_LOG("Configuration descriptor size: %d\n", (int)total_length);
 
 	/* Write the configuration descriptor */
 	dc_configuration.wTotalLength = htole16(total_length);
@@ -127,9 +127,9 @@ static void req_get_descriptor(int wValue, int wLength)
 	int type = (wValue >> 8) & 0xff;
 	int num = (wValue & 0xff);
 
-	static char const *strs[] = {
+	GUNUSED static char const *strs[] = {
 		"DEV","CONFIG","STR","INTF","ENDP","DEVQ","OSC","POWER" };
-	usb_log("GET_DESCRIPTOR: %s #%d len:%d\n", strs[type-1], num, wLength);
+	USB_LOG("GET_DESCRIPTOR: %s #%d len:%d\n", strs[type-1], num, wLength);
 
 	if(type == USB_DC_DEVICE && num == 0)
 		dcp_write(&dc_device, dc_device.bLength);
@@ -150,13 +150,13 @@ static void req_get_descriptor(int wValue, int wLength)
 
 static void req_get_configuration(void)
 {
-	usb_log("GET_CONFIGURATION -> %d\n", 1);
+	USB_LOG("GET_CONFIGURATION -> %d\n", 1);
 	dcp_write("\x01", 1);
 }
 
 static void req_set_configuration(int wValue)
 {
-	usb_log("SET_CONFIGURATION: %d\n", wValue);
+	USB_LOG("SET_CONFIGURATION: %d\n", wValue);
 	/* Ok for (wValue == 1) only */
 	USB.DCPCTR.PID = (wValue == 1) ? 1 : 2;
 }
@@ -167,7 +167,7 @@ void usb_req_setup(void)
 	int bRequest = USB.USBREQ.BREQUEST;
 	int bmRequestType = USB.USBREQ.BMREQUEST;
 	int wValue = USB.USBVAL.word;
-	int wIndex = USB.USBINDX.word;
+	GUNUSED int wIndex = USB.USBINDX.word;
 	int wLength = USB.USBLENG.word;
 
 	USB.INTSTS0.VALID = 0;
@@ -185,7 +185,7 @@ void usb_req_setup(void)
 		req_set_configuration(wValue);
 
 	/* TODO: Other standard SETUP requests */
-	else usb_log("SETUP: bRequest=%02x bmRequestType=%02x wValue=%04x\n"
+	else USB_LOG("SETUP: bRequest=%02x bmRequestType=%02x wValue=%04x\n"
 		"  wIndex=%04x wLength=%d -> ???\n",
 		bRequest, bmRequestType, wValue, wIndex, wLength);
 

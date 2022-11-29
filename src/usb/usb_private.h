@@ -131,7 +131,7 @@ void usb_pipe_init_transfers(void);
 		GINT_CALL_SET_STOP(&__f)); \
 	if(__t >= 0) timer_start(__t); \
 	while((condition) && __f == 0) {} \
-	if(__f) usb_log("%s: %d: (" #condition ") holds\n", \
+	if(__f) USB_LOG("%s: %d: (" #condition ") holds\n", \
 		__FUNCTION__, __LINE__); \
 	if(__t >= 0) timer_stop(__t); \
 	__f != 0; \

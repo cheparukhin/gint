@@ -12,6 +12,7 @@ extern "C" {
 #include <gint/defs/types.h>
 #include <gint/defs/timeout.h>
 #include <gint/gint.h>
+#include <gint/config.h>
 #include <stdarg.h>
 #include <endian.h>
 
@@ -271,6 +272,9 @@ int usb_commit_async(int pipe, gint_call_t callback);
 // USB debugging log
 //---
 
+#ifdef GINT_USB_DEBUG
+#define USB_LOG(...) usb_log(__VA_ARGS__)
+
 /* usb_set_log(): Set the logging function for the USB driver
 
    The USB driver can produce logs, which are mostly useful to troubleshoot
@@ -283,6 +287,10 @@ void usb_set_log(void (*logger)(char const *format, va_list args));
 
 /* usb_log(): Send a message to the USB log */
 void usb_log(char const *format, ...);
+
+#else
+#define USB_LOG(...) do {} while(0)
+#endif
 
 //---
 // Standard descriptors

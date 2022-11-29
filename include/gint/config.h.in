@@ -38,4 +38,7 @@
    enabled or disabled at runtime. */
 #cmakedefine GINT_KMALLOC_DEBUG
 
+/* GINT_USB_DEBUG: Selects whether USB debug functions are enabled */
+#cmakedefine GINT_USB_DEBUG
+
 #endif /* GINT_CONFIG */

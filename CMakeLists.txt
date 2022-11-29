@@ -9,6 +9,7 @@ include(Fxconv)
 option(GINT_NO_OS_STACK "Do not use the OS stack as a memory pool (fx-CG only)")
 option(GINT_STATIC_GRAY "Use static memory instead of malloc for gray buffers (fx-9860G only)")
 option(GINT_KMALLOC_DEBUG "Enable debug functions for kmalloc")
+option(GINT_USB_DEBUG "Enable debug functions for the USB driver")
 
 set(CMAKE_INSTALL_MESSAGE LAZY)
 

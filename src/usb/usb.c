@@ -111,14 +111,14 @@ static void hpoweroff(void)
 
 int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 {
-	usb_log("---- usb_open ----\n");
+	USB_LOG("---- usb_open ----\n");
 
 	int rc = usb_configure_solve(interfaces);
 	usb_configure_log();
 
 	if(rc != 0)
 	{
-		usb_log("configure failure: %d\n", rc);
+		USB_LOG("configure failure: %d\n", rc);
 		return rc;
 	}
 
@@ -189,7 +189,7 @@ void usb_close(void)
 {
 	intc_priority(INTC_USB, 0);
 	hpoweroff();
-	usb_log("---- usb_close ----\n");
+	USB_LOG("---- usb_close ----\n");
 
 	usb_open_callback = GINT_CALL_NULL;
 	usb_open_status = false;
@@ -201,7 +201,7 @@ void usb_close(void)
 
 static void usb_interrupt_handler(void)
 {
-	static char const * const device_st[] = {
+	GUNUSED static char const * const device_st[] = {
 		"powered", "default", "address", "configured",
 		"suspended-powered", "suspended-default", "suspended-address",
 		"suspended-configured",
@@ -212,7 +212,7 @@ static void usb_interrupt_handler(void)
 	if(USB.INTSTS0.VBINT)
 	{
 		INTSTS0_clear(VBINT);
-		usb_log("VBUS %s\n", USB.INTSTS0.VBSTS ? "up" : "down");
+		USB_LOG("VBUS %s\n", USB.INTSTS0.VBSTS ? "up" : "down");
 	}
 	else if(USB.INTSTS0.CTRT)
 	{
@@ -222,9 +222,9 @@ static void usb_interrupt_handler(void)
 	else if(USB.INTSTS0.DVST)
 	{
 		INTSTS0_clear(DVST);
-		usb_log("DVST %s", device_st[USB.INTSTS0.DVSQ]);
-		if(USB.INTSTS0.DVSQ == 2) usb_log(": %04x\n",USB.USBADDR.word);
-		else usb_log("\n");
+		USB_LOG("DVST %s", device_st[USB.INTSTS0.DVSQ]);
+		if(USB.INTSTS0.DVSQ == 2) USB_LOG(": %04x\n",USB.USBADDR.word);
+		else USB_LOG("\n");
 
 		/* When configured, run the callback for usb_open() */
 		if(USB.INTSTS0.DVSQ == 3)
@@ -248,7 +248,7 @@ static void usb_interrupt_handler(void)
 			if(status & (1 << i)) usb_pipe_write_bemp(i);
 		}
 	}
-	else usb_log("<%04X> -> ???\n", USB.INTSTS0.word);
+	else USB_LOG("<%04X> -> ???\n", USB.INTSTS0.word);
 
 	/* Restore PIPESEL which can have been used for transfers */
 	USB.PIPESEL.word = pipesel;
