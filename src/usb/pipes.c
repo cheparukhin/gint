@@ -224,6 +224,8 @@ static void finish_transfer(struct transfer volatile *t, int pipe)
 	if(pipe) USB.BEMPENB.word &= ~(1 << pipe);
 
 	if(t->callback.function) gint_call(t->callback);
+
+	USB_TRACE("finish_transfer()");
 }
 
 /* finish_round(): Update transfer logic after a write round completes
@@ -252,6 +254,8 @@ static void finish_round(struct transfer volatile *t, int pipe)
 		t->data = NULL;
 		if(t->callback.function) gint_call(t->callback);
 	}
+
+	USB_TRACE("finish_round()");
 }
 
 /* write_round(): Write up to a FIFO's worth of data to a pipe
@@ -304,6 +308,8 @@ static void write_round(struct transfer volatile *t, int pipe)
 		if(t->unit_size == 4) write_32(t->data, size >> 2, FIFO);
 		if(partial) finish_round(t, pipe);
 	}
+
+	USB_TRACE("write_round()");
 }
 
 int usb_write_async(int pipe, void const *data, int size, int unit_size,

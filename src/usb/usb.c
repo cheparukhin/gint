@@ -6,6 +6,7 @@
 #include <gint/drivers/states.h>
 #include <gint/clock.h>
 #include <gint/intc.h>
+#include <gint/cpu.h>
 #include "usb_private.h"
 
 #define USB SH7305_USB
@@ -27,10 +28,11 @@ static gint_call_t usb_open_callback = GINT_CALL_NULL;
 static bool volatile usb_open_status = false;
 
 //---
-// Logging system
+// Debugging functions
 //---
 
 static void (*usb_logger)(char const *format, va_list args) = NULL;
+static void (*usb_tracer)(char const *message) = NULL;
 
 void usb_set_log(void (*logger)(char const *format, va_list args))
 {
@@ -40,11 +42,24 @@ void usb_set_log(void (*logger)(char const *format, va_list args))
 void usb_log(char const *format, ...)
 {
 	if(!usb_logger) return;
-
 	va_list args;
 	va_start(args, format);
 	usb_logger(format, args);
 	va_end(args);
+}
+
+void usb_set_trace(void (*tracer)(char const *message))
+{
+	usb_tracer = tracer;
+}
+
+void usb_trace(char const *message)
+{
+	if(usb_tracer) {
+		cpu_atomic_start();
+		usb_tracer(message);
+		cpu_atomic_end();
+	}
 }
 
 //---

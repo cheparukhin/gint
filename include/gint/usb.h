@@ -269,27 +269,28 @@ int usb_commit_sync_timeout(int pipe, timeout_t const *timeout);
 int usb_commit_async(int pipe, gint_call_t callback);
 
 //---
-// USB debugging log
+// USB debugging functions
 //---
 
 #ifdef GINT_USB_DEBUG
 #define USB_LOG(...) usb_log(__VA_ARGS__)
+#define USB_TRACE(...) usb_trace(__VA_ARGS__)
 
-/* usb_set_log(): Set the logging function for the USB driver
-
-   The USB driver can produce logs, which are mostly useful to troubleshoot
-   problems and add new protocols. The logging is disabled by default but can
-   be enabled by specifying this function.
-
-   It is up to you whether to store that in a buffer, rotate logs, send them to
-   storage memory or a console on the PC. */
+/* usb_set_log(): Set the logging function for the USB driver */
 void usb_set_log(void (*logger)(char const *format, va_list args));
-
 /* usb_log(): Send a message to the USB log */
 void usb_log(char const *format, ...);
 
+/* usb_set_trace(): Set the tracing function for the USB driver
+   The function is called atomically, thus cannot be interrupted, therefore it
+   is safe to call usb_trace() in interrupt handlers. */
+void usb_set_trace(void (*tracer)(char const *message));
+/* usb_trace(): Trace the current state of the driver */
+void usb_trace(char const *message);
+
 #else
 #define USB_LOG(...) do {} while(0)
+#define USB_TRACE(...) do {} while(0)
 #endif
 
 //---
