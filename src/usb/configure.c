@@ -77,7 +77,6 @@ static int find_pipe(int type)
 	return -1;
 }
 
-/* usb_configure_solve(): Allocate resources for all activated interfaces */
 int usb_configure_solve(usb_interface_t const **interfaces)
 {
 	/* Reset the previous configuration */
@@ -177,7 +176,6 @@ int usb_configure_solve(usb_interface_t const **interfaces)
 	return 0;
 }
 
-/* usb_configure_log(): Print configuration results in the USB_LOG() */
 void usb_configure_log(void)
 {
 #ifdef GINT_USB_DEBUG
@@ -200,7 +198,6 @@ void usb_configure_log(void)
 #endif
 }
 
-/* usb_configure(): Load the generated configuration to the USB module */
 void usb_configure(void)
 {
 	for(int i = 0; i < 32; i++)
@@ -208,11 +205,18 @@ void usb_configure(void)
 		if(!conf_ep[i].intf) continue;
 		int address = (i & 0xf) + (i >= 16 ? 0x80 : 0);
 		usb_pipe_configure(address, &conf_ep[i]);
+	}
+}
+
+void usb_configure_clear_pipes(void)
+{
+	for(int i = 0; i < 32; i++)
+	{
+		if(!conf_ep[i].intf) continue;
 		usb_pipe_clear(conf_ep[i].pipe);
 	}
 }
 
-/* usb_configure_interfaces(): List configures interfaces */
 usb_interface_t const * const *usb_configure_interfaces(void)
 {
 	return conf_if;

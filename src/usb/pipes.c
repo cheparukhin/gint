@@ -49,7 +49,10 @@ void usb_pipe_clear(int pipe)
 	usb_while(!USB.PIPECTR[pipe-1].BSTS);
 
 	USB.PIPECTR[pipe-1].PID = 0;
+	usb_while(USB.PIPECTR[pipe-1].CSSTS || USB.PIPECTR[pipe-1].PBUSY);
+
 	USB.PIPECTR[pipe-1].SQCLR = 1;
+	usb_while(USB.PIPECTR[pipe-1].SQMON != 0);
 }
 
 //---

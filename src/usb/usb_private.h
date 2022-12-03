@@ -27,17 +27,29 @@
    Returns an USB_* error code. */
 int usb_configure_solve(usb_interface_t const **interfaces);
 
-/* usb_configure_log(): Print configuration results in the usb_log()
+/* usb_configure_log(): Print configuration results with USB_LOG()
    This function can be called even if usb_configure_solve() fails. */
 void usb_configure_log(void);
 
-/* usb_configure(): Load the generated configuration to the USB module
+/* usb_configure(): Load the solved configuration to the USB module
 
    This function configures the USB module's pipes and FIFO memory to prepare
    handling requests to the interfaces activated in usb_configure_solve(). This
    configuration step is un-done by either another configuration through a
-   successful usb_open(), or a context restore in the USB driver. */
+   successful usb_open(), or a context restore in the USB driver.
+
+   This function loads all of the "static" data for the pipes, ie. PIPCFG,
+   PIPEBUF, PIPEMAXP, and PIPERI, and doesn't change the "dynamic" data in
+   PIPECTR. */
 void usb_configure(void);
+
+/* usb_configure_clear_pipes(): Clear configured pipes
+
+   This function clears configured pipes' dynamic data in PIPECTR. It shoud be
+   used when initializing the module but also when resetting the connection to
+   the host (eg. after a world switch), since a renewed host will not expect
+   any leftover data, non-zero sequence bits, etc. */
+void usb_configure_clear_pipes(void);
 
 /* endpoint_t: Driver information for each open endpoint in the device
 

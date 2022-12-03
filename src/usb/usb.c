@@ -175,6 +175,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 
 	/* Configure other pipes to use activated interfaces */
 	usb_configure();
+	usb_configure_clear_pipes();
 	/* Initialize transfer tracker for multi-part transfers */
 	usb_pipe_init_transfers();
 
@@ -244,6 +245,8 @@ static void usb_interrupt_handler(void)
 		/* When configured, run the callback for usb_open() */
 		if(USB.INTSTS0.DVSQ == 3)
 		{
+			usb_configure_clear_pipes();
+
 			usb_open_status = true;
 			if(usb_open_callback.function)
 			{
