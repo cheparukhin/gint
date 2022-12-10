@@ -78,8 +78,7 @@ typedef volatile struct
 //---
 //  SH7305 Pin Function Controller.
 //  This is somewhat reminiscent of the SH7724, but there are many differences.
-//  The official emulator is the basis for this module, with extra registers
-//  added based on known differences with actual hardware (eg. few last ports).
+//  The official emulator is the basis for this module.
 //---
 
 /* All port control registers (PCRx) have 2-bit entries specifying 4 pin modes:
