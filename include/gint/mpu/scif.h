@@ -209,7 +209,7 @@ typedef volatile struct
 
 } GPACKED(4) sh7305_scif_t;
 
-#define SH7305_SCIF (*((sh7305_scif_t *)0x04410000))
+#define SH7305_SCIF (*((sh7305_scif_t *)0xa4410000))
 
 #ifdef __cplusplus
 }
