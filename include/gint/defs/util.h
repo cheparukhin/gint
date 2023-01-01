@@ -14,6 +14,11 @@
 #define GAUTOTYPE __auto_type
 #endif
 
+#ifdef __cplusplus
+#include <algorithm>
+using std::min;
+using std::max;
+#else
 /* min(), max() (without double evaluation) */
 #define	min(a, b) ({			\
 	GAUTOTYPE _a = (a);		\
@@ -25,6 +30,7 @@
 	GAUTOTYPE _b = (b);		\
 	_a > _b ? _a : _b;		\
 })
+#endif
 
 /* sgn() (without double evaluation) */
 #define	sgn(s) ({			\
