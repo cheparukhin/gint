@@ -2,13 +2,14 @@
 #include <gint/defs/attributes.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdlib.h>
 
 /* File descriptor table */
-static fs_descriptor_t fdtable[FS_FD_MAX] = { 0 };
+static fs_descriptor_t *fdtable;
 
 fs_descriptor_t const *fs_get_descriptor(int fd)
 {
-	if((unsigned)fd >= FS_FD_MAX)
+	if(!fdtable || (unsigned)fd >= FS_FD_MAX)
 		return NULL;
 	if(fdtable[fd].type == NULL)
 		return NULL;
@@ -18,7 +19,7 @@ fs_descriptor_t const *fs_get_descriptor(int fd)
 
 int fs_create_descriptor(fs_descriptor_t const *data)
 {
-	if(data->type == NULL)
+	if(!fdtable || data->type == NULL)
 		return -1;
 
 	/* Leave 0/1/2 for stdin, stdout and stderr */
@@ -34,7 +35,7 @@ int fs_create_descriptor(fs_descriptor_t const *data)
 
 void fs_free_descriptor(int fd)
 {
-	if((unsigned)fd >= FS_FD_MAX)
+	if(!fdtable || (unsigned)fd >= FS_FD_MAX)
 		return;
 
 	fdtable[fd].type = NULL;
@@ -43,6 +44,10 @@ void fs_free_descriptor(int fd)
 
 int open_generic(fs_descriptor_type_t *type, void *data, int fd)
 {
+	if(!fdtable) {
+		errno = ENOMEM;
+		return -1;
+	}
 	if(!type) {
 		errno = EINVAL;
 		return -1;
@@ -81,8 +86,12 @@ static fs_descriptor_type_t devnull = {
 	.close  = NULL,
 };
 
-GCONSTRUCTOR static void init_standard_streams(void)
+GCONSTRUCTOR static void init_fs(void)
 {
+	fdtable = malloc(FS_FD_MAX * sizeof *fdtable);
+	if(!fdtable)
+		return;
+
 	fdtable[STDIN_FILENO].type = &devnull;
 	fdtable[STDIN_FILENO].data = NULL;
 

@@ -12,7 +12,7 @@
 // Interrupt controllers
 //---
 
-GDATA3 sh7705_intc_t SH7705_INTC = {
+GRODATA3 sh7705_intc_t const SH7705_INTC = {
 	.IPR = {
 		(void *)0xfffffee2, (void *)0xfffffee4,
 		(void *)0xa4000016, (void *)0xa4000018, (void *)0xa400001a,
@@ -21,7 +21,7 @@ GDATA3 sh7705_intc_t SH7705_INTC = {
 	.ICR1 = (void *)0xa4000010,
 };
 
-sh7305_intc_t SH7305_INTC = {
+sh7305_intc_t const SH7305_INTC = {
 	.IPR		= (void *)0xa4080000,
 	.MSK		= (void *)0xa4080080,
 	.MSKCLR		= (void *)0xa40800c0,

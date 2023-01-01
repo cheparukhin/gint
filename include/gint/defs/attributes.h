@@ -10,6 +10,7 @@
 /* Objects from the gint's uninitialized BSS section */
 #define GBSS		__attribute__((section(".gint.bss")))
 /* Additional sections that are only needed on SH3 */
+#define GRODATA3	__attribute__((section(".gint.rodata.sh3")))
 #define GDATA3		__attribute__((section(".gint.data.sh3")))
 #define GBSS3		__attribute__((section(".gint.bss.sh3")))
 /* Objects for the ILRAM, XRAM and YRAM regions */

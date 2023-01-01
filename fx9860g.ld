@@ -109,6 +109,7 @@ SECTIONS
 		*(.rodata.4)
 
 		*(.rodata .rodata.*)
+		*(.gint.rodata.sh3)
 	} > rom
 
 

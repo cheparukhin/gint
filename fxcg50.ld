@@ -175,7 +175,7 @@ SECTIONS
 
 	/DISCARD/ : {
 		/* SH3-only data sections */
-		*(.gint.data.sh3 .gint.bss.sh3)
+		*(.gint.rodata.sh3 .gint.data.sh3 .gint.bss.sh3)
 		/* Java class registration (why are they even here?!) */
 		*(.jcr)
 		/* Asynchronous unwind tables: no C++ exception handling */
