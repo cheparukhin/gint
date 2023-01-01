@@ -14,7 +14,7 @@
 #include <gint/drivers/iokbd.h>
 #include <gint/hardware.h>
 
-#include <stdarg.h>
+#include <string.h>
 
 /* Keyboard scan frequency in Hertz. Start with 128 Hz, this frequency *must
    be high* for the keyboard to work! Reading at low frequencies produces a lot
@@ -34,23 +34,29 @@ keydev_t *keydev_std(void)
 	return &keysc_dev;
 }
 
+/* keysc_scan(): Scand the keyboard */
+static void keysc_scan(uint8_t *scan)
+{
+	if(isSH3())
+	{
+		iokbd_scan(scan);
+		return;
+	}
+
+	volatile uint16_t *KEYSC = (void *)0xa44b0000;
+
+	for(int i = 0; i < 6; i++) {
+		int data = KEYSC[i];
+		scan[2*i] = data & 0xff;
+		scan[2*i+1] = data >> 8;
+	}
+}
+
 /* keysc_tick(): Update the keyboard to the next state */
 static int keysc_tick(void)
 {
-	GALIGNED(2) uint8_t scan[12] = { 0 };
-
-	/* Scan the key matrix: from I/O ports on SH3, KEYSC on SH4 */
-	if(isSH3()) iokbd_scan(scan);
-	else
-	{
-		volatile uint16_t *KEYSC = (void *)0xa44b0000;
-		uint16_t *array = (void *)&scan;
-
-		for(int i = 0; i < 6; i++) {
-			array[i] = KEYSC[i];
-			array[i] = (array[i] << 8) | (array[i] >> 8);
-		}
-	}
+	uint8_t scan[12] = { 0 };
+	keysc_scan(scan);
 
 	keydev_process_state(&keysc_dev, scan);
 	keydev_tick(&keysc_dev, keysc_scan_us);
@@ -98,6 +104,11 @@ int keydown(int key)
 static void configure(void)
 {
 	keydev_init(&keysc_dev);
+
+	/* Do a first scan to load the initial state (so that keys that are
+           pressed at startup are not registered as new presses) */
+	keysc_scan(keysc_dev.state_now);
+	memcpy(keysc_dev.state_queue, keysc_dev.state_now, 12);
 
 	/* Set the default repeat to 400/40 ms */
 	keydev_t *d = keydev_std();
