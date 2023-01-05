@@ -13,6 +13,80 @@ extern "C" {
 #include <gint/defs/types.h>
 
 //---
+// SH7705 But State Controller. Refer to:
+//   Renesas SH7705 Group Hardware Manual
+//   Section 7: Bus State Controller (BSC)
+//---
+
+typedef volatile lword_union(sh7705_bsc_CSnBCR_t,
+	uint32_t	:2;
+	uint32_t IWW	:2; /* Wait cycles for Write-Read and Write-Write */
+	uint32_t	:1;
+	uint32_t IWRWD	:2; /* Wait cycles for other-space Read-Write */
+	uint32_t	:1;
+	uint32_t IWRWS	:2; /* Wait cycles for same-space Read-Write */
+	uint32_t	:1;
+	uint32_t IWRRD	:2; /* Wait cycles for other-space Read-Read */
+	uint32_t	:1;
+	uint32_t IWRRS	:2; /* Wait cycles for same-space Read-Read */
+	uint32_t	:1;
+	uint32_t TYPE	:3; /* Memory type */
+	uint32_t	:1;
+	uint32_t BSZ	:2; /* Data bus size */
+	uint32_t	:9;
+);
+
+/* Warning: the layout of this register changes with n *and* with the memory
+   type. This version is not exhaustive. Check the manual! */
+typedef volatile lword_union(sh7705_bsc_CSnWCR_t,
+	uint32_t	:13;
+	uint32_t WW	:3; /* Write access wait cycles */
+	uint32_t 	:3;
+	uint32_t SW	:2; /* Wait from CSn/address to RD/WEn assertion */
+	uint32_t WR	:4; /* Access wait cycles */
+	uint32_t WM	:1; /* Whether to use external wait */
+	uint32_t	:4;
+	uint32_t HW	:2; /* Wait from RD/WEn to CSn/address negation */
+);
+
+typedef volatile struct
+{
+	lword_union(CMNCR,
+		uint32_t	:24;
+		uint32_t DMAIW	:2; /* DMA single-address wait states */
+		uint32_t DMAIWA	:1; /* DMAIW wait states insertion method */
+		uint32_t	:1;
+		uint32_t const ENDIAN	:1; /* Global CPU endianness flag */
+		uint32_t	:1;
+		uint32_t HIZMEM	:1; /* High-Z memory Control*/
+		uint32_t HIZCNT	:1; /* High-Z Control*/
+	);
+
+	sh7705_bsc_CSnBCR_t CS0BCR;
+	sh7705_bsc_CSnBCR_t CS2BCR;
+	sh7705_bsc_CSnBCR_t CS3BCR;
+	sh7705_bsc_CSnBCR_t CS4BCR;
+	sh7705_bsc_CSnBCR_t CS5ABCR;
+	sh7705_bsc_CSnBCR_t CS5BBCR;
+	sh7705_bsc_CSnBCR_t CS6ABCR;
+	sh7705_bsc_CSnBCR_t CS6BBCR;
+
+	sh7705_bsc_CSnWCR_t CS0WCR;
+	sh7705_bsc_CSnWCR_t CS2WCR;
+	sh7705_bsc_CSnWCR_t CS3WCR;
+	sh7705_bsc_CSnWCR_t CS4WCR;
+	sh7705_bsc_CSnWCR_t CS5AWCR;
+	sh7705_bsc_CSnWCR_t CS5BWCR;
+	sh7705_bsc_CSnWCR_t CS6AWCR;
+	sh7705_bsc_CSnWCR_t CS6BWCR;
+
+	/* TODO: There are more registers (not involved in overclocking). */
+} GPACKED(4) sh7705_bsc_t;
+
+#define SH7705_BSC (*(sh7705_bsc_t *)0xa4fd0000)
+
+
+//---
 // SH7305 But State Controller. Refer to:
 //   Renesas SH7730 Group Hardware Manual
 //   Section 11: Bus State Controller (BSC)

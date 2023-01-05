@@ -68,28 +68,40 @@ enum {
 	/* Combinations of hardware settings that are none of Ftune's levels */
 	CLOCK_SPEED_UNKNOWN = 0,
 
-	/* Ftune's 5 default overclock levels. The main settings are listed below,
-	   thoug many more are involved.
+	/* Ftune's 5 default overclock levels. The main settings are listed
+	   below, though many more are involved.
 
-      On SH4 fx-9860G-likr:
-        (Not supported yet)
-
-      On the fx G-III series:
-        (Not supported yet)
-
+	   On SH3 fx-9860G-like:
+	     F1:  CPU @  29 MHz                    [Default speed]
+	     F2:  CPU @  58 MHz                    [Similar to G-III default]
+	     F3:  CPU @  88 MHz
+	     F4:  CPU @ 118 MHz                    [Fastest CPU option]
+	     F5:  CPU @ 118 MHz                    [Reduced memory wait times]
+	   On SH4 fx-9860G-like:
+	     F1:  CPU @  29 MHz,  BFC @  29 MHz    [Default speed]
+	     F2:  CPU @  58 MHz,  BFC @  29 MHz    [Similar to G-III default]
+	     F3:  CPU @  29 MHz,  BFC @  29 MHz    [SH3 default]
+	     F4:  CPU @ 118 MHz,  BFC @  59 MHz
+	     F5:  CPU @ 236 MHz,  BFC @  118 MHz   [Fastest option]
+	   On G-III / Graph 35+E II:
+	     F1:  CPU @  58 MHz,  BFC @  29 MHz    [Default speed]
+	     F2:  CPU @  58 MHz,  BFC @  29 MHz    [fx-CG 10/20 default]
+	     F3:  CPU @  29 MHz,  BFC @  29 MHz    [SH3 default]
+	     F4:  CPU @ 118 MHz,  BFC @  58 MHz
+	     F5:  CPU @ 235 MHz,  BFC @  58 MHz    [Fastest option]
 	   On fx-CG 10/20:
-		  F1:  CPU @  58 MHz,  BFC @  29 MHz    [Default speed]
-		  F2:  CPU @  58 MHz,  BFC @  29 MHz    [Improved memory speed]
-		  F3:  CPU @ 118 MHz,  BFC @  58 MHz    [Faster than F2]
-		  F4:  CPU @ 118 MHz,  BFC @ 118 MHz    [Fastest bus option]
-		  F5:  CPU @ 191 MHz,  BFC @  94 MHz    [Fastest CPU option]
+	     F1:  CPU @  58 MHz,  BFC @  29 MHz    [Default speed]
+	     F2:  CPU @  58 MHz,  BFC @  29 MHz    [Improved memory speed]
+	     F3:  CPU @ 118 MHz,  BFC @  58 MHz    [Faster than F2]
+	     F4:  CPU @ 118 MHz,  BFC @ 118 MHz    [Fastest bus option]
+	     F5:  CPU @ 191 MHz,  BFC @  94 MHz    [Fastest CPU option]
+	   On fx-CG 50:
+	     F1:  CPU @ 116 MHz,  BFC @  58 MHz    [Default speed]
+	     F2:  CPU @  58 MHz,  BFC @  29 MHz    [fx-CG 10/20 default]
+	     F3:  CPU @  94 MHz,  BFC @  47 MHz    [Clearly slow: F2 < F3 < F1]
+	     F4:  CPU @ 232 MHz,  BFC @  58 MHz    [Fastest CPU option]
+	     F5:  CPU @ 189 MHz,  BFC @  94 MHz    [Fastest bus option] */
 
-      On fx-CG 50:
-		  F1:  CPU @ 116 MHz,  BFC @  58 MHz    [Default speed]
-		  F2:  CPU @  58 MHz,  BFC @  29 MHz    [Clearly slower: F2 < F3 < F1]
-		  F3:  CPU @  94 MHz,  BFC @  47 MHz    [Clearly slower: F2 < F3 < F1]
-		  F4:  CPU @ 232 MHz,  BFC @  58 MHz    [Fastest CPU option]
-		  F5:  CPU @ 189 MHz,  BFC @  94 MHz    [Fastest bus option] */
 	CLOCK_SPEED_F1 = 1,
 	CLOCK_SPEED_F2 = 2,
 	CLOCK_SPEED_F3 = 3,
@@ -100,7 +112,6 @@ enum {
 	CLOCK_SPEED_DEFAULT = CLOCK_SPEED_F1,
 };
 
-#ifdef FXCG50
 /* clock_get_speed(): Determine the current clock speed
 
    This function compares the current hardware state with the settings for each
@@ -123,7 +134,6 @@ int clock_get_speed(void);
    Currently the clock speed is not reset during a world switch nor when
    leaving the add-in. */
 void clock_set_speed(int speed);
-#endif
 
 //---
 //	Sleep functions

@@ -27,7 +27,6 @@ const clock_frequency_t *clock_freq(void)
 //---
 
 #if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
-#define CPG SH7705_CPG
 
 void sh7705_probe(void)
 {
@@ -41,35 +40,23 @@ void sh7705_probe(void)
 	int ckio = xtal * pll2;
 
 	/* This signal is multiplied by the PLL1 circuit */
-	int pll1 = CPG.FRQCR.STC + 1;
+	int pll1 = SH7705_CPG.FRQCR.STC + 1;
 
-	/* Iphi and Pphi have dividers (Bphi is always equal to CKIO) */
-	int idiv = CPG.FRQCR.IFC;
-	int pdiv = CPG.FRQCR.PFC;
-
-	/* Fill in the setting structure */
+	/* Fill in the setting structure. Iϕ and Pϕ have dividers, while Bϕ is
+	   always equal to CKIO. */
 	freq.PLL1 = pll1;
 	freq.PLL2 = pll2;
 	freq.Bphi_div = 1;
-	freq.Iphi_div = idiv + 1;
-	freq.Pphi_div = pdiv + 1;
+	freq.Iphi_div = SH7705_CPG.FRQCR.IFC + 1;
+	freq.Pphi_div = SH7705_CPG.FRQCR.PFC + 1;
 
-	/* Deduce the frequency of the main clocks. This value is ckio/3 */
-	int ckio_3 = 9830400;
-
-	/* Exchange the setting values 2 and 3 (corresponding to /3 and /4)
-	   This means that /1, /2, /4 are now 0, 1, 2, which is perfect for a
-	   quick bit shift */
-	idiv = idiv ^ (idiv >> 1);
-	pdiv = pdiv ^ (pdiv >> 1);
-
+	/* Deduce the frequency of the main clocks */
 	freq.CKIO_f = ckio;
 	freq.Bphi_f = ckio;
-	freq.Iphi_f = (idiv == 3) ? ckio_3 : ckio >> idiv;
-	freq.Pphi_f = (pdiv == 3) ? ckio_3 : ckio >> pdiv;
+	freq.Iphi_f = (ckio * pll1) / freq.Iphi_div;
+	freq.Pphi_f = (ckio * pll1) / freq.Pphi_div;
 }
 
-#undef CPG
 #endif /* FX9860G and platform-agnostic */
 
 //---
@@ -134,9 +121,7 @@ static void configure(void)
 {
 	/* Disable spread spectrum in SSGSCR */
 	if(isSH4())
-	{
 		SH7305_CPG.SSCGCR.SSEN = 0;
-	}
 
 	cpg_compute_freq();
 }
@@ -147,18 +132,16 @@ static void configure(void)
 
 static void hsave(cpg_state_t *s)
 {
-	if(isSH4()) {
+	if(isSH4())
 		s->SSCGCR = SH7305_CPG.SSCGCR.lword;
-		cpg_get_overclock_setting(&s->speed);
-	}
+	cpg_get_overclock_setting(&s->speed);
 }
 
 static void hrestore(cpg_state_t const *s)
 {
-	if(isSH4()) {
+	if(isSH4())
 		SH7305_CPG.SSCGCR.lword = s->SSCGCR;
-		cpg_set_overclock_setting(&s->speed);
-	}
+	cpg_set_overclock_setting(&s->speed);
 }
 
 gint_driver_t drv_cpg = {

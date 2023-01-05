@@ -32,6 +32,12 @@ typedef volatile struct
 		uint16_t PFC	:2;	/* Peripheral clock divider */
 	);
 
+	byte_union(UCLKCR,
+		uint8_t	USSCS	:2;	/* Source Clock Selection Bit */
+		uint8_t USBEN	:1;	/* USB On-Chip Oscillator Enable */
+		uint8_t		:5;
+	);
+
 } GPACKED(4) sh7705_cpg_t;
 
 #define SH7705_CPG (*((sh7705_cpg_t *)0xffffff80))
