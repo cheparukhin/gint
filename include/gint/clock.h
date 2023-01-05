@@ -135,6 +135,26 @@ int clock_get_speed(void);
    leaving the add-in. */
 void clock_set_speed(int speed);
 
+/* If you want to faithfully save and restore the clock state while properly
+   handling clock speeds that are not Ftune/PTune's defaults, you can get a
+   full copy of the settings.
+
+   WARNING: Applying random settings with cpg_set_overclock_setting() might
+   damage your calculator! */
+
+struct cpg_overclock_setting
+{
+    uint32_t FLLFRQ, FRQCR;
+    uint32_t CS0BCR, CS2BCR, CS3BCR, CS5aBCR;
+    uint32_t CS0WCR, CS2WCR, CS3WCR, CS5aWCR;
+};
+
+/* Queries the clock setting from the hardware. */
+void cpg_get_overclock_setting(struct cpg_overclock_setting *s);
+
+/* Applies the specified overclock setting. */
+void cpg_set_overclock_setting(struct cpg_overclock_setting const *s);
+
 //---
 //	Sleep functions
 //---
@@ -152,27 +172,6 @@ void sleep_us_spin(uint64_t delay_us);
 
 /* sleep_ms(): Sleep for a fixed duration in milliseconds */
 #define sleep_ms(delay_ms) sleep_us((delay_ms) * 1000ull)
-
-//---
-// Low-level overclock functions
-//
-// These low-level functions directly read or write registers involved in
-// setting the overclock level. Don't use them directly unless you understand
-// how their interactions with the environment; instead, use clock_set_speed().
-//---
-
-struct cpg_overclock_setting
-{
-    uint32_t FLLFRQ, FRQCR;
-    uint32_t CS0BCR, CS2BCR, CS3BCR, CS5aBCR;
-    uint32_t CS0WCR, CS2WCR, CS3WCR, CS5aWCR;
-};
-
-/* Queries the clock setting from the hardware. */
-void cpg_get_overclock_setting(struct cpg_overclock_setting *s);
-
-/* Applies the specified overclock setting. */
-void cpg_set_overclock_setting(struct cpg_overclock_setting const *s);
 
 #ifdef __cplusplus
 }

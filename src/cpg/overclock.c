@@ -77,7 +77,7 @@ void cpg_get_overclock_setting(struct cpg_overclock_setting *s)
     }
 }
 
-void cpg_set_overclock_setting(struct cpg_overclock_setting const *s)
+static void cpg_low_level_set_setting(struct cpg_overclock_setting const *s)
 {
     if(isSH3()) {
         SH7705_WDT.WTCNT.WRITE = 0;
@@ -115,6 +115,30 @@ void cpg_set_overclock_setting(struct cpg_overclock_setting const *s)
         SH7305_BSC.CS5ABCR.lword = s->CS5aBCR;
         SH7305_BSC.CS5AWCR.lword = s->CS5aWCR;
     }
+}
+
+void cpg_set_overclock_setting(struct cpg_overclock_setting const *s)
+{
+    uint32_t old_Pphi = clock_freq()->Pphi_f;
+
+    /* Wait for asynchronous tasks to complete */
+    gint_world_sync();
+
+    /* Disable interrupts during the change */
+    cpu_atomic_start();
+
+    /* Load the clock settings */
+    cpg_low_level_set_setting(s);
+
+    /* Determine the change in frequency for Pϕ and recompute CPG data */
+    cpg_compute_freq();
+    uint32_t new_Pphi = clock_freq()->Pphi_f;
+
+    /* Update timers' TCNT and TCOR to match the new clock speed */
+    void timer_rescale(uint32_t old_Pphi, uint32_t new_Pphi);
+    timer_rescale(old_Pphi, new_Pphi);
+
+    cpu_atomic_end();
 }
 
 #ifdef FX9860G
@@ -486,24 +510,5 @@ void clock_set_speed(int level)
         return;
 
     struct cpg_overclock_setting const *s = &settings[level - CLOCK_SPEED_F1];
-    uint32_t old_Pphi = clock_freq()->Pphi_f;
-
-    /* Wait for asynchronous tasks to complete */
-    gint_world_sync();
-
-    /* Disable interrupts during the change */
-    cpu_atomic_start();
-
-    /* Set the clock settings */
     cpg_set_overclock_setting(s);
-
-    /* Determine the change in frequency for Pϕ and recompute CPG data */
-    cpg_compute_freq();
-    uint32_t new_Pphi = clock_freq()->Pphi_f;
-
-    /* Update timers' TCNT and TCOR to match the new clock speed */
-    void timer_rescale(uint32_t old_Pphi, uint32_t new_Pphi);
-    timer_rescale(old_Pphi, new_Pphi);
-
-    cpu_atomic_end();
 }
