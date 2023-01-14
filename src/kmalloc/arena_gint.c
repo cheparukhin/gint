@@ -259,7 +259,7 @@ static void *gint_malloc(size_t size, void *data)
 	int c = size_class(size);
 
 	/* Try to find a class that has a free block available */
-	block_t *alloc;
+	block_t *alloc = NULL;
 	for(; c <= 15; c++)
 	{
 		block_t *list = index->classes[c];
