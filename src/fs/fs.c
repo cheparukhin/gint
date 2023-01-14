@@ -88,7 +88,7 @@ static fs_descriptor_type_t devnull = {
 
 GCONSTRUCTOR static void init_fs(void)
 {
-	fdtable = malloc(FS_FD_MAX * sizeof *fdtable);
+	fdtable = calloc(FS_FD_MAX, sizeof *fdtable);
 	if(!fdtable)
 		return;
 
