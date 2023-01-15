@@ -250,25 +250,41 @@ add_compile_options(-Wall -Wextra -std=c11 -Os -fstrict-volatile-bitfields -mtas
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   add_compile_definitions(FX9860G)
-  add_library(gint-fx STATIC ${SOURCES_COMMON} ${SOURCES_FX} ${ASSETS_FX})
   set(NAME "gint-fx")
-  set(LINKER_SCRIPT "fx9860g.ld")
+  set(LINKER_SCRIPTS
+    "${CMAKE_CURRENT_BINARY_DIR}/fx9860g.ld")
+  add_library(gint-fx STATIC ${SOURCES_COMMON} ${SOURCES_FX} ${ASSETS_FX}
+    ${LINKER_SCRIPTS})
 endif()
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fxCG50)
   add_compile_definitions(FXCG50)
-  add_library(gint-cg STATIC ${SOURCES_COMMON} ${SOURCES_CG} ${ASSETS_CG})
   set(NAME "gint-cg")
-  set(LINKER_SCRIPT "fxcg50.ld")
+  set(LINKER_SCRIPTS
+    "${CMAKE_CURRENT_BINARY_DIR}/fxcg50.ld"
+    "${CMAKE_CURRENT_BINARY_DIR}/fxcg50_fastload.ld")
+  add_library(gint-cg STATIC ${SOURCES_COMMON} ${SOURCES_CG} ${ASSETS_CG}
+    ${LINKER_SCRIPTS})
 endif()
 
 set_target_properties("${NAME}" PROPERTIES OUTPUT_NAME "${NAME}")
 
+# Generate linker scripts
+macro(generate_linker_script OUTPUT INPUT OPTIONS)
+  add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${OUTPUT}"
+    COMMAND ${FXSDK_TOOLCHAIN}cpp "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT}"
+            -P -C -traditional-cpp ${OPTIONS} -o "${OUTPUT}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/${INPUT}")
+endmacro()
+generate_linker_script("fx9860g.ld" "fx9860g.ld.c" "")
+generate_linker_script("fxcg50.ld" "fxcg50.ld.c" "")
+generate_linker_script("fxcg50_fastload.ld" "fxcg50.ld.c" "-DFXCG50_FASTLOAD")
+
 # Library file
 install(TARGETS "${NAME}" DESTINATION "${FXSDK_LIB}")
-# Linker script
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/${LINKER_SCRIPT}"
-  DESTINATION "${FXSDK_LIB}")
+# Linker scripts
+install(FILES ${LINKER_SCRIPTS} DESTINATION "${FXSDK_LIB}")
 # Headers
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/include/"
   DESTINATION "${FXSDK_INCLUDE}"

@@ -10,10 +10,16 @@ OUTPUT_FORMAT(elf32-sh)
 /* Located in core/start.c */
 ENTRY(_start)
 
+#ifdef FXCG50_FASTLOAD
+# define _ROM_REGION 0x8c200000
+#else
+# define _ROM_REGION 0x00300000
+#endif
+
 MEMORY
 {
 	/* Userspace mapping of the add-in (without G3A header) */
-	rom   (rx):   o = 0x00300000, l = 2M
+	rom   (rx):   o = _ROM_REGION, l = 2M
 	/* Static RAM; stack grows down from the end of this region.
 	   The first 5k (0x1400 bytes) are reserved by gint for the VBR space,
 	   which is loaded dynamically and accessed through P1 */
@@ -31,7 +37,7 @@ SECTIONS
 	*/
 
 	/* First address to be mapped to ROM */
-	_brom = 0x00300000;
+	_brom = ORIGIN(rom);
 	/* Size of ROM mappings */
 	_srom = SIZEOF(.text) + SIZEOF(.rodata)
 	      + SIZEOF(.gint.drivers) + SIZEOF(.gint.blocks);
