@@ -2,7 +2,7 @@
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fxCG50)
   set(PC cg)
   set(INTF_DEFN FXCG50)
-  set(INTF_LINK "-T;fxcg50.ld")
+  set(INTF_LINK "-T;$<IF:$<CONFIG:FastLoad>,fxcg50_fastload.ld,fxcg50.ld>")
 elseif("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   set(PC fx)
   set(INTF_DEFN FX9860G)
