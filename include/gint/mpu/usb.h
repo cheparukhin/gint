@@ -137,47 +137,11 @@ typedef volatile struct
 	pad(4);
 
 	/* BRDY Interrupt Enable Register */
-	word_union(BRDYENB,
-		uint16_t	:6;
-		uint16_t PIPE9BRDYE :1;
-		uint16_t PIPE8BRDYE :1;
-		uint16_t PIPE6BRDYE :1;
-		uint16_t PIPE7BRDYE :1;
-		uint16_t PIPE5BRDYE :1;
-		uint16_t PIPE3BRDYE :1;
-		uint16_t PIPE4BRDYE :1;
-		uint16_t PIPE2BRDYE :1;
-		uint16_t PIPE1BRDYE :1;
-		uint16_t PIPE0BRDYE :1;
-	);
+	uint16_t BRDYENB;
 	/* NRDY Interrupt Enable Register */
-	word_union(NRDYENB,
-		uint16_t	:6;
-		uint16_t PIPE9NRDYE :1;
-		uint16_t PIPE8NRDYE :1;
-		uint16_t PIPE6NRDYE :1;
-		uint16_t PIPE7NRDYE :1;
-		uint16_t PIPE5NRDYE :1;
-		uint16_t PIPE3NRDYE :1;
-		uint16_t PIPE4NRDYE :1;
-		uint16_t PIPE2NRDYE :1;
-		uint16_t PIPE1NRDYE :1;
-		uint16_t PIPE0NRDYE :1;
-	);
+	uint16_t NRDYENB;
 	/* BEMP Interrupt Enable Register */
-	word_union(BEMPENB,
-		uint16_t	:6;
-		uint16_t PIPE9BEMPE :1;
-		uint16_t PIPE8BEMPE :1;
-		uint16_t PIPE6BEMPE :1;
-		uint16_t PIPE7BEMPE :1;
-		uint16_t PIPE5BEMPE :1;
-		uint16_t PIPE3BEMPE :1;
-		uint16_t PIPE4BEMPE :1;
-		uint16_t PIPE2BEMPE :1;
-		uint16_t PIPE1BEMPE :1;
-		uint16_t PIPE0BEMPE :1;
-	);
+	uint16_t BEMPENB;
 
 	/* SOF Control Register */
 	word_union(SOFCFG,
@@ -208,53 +172,17 @@ typedef volatile struct
 	pad(4);
 
 	/* BRDY Interrupt Status Register */
-	word_union(BRDYSTS,
-		uint16_t	:6;
-		uint16_t PIPE9BRDY :1;
-		uint16_t PIPE8BRDY :1;
-		uint16_t PIPE6BRDY :1;
-		uint16_t PIPE7BRDY :1;
-		uint16_t PIPE5BRDY :1;
-		uint16_t PIPE3BRDY :1;
-		uint16_t PIPE4BRDY :1;
-		uint16_t PIPE2BRDY :1;
-		uint16_t PIPE1BRDY :1;
-		uint16_t PIPE0BRDY :1;
-	);
+	uint16_t BRDYSTS;
 	/* NRDY Interrupt Status Register */
-	word_union(NRDYSTS,
-		uint16_t	:6;
-		uint16_t PIPE9NRDY :1;
-		uint16_t PIPE8NRDY :1;
-		uint16_t PIPE6NRDY :1;
-		uint16_t PIPE7NRDY :1;
-		uint16_t PIPE5NRDY :1;
-		uint16_t PIPE3NRDY :1;
-		uint16_t PIPE4NRDY :1;
-		uint16_t PIPE2NRDY :1;
-		uint16_t PIPE1NRDY :1;
-		uint16_t PIPE0NRDY :1;
-	);
+	uint16_t NRDYSTS;
 	/* BEMP Interrupt Status Register */
-	word_union(BEMPSTS,
-		uint16_t	:6;
-		uint16_t PIPE9BEMP :1;
-		uint16_t PIPE8BEMP :1;
-		uint16_t PIPE6BEMP :1;
-		uint16_t PIPE7BEMP :1;
-		uint16_t PIPE5BEMP :1;
-		uint16_t PIPE3BEMP :1;
-		uint16_t PIPE4BEMP :1;
-		uint16_t PIPE2BEMP :1;
-		uint16_t PIPE1BEMP :1;
-		uint16_t PIPE0BEMP :1;
-	);
+	uint16_t BEMPSTS;
 
 	/* Frame Number Registers */
 	word_union(FRMNUM,
 		uint16_t OVRN	:1;	/* Overrun/Underrun Detection Status */
 		uint16_t CRCE	:1;	/* Receive Data Error */
-		uint16_t cons	:3;
+		uint16_t const	:3;
 		uint16_t FRNM	:11;	/* Frame Number */
 	);
 	word_union(UFRMNUM,
@@ -341,7 +269,7 @@ typedef volatile struct
 	/* Pipe Buffer Setting Register */
 	word_union(PIPEBUF,
 		uint16_t	:1;
-		uint16_t BUFSIZE	: 5;	/* Buffer Size */
+		uint16_t BUFSIZE:5;	/* Buffer Size */
 		uint16_t	:2;
 		uint16_t BUFNMB	:8;	/* Buffer Number */
 	);

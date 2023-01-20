@@ -181,9 +181,9 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 
 	/* VBSE=1 RSME=0 SOFE=0 DVSE=1 CTRE=1 BEMPE=1 NRDYE=0 BRDYE=0 */
 	USB.INTENB0.word = 0x9c00;
-	USB.BRDYENB.word = 0x0000;
-	USB.NRDYENB.word = 0x0000;
-	USB.BEMPENB.word = 0x0000;
+	USB.BRDYENB = 0x0000;
+	USB.NRDYENB = 0x0000;
+	USB.BEMPENB = 0x0000;
 
 	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
 	intc_priority(INTC_USB, 8);
@@ -258,8 +258,8 @@ static void usb_interrupt_handler(void)
 	else if(USB.INTSTS0.BEMP)
 	{
 		/* Invoke callbacks for each buffer-empty interrupt */
-		uint16_t status = USB.BEMPSTS.word;
-		USB.BEMPSTS.word = 0;
+		uint16_t status = USB.BEMPSTS;
+		USB.BEMPSTS = 0;
 
 		for(int i = 1; i <= 9; i++)
 		{
@@ -288,9 +288,9 @@ void hsave(usb_state_t *s)
 	s->D1FIFOSEL = USB.D1FIFOSEL.word;
 
 	s->INTENB0   = USB.INTENB0.word;
-	s->BRDYENB   = USB.BRDYENB.word;
-	s->NRDYENB   = USB.NRDYENB.word;
-	s->BEMPENB   = USB.BEMPENB.word;
+	s->BRDYENB   = USB.BRDYENB;
+	s->NRDYENB   = USB.NRDYENB;
+	s->BEMPENB   = USB.BEMPENB;
 	s->SOFCFG    = USB.SOFCFG.word;
 
 	s->DCPCFG    = USB.DCPCFG.word;
@@ -317,9 +317,9 @@ static void hrestore(usb_state_t const *s)
 	USB.D1FIFOSEL.word      = s->D1FIFOSEL;
 
 	USB.INTENB0.word        = s->INTENB0;
-	USB.BRDYENB.word        = s->BRDYENB;
-	USB.NRDYENB.word        = s->NRDYENB;
-	USB.BEMPENB.word        = s->BEMPENB;
+	USB.BRDYENB             = s->BRDYENB;
+	USB.NRDYENB             = s->NRDYENB;
+	USB.BEMPENB             = s->BEMPENB;
 	USB.SOFCFG.word         = s->SOFCFG;
 
 	USB.DCPCFG.word         = s->DCPCFG;
@@ -328,9 +328,9 @@ static void hrestore(usb_state_t const *s)
 
 	/* Clear remaining interrupts. Read-only bits will be ignored */
 	USB.INTSTS0.word        = 0;
-	USB.BRDYSTS.word        = 0;
-	USB.NRDYSTS.word        = 0;
-	USB.BEMPSTS.word        = 0;
+	USB.BRDYSTS             = 0;
+	USB.NRDYSTS             = 0;
+	USB.BEMPSTS             = 0;
 
 	/* Restore SYSCFG last as clearing SCKE disables writing */
 	USB.SYSCFG.word         = s->SYSCFG;

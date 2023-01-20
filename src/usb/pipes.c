@@ -224,7 +224,7 @@ static void finish_transfer(struct transfer volatile *t, int pipe)
 	t->used = 0;
 
 	/* Disable the interrupt */
-	if(pipe) USB.BEMPENB.word &= ~(1 << pipe);
+	if(pipe) USB.BEMPENB &= ~(1 << pipe);
 
 	if(t->callback.function) gint_call(t->callback);
 
@@ -340,7 +340,7 @@ int usb_write_async(int pipe, void const *data, int size, int unit_size,
 
 	/* Set up the Buffer Empty interrupt to refill the buffer when it gets
 	   empty, and be notified when the transfer completes. */
-	if(pipe) USB.BEMPENB.word |= (1 << pipe);
+	if(pipe) USB.BEMPENB |= (1 << pipe);
 
 	write_round(t, pipe);
 	return 0;
