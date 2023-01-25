@@ -44,6 +44,9 @@
 .global ___ConfigureStatusArea
 .global ___SetQuitHandler
 
+/* Reset */
+.global ___Reset
+
 #define syscall_(id, syscall_table)	\
 	mov.l	syscall_table, r2	;\
 	mov.l	1f, r0			;\
@@ -114,6 +117,11 @@ ___GetVRAMAddress:
 	syscall(0x135)
 ___SetQuitHandler:
 	syscall(0x494)
+
+/* Reset */
+
+___Reset:
+	syscall(0x236)
 
 syscall_table:
 	.long	0x80010070
@@ -187,6 +195,11 @@ ___SetQuitHandler:
 .global ___SpecialMatrixCodeProcessing
 ___SpecialMatrixCodeProcessing:
 	syscall(0x1e60)
+
+/* Reset */
+
+___Reset:
+	syscall(0x1187)
 
 syscall_table:
 	.long	0x80020070

@@ -205,6 +205,8 @@ key_event_t keydev_unqueue_event(keydev_t *d)
 
 	return ev;
 }
+__attribute__((alias("keydev_unqueue_event")))
+key_event_t _WEAK_keydev_unqueue_event(keydev_t *d);
 
 /* keydev_keydown(): Check if a key is down according to generated events */
 bool keydev_keydown(keydev_t *d, int key)
@@ -214,6 +216,8 @@ bool keydev_keydown(keydev_t *d, int key)
 
 	return (d->state_queue[row] & col) != 0;
 }
+__attribute__((alias("keydev_keydown")))
+bool _WEAK_keydev_keydown(keydev_t *d, int key);
 
 //---
 // Event transforms

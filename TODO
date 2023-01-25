@@ -12,11 +12,10 @@ Extensions on existing code:
 * kernel:    better restore to userspace before panic (ensure BL=0 IMASK=0)
 * project:   add license file
 * kernel:    group linker script symbols in a single header file
-* core:      try to leave add-in without reset in case of panic
-* core:      use cmp/str for memchr()
 * r61524:    brightness control and clean the file
 * core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
 * core:      run destructors when a task-switch results in leaving the app
+* fs:        support read-only files backed with GetBlockAddress() on fx-CG
 
 Future directions:
 * Audio playback using TSWilliamson's libsnd method

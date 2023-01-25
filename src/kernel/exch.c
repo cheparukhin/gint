@@ -2,16 +2,43 @@
 #include <gint/display.h>
 #include <gint/clock.h>
 #include <gint/mpu/dma.h>
+#include <gint/drivers/keydev.h>
 #include <gint/defs/attributes.h>
 #include <gint/hardware.h>
+#include <gint/gint.h>
+#include <stdlib.h>
+#include <string.h>
+
+void __Reset(void);
 
 #define dprint(x, y, ...) dprint(x, y, C_BLACK, __VA_ARGS__)
 #define dtext(x, y, str)  dtext (x, y, C_BLACK, str)
+
+/* Weak implementation of driver functions, which are used if the keyboard and
+   display drivers are not linked in. This allows add-ins to not link in these
+   drivers (which is useful for low-level debugging). */
+GWEAK void _WEAK_dupdate(void)
+{
+	return;
+}
+GWEAK keydev_t *_WEAK_keydev_std(void)
+{
+	return NULL;
+}
+GWEAK bool _WEAK_keydev_keydown(GUNUSED keydev_t *d, GUNUSED int key)
+{
+	return false;
+}
+GWEAK key_event_t _WEAK_keydev_unqueue_event(GUNUSED keydev_t *d)
+{
+	return (key_event_t){ .type = KEYEV_NONE };
+}
 
 /* gint_panic_default(): Default panic handler */
 GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 {
 	uint32_t TEA, TRA;
+	keydev_t *kd = _WEAK_keydev_std();
 
 	if(isSH3())
 	{
@@ -31,9 +58,9 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	if(isSH4()) __asm__("stc sgr, %0" : "=r"(SGR));
 
 	dfont(NULL);
-	dclear(C_WHITE);
 
 	#ifdef FX9860G
+	memset(gint_vram, 0, 1024);
 	dtext(1, 0, "Exception! (SysERROR)");
 	for(int i = 0; i < 32; i++) gint_vram[i] = ~gint_vram[i];
 
@@ -55,16 +82,23 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	if(name[0]) dtext(1, 9, name);
 	else dprint(1, 9, "%03x", code);
 
-	dprint(1, 17, " PC :%08x", PC);
-	dprint(1, 25, "TEA :%08x", TEA);
-	dprint(1, 33, "TRA :%08x", TRA);
-	if(isSH4()) dprint(1, 41, "SGR :%08x", SGR);
+	dprint(1, 17, " PC:%08x  TRA:%d", PC, TRA);
+	dprint(1, 25, "TEA:%08x", TEA);
 
-	dtext(1, 49, "The add-in crashed.");
-	dtext(1, 57, "Please reset the calc");
+	dtext(1, 33, "The add-in crashed.");
+	if(kd == NULL) {
+		dtext(1, 41, "Please reset the calc");
+	}
+	else {
+		dtext(1, 41, "[EXIT]:Quit add-in");
+		dtext(1, 49, "[MENU]:Main menu");
+		dtext(1, 57, "[F1]+[F6]: RESET calc");
+	}
 	#endif
 
 	#ifdef FXCG50
+	/* Don't require the DMA driver just for a clear */
+	memset(gint_vram, 0xff, DWIDTH*DHEIGHT*2);
 	dtext(6, 3, "An exception occured! (System ERROR)");
 
 	uint32_t *long_vram = (void *)gint_vram;
@@ -99,21 +133,27 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	dprint(38, 75, "= %#x", TRA);
 	dtext(281, 75, "(Trap number)");
 
-	dtext(6, 95,  "An unrecoverable error occurred in the add-in.");
-	dtext(6, 108, "Please press the RESET button to restart the");
-	dtext(6, 121, "calculator.");
+	dtext(6, 95,  "The add-in crashed!");
+	if(kd == NULL) {
+		dtext(6, 108, "Please press the RESET button to restart the");
+		dtext(6, 121, "calculator.");
+	}
+	else {
+		dtext(6, 121, "[EXIT]: Exit the program with abort()");
+		dtext(6, 134, "[MENU]: Leave to main menu");
+		dtext(6, 147, "[F1]+[F6]: RESET the calculator");
+	}
 
 	/* DMA address error handler */
 	if(code == 0x1020)
 	{
 		#define DMA SH7305_DMA
-		dprint(6, 141, "SAR0: %08x   DAR0: %08x   TCR0: %08x",
+		dprint(6, 167, "SAR0: %08x   DAR0: %08x   TCR0: %08x",
 			DMA.DMA0.SAR, DMA.DMA0.DAR, DMA.DMA0.TCR);
-		dprint(6, 154, "CHCR0: %08x", DMA.DMA0.CHCR);
-		dprint(6, 167, "SAR1: %08x   DAR1: %08x   TCR1: %08x",
+		dprint(6, 180, "CHCR0: %08x", DMA.DMA0.CHCR);
+		dprint(6, 193, "SAR1: %08x   DAR1: %08x   TCR1: %08x",
 			DMA.DMA1.SAR, DMA.DMA1.DAR, DMA.DMA1.TCR);
-		dprint(6, 180, "CHCR1: %08x", DMA.DMA1.CHCR);
-		dprint(6, 193, "DMAOR: %04x", DMA.OR);
+		dprint(6, 206, "CHCR1: %08x  DMAOR:%04x", DMA.DMA1.CHCR, DMA.OR);
 		#undef DMA
 	}
 	/* Illegal instruction handler */
@@ -125,8 +165,31 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	}
 	#endif
 
-	dupdate();
-	while(1) sleep();
+	_WEAK_dupdate();
+
+	/* Make sure relevant keys are released before taking in events; we don't
+	   want the user to RESET through this screen by holding a key */
+	bool has_released = false;
+
+	while(1) {
+		while(_WEAK_keydev_unqueue_event(kd).type != KEYEV_NONE) {}
+
+		bool exit = _WEAK_keydev_keydown(kd, KEY_EXIT);
+		bool menu = _WEAK_keydev_keydown(kd, KEY_MENU);
+		bool f1   = _WEAK_keydev_keydown(kd, KEY_F1);
+		bool f6   = _WEAK_keydev_keydown(kd, KEY_F6);
+
+		if(has_released && exit)
+			abort();
+		if(has_released && menu)
+			gint_osmenu();
+		if(has_released && f1 && f6)
+			__Reset();
+		if(!exit && !menu && !f1 && !f6)
+			has_released = true;
+
+		sleep();
+	}
 }
 
 /* Panic handler */

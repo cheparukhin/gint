@@ -31,3 +31,5 @@ void dupdate(void)
 	gint_call_t hook = dupdate_get_hook();
 	if(hook.function) gint_call(hook);
 }
+__attribute__((alias("dupdate")))
+void _WEAK_dupdate(void);

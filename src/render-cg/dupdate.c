@@ -18,3 +18,5 @@ void dupdate(void)
 	/* Switch buffers if triple buffering is enabled */
 	dvram_switch();
 }
+__attribute__((alias("dupdate")))
+void _WEAK_dupdate(void);

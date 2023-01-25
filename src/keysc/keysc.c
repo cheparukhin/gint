@@ -33,6 +33,8 @@ keydev_t *keydev_std(void)
 {
 	return &keysc_dev;
 }
+__attribute__((alias("keydev_std")))
+keydev_t *_WEAK_keydev_std(void);
 
 /* keysc_scan(): Scand the keyboard */
 static void keysc_scan(uint8_t *scan)
