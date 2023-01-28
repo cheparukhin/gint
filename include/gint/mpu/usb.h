@@ -28,12 +28,16 @@ typedef volatile struct
 
 	/* CPU Bus Wait Setting Register */
 	word_union(BUSWAIT,
-		uint16_t	:12;
+		uint16_t	:8;
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t	:1;
+		uint16_t _2	:1;	/* Unknown role; can be set */
+		uint16_t	:1;
 		uint16_t BWAIT	:4;	/* Bus Wait */
 	);
 
 	/* System Configuration Status Register */
-	word_union(SYSSTS,
+	const word_union(SYSSTS,
 		uint16_t	:14;
 		uint16_t LNST	:2;	/* Line Status */
 	);
@@ -41,7 +45,9 @@ typedef volatile struct
 
 	/* Device State Control Register */
 	word_union(DVSTCTR,
-		uint16_t	:7;
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t	:2;
+		uint16_t _2	:4;	/* Unknown role; can be set */
 		uint16_t WKUP	:1;	/* Wakeup Output */
 		uint16_t RWUPE	:1;	/* Wakeup Detection Enable */
 		uint16_t USBRT	:1;	/* USB Reset Output */
@@ -92,8 +98,9 @@ typedef volatile struct
 		uint16_t DREQE	:1;	/* DMA Transfert Request Enable */
 		uint16_t MBW	:2;	/* Access Bits Width */
 		uint16_t	:1;
-		uint16_t BIGEND	:1;	/* Endiant Control */
-		uint16_t	:4;
+		uint16_t BIGEND	:1;	/* Endian Control */
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t	:3;
 		uint16_t CURPIPE:4;	/* Port Access Pipe Specification */
 	);
 	word_union(D0FIFOCTR,
@@ -111,7 +118,8 @@ typedef volatile struct
 		uint16_t MBW	:2;	/* Access Bits Width */
 		uint16_t	:1;
 		uint16_t BIGEND	:1;	/* Endian Control */
-		uint16_t	:4;
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t	:3;
 		uint16_t CURPIPE:4;	/* Port Access Pipe Specification */
 	);
 	word_union(D1FIFOCTR,
@@ -134,7 +142,19 @@ typedef volatile struct
 		uint16_t BRDYE	:1;	/* Buffer Ready */
 		uint16_t	:8;
 	);
-	pad(4);
+	word_union(INTENB1,
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t BCHGE	:1;	/* Bus Change */
+		uint16_t	:1;
+		uint16_t DTCHE	:1;	/* Disconnection Detection */
+		uint16_t ATTCHE	:1;	/* Connection Detection */
+		uint16_t	:4;
+		uint16_t EOFERRE:1;	/* EOF Error Detection */
+		uint16_t SIGNE	:1;	/* Setup Transaction Error */
+		uint16_t SACKE	:1;	/* Setup Transaction Normal Response */
+		uint16_t	:4;
+	);
+	pad(2);
 
 	/* BRDY Interrupt Enable Register */
 	uint16_t BRDYENB;
@@ -150,7 +170,10 @@ typedef volatile struct
 		uint16_t	:1;
 		uint16_t BRDYM	:1;	/* BRDY Status Clear Timing */
 		uint16_t enable	:1; 	/* SHOULD BE SET TO 1 MANUALLY */
-		uint16_t	:5;
+		uint16_t	:1;
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t _2	:1;	/* Unknown role; can be set */
+		uint16_t	:2;
 	);
 	pad(2);
 
@@ -217,7 +240,10 @@ typedef volatile struct
 
 	/* DCP Configuration Register */
 	word_union(DCPCFG,
-		uint16_t	:11;
+		uint16_t	:7;
+		uint16_t _1	:1;	/* Unknown role; can be set */
+		uint16_t _2	:1;	/* Unknown role; can be set */
+		uint16_t	:2;
 		uint16_t DIR	:1;	/* Transfer Direction */
 		uint16_t	:4;
 	);
@@ -357,6 +383,15 @@ typedef volatile struct
 	pad(0x1e);
 
 	uint16_t REG_C2;
+	pad(12);
+
+	word_union(DEVADD[11],
+		uint16_t	:1;
+		uint16_t UPPHUB	:4;	/* Address of target's hub */
+		uint16_t HUBPORT:3;	/* Hub port where target connects */
+		uint16_t USBSPD	:2;	/* Transfer speed / Target present */
+		uint16_t	:6;
+	);
 
 } GPACKED(4) sh7305_usb_t;
 

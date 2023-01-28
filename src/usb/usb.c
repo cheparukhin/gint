@@ -141,9 +141,27 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	if(!hpowered()) hpoweron();
 	hpoweron_write();
 
-	*(uint16_t volatile *)0xa4d800c2 = 0x0020;
+	USB.REG_C2 = 0x0020;
+
+	// TODO: Configuration sequence
+	// - DPRPU = 0     (disconnect if previously a function)
+	// - DPRD = 0      (required for setting DCFM)
+	// - DCFM = 0/1    (select host/function)
+	// - USBE = 0      (clears registers based on DCFM)
+	// Then for function:
+	// - HSE = 1       (use high-speed)
+	// - USBE = 1
+	// - ...
+	// - DPRPU = 1     (notify host of connection)
+	// - Read LNST
+	// And for host:
+	// - HSE = 0       (allow slow devices)
+	// - USBE = 1
+	// - DRPD = 1      (host setting)
+	// - Read LNST
 
 	/* Turn on the module now that SCKE=1 */
+	// TODO: Set to 0 now, set to 1 after enabling DPRPU/DPRD
 	USB.SYSCFG.USBE = 1;
 	USB.SYSCFG.HSE = 1;
 
