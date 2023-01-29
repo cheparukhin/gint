@@ -2,6 +2,7 @@
 #include <gint/mpu/usb.h>
 #include <gint/mpu/power.h>
 #include <gint/mpu/cpg.h>
+#include <gint/mpu/pfc.h>
 #include <gint/drivers.h>
 #include <gint/drivers/states.h>
 #include <gint/clock.h>
@@ -76,11 +77,8 @@ static void hpoweron(void)
 {
 	if(hpowered()) return;
 
-	/* TODO: USB: Proper handling of MSELCRA and MSELCRB */
-	uint16_t volatile *MSELCRA = (void *)0xa4050180;
-	uint16_t volatile *MSELCRB = (void *)0xa4050182;
-	*MSELCRA &= 0xff3f;
-	*MSELCRB &= 0x3fff;
+	SH7305_PFC.MSELCRA.UNKNOWN_USB = 0;
+	SH7305_PFC.MSELCRB.XTAL_USB = 0;
 
 	/* Leave some delay for the clock to settle. The OS leaves
 	   100 ms, but it just never seems necessary. */
@@ -106,9 +104,6 @@ static void hpoweron_write(void)
 
 static void hpoweroff(void)
 {
-	uint16_t volatile *MSELCRA = (void *)0xa4050180;
-	uint16_t volatile *MSELCRB = (void *)0xa4050182;
-
 	SH7305_USB_UPONCR.word = 0x0000;
 
 	/* This delay is crucial and omitting it has caused constant freezes in
@@ -120,12 +115,15 @@ static void hpoweroff(void)
 	sleep_us_spin(1000);
 
 	/* The values used by the OS (a PFC driver could do better) */
-	*MSELCRB = (*MSELCRB & 0x3fff) | 0xc000;
-	*MSELCRA = (*MSELCRA & 0xff3f) | 0x0040;
+	SH7305_PFC.MSELCRB.XTAL_USB = 3;
+	SH7305_PFC.MSELCRA.UNKNOWN_USB = 1;
 }
 
 int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 {
+	/* TODO: Check whether the calculator can host devices (probably no) */
+	bool host = false;
+
 	USB_LOG("---- usb_open ----\n");
 
 	int rc = usb_configure_solve(interfaces);
@@ -143,38 +141,37 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 
 	USB.REG_C2 = 0x0020;
 
-	// TODO: Configuration sequence
-	// - DPRPU = 0     (disconnect if previously a function)
-	// - DPRD = 0      (required for setting DCFM)
-	// - DCFM = 0/1    (select host/function)
-	// - USBE = 0      (clears registers based on DCFM)
-	// Then for function:
-	// - HSE = 1       (use high-speed)
-	// - USBE = 1
-	// - ...
-	// - DPRPU = 1     (notify host of connection)
-	// - Read LNST
-	// And for host:
-	// - HSE = 0       (allow slow devices)
-	// - USBE = 1
-	// - DRPD = 1      (host setting)
-	// - Read LNST
-
-	/* Turn on the module now that SCKE=1 */
-	// TODO: Set to 0 now, set to 1 after enabling DPRPU/DPRD
-	USB.SYSCFG.USBE = 1;
-	USB.SYSCFG.HSE = 1;
-
-	/* Disable pin pull-down and pull-up in order to change DCFM */
-	USB.SYSCFG.DRPD = 0;
+	/* Disconnect (DPRPU=0) if we were previously connected as a function. Also
+	   drive down DRPR, since both are required for setting DCFM. */
 	USB.SYSCFG.DPRPU = 0;
-	/* Select function controller */
-	USB.SYSCFG.DCFM = 0;
+	USB.SYSCFG.DRPD = 0;
 
-	/* Pull D+ up to 3.3V, notifying connection when possible. Read
-	   SYSSTS.LNST as required after modifying DPRPU */
-	USB.SYSCFG.DPRPU = 1;
-	GUNUSED volatile int LNST = USB.SYSSTS.LNST;
+	if(host) {
+		/* Select the host controller */
+		USB.SYSCFG.DCFM = 1;
+		/* Clear registers to prepare for host operation */
+		USB.SYSCFG.USBE = 0;
+		/* Do not require high-speed operation; also accept full-speed */
+		USB.SYSCFG.HSE = 0;
+
+		/* Pull DPRD and eliminate chattering */
+		USB.SYSCFG.DRPD = 1;
+		GUNUSED volatile int LNST = USB.SYSSTS.LNST;
+
+		/* Enable the module */
+		USB.SYSCFG.USBE = 1;
+	}
+	else {
+		/* Select the function controller */
+		USB.SYSCFG.DCFM = 0;
+		/* Clear registers to prepare for function operation */
+		USB.SYSCFG.USBE = 0;
+		/* Use high-speed only */
+		USB.SYSCFG.HSE = 1;
+
+		/* Enable the module */
+		USB.SYSCFG.USBE = 1;
+	}
 
 	/* Prepare the default control pipe. */
 	USB.DCPCFG.DIR = 0;
@@ -205,6 +202,11 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 
 	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
 	intc_priority(INTC_USB, 8);
+
+	/* Pull D+ up to 3.3V, notifying connection when possible. Read
+	   SYSSTS.LNST as required after modifying DPRPU */
+	USB.SYSCFG.DPRPU = 1;
+	GUNUSED volatile int LNST = USB.SYSSTS.LNST;
 
 	return 0;
 }
@@ -356,7 +358,7 @@ static void hrestore(usb_state_t const *s)
 
 gint_driver_t drv_usb = {
 	.name         = "USB",
-	/* TODO: Wait for remaining transfers in unbind() */
+	/* TODO: usb: Wait for remaining transfers in unbind() */
 	.hpowered     = hpowered,
 	.hpoweron     = hpoweron,
 	.hpoweroff    = hpoweroff,

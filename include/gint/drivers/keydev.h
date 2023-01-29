@@ -125,7 +125,7 @@ typedef struct {
 	   that the precision of the delay is limited by the speed at which the
 	   keyboard is scanned, which is nowhere near microsecond-level. By
 	   default (128 Hz) the precision is about 7.8 ms. */
-   keydev_repeat_profile_t repeater;
+	keydev_repeat_profile_t repeater;
 
 } GPACKEDENUM keydev_transform_t;
 
@@ -204,8 +204,8 @@ typedef struct {
 	/* Event queue (circular buffer) */
 	key_event_t queue[KEYBOARD_QUEUE_SIZE];
 
-   /* Parameters for the standard repeat function */
-   int rep_standard_first, rep_standard_next;
+	/* Parameters for the standard repeat function */
+	int rep_standard_first, rep_standard_next;
 
 } keydev_t;
 

@@ -190,7 +190,9 @@ typedef volatile struct
 	/* Module function selection registers.
 	   WARNING: These are the SH7724 bits, not necessarily the SH7305! */
 	word_union(MSELCRA,
-		uint16_t		:16;
+		uint16_t		:8;
+		uint16_t UNKNOWN_USB	:2;
+		uint16_t		:6;
 	);
 	word_union(MSELCRB,
 		uint16_t XTAL_USB	:2;

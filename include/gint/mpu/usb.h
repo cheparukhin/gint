@@ -11,6 +11,19 @@ extern "C" {
 
 #include <gint/defs/types.h>
 
+typedef struct
+{
+	word_union(TRE,
+		uint16_t	:6;
+		uint16_t TRENB	:1;	/* Transaction Counter Enable */
+		uint16_t TRCLR	:1;	/* Transaction Counter Clear */
+		uint16_t	:8;
+	);
+	word_union(TRN,
+		uint16_t TRCNT	:16;	/* Transaction Counter */
+	);
+} sh7305_usb_pipetr;
+
 typedef volatile struct
 {
 	/* System Configuration Control Register */
@@ -192,7 +205,19 @@ typedef volatile struct
 		uint16_t VALID	:1;	/* USB Request Reception */
 		uint16_t CTSQ	:3;	/* Control Transfer Stage */
 	);
-	pad(4);
+	word_union(INTSTS1,
+		uint16_t _1	:1;	/* Unknown role */
+		uint16_t BCHG	:1;	/* Bus Change */
+		uint16_t	:1;
+		uint16_t DTCH	:1;	/* Disconnection Detection */
+		uint16_t ATTCH	:1;	/* Connection Detection */
+		uint16_t	:4;
+		uint16_t EOFERR	:1;	/* EOF Error Detection */
+		uint16_t SIGN	:1;	/* Setup Transaction Error */
+		uint16_t SACK	:1;	/* Setup Transaction Normal Response */
+		uint16_t	:4;
+	);
+	pad(2);
 
 	/* BRDY Interrupt Status Register */
 	uint16_t BRDYSTS;
@@ -333,53 +358,8 @@ typedef volatile struct
 	);
 	pad(14);
 
-	/* PIPEn Transaction Counter Enable Registers and */
-	/* PIPEn Transaction Counter Registers */
-	word_union(PIPE1TRE,
-		uint16_t	:6;
-		uint16_t TRENB	:1;	/* Transaction Counter Enable */
-		uint16_t TRCLR	:1;	/* Transaction Counter Clear */
-		uint16_t	:8;
-	);
-	word_union(PIPE1TRN,
-		uint16_t TRCNT	:16;	/* Transaction Counter */
-	);
-	word_union(PIPE2TRE,
-		uint16_t	:6;
-		uint16_t TRENB	:1;	/* Transaction Counter Enable */
-		uint16_t TRCLR	:1;	/* Transaction Counter Clear */
-		uint16_t	:8;
-	);
-	word_union(PIPE2TRN,
-		uint16_t TRCNT	:16;	/* Transaction Counter */
-	);
-	word_union(PIPE3TRE,
-		uint16_t	:6;
-		uint16_t TRENB	:1;	/* Transaction Counter Enable */
-		uint16_t TRCLR	:1;	/* Transaction Counter Clear */
-		uint16_t	:8;
-	);
-	word_union(PIPE3TRN,
-		uint16_t TRCNT	:16;	/* Transaction Counter */
-	);
-	word_union(PIPE4TRE,
-		uint16_t	:6;
-		uint16_t TRENB	:1;	/* Transaction Counter Enable */
-		uint16_t TRCLR	:1;	/* Transaction Counter Clear */
-		uint16_t	:8;
-	);
-	word_union(PIPE4TRN,
-		uint16_t TRCNT	:16;	/* Transaction Counter */
-	);
-	word_union(PIPE5TRE,
-		uint16_t	:6;
-		uint16_t TRENB	:1;	/* Transaction Counter Enable */
-		uint16_t TRCLR	:1;	/* Transaction Counter Clear */
-		uint16_t	:8;
-	);
-	word_union(PIPE5TRN,
-		uint16_t TRCNT	:16;	/* Transaction Counter */
-	);
+	/* Transaction Counter Registers (PIPE1..PIPE5 only) */
+	sh7305_usb_pipetr PIPETR[5];
 	pad(0x1e);
 
 	uint16_t REG_C2;

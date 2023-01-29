@@ -18,21 +18,42 @@
 void usb_pipe_configure(int address, endpoint_t const *ep)
 {
 	/* Maps USB 2.0 transfer types to SH7305 USB module transfer types */
-	static uint8_t type_map[4] = { 0, 3, 1, 2 };
-	USB.PIPESEL.PIPESEL = ep->pipe;
+	static uint8_t type_map[4] = {
+		0, TYPE_ISOCHRONOUS, TYPE_BULK, TYPE_INTERRUPT };
 
-	USB.PIPECFG.TYPE    = type_map[ep->dc->bmAttributes & 0x03];
-	USB.PIPECFG.BFRE    = 0;
+	if(ep->pipe > 0) {
+		/* Set PID to NAK so we can modify the pipe's configuration */
+		USB.PIPECTR[ep->pipe-1].PID = PID_NAK;
+		usb_while(USB.PIPECTR[ep->pipe-1].PBUSY);
+	}
+
+	int type = type_map[ep->dc->bmAttributes & 0x03];
+	bool dir_transmitting = (address & 0x80) != 0;
+	bool dir_receiving = !dir_transmitting;
+
+	USB.PIPESEL.PIPESEL = ep->pipe;
+	USB.PIPECFG.TYPE    = type;
+	USB.PIPECFG.BFRE    = dir_receiving;
+	/* Enable continuous mode on all bulk transfer pipes
+	   TODO: Also make it double mode*/
 	USB.PIPECFG.DBLB    = 0;
-	USB.PIPECFG.CNTMD   = 1;
-	USB.PIPECFG.SHTNAK  = 0;
-	USB.PIPECFG.DIR     = (address & 0x80) != 0;
+	USB.PIPECFG.CNTMD   = (type == TYPE_BULK);
+	USB.PIPECFG.SHTNAK  = 1;
+	USB.PIPECFG.DIR     = dir_transmitting;
 	USB.PIPECFG.EPNUM   = (address & 0x0f);
 
 	USB.PIPEBUF.BUFSIZE = ep->bufsize - 1;
 	USB.PIPEBUF.BUFNMB  = ep->bufnmb;
 
 	USB.PIPEMAXP.MXPS   = le16toh(ep->dc->wMaxPacketSize);
+
+	USB.PIPEPERI.IFIS = 0;
+	USB.PIPEPERI.IITV = 0;
+
+	if(ep->pipe >= 1 && ep->pipe <= 5) {
+		USB.PIPETR[ep->pipe-1].TRE.TRCLR = 1;
+		USB.PIPETR[ep->pipe-1].TRE.TRENB = 0;
+	}
 }
 
 /* usb_pipe_clear(): Clear all data in the pipe */
@@ -41,16 +62,14 @@ void usb_pipe_clear(int pipe)
 	if(pipe <= 0 || pipe > 9) return;
 
 	/* Set PID=NAK then use ACLRM to clear the pipe */
-	USB.PIPECTR[pipe-1].PID = 0;
+	USB.PIPECTR[pipe-1].PID = PID_NAK;
 	usb_while(USB.PIPECTR[pipe-1].PBUSY);
 
 	USB.PIPECTR[pipe-1].ACLRM = 1;
 	USB.PIPECTR[pipe-1].ACLRM = 0;
-	usb_while(!USB.PIPECTR[pipe-1].BSTS);
 
-	USB.PIPECTR[pipe-1].PID = 0;
-	usb_while(USB.PIPECTR[pipe-1].CSSTS || USB.PIPECTR[pipe-1].PBUSY);
-
+	/* Clear the sequence bit (important after a world switch since we restore
+	   hardware registers but the host connection is starting from scratch!) */
 	USB.PIPECTR[pipe-1].SQCLR = 1;
 	usb_while(USB.PIPECTR[pipe-1].SQMON != 0);
 }
@@ -65,22 +84,22 @@ typedef enum {
 	CF,       /* Used for the Default Control Pipe */
 	D0F,      /* FIFO Controller 0 */
 	D1F,      /* FIFO Controller 1 */
-} fifo_t;
+} GPACKEDENUM fifo_t;
 
 enum {
 	FIFO_READ   = 0, /* Read mode */
 	FIFO_WRITE  = 1, /* Write mode */
 };
 
-/* fifo_access(): Get a FIFO controller for a pipe */
-static fifo_t fifo_access(int pipe)
+/* fifo_find_available_controller(): Get a FIFO controller for a pipe */
+static fifo_t fifo_find_available_controller(int pipe)
 {
-	/* TODO: USB: fifo_access(): Possibly use CFIFO for all pipes? */
 	if(pipe == 0) return CF;
-	/* Find a free controller */
+
 	if(USB.D0FIFOSEL.CURPIPE == 0) return D0F;
-	USB_LOG("Wait D0 is unavailable\n");
+	USB_LOG("D0 is unavailable!\n");
 	if(USB.D1FIFOSEL.CURPIPE == 0) return D1F;
+	USB_LOG("D1 is unavailable!\n");
 
 	return NOF;
 }
@@ -90,38 +109,58 @@ static void fifo_bind(fifo_t ct, int pipe, int mode, int size)
 {
 	size = (size - (size == 4) - 1) & 3;
 
-	if(pipe == 0)
-	{
-		if(USB.CFIFOSEL.ISEL == 1 && USB.DCPCTR.PID == 1) return;
+	if(pipe == 0) {
+		if(USB.CFIFOSEL.ISEL == 1 && USB.DCPCTR.PID == 1)
+			return;
 
-		if(mode == FIFO_WRITE) USB.DCPCTR.PID = 1;
+		if(mode == FIFO_WRITE)
+			USB.DCPCTR.PID = PID_BUF;
 		/* RCNT=0 REW=0 MBW=size BIGEND=1 ISEL=mode CURPIPE=0 */
 		USB.CFIFOSEL.word = 0x0100 | (mode << 5) | (size << 10);
 		usb_while(!USB.CFIFOCTR.FRDY || USB.CFIFOSEL.ISEL != mode);
 		return;
 	}
 
-	/* Set PID to BUF */
-	USB.PIPECTR[pipe-1].PID = 1;
+	__typeof__(USB.D0FIFOSEL) sel;
+	sel.RCNT = 0;
+	sel.REW = 0;
+	sel.DCLRM = (mode == FIFO_READ);
+	sel.DREQE = 0;
+	sel.MBW = size;
+	sel.BIGEND = 1;
+	sel.CURPIPE = pipe;
 
-	/* RCNT=0 REW=0 DCLRM=0 DREQE=0 MBW=size BIGEND=1 */
-	if(ct == D0F) USB.D0FIFOSEL.word = 0x0100 | (size << 10) | pipe;
-	if(ct == D1F) USB.D1FIFOSEL.word = 0x0100 | (size << 10) | pipe;
+	if(ct == D0F) {
+		USB.D0FIFOSEL.word = sel.word;
+		usb_while(!USB.D0FIFOCTR.FRDY || USB.PIPECFG.DIR != mode);
+	}
+	if(ct == D1F) {
+		USB.D1FIFOSEL.word = sel.word;
+		usb_while(!USB.D1FIFOCTR.FRDY || USB.PIPECFG.DIR != mode);
+	}
 
-	if(ct == D0F) usb_while(!USB.D0FIFOCTR.FRDY || USB.PIPECFG.DIR!=mode);
-	if(ct == D1F) usb_while(!USB.D1FIFOCTR.FRDY || USB.PIPECFG.DIR!=mode);
+	/* Enable USB comunication! */
+	USB.PIPECTR[pipe-1].PID = PID_BUF;
 }
 
-/* fifo_unbind(): Free a FIFO */
+/* fifo_unbind(): Unbind a FIFO */
 static void fifo_unbind(fifo_t ct)
 {
-	if(ct == D0F)
-	{
+	int pipe = -1;
+	if(ct == D0F) pipe = USB.D0FIFOSEL.CURPIPE;
+	if(ct == D1F) pipe = USB.D1FIFOSEL.CURPIPE;
+	if(pipe <= 0)
+		return;
+
+	/* Disbable communication on the pipe */
+	USB.PIPECTR[pipe-1].PID = PID_NAK;
+	usb_while(USB.PIPECTR[pipe-1].PBUSY);
+
+	if(ct == D0F) {
 		USB.D0FIFOSEL.word = 0x0000;
 		usb_while(USB.D0FIFOSEL.CURPIPE != 0);
 	}
-	if(ct == D1F)
-	{
+	if(ct == D1F) {
 		USB.D1FIFOSEL.word = 0x0000;
 		usb_while(USB.D1FIFOSEL.CURPIPE != 0);
 	}
@@ -327,7 +366,7 @@ int usb_write_async(int pipe, void const *data, int size, int unit_size,
 	   otherwise try to get a new free one */
 	/* TODO: usb_write_async(): TOC/TOU race on controller being free */
 	fifo_t ct = t->ct;
-	if(ct == NOF) ct = fifo_access(pipe);
+	if(ct == NOF) ct = fifo_find_available_controller(pipe);
 	if(ct == NOF) return USB_WRITE_NOFIFO;
 
 	t->data = data;

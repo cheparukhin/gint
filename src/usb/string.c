@@ -30,21 +30,14 @@ uint16_t usb_dc_string(uint16_t const *literal, size_t len)
 	dc->bDescriptorType = USB_DC_STRING;
 	for(size_t i = 0; i < len; i++) dc->data[i] = htole16(literal[i]);
 
-	/* Try to make room in the array; if realloc() fails, try to allocate
-	   again in another arena */
+	/* Try to make room in the array */
 	size_t new_size = (array_size + 1) * sizeof(*array);
 	usb_dc_string_t **new_array = realloc(array, new_size);
 
 	if(!new_array)
 	{
-		new_array = malloc(new_size);
-		if(!new_array)
-		{
-			free(dc);
-			return 0;
-		}
-		memcpy(new_array, array, array_size * sizeof(*array));
-		free(array);
+		free(dc);
+		return 0;
 	}
 
 	array = new_array;

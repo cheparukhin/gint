@@ -6,7 +6,7 @@
 #define GINT_USB_USB_PRIVATE
 
 #include <gint/defs/attributes.h>
-#include <gint/timer.h>
+#include <gint/defs/timeout.h>
 #include <gint/gint.h>
 #include <gint/usb.h>
 
@@ -133,20 +133,15 @@ void usb_pipe_write_bemp(int pipe);
 void usb_pipe_init_transfers(void);
 
 //---
-// Timout waits
+// Timeout waits
 //---
 
 /* usb_while(): A while loop with a timeout */
-#define usb_while(condition) ({ \
-	volatile int __f = 0; \
-	int __t = timer_configure(TIMER_ANY, 100000 /*µs*/, \
-		GINT_CALL_SET_STOP(&__f)); \
-	if(__t >= 0) timer_start(__t); \
-	while((condition) && __f == 0) {} \
-	if(__f) USB_LOG("%s: %d: (" #condition ") holds\n", \
-		__FUNCTION__, __LINE__); \
-	if(__t >= 0) timer_stop(__t); \
-	__f != 0; \
+#define usb_while(COND) ({ \
+   timeout_t __t = timeout_make_ms(100); \
+   bool __b = false; \
+   while((COND) && !(__b = timeout_elapsed(&__t))) {} \
+	if(__b) USB_LOG("%s:%d: inf. while(" #COND ")\n", __FUNCTION__, __LINE__); \
 })
 
 //---
@@ -174,5 +169,21 @@ enum {
    bit in the INTSTS0 register. The inputs are the USBREQ, USBVAL, USBINDX and
    USBLENG registers, along with the DCP FIFO. */
 void usb_req_setup(void);
+
+//---
+// Enumerations and stuff
+//---
+
+enum {
+   PID_NAK = 0,
+   PID_BUF = 1,
+   PID_STALL2 = 2,
+   PID_STALL3 = 3,
+};
+enum {
+   TYPE_BULK = 1,
+   TYPE_INTERRUPT = 2,
+   TYPE_ISOCHRONOUS = 3,
+};
 
 #endif /* GINT_USB_USB_PRIVATE */
