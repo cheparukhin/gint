@@ -266,13 +266,9 @@ static void usb_interrupt_handler(void)
 		if(USB.INTSTS0.DVSQ == 3)
 		{
 			usb_configure_clear_pipes();
-
 			usb_open_status = true;
-			if(usb_open_callback.function)
-			{
-				gint_call(usb_open_callback);
-				usb_open_callback = GINT_CALL_NULL;
-			}
+			gint_call(usb_open_callback);
+			usb_open_callback = GINT_CALL_NULL;
 		}
 	}
 	else if(USB.INTSTS0.BEMP)

@@ -12,8 +12,7 @@ void dupdate(void)
 
 	r61524_display(gint_vram, 0, 224, method);
 
-	gint_call_t hook = dupdate_get_hook();
-	if(hook.function) gint_call(hook);
+	gint_call(dupdate_get_hook());
 
 	/* Switch buffers if triple buffering is enabled */
 	dvram_switch();

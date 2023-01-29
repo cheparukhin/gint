@@ -28,8 +28,7 @@ void dupdate(void)
 		t6k11_display(gint_vram, 0, 64, 16);
 	}
 
-	gint_call_t hook = dupdate_get_hook();
-	if(hook.function) gint_call(hook);
+	gint_call(dupdate_get_hook());
 }
 __attribute__((alias("dupdate")))
 void _WEAK_dupdate(void);

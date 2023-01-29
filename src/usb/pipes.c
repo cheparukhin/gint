@@ -263,10 +263,10 @@ static void finish_transfer(struct transfer volatile *t, int pipe)
 	t->used = 0;
 
 	/* Disable the interrupt */
-	if(pipe) USB.BEMPENB &= ~(1 << pipe);
+	if(pipe != 0)
+		USB.BEMPENB &= ~(1 << pipe);
 
-	if(t->callback.function) gint_call(t->callback);
-
+	gint_call(t->callback);
 	USB_TRACE("finish_transfer()");
 }
 
@@ -287,14 +287,14 @@ static void finish_round(struct transfer volatile *t, int pipe)
 	t->flying = 0;
 
 	/* Account for auto-transfers */
-	if(t->used == pipe_bufsize(pipe)) t->used = 0;
+	if(t->used == pipe_bufsize(pipe))
+		t->used = 0;
 
 	/* At the end, free the FIFO and invoke the callback. Hold the
 	   controller until the pipe is committed */
-	if(t->size == 0)
-	{
+	if(t->size == 0) {
 		t->data = NULL;
-		if(t->callback.function) gint_call(t->callback);
+		gint_call(t->callback);
 	}
 
 	USB_TRACE("finish_round()");

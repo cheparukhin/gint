@@ -160,11 +160,8 @@ static void dma_interrupt_transfer_ended(int channel)
 	if(dma_wait_ics[channel])
 		cpu_csleep_cancel(dma_wait_ics[channel]);
 
-	if(dma_callbacks[channel].function)
-	{
-		gint_call(dma_callbacks[channel]);
-		dma_callbacks[channel] = GINT_CALL_NULL;
-	}
+	gint_call(dma_callbacks[channel]);
+	dma_callbacks[channel] = GINT_CALL_NULL;
 }
 
 /* dma_channel_wait(): Wait for a particular channel's transfer to finish

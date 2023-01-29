@@ -149,7 +149,7 @@ int gint_world_switch(gint_call_t call)
 	if(canary)
 		*canary = 0xb7c0ffee;
 
-	int rc = call.function ? gint_call(call) : 0;
+	int rc = gint_call(call);
 
 	/* The canary check needs to occur before switching in the gint world;
 	   otherwise we just crash due to the overflow. gint_panic() isn't

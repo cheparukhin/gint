@@ -153,7 +153,8 @@ static GINLINE int gint_call(gint_call_t cb)
 	int (*f)(int r4, int r5, int r6, int r7) = cb.function;
 #endif
 
-	return f(cb.args[0].i, cb.args[1].i, cb.args[2].i, cb.args[3].i);
+        gint_call_arg_t *args = cb.args;
+	return f ? f(args[0].i, args[1].i, args[2].i, args[3].i) : -1;
 }
 
 //---
