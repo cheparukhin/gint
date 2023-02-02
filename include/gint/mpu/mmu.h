@@ -49,12 +49,10 @@ typedef struct
 } GPACKED(4) tlb_data_t;
 
 //---
-//	SH7305 TLB. Refer to:
-//	  "Renesas SH7724 User's Manual: Hardware"
-//	  Section 7: "Memory Management Unit (MMU)"
+//	SH7305 TLB. Refer to SH4AL-DSP manual, section 7 (MMU)
 //---
 
-/* utlb_addr_t - address part of a UTLB entry */
+/* utlb_addr_t: Address part of a UTLB entry */
 typedef struct
 {
 	uint VPN	:22;
@@ -64,7 +62,7 @@ typedef struct
 
 } GPACKED(4) utlb_addr_t;
 
-/* utlb_data_t - data part of a UTLB entry */
+/* utlb_data_t: Data part of a UTLB entry */
 typedef struct
 {
 	uint		:3;
@@ -80,6 +78,34 @@ typedef struct
 	uint WT		:1;
 
 } GPACKED(4) utlb_data_t;
+
+/* itlb_addr_t: Address part of an ITLB entry */
+typedef struct
+{
+	uint VPN	:22;
+	uint		:1;
+	uint V		:1;
+	uint ASID	:8;
+
+} GPACKED(4) itlb_addr_t;
+
+/* itlb_data_t: Data part of an ITLB entry */
+typedef struct
+{
+	uint		:3;
+	uint PPN	:19;
+	uint		:1;
+	uint V		:1;
+	uint SZ1	:1;
+	uint PR		:1;
+	uint		:1;
+	uint SZ0	:1;
+	uint C		:1;
+	uint 		:1;
+	uint SH		:1;
+	uint		:1;
+
+} GPACKED(4) itlb_data_t;
 
 typedef volatile struct
 {

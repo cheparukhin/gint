@@ -89,7 +89,7 @@ uint32_t tlb_translate(uint32_t page, uint32_t *size);
 /* utlb_addr() - get the P4 address of a UTLB address entry
    @E  Entry number (should be in range 0..63)
    Returns a pointer to the entry. */
-const utlb_addr_t *utlb_addr(uint E);
+utlb_addr_t const *utlb_addr(uint E);
 
 /* utlb_data() - get the P4 address of a UTLB data entry
    @E  Entry number (should be in range 0..63)
@@ -109,6 +109,16 @@ void utlb_mapped_memory(uint32_t *rom, uint32_t *ram);
 
 /* utlb_translate(): Get the physical address for a virtual page */
 uint32_t utlb_translate(uint32_t page, uint32_t *size);
+
+/* itlb_addr(): Get the P4 address of an ITLB address entry
+   @E  Entry number (0..3)
+   Returns a pointer to the entry. */
+itlb_addr_t const *itlb_addr(uint E);
+
+/* itlb_data(): Get the P4 address of an ITLB data entry
+   @E  Entry number (0..3)
+   Returns a pointer to the entry. */
+itlb_data_t const *itlb_data(uint E);
 
 #ifdef __cplusplus
 }

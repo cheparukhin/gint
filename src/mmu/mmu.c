@@ -129,21 +129,18 @@ uint32_t tlb_translate(uint32_t page, uint32_t *size)
 //	SH7305 Unified TLB
 //---
 
-/* utlb_addr() - get the P4 address of a UTLB address entry */
 GINLINE const utlb_addr_t *utlb_addr(uint E)
 {
 	uint32_t addr = 0xf6000000 | ((E & 0x3f) << 8);
 	return (void *)addr;
 }
 
-/* utlb_data() - get the P4 address of a UTLB data entry */
 GINLINE const utlb_data_t *utlb_data(uint E)
 {
 	uint32_t addr = 0xf7000000 | ((E & 0x3f) << 8);
 	return (void *)addr;
 }
 
-/* utlb_mapped_memory() - count amount of mapped memory */
 void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 {
 	uint32_t rom = 0, ram = 0;
@@ -170,7 +167,6 @@ void utlb_mapped_memory(uint32_t *p_rom, uint32_t *p_ram)
 	gint[HWURAM] = ram;
 }
 
-/* utlb_translate(): Get the physical address for a virtual page */
 uint32_t utlb_translate(uint32_t page, uint32_t *size)
 {
 	for(int E = 0; E < 64; E++)
@@ -189,6 +185,18 @@ uint32_t utlb_translate(uint32_t page, uint32_t *size)
 		}
 	}
 	return -1;
+}
+
+itlb_addr_t const *itlb_addr(uint E)
+{
+	uint32_t addr = 0xf2000000 | ((E & 3) << 8);
+	return (void *)addr;
+}
+
+itlb_data_t const *itlb_data(uint E)
+{
+	uint32_t addr = 0xf3000000 | ((E & 3) << 8);
+	return (void *)addr;
 }
 
 static void configure(void)
