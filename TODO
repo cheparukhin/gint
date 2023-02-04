@@ -16,6 +16,8 @@ Extensions on existing code:
 * core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
 * core:      run destructors when a task-switch results in leaving the app
 * fs:        support read-only files backed with GetBlockAddress() on fx-CG
+* kernel:    SH4- or G-III-specific linker scripts?
+* keysc:     global shortcut SHIFT+0+EXIT for abort() as an infinite loop break
 
 Future directions:
 * Audio playback using TSWilliamson's libsnd method

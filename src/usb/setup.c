@@ -8,7 +8,7 @@
 
 #define USB SH7305_USB
 
-#define dcp_write(data, size) usb_write_sync(0, data, size, 1, false)
+#define dcp_write(data, size) usb_write_sync(0, data, size, false)
 
 //---
 // SETUP requests

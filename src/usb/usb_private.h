@@ -132,6 +132,46 @@ void usb_pipe_write_bemp(int pipe);
 /* usb_pipe_init_transfers(): Initialize transfer information */
 void usb_pipe_init_transfers(void);
 
+/* usb_wait_all_transfers(): Wait for all transfers to finish
+
+   This function waits for all current operations on the pipes to finish their
+   current read/write/fsync call. Once the waiting period is finished, the
+   calls are guaranteed to be finished, but write transactions might not (as
+   they require multiple calls finishing with a fsync(2)).
+
+   If `await_long_writes` is set, this function also waits for all writes to be
+   committed, which only makes sense if said writes are executed in a thread
+   that is able to run while this is waiting. */
+void usb_wait_all_transfers(bool await_long_writes);
+
+/* usb_pipe_write4(): Copy arbitrary ranges of memory to a 4-byte USB FIFO
+
+   This function copies arbitrarily-aligned data of any size into a 4-byte
+   USB FIFO register. It rearranges data so as to perform only 4-byte aligned
+   writes. If the data size isn't a multiple of 4 bytes, it stores the
+   remainder into a short buffer (holding between 0 and 3 bytes), to be
+   combined with fresh data on the next call. The remainder of the buffer can
+   be discharged eventually with usb_pipe_flush4().
+
+   @data         Data to write into the FIFO
+   @size         Number of bytes to write
+   @buffer       Address of short buffer
+   @buffer_size  Address of short buffer's size tracker
+   @FIFO         FIFO to output to */
+void usb_pipe_write4(void const *data, int size, uint32_t volatile *buffer,
+   uint8_t volatile *buffer_size, uint32_t volatile *FIFO);
+
+/* usb_pipe_flush4(): Flush usb_pipe_write4()'s short buffer
+
+   This function is used after a sequence of usb_pipe_write4() to flush the
+   last few bytes remaining in the short buffer.
+
+   @buffer       Contents of short buffer
+   @buffer_size  Short buffer's size tracker
+   @FIFO         FIFO to output to */
+void usb_pipe_flush4(uint32_t buffer, int buffer_size,
+   uint32_t volatile *FIFO);
+
 //---
 // Timeout waits
 //---
@@ -171,7 +211,7 @@ enum {
 void usb_req_setup(void);
 
 //---
-// Enumerations and stuff
+// Enumerated constants
 //---
 
 enum {

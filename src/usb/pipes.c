@@ -6,7 +6,7 @@
 
 #include <string.h>
 
-#include "asyncio.h"
+#include <gint/drivers/asyncio.h>
 #include "usb_private.h"
 
 #define USB SH7305_USB
@@ -69,8 +69,9 @@ void usb_pipe_clear(int pipe)
 	USB.PIPECTR[pipe-1].ACLRM = 1;
 	USB.PIPECTR[pipe-1].ACLRM = 0;
 
-	/* Clear the sequence bit (important after a world switch since we restore
-	   hardware registers but the host connection is starting from scratch!) */
+	/* Clear the sequence bit (important after a world switch since we
+	   restore hardware registers but the connection to the hosts restarts
+	   from scratch!) */
 	USB.PIPECTR[pipe-1].SQCLR = 1;
 	usb_while(USB.PIPECTR[pipe-1].SQMON != 0);
 }
@@ -106,48 +107,43 @@ static fifo_t fifo_find_available_controller(int pipe)
 }
 
 /* fifo_bind(): Bind a FIFO to a pipe in reading or writing mode */
-static void fifo_bind(fifo_t ct, int pipe, int mode, int size)
+static void fifo_bind(fifo_t ct, int pipe, int mode)
 {
-	size = (size - (size == 4) - 1) & 3;
+	int reading = (mode == FIFO_READ);
+	int writing = (mode == FIFO_WRITE);
 
-	if(pipe == 0) {
-		if(USB.CFIFOSEL.ISEL == 1 && USB.DCPCTR.PID == 1)
-			return;
-
-		if(mode == FIFO_WRITE)
-			USB.DCPCTR.PID = PID_BUF;
-		/* RCNT=0 REW=0 MBW=size BIGEND=1 ISEL=mode CURPIPE=0 */
-		USB.CFIFOSEL.word = 0x0100 | (mode << 5) | (size << 10);
+	/* RCNT=0 REW=0 MBW=2 BIGEND=1 ISEL=mode CURPIPE=0 */
+	if(ct == CF) {
+		USB.CFIFOSEL.word = 0x0900 | (mode << 5);
 		usb_while(!USB.CFIFOCTR.FRDY || USB.CFIFOSEL.ISEL != mode);
-		return;
 	}
-
-	__typeof__(USB.D0FIFOSEL) sel;
-	sel.RCNT = 0;
-	sel.REW = 0;
-	sel.DCLRM = (mode == FIFO_READ);
-	sel.DREQE = 0;
-	sel.MBW = size;
-	sel.BIGEND = 1;
-	sel.CURPIPE = pipe;
-
+	/* RCNT=0 REW=0 DCLRM=reading DREQE=0 MBW=2 BIGEND=1 CURPIPE=pipe */
 	if(ct == D0F) {
-		USB.D0FIFOSEL.word = sel.word;
+		USB.D0FIFOSEL.word = 0x0900 | (reading << 13) | pipe;
 		usb_while(!USB.D0FIFOCTR.FRDY || USB.PIPECFG.DIR != mode);
 	}
 	if(ct == D1F) {
-		USB.D1FIFOSEL.word = sel.word;
+		USB.D1FIFOSEL.word = 0x0900 | (reading << 13) | pipe;
 		usb_while(!USB.D1FIFOCTR.FRDY || USB.PIPECFG.DIR != mode);
 	}
 
 	/* Enable USB comunication! */
-	USB.PIPECTR[pipe-1].PID = PID_BUF;
+	if(pipe == 0 && writing)
+		USB.DCPCTR.PID = PID_BUF;
+	if(pipe != 0)
+		USB.PIPECTR[pipe-1].PID = PID_BUF;
 }
 
 /* fifo_unbind(): Unbind a FIFO */
 static void fifo_unbind(fifo_t ct)
 {
 	int pipe = -1;
+	/* TODO: USB (DCP normalization): NAK when unbinding?
+	if(ct == CF) {
+		USB.DCPCTR.CCPL = 0;
+		USB.DCPCTR.PID = PID_NAK;
+		usb_while(!USB.DCPCTR.PBUSY);
+	} */
 	if(ct == D0F) pipe = USB.D0FIFOSEL.CURPIPE;
 	if(ct == D1F) pipe = USB.D1FIFOSEL.CURPIPE;
 	if(pipe <= 0)
@@ -171,52 +167,69 @@ static void fifo_unbind(fifo_t ct)
 // Writing operations
 //---
 
-/* Current operation waiting to be performed on each pipe. There are two
-   possible states for a pipe's transfer data:
-   -> Either there is a transfer going on, in which case (data != NULL),
-      (size != 0), and (buffer_used) has no meaning.
-   -> Either there is no transfer going on, and (data = NULL), (size = 0).
+/* The writing logic is asynchronous, which makes it sometimes hard to track.
+   The series of call for a write I/O is zero or more usb_write_async()
+   followed by a usb_commit_async():
 
-   A controller is assigned to t->controller when a write first occurs until
-   the pipe is fully committed. (ct = NOF) indicates an unused pipe, while
-   (ct != NOF) indicates that stuff has been written and is waiting a commit.
+     write_io ::= usb_write_async* usb_commit_async
 
-   Additionally, between a call to write_round() and the corresponding
-   finish_write(), the (round_size) attribute is set to a non-zero value
-   indicating how many bytes are waiting for write completion. */
+   A usb_write_async() will write to the hardware buffer as many times as it
+   takes to exhaust the input, including 1 time if the hardware buffer can hold
+   the entire input and 0 times if there is no input. Each _round_ consists of
+   a call to write_round() to copy with the CPU or start the copy with the DMA,
+   and a call to finish_round() when the copy is finished.
 
-/* Multi-round operations to be continued whenever buffers are ready */
-GBSS static asyncio_op_t volatile pipe_transfers[10];
+   If the round fills the buffer, finish_round() is triggered by the BEMP
+   interrupt after the hardware finishes transferring. Otherwise finish_round()
+   is triggered directly when writing finishes.
+
+     complete_round ::= write_round
+                        <Finish writing with CPU or DMA>
+                        <USB module auto-commits pipe>
+                        <BEMP interrupt after transmission>
+                        finish_round
+
+     partial_round ::= write_round
+                       <Finish writing with CPU or DMA>
+                       finish_round
+
+   Note that the "<Finish writing>" event is asynchronous if the DMA is used. A
+   full write will take zero or more complete rounds followed by zero or one
+   partial round before finish_call() is called:
+
+     usb_write_async ::= complete_round* partial_round? finish_call
+
+   And a commit will trigger a transmission of whatever is left in the buffer
+   (including nothing) and wait for the BEMP interrupt.
+
+     usb_commit_async ::= <Manually commit pipe>
+                          <BEMP interrut after transmission>
+                          finish_call
+
+   Most functions can execute either in the main thread or within an interrupt
+   handler. */
+GBSS static asyncio_op_t pipe_transfers[10];
 
 void usb_pipe_init_transfers(void)
 {
-	memset((void *)pipe_transfers, 0, sizeof pipe_transfers);
+	for(int i = 0; i < 10; i++)
+		asyncio_op_clear(&pipe_transfers[i]);
 }
 
-static void write_8(uint8_t const *data, int size, uint8_t volatile *FIFO)
+void usb_wait_all_transfers(bool await_long_writes)
 {
-	for(int i = 0; i < size; i++) *FIFO = data[i];
-}
-static void write_16(uint16_t const *data, int size, uint16_t volatile *FIFO)
-{
-	for(int i = 0; i < size; i++) *FIFO = data[i];
-}
-static void write_32(uint32_t const *data, int size, uint32_t volatile *FIFO)
-{
-	for(int i = 0; i < size; i++) *FIFO = data[i];
-}
-
-/* Check whether a pipe is busy with a multi-round write or a transfer */
-GINLINE static bool pipe_busy(int pipe)
-{
-	/* Multi-round write still not finished */
-	if(pipe_transfers[pipe].data_w) return true;
-	/* Transfer in progress */
-	if(pipe && !USB.PIPECTR[pipe-1].BSTS) return true;
-	/* Callback for a just-finished transfer not yet called */
-	if(pipe_transfers[pipe].round_size) return true;
-	/* All good */
-	return false;
+	while(1) {
+		bool all_done = true;
+		for(int i = 0; i < 10; i++) {
+			asyncio_op_t const *t = &pipe_transfers[i];
+			all_done &= !asyncio_op_busy(t);
+			if(await_long_writes)
+				all_done &= (t->type != ASYNCIO_WRITE);
+		}
+		if(all_done)
+			return;
+		sleep();
+	}
 }
 
 /* Size of a pipe's buffer area, in bytes */
@@ -229,91 +242,70 @@ static int pipe_bufsize(int pipe)
 	return (USB.PIPEBUF.BUFSIZE + 1) * 64;
 }
 
-/* finish_transfer(): Finish a multi-round write transfer
-
-   This function is called when the final round of a transfer has completed,
-   either by the handler of the BEMP interrupt or by the usb_commit_async()
-   function if the pipe is being committed when empty. */
-static void finish_transfer(asyncio_op_t volatile *t, int pipe)
+/* This function is called when a read/write/fsync call and its associated
+   hardware interactions all complete. */
+static void finish_call(asyncio_op_t *t, int pipe)
 {
-	/* Free the FIFO controller */
-	fifo_unbind(t->controller);
-	t->controller = NOF;
+	/* Unbind the USB controller used for the call, except for writes since
+	   the USB module requires us to keep it until the final commit */
+	if(t->type != ASYNCIO_WRITE) {
+		fifo_unbind(t->controller);
+		t->controller = NOF;
+	}
 
-	/* Mark the transfer as unused */
-	t->committed_w = false;
-	t->buffer_used = 0;
-
-	/* Disable the interrupt */
-	if(pipe != 0)
+	/* Disable interrupts */
+	if((t->type == ASYNCIO_WRITE || t->type == ASYNCIO_SYNC) && pipe != 0)
 		USB.BEMPENB &= ~(1 << pipe);
 
-	gint_call(t->callback);
-	USB_TRACE("finish_transfer()");
+	asyncio_op_finish_call(t);
+	USB_TRACE("finish_call()");
 }
 
-/* finish_round(): Update transfer logic after a write round completes
-
-   This function is called when a write round completes, either by the handler
-   of the BEMP interrupt if the round filled the FIFO, or by the handler of the
-   DMA transfer or the write_round() function itself if it didn't.
-
-   It the current write operation has finished with this round, this function
-   invokes the write_async callback. */
-static void finish_round(asyncio_op_t volatile *t, int pipe)
+/* This function is called when a round of writing has completed, including all
+   hardware interactions. If the FIFO got filled by the writing, this is after
+   the transmission and BEMP interrupt; otherwise this is when the CPU/DMA
+   finished writing. */
+static void finish_round(asyncio_op_t *t, int pipe)
 {
-	/* Update the pointer as a result of the newly-finished write */
-	t->buffer_used += t->round_size;
-	t->data_w += t->round_size;
-	t->size -= t->round_size;
-	t->round_size = 0;
+//	USB_LOG("[PIPE%d] finish_round() for %d bytes\n", pipe, t->round_size);
+	asyncio_op_finish_write_round(t);
 
 	/* Account for auto-transfers */
 	if(t->buffer_used == pipe_bufsize(pipe))
 		t->buffer_used = 0;
 
-	/* At the end, free the FIFO and invoke the callback. Hold the
-	   controller until the pipe is committed */
-	if(t->size == 0) {
-		t->data_w = NULL;
-		gint_call(t->callback);
-	}
-
 	USB_TRACE("finish_round()");
-}
 
+	if(t->size == 0)
+		finish_call(t, pipe);
+}
 /* write_round(): Write up to a FIFO's worth of data to a pipe
 
    If this is a partial round (FIFO not going to be full), finish_round() is
    invoked after the write. Otherwise the FIFO is transmitted automatically and
    the BEMP handler will call finish_round() after the transfer. */
-static void write_round(asyncio_op_t volatile *t, int pipe)
+static void write_round(asyncio_op_t *t, int pipe)
 {
 	fifo_t ct = t->controller;
-	void volatile *FIFO = NULL;
 
+	void volatile *FIFO = NULL;
 	if(ct == CF)  FIFO = &USB.CFIFO;
 	if(ct == D0F) FIFO = &USB.D0FIFO;
 	if(ct == D1F) FIFO = &USB.D1FIFO;
-	fifo_bind(ct, pipe, FIFO_WRITE, t->unit_size);
 
 	/* Amount of data that can be transferred in a single run */
-	int available = pipe_bufsize(pipe) - (pipe == 0 ? 0 : t->buffer_used);
+	int available = pipe_bufsize(pipe) - t->buffer_used;
 	int size = min(t->size, available);
-	t->round_size = size;
 
 	/* If this is a partial write (size < available), call finish_round()
 	   after the copy to notify the user that the pipe is ready. Otherwise,
 	   a USB transfer will occur and the BEMP handler will do it. */
 	bool partial = (size < available);
 
+	asyncio_op_start_write_round(t, size);
+
 	if(t->dma)
 	{
-		/* TODO: USB: Can we use 32-byte DMA transfers? */
-		int block_size = DMA_1B;
-		if(t->unit_size == 2) block_size = DMA_2B, size >>= 1;
-		if(t->unit_size == 4) block_size = DMA_4B, size >>= 2;
-
 		gint_call_t callback = partial ?
 			GINT_CALL(finish_round, (void *)t, pipe) :
 			GINT_CALL_NULL;
@@ -321,60 +313,56 @@ static void write_round(asyncio_op_t volatile *t, int pipe)
 		/* Use DMA channel 3 for D0F and 4 for D1F */
 		int channel = (ct == D0F) ? 3 : 4;
 
-		bool ok = dma_transfer_async(channel, block_size, size,
+		/* TODO: USB: Can we use 32-byte DMA transfers? */
+		bool ok = dma_transfer_async(channel, DMA_4B, size >> 2,
 			t->data_w, DMA_INC, (void *)FIFO, DMA_FIXED, callback);
 		if(!ok) USB_LOG("DMA async failed on channel %d!\n", channel);
 	}
 	else
 	{
-		if(t->unit_size == 1) write_8(t->data_w, size, FIFO);
-		if(t->unit_size == 2) write_16(t->data_w, size >> 1, FIFO);
-		if(t->unit_size == 4) write_32(t->data_w, size >> 2, FIFO);
+		usb_pipe_write4(t->data_w, size, &t->shbuf, &t->shbuf_size,
+			FIFO);
 		if(partial) finish_round(t, pipe);
 	}
 
 	USB_TRACE("write_round()");
 }
 
-int usb_write_async(int pipe, void const *data, int size, int unit_size,
-	bool use_dma, gint_call_t callback)
+int usb_write_async(int pipe, void const *data, int size, bool use_dma,
+	gint_call_t callback)
 {
-	if(pipe_busy(pipe)) return USB_WRITE_BUSY;
+	asyncio_op_t *t = &pipe_transfers[pipe];
+	if(asyncio_op_busy(t))
+		return USB_WRITE_BUSY;
 
-	asyncio_op_t volatile *t = &pipe_transfers[pipe];
-	if(!data || !size) return 0;
-
-	/* Re-use the controller from a previous write if there is one,
-	   otherwise try to get a new free one */
+	/* If this if the first write of a series, find a controller. */
 	/* TODO: usb_write_async(): TOC/TOU race on controller being free */
-	fifo_t ct = t->controller;
-	if(ct == NOF) ct = fifo_find_available_controller(pipe);
-	if(ct == NOF) return USB_WRITE_NOFIFO;
+	if(t->controller == NOF) {
+		fifo_t ct = fifo_find_available_controller(pipe);
+		if(ct == NOF)
+			return USB_WRITE_NOFIFO;
+		fifo_bind(ct, pipe, FIFO_WRITE);
+		t->controller = ct;
+	}
 
-	t->data_w = data;
-	t->size = size;
-	t->unit_size = (pipe == 0) ? 1 : unit_size;
-	t->dma = use_dma;
-	t->committed_w = false;
-	t->controller = ct;
-	t->callback = callback;
+	asyncio_op_start_write(t, data, size, use_dma, &callback);
 
 	/* Set up the Buffer Empty interrupt to refill the buffer when it gets
 	   empty, and be notified when the transfer completes. */
-	if(pipe) USB.BEMPENB |= (1 << pipe);
+	USB.BEMPENB |= (1 << pipe);
 
 	write_round(t, pipe);
 	return 0;
 }
 
-int usb_write_sync_timeout(int pipe, void const *data, int size, int unit_size,
-	bool use_dma, timeout_t const *timeout)
+int usb_write_sync_timeout(int pipe, void const *data, int size, bool use_dma,
+	timeout_t const *timeout)
 {
 	volatile int flag = 0;
 
 	while(1)
 	{
-		int rc = usb_write_async(pipe, data, size, unit_size, use_dma,
+		int rc = usb_write_async(pipe, data, size, use_dma,
 			GINT_CALL_SET(&flag));
 		if(rc == 0)
 			break;
@@ -396,39 +384,45 @@ int usb_write_sync_timeout(int pipe, void const *data, int size, int unit_size,
 	return 0;
 }
 
-int usb_write_sync(int pipe, void const *data, int size, int unit, bool dma)
+int usb_write_sync(int pipe, void const *data, int size, bool dma)
 {
-	return usb_write_sync_timeout(pipe, data, size, unit, dma, NULL);
+	return usb_write_sync_timeout(pipe, data, size, dma, NULL);
 }
 
 int usb_commit_async(int pipe, gint_call_t callback)
 {
-	asyncio_op_t volatile *t = &pipe_transfers[pipe];
-	if(pipe_busy(pipe)) return USB_COMMIT_BUSY;
+	asyncio_op_t *t = &pipe_transfers[pipe];
+	if(asyncio_op_busy(t))
+		return USB_COMMIT_BUSY;
+	if(t->type != ASYNCIO_WRITE || t->controller == NOF)
+		return USB_COMMIT_INACTIVE;
 
-	if(t->controller == NOF) return USB_COMMIT_INACTIVE;
+	/* Flush any remaining bytes in the short buffer. This cannot fill the
+	   buffer and create an auto-transmission situation; instead the module
+	   remains idle after this write. This is because we only use 32-bit
+	   writes, therefore at worst the buffer is 4 bytes away from being
+	   full, and will not be filled by an extra 0-3 bytes. */
+	void volatile *FIFO = NULL;
+	if(t->controller == CF)  FIFO = &USB.CFIFO;
+	if(t->controller == D0F) FIFO = &USB.D0FIFO;
+	if(t->controller == D1F) FIFO = &USB.D1FIFO;
+	usb_pipe_flush4(t->shbuf, t->shbuf_size, FIFO);
 
-	t->committed_w = true;
-	t->callback = callback;
+	/* Switch from WRITE to SYNC type; this influences the BEMP handler and
+	   the final finish_call() */
+	asyncio_op_start_sync(t, &callback);
 
-	/* TODO: Handle complex commits on the DCP */
-	if(pipe == 0)
-	{
-		finish_transfer(t, pipe);
+	/* TODO: Figure out why previous attempts to use BEMP to finish commit
+	   TODO| calls on the DCP failed with a freeze */
+	if(pipe == 0) {
 		USB.CFIFOCTR.BVAL = 1;
-		return 0;
-	}
-
-	/* Committing an empty pipe ends the transfer on the spot */
-	if(t->buffer_used == 0)
-	{
-		finish_transfer(t, pipe);
+		finish_call(t, pipe);
 		return 0;
 	}
 
 	/* Set BVAL=1 and inform the BEMP handler of the commitment with the
-	   committed_w flag; the handler will invoke finish_transfer() */
-	fifo_bind(t->controller, pipe, FIFO_WRITE, t->unit_size);
+	   SYNC type; the handler will invoke finish_call() */
+	USB.BEMPENB |= (1 << pipe);
 	if(t->controller == D0F) USB.D0FIFOCTR.BVAL = 1;
 	if(t->controller == D1F) USB.D1FIFOCTR.BVAL = 1;
 	USB_LOG("[PIPE%d] Committed transfer\n", pipe);
@@ -471,11 +465,11 @@ void usb_commit_sync(int pipe)
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe)
 {
-	asyncio_op_t volatile *t = &pipe_transfers[pipe];
+	asyncio_op_t *t = &pipe_transfers[pipe];
 
-	if(t->committed_w)
+	if(t->type == ASYNCIO_SYNC)
 	{
-		finish_transfer(t, pipe);
+		finish_call(t, pipe);
 	}
 	else
 	{

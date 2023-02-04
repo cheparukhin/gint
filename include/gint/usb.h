@@ -175,23 +175,22 @@ int usb_interface_pipe(usb_interface_t const *interface, int endpoint);
 
 /* usb_write_sync(): Synchronously write to a USB pipe
 
-   This functions writes (size) bytes of (data) into the specified pipe, by
-   units of (unit_size) bytes. The unit size must be 1, 2 or 4, and both (data)
-   and (size) must be multiples of the unit size. In general, you should try to
-   use the largest possible unit size, as it will be much faster. In a sequence
-   of writes that concludes with a commit, all the writes must use the same
-   unit size.
+   This functions writes (size) bytes of (data) into the specified pipe. If the
+   data fits into the pipe, this function returns right away, and the data is
+   *not* transmitted. Otherwise, data is written until the pipe is full, at
+   which point it is automatically transmitted. After the transfer, this
+   function resumes writing, returning only once everything is written. Even
+   then the last bytes will still not have been transmitted, to allow for other
+   writes to follow. After the last write in a sequence, use usb_commit_sync()
+   or usb_commit_async() to transmit the last bytes.
 
-   If the data fits into the pipe, this function returns right away, and the
-   data is *not* transmitted. Otherwise, data is written until the pipe is
-   full, at which point it is automatically transmitted. After the transfer,
-   this function resumes writing, returning only once everything is written.
-   Even then the last bytes will still not have been transmitted, to allow for
-   other writes to follow. After the last write in a sequence, use
-   usb_commit_sync() or usb_commit_async() to transmit the last bytes.
-
-   If (use_dma=true), the write is performed with the DMA instead of the CPU,
-   which is generally faster.
+   If (use_dma=true), the write is performed with the DMA instead of the CPU.
+   This requires at least 4-byte alignment on:
+     1. The input data;
+     2. The size of this write;
+     3. The amount of data previously written to the pipe not yet committed.
+   This is because using the DMA does not allow any insertion of CPU logic to
+   handle unaligned stuff.
 
    This function will use a FIFO controller to access the pipe. The FIFO
    controller will be reserved for further writes until the contents of the
@@ -204,17 +203,15 @@ int usb_interface_pipe(usb_interface_t const *interface, int endpoint);
    waits for the ressources to become available then proceeds normally.
 
    @pipe       Pipe to write into
-   @data       Source data (unit_size-aligned)
-   @size       Size of source (multiple of unit_size)
-   @unit_size  FIFO access size (must be 1, 2, or 4)
+   @data       Source data
+   @size       Size of source
    @dma        Whether to use the DMA to perform the write
    -> Returns an error code (0 on success). */
-int usb_write_sync(int pipe, void const *data, int size, int unit_size,
-	bool use_dma);
+int usb_write_sync(int pipe, void const *data, int size, bool use_dma);
 
 /* usb_write_sync_timeout(): Synchronously write, with a timeout */
 int usb_write_sync_timeout(int pipe, void const *data, int size,
-	int unit_size, bool use_dma, timeout_t const *timeout);
+	bool use_dma, timeout_t const *timeout);
 
 /* usb_write_async(): Asynchronously write to a USB pipe
 
@@ -236,14 +233,13 @@ int usb_write_sync_timeout(int pipe, void const *data, int size,
    is idle and USB_WRITE_BUSY otherwise.
 
    @pipe       Pipe to write into
-   @data       Source data (unit_size-aligned)
-   @size       Size of source (multiple of unit_size)
-   @unit_size  FIFO access size (must be 1, 2, or 4)
+   @data       Source data
+   @size       Size of source
    @dma        Whether to use the DMA to perform the write
    @callback   Optional callback to invoke when the write completes
    -> Returns an error code (0 on success). */
-int usb_write_async(int pipe, void const *data, int size, int unit_size,
-	bool use_dma, gint_call_t callback);
+int usb_write_async(int pipe, void const *data, int size, bool use_dma,
+	gint_call_t callback);
 
 /* usb_commit_sync(): Synchronously commit a write
 

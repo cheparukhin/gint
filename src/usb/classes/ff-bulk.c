@@ -108,9 +108,9 @@ static void capture_vram(GUNUSED bool onscreen, char const *type)
 	subheader.pixel_format = htole32(format);
 
 	int pipe = usb_ff_bulk_output();
-	usb_write_sync(pipe, &header, sizeof header, 4, false);
-	usb_write_sync(pipe, &subheader, sizeof subheader, 4, false);
-	usb_write_sync(pipe, source, size, 4, false);
+	usb_write_sync(pipe, &header, sizeof header, false);
+	usb_write_sync(pipe, &subheader, sizeof subheader, false);
+	usb_write_sync(pipe, source, size, false);
 	usb_commit_sync(pipe);
 }
 
@@ -123,16 +123,12 @@ void usb_fxlink_text(char const *text, int size)
 {
 	if(size == 0) size = strlen(text);
 
-	int unit_size = 4;
-	if((uint32_t)text & 3 || size & 3) unit_size = 2;
-	if((uint32_t)text & 1 || size & 1) unit_size = 1;
-
 	usb_fxlink_header_t header;
 	usb_fxlink_fill_header(&header, "fxlink", "text", size);
 
 	int pipe = usb_ff_bulk_output();
-	usb_write_sync(pipe, &header, sizeof header, unit_size, false);
-	usb_write_sync(pipe, text, size, unit_size, false);
+	usb_write_sync(pipe, &header, sizeof header, false);
+	usb_write_sync(pipe, text, size, false);
 	usb_commit_sync(pipe);
 }
 

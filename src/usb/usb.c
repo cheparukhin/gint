@@ -223,6 +223,9 @@ void usb_open_wait(void)
 
 void usb_close(void)
 {
+	usb_wait_all_transfers(false);
+	usb_pipe_init_transfers();
+
 	intc_priority(INTC_USB, 0);
 	hpoweroff();
 	USB_LOG("---- usb_close ----\n");
@@ -277,7 +280,7 @@ static void usb_interrupt_handler(void)
 		uint16_t status = USB.BEMPSTS;
 		USB.BEMPSTS = 0;
 
-		for(int i = 1; i <= 9; i++)
+		for(int i = 0; i <= 9; i++)
 		{
 			if(status & (1 << i)) usb_pipe_write_bemp(i);
 		}

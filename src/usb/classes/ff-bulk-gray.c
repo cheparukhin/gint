@@ -22,10 +22,10 @@ static void capture_vram_gray(GUNUSED bool onscreen, char const *type)
 	subheader.pixel_format = htole32(USB_FXLINK_IMAGE_GRAY);
 
 	int pipe = usb_ff_bulk_output();
-	usb_write_sync(pipe, &header, sizeof header, 4, false);
-	usb_write_sync(pipe, &subheader, sizeof subheader, 4, false);
-	usb_write_sync(pipe, light, 1024, 4, false);
-	usb_write_sync(pipe, dark, 1024, 4, false);
+	usb_write_sync(pipe, &header, sizeof header, false);
+	usb_write_sync(pipe, &subheader, sizeof subheader, false);
+	usb_write_sync(pipe, light, 1024, false);
+	usb_write_sync(pipe, dark, 1024, false);
 	usb_commit_sync(pipe);
 }
 
