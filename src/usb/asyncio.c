@@ -11,9 +11,12 @@ bool asyncio_op_busy(asyncio_op_t const *op)
     /* WAITING and READING states are busy */
     if(op->type == ASYNCIO_READ)
         return op->round_size || op->data_r != NULL;
-    /* WRITING, FLYING-WRITE, FLYING-COMMIT and PENDING states are busy */
+    /* WRITING, FLYING-WRITE and PENDING states are busy */
     if(op->type == ASYNCIO_WRITE)
-        return op->round_size || op->flying_w || op->data_w != NULL;
+        return op->data_w != NULL;
+    /* FLYING-COMMIT state is busy */
+    if(op->type == ASYNCIO_SYNC)
+        return true;
 
     return false;
 }
@@ -62,7 +65,6 @@ void asyncio_op_finish_call(asyncio_op_t *op)
         op->size = 0;
         op->callback = GINT_CALL_NULL;
         op->round_size = 0;
-        op->flying_w = false;
     }
     else {
         asyncio_op_clear(op);

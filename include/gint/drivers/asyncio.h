@@ -53,15 +53,18 @@
 
    The invariants and meaning for each state are as follow:
 
-   State          Characterization             Description
+   State(s)       Characterization             Description
    ============================================================================
    IDLE           type == ASYNCIO_NONE         No I/O operation
-   PENDING        data_w && !flying_w \        Ready to write pending data
-                    && round_size == 0
-   WRITING        round_size > 0               CPU/DMA write to HW in progress
-   FLYING-WRITE   flying_w && type == WRITE    HW transmission in progress
+   ----------------------------------------------------------------------------
+   PENDING        data_w && round_size == 0    Ready to write pending data
+   ----------------------------------------------------------------------------
+   WRITING,       round_size > 0               CPU/DMA write to HW in progress
+   FLYING-WRITE                                HW transmission in progress
+   ----------------------------------------------------------------------------
    IN-PROGRESS    !data_w && type == WRITE     Waiting for write(2) or fsync(2)
-   FLYING-SYNC    flying_w && type == SYNC     HW commit in progress
+   ----------------------------------------------------------------------------
+   FLYING-SYNC    type == ASYNCIO_SYNC         HW commit in progress
    ============================================================================
 
    For a read:
@@ -87,8 +90,11 @@
    State          Characterization             Description
    ============================================================================
    IDLE-EMPTY     type == ASYNCIO_NONE         No I/O operation
+   ----------------------------------------------------------------------------
    IDLE-READY     !data_r && buffer_size > 0   Hardware waiting for us to read
+   ----------------------------------------------------------------------------
    WAITING        data_r && !buffer_size       Waiting for further HW data
+   ----------------------------------------------------------------------------
    READING        round_size > 0               DMA/CPU read from HW in progress
    ============================================================================
 
@@ -127,9 +133,6 @@ typedef volatile struct
        Usually, this is assigned for the duration of hardware transaction.
        This value is user-managed and not modified by asyncio_op functions. */
     uint8_t controller;
-    /* Whether a hardware operation is in progress ("flying" write states) */
-    // TODO: Do we actually set and maintain this member?!
-    bool flying_w;
 
     /** Internal information **/
 
