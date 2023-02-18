@@ -208,15 +208,6 @@ void usb_configure(void)
 	}
 }
 
-void usb_configure_clear_pipes(void)
-{
-	for(int i = 0; i < 32; i++)
-	{
-		if(!conf_ep[i].intf) continue;
-		usb_pipe_clear(conf_ep[i].pipe);
-	}
-}
-
 usb_interface_t const * const *usb_configure_interfaces(void)
 {
 	return conf_if;

@@ -176,6 +176,11 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 		USB.SYSCFG.USBE = 1;
 	}
 
+	usb_pipe_reset_fifos();
+	for(int i = 0; i <= 9; i++)
+		usb_pipe_reset(i);
+	usb_pipe_init_transfers();
+
 	/* Prepare the default control pipe. */
 	USB.DCPCFG.DIR = 0;
 	USB.DCPMAXP.DEVSEL = 0;
@@ -187,18 +192,10 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.CFIFOSEL.RCNT = 0;
 	USB.CFIFOSEL.REW = 0;
 	USB.CFIFOSEL.BIGEND = 1;
-	/* Clear D0FIFOSEL and D1FIFOSEL so that pipes can be configured */
-	USB.D0FIFOSEL.word = 0x0000;
-	USB.D1FIFOSEL.word = 0x0000;
-
-	/* Configure other pipes to use activated interfaces */
-	usb_configure();
-	usb_configure_clear_pipes();
-	/* Initialize transfer tracker for multi-part transfers */
-	usb_pipe_init_transfers();
 
 	/* VBSE=1 RSME=0 SOFE=0 DVSE=1 CTRE=1 BEMPE=1 NRDYE=0 BRDYE=0 */
 	USB.INTENB0.word = 0x9c00;
+	USB.INTENB1.word = 0x0000;
 	USB.BRDYENB = 0x0000;
 	USB.NRDYENB = 0x0000;
 	USB.BEMPENB = 0x0000;
@@ -271,7 +268,8 @@ static void usb_interrupt_handler(void)
 		/* When configured, run the callback for usb_open() */
 		if(USB.INTSTS0.DVSQ == 3)
 		{
-			usb_configure_clear_pipes();
+			usb_configure();
+
 			usb_open_status = true;
 			gint_call(usb_open_callback);
 			usb_open_callback = GINT_CALL_NULL;
@@ -301,23 +299,60 @@ static void usb_interrupt_handler(void)
 void hsave(usb_state_t *s)
 {
 	s->SYSCFG    = USB.SYSCFG.word;
+	s->BUSWAIT   = USB.BUSWAIT.word;
+
 	s->DVSTCTR   = USB.DVSTCTR.word;
+	s->SOFCFG    = USB.SOFCFG.word;
 	s->TESTMODE  = USB.TESTMODE.word;
 	s->REG_C2    = USB.REG_C2;
+
+	s->INTENB0   = USB.INTENB0.word;
+	s->INTENB1   = USB.INTENB1.word;
+	s->BRDYENB   = USB.BRDYENB;
+	s->NRDYENB   = USB.NRDYENB;
+	s->BEMPENB   = USB.BEMPENB;
+
+	s->DCPMAXP   = USB.DCPMAXP.word;
+
+#ifdef GINT_USB_DEBUG
+	/* Save some other state for inspection only. Since we need to write to
+	   PIPESEL in order to read PIPECFG etc, enable writing. */
+	hpoweron_write();
+
+	s->SYSSTS    = USB.SYSSTS.word;
+	s->FRMNUM    = USB.FRMNUM.word;
+	s->UFRMNUM   = USB.UFRMNUM.word;
 
 	s->CFIFOSEL  = USB.CFIFOSEL.word;
 	s->D0FIFOSEL = USB.D0FIFOSEL.word;
 	s->D1FIFOSEL = USB.D1FIFOSEL.word;
+	s->CFIFOCTR  = USB.CFIFOCTR.word;
+	s->D0FIFOCTR = USB.D0FIFOCTR.word;
+	s->D1FIFOCTR = USB.D1FIFOCTR.word;
 
-	s->INTENB0   = USB.INTENB0.word;
-	s->BRDYENB   = USB.BRDYENB;
-	s->NRDYENB   = USB.NRDYENB;
-	s->BEMPENB   = USB.BEMPENB;
-	s->SOFCFG    = USB.SOFCFG.word;
+	s->INTSTS0   = USB.INTSTS0.word;
+	s->INTSTS1   = USB.INTSTS1.word;
+	s->BRDYSTS   = USB.BRDYSTS;
+	s->NRDYSTS   = USB.NRDYSTS;
+	s->BEMPSTS   = USB.BEMPSTS;
 
 	s->DCPCFG    = USB.DCPCFG.word;
-	s->DCPMAXP   = USB.DCPMAXP.word;
 	s->DCPCTR    = USB.DCPCTR.word;
+
+	s->USBADDR   = USB.USBADDR.word;
+	s->USBREQ    = USB.USBREQ.word;
+	s->USBVAL    = USB.USBVAL.word;
+	s->USBINDX   = USB.USBINDX.word;
+	s->USBLENG   = USB.USBLENG.word;
+
+	s->PIPESEL   = USB.PIPESEL.word;
+	for(int i = 0; i < 9; i++) {
+		USB.PIPESEL.PIPESEL = i+1;
+		s->PIPECFG[i]   = USB.PIPECFG.word;
+		s->PIPEnCTR[i]  = USB.PIPECTR[i].word;
+		s->PIPEBUF[i]   = USB.PIPEBUF.word;
+	}
+#endif
 
 	/* Leave the module open for gint to use it, or for the next restore
 	   to proceed more quickly (if during a world switch) */
@@ -331,30 +366,33 @@ static void hrestore(usb_state_t const *s)
 	usb_open_status = false;
 
 	USB.DVSTCTR.word        = s->DVSTCTR;
+	USB.SOFCFG.word         = s->SOFCFG;
 	USB.TESTMODE.word       = s->TESTMODE;
+	USB.FRMNUM.word         = 0;
 	USB.REG_C2              = s->REG_C2;
 
-	USB.CFIFOSEL.word       = s->CFIFOSEL;
-	USB.D0FIFOSEL.word      = s->D0FIFOSEL;
-	USB.D1FIFOSEL.word      = s->D1FIFOSEL;
-
 	USB.INTENB0.word        = s->INTENB0;
+	USB.INTENB1.word        = s->INTENB1;
 	USB.BRDYENB             = s->BRDYENB;
 	USB.NRDYENB             = s->NRDYENB;
 	USB.BEMPENB             = s->BEMPENB;
-	USB.SOFCFG.word         = s->SOFCFG;
 
-	USB.DCPCFG.word         = s->DCPCFG;
+	usb_pipe_reset_fifos();
+	for(int i = 0; i <= 9; i++)
+		usb_pipe_reset(i);
+
 	USB.DCPMAXP.word        = s->DCPMAXP;
-	USB.DCPCTR.word         = s->DCPCTR;
+	USB.PIPESEL.word        = 0x0000;
 
 	/* Clear remaining interrupts. Read-only bits will be ignored */
-	USB.INTSTS0.word        = 0;
-	USB.BRDYSTS             = 0;
-	USB.NRDYSTS             = 0;
-	USB.BEMPSTS             = 0;
+	USB.INTSTS0.word        = 0x0000;
+	USB.INTSTS1.word        = 0x0000;
+	USB.BRDYSTS             = 0x0000;
+	USB.NRDYSTS             = 0x0000;
+	USB.BEMPSTS             = 0x0000;
 
 	/* Restore SYSCFG last as clearing SCKE disables writing */
+	USB.BUSWAIT.word        = s->BUSWAIT;
 	USB.SYSCFG.word         = s->SYSCFG;
 }
 

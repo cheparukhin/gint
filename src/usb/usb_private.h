@@ -126,6 +126,12 @@ void usb_pipe_configure(int address, endpoint_t const *ep);
 /* usb_pipe_clear(): Clear all data in the pipe */
 void usb_pipe_clear(int pipe);
 
+/* usb_pipe_reset(): Clear all data in pipe and reset it to a blank state */
+void usb_pipe_reset(int pipe);
+
+/* usb_pipe_reset_fifos(): Unbind all FIFOs from pipes */
+void usb_pipe_reset_fifos(void);
+
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe);
 

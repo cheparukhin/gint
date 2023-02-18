@@ -58,7 +58,15 @@ void usb_pipe_configure(int address, endpoint_t const *ep)
 
 void usb_pipe_clear(int pipe)
 {
-	if(pipe <= 0 || pipe > 9) return;
+	if(pipe < 0 || pipe > 9) return;
+
+	if(pipe == 0) {
+		USB.DCPCTR.PID = PID_NAK;
+		usb_while(USB.DCPCTR.PBUSY);
+
+		USB.DCPCTR.SQCLR = 1;
+		usb_while(USB.DCPCTR.SQMON != 0);
+	}
 
 	/* Set PID=NAK then use ACLRM to clear the pipe */
 	USB.PIPECTR[pipe-1].PID = PID_NAK;
@@ -72,6 +80,24 @@ void usb_pipe_clear(int pipe)
 	   from scratch!) */
 	USB.PIPECTR[pipe-1].SQCLR = 1;
 	usb_while(USB.PIPECTR[pipe-1].SQMON != 0);
+}
+
+void usb_pipe_reset(int pipe)
+{
+	if(pipe < 0 || pipe > 9) return;
+	usb_pipe_clear(pipe);
+
+	if(pipe == 0) {
+		USB.DCPCFG.word = 0x0000;
+		USB.DCPCTR.word = 0x0000;
+		USB.DCPMAXP.word = 0x0000;
+		return;
+	}
+
+	USB.PIPESEL.PIPESEL = pipe;
+	USB.PIPECFG.word = 0x0000;
+	USB.PIPECTR[pipe-1].word = 0x0000;
+	USB.PIPEBUF.word = 0x0000;
 }
 
 //---
@@ -159,6 +185,13 @@ static void fifo_unbind(fifo_t ct)
 		USB.D1FIFOSEL.word = 0x0000;
 		usb_while(USB.D1FIFOSEL.CURPIPE != 0);
 	}
+}
+
+void usb_pipe_reset_fifos(void)
+{
+	fifo_unbind(CF);
+	fifo_unbind(D0F);
+	fifo_unbind(D1F);
 }
 
 //---

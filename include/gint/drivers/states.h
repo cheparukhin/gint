@@ -13,6 +13,7 @@
 extern "C" {
 #endif
 
+#include <gint/config.h>
 #include <gint/mpu/dma.h>
 #include <gint/clock.h>
 
@@ -88,13 +89,23 @@ typedef struct {
 typedef struct {
 	/* Control and power-up. We don't save power-related registers from other
 	   modules nor UPONCR, because they must be changed to use the module */
-	uint16_t SYSCFG, DVSTCTR, TESTMODE, REG_C2;
-	/* FIFO configuration */
-	uint16_t CFIFOSEL, D0FIFOSEL, D1FIFOSEL;
+	uint16_t SYSCFG, BUSWAIT, DVSTCTR, SOFCFG, TESTMODE, REG_C2;
 	/* Interrupt configuration */
-	uint16_t INTENB0, BRDYENB, NRDYENB, BEMPENB, SOFCFG;
-	/* Default Control Pipe (maybe not needed) */
-	uint16_t DCPCFG, DCPMAXP, DCPCTR;
+	uint16_t INTENB0, INTENB1, BRDYENB, NRDYENB, BEMPENB;
+	/* Default Control Pipe */
+	uint16_t DCPMAXP;
+
+#ifdef GINT_USB_DEBUG
+	/* Registers tracked read-only for state analysis and debugging */
+	uint16_t SYSSTS, FRMNUM, UFRMNUM;
+	uint16_t CFIFOSEL, D0FIFOSEL, D1FIFOSEL, CFIFOCTR, D0FIFOCTR, D1FIFOCTR;
+	uint16_t INTSTS0, INTSTS1, BRDYSTS, NRDYSTS, BEMPSTS;
+	uint16_t DCPCFG, DCPCTR;
+	uint16_t USBADDR, USBREQ, USBVAL, USBINDX, USBLENG;
+	uint16_t PIPESEL, PIPECFG[9], PIPEnCTR[9], PIPEBUF[9];
+	/* Ignored: UPONCR, PIPEnMAXP, PIPEnPERI, PIPEnTRN, PIPEnTRE, DEVADDn */
+#endif
+
 } usb_state_t;
 
 #ifdef __cplusplus
