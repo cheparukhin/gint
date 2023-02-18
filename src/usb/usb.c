@@ -121,6 +121,9 @@ static void hpoweroff(void)
 
 int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 {
+	if(usb_open_status)
+		return USB_OPEN_ALREADY_OPEN;
+
 	/* TODO: Check whether the calculator can host devices (probably no) */
 	bool host = false;
 

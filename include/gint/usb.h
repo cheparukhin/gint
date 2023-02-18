@@ -39,6 +39,8 @@ enum {
 	USB_OPEN_MISSING_DATA,
 	/* Invalid parameters: bad endpoint numbers, bad buffer sizes... */
 	USB_OPEN_INVALID_PARAMS,
+	/* USB interfaces are already opened */
+	USB_OPEN_ALREADY_OPEN,
 
 	/* This pipe is busy (returned by usb_write_async()) */
 	USB_WRITE_BUSY,
