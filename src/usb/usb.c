@@ -141,8 +141,8 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 
 	USB.REG_C2 = 0x0020;
 
-	/* Disconnect (DPRPU=0) if we were previously connected as a function. Also
-	   drive down DRPR, since both are required for setting DCFM. */
+	/* Disconnect (DPRPU=0) if we were previously connected as a function.
+	   Also drive down DRPD, since both are required for setting DCFM. */
 	USB.SYSCFG.DPRPU = 0;
 	USB.SYSCFG.DRPD = 0;
 
@@ -151,7 +151,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 		USB.SYSCFG.DCFM = 1;
 		/* Clear registers to prepare for host operation */
 		USB.SYSCFG.USBE = 0;
-		/* Do not require high-speed operation; also accept full-speed */
+		/* Accept both high-speed and full-speed devices */
 		USB.SYSCFG.HSE = 0;
 
 		/* Pull DPRD and eliminate chattering */

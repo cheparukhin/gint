@@ -15,7 +15,6 @@
 // Operations on pipes
 //---
 
-/* usb_pipe_configure(): Configure a pipe when opening the connection */
 void usb_pipe_configure(int address, endpoint_t const *ep)
 {
 	/* Maps USB 2.0 transfer types to SH7305 USB module transfer types */
@@ -57,7 +56,6 @@ void usb_pipe_configure(int address, endpoint_t const *ep)
 	}
 }
 
-/* usb_pipe_clear(): Clear all data in the pipe */
 void usb_pipe_clear(int pipe)
 {
 	if(pipe <= 0 || pipe > 9) return;

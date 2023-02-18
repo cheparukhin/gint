@@ -106,7 +106,7 @@ static void write_configuration_descriptor(int wLength)
 		if(dc[1] == USB_DC_INTERFACE)
 		{
 			usb_dc_interface_t idc = *(usb_dc_interface_t *)dc;
-			idc.bInterfaceNumber = k;
+			idc.bInterfaceNumber = i;
 			dcp_write(&idc, idc.bLength);
 		}
 		/* Edit endpoint numbers on-the-fly */
