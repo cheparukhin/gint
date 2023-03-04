@@ -366,7 +366,7 @@ int usb_write_async(int pipe, void const *data, int size, bool use_dma,
 {
 	asyncio_op_t *t = &pipe_transfers[pipe];
 	if(asyncio_op_busy(t))
-		return USB_WRITE_BUSY;
+		return USB_BUSY;
 
 	/* If this if the first write of a series, find a controller. */
 	/* TODO: usb_write_async(): TOC/TOU race on controller being free */
@@ -401,17 +401,17 @@ int usb_write_sync_timeout(int pipe, void const *data, int size, bool use_dma,
 			break;
 		if(rc == USB_WRITE_NOFIFO)
 			USB_LOG("USB_WRITE_NOFIFO\n");
-		if(rc != USB_WRITE_BUSY)
+		if(rc != USB_BUSY)
 			return rc;
 		if(timeout_elapsed(timeout))
-			return USB_WRITE_TIMEOUT;
+			return USB_TIMEOUT;
 		sleep();
 	}
 
 	while(!flag)
 	{
 		if(timeout_elapsed(timeout))
-			return USB_WRITE_TIMEOUT;
+			return USB_TIMEOUT;
 		sleep();
 	}
 	return 0;
@@ -426,7 +426,7 @@ int usb_commit_async(int pipe, gint_call_t callback)
 {
 	asyncio_op_t *t = &pipe_transfers[pipe];
 	if(asyncio_op_busy(t))
-		return USB_COMMIT_BUSY;
+		return USB_BUSY;
 	if(t->type != ASYNCIO_WRITE || t->controller == NOF)
 		return USB_COMMIT_INACTIVE;
 
@@ -473,10 +473,10 @@ int usb_commit_sync_timeout(int pipe, timeout_t const *timeout)
 		int rc = usb_commit_async(pipe, GINT_CALL_SET(&flag));
 		if(rc == 0)
 			break;
-		if(rc != USB_COMMIT_BUSY)
+		if(rc != USB_BUSY)
 			return rc;
 		if(timeout_elapsed(timeout))
-			return USB_COMMIT_TIMEOUT;
+			return USB_TIMEOUT;
 		sleep();
 	}
 
@@ -484,7 +484,7 @@ int usb_commit_sync_timeout(int pipe, timeout_t const *timeout)
 	while(!flag)
 	{
 		if(timeout_elapsed(timeout))
-			return USB_COMMIT_TIMEOUT;
+			return USB_TIMEOUT;
 		sleep();
 	}
 	return 0;
@@ -495,7 +495,6 @@ void usb_commit_sync(int pipe)
 	usb_commit_sync_timeout(pipe, NULL);
 }
 
-/* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe)
 {
 	asyncio_op_t *t = &pipe_transfers[pipe];

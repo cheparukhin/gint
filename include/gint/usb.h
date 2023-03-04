@@ -29,32 +29,32 @@ enum {
 	/* There are no interfaces */
 	USB_OPEN_NO_INTERFACE = 1,
 	/* There are more interfaces than supported (16) */
-	USB_OPEN_TOO_MANY_INTERFACES,
+	USB_OPEN_TOO_MANY_INTERFACES = -2,
 	/* There are not enough endpoint numbers for every interface, or there
 	   are not enough pipes to set them up */
-	USB_OPEN_TOO_MANY_ENDPOINTS,
+	USB_OPEN_TOO_MANY_ENDPOINTS = -3,
 	/* There is not enough FIFO memory to use the requested buffer sizes */
-	USB_OPEN_NOT_ENOUGH_MEMORY,
+	USB_OPEN_NOT_ENOUGH_MEMORY = -4,
 	/* Information is missing, such as buffer size for some endpoints */
-	USB_OPEN_MISSING_DATA,
+	USB_OPEN_MISSING_DATA = -5,
 	/* Invalid parameters: bad endpoint numbers, bad buffer sizes... */
-	USB_OPEN_INVALID_PARAMS,
+	USB_OPEN_INVALID_PARAMS = -6,
 	/* USB interfaces are already opened */
-	USB_OPEN_ALREADY_OPEN,
+	USB_OPEN_ALREADY_OPEN = -7,
 
-	/* This pipe is busy (returned by usb_write_async()) */
-	USB_WRITE_BUSY,
+	/* General timeout for a sync_timeout call */
+	USB_TIMEOUT = -8,
+	/* This pipe is busy with another call */
+	USB_BUSY = -9,
+
 	/* Both FIFO controllers are busy, none is available to transfer */
-	USB_WRITE_NOFIFO,
-	/* Timeout */
-	USB_WRITE_TIMEOUT,
-
-	/* This pipe is busy (returned by usb_commit_async()) */
-	USB_COMMIT_BUSY,
+	USB_WRITE_NOFIFO = -10,
 	/* This pipe has no ongoing transfer to commit */
-	USB_COMMIT_INACTIVE,
-	/* Timeout */
-	USB_COMMIT_TIMEOUT,
+	USB_COMMIT_INACTIVE = -11,
+	/* This pipe is currently not receiving any data */
+	USB_READ_IDLE = -12,
+	/* No FIFO controller is available */
+	USB_READ_NOFIFO = -13,
 };
 
 /* usb_open(): Open the USB link
