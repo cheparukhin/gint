@@ -1,15 +1,17 @@
 #include <gint/usb.h>
 #include <gint/usb-ff-bulk.h>
 #include <gint/display.h>
-
 #include <string.h>
+#include <stdlib.h>
+
+static void notify_read(int endpoint, int size);
 
 static usb_dc_interface_t dc_interface = {
 	.bLength              = sizeof(usb_dc_interface_t),
 	.bDescriptorType      = USB_DC_INTERFACE,
 	.bInterfaceNumber     = -1 /* Set by driver */,
 	.bAlternateSetting    = 0,
-	.bNumEndpoints        = 1,
+	.bNumEndpoints        = 2,
 	.bInterfaceClass      = 0xff, /* Vendor-Specific */
 	.bInterfaceSubClass   = 0x77, /* (not recognized by Casio tools?) */
 	.bInterfaceProtocol   = 0x00,
@@ -22,7 +24,15 @@ static usb_dc_endpoint_t dc_endpoint1i = {
 	.bDescriptorType     = USB_DC_ENDPOINT,
 	.bEndpointAddress    = 0x81, /* 1 IN */
 	.bmAttributes        = 0x02, /* Bulk transfer */
-	/* TODO: Additional transactions per µframe ?! */
+	.wMaxPacketSize      = htole16(512),
+	.bInterval           = 1,
+};
+/* Endpoint for PC -> calculator communication */
+static usb_dc_endpoint_t dc_endpoint1o = {
+	.bLength             = sizeof(usb_dc_endpoint_t),
+	.bDescriptorType     = USB_DC_ENDPOINT,
+	.bEndpointAddress    = 0x02, /* 2 OUT */
+	.bmAttributes        = 0x02, /* Bulk transfer */
 	.wMaxPacketSize      = htole16(512),
 	.bInterval           = 1,
 };
@@ -32,14 +42,18 @@ usb_interface_t const usb_ff_bulk = {
 	.dc = (void const *[]){
 		&dc_interface,
 		&dc_endpoint1i,
+		&dc_endpoint1o,
 		NULL,
 	},
 	/* Parameters for each endpoint */
 	.params = (usb_interface_endpoint_t []){
 		{ .endpoint     = 0x81, /* 1 IN */
 		  .buffer_size  = 2048, },
+		{ .endpoint     = 0x02, /* 2 OUT */
+		  .buffer_size  = 2048, },
 		{ 0 },
 	},
+	.notify_read = notify_read,
 };
 
 GCONSTRUCTOR static void set_strings(void)
@@ -56,6 +70,11 @@ int usb_ff_bulk_output(void)
 	return usb_interface_pipe(&usb_ff_bulk, 0x81);
 }
 
+int usb_ff_bulk_input(void)
+{
+	return usb_interface_pipe(&usb_ff_bulk, 0x02);
+}
+
 //---
 // fxlink protocol
 //---
@@ -68,7 +87,7 @@ bool usb_fxlink_fill_header(usb_fxlink_header_t *header,
 	memset(header, 0, sizeof *header);
 	header->version = htole32(0x00000100);
 	header->size = htole32(data_size);
-	/* TODO: usb_fxlink_header: avoid sync with interace definition */
+	/* TODO: usb_fxlink_fill_header: avoid harcoded transfer size */
 	header->transfer_size = htole32(2048);
 
 	strncpy(header->application, application, 16);
@@ -135,4 +154,52 @@ void usb_fxlink_text(char const *text, int size)
 void usb_fxlink_videocapture(bool onscreen)
 {
 	capture_vram(onscreen, "video");
+}
+
+//---
+// Data reception
+//---
+
+/* Copy of the header for received BULK messages */
+static usb_fxlink_header_t recv_header;
+/* Size of transfer not yet read (implies valid header when non-zero) */
+static int recv_size = 0;
+
+static void header_finished(void)
+{
+	recv_header.version = le32toh(recv_header.version);
+	recv_header.size = le32toh(recv_header.size);
+	recv_header.transfer_size = le32toh(recv_header.transfer_size);
+
+	int major = (recv_header.version >> 8) & 0xff;
+	int minor = (recv_header.version & 0xff);
+
+	USB_LOG("[ff-bulk %d.%d] New %.16s.%.16s (%d bytes)\n", major, minor,
+		recv_header.application, recv_header.type, recv_header.size);
+}
+
+static void notify_read(int endpoint, int size)
+{
+	/* We only have one endpoint for reading, the bulk OUT */
+	(void)endpoint;
+
+	USB_LOG("[ff-bulk] Data available on %02x (%d bytes)\n", endpoint, size);
+
+	if(recv_size <= 0) {
+		usb_read_sync(usb_ff_bulk_input(), &recv_header, sizeof recv_header,
+			false);
+		header_finished();
+		recv_size = recv_header.size;
+	}
+	else {
+		USB_LOG("-> malloc dropping\n");
+
+		char *data = malloc(size);
+		usb_read_sync(usb_ff_bulk_input(), data, size, false);
+		free(data);
+
+		recv_size -= size;
+		if(recv_size < 0)
+			recv_size = 0;
+	}
 }

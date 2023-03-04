@@ -193,12 +193,15 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.CFIFOSEL.REW = 0;
 	USB.CFIFOSEL.BIGEND = 1;
 
-	/* VBSE=1 RSME=0 SOFE=0 DVSE=1 CTRE=1 BEMPE=1 NRDYE=0 BRDYE=0 */
-	USB.INTENB0.word = 0x9c00;
+	/* VBSE=1 RSME=0 SOFE=0 DVSE=1 CTRE=1 BEMPE=1 NRDYE=0 BRDYE=1 */
+	USB.INTENB0.word = 0x9d00;
 	USB.INTENB1.word = 0x0000;
 	USB.BRDYENB = 0x0000;
 	USB.NRDYENB = 0x0000;
 	USB.BEMPENB = 0x0000;
+	USB.BRDYSTS = 0x0000;
+	USB.NRDYSTS = 0x0000;
+	USB.BEMPSTS = 0x0000;
 
 	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
 	intc_priority(INTC_USB, 8);
@@ -278,12 +281,24 @@ static void usb_interrupt_handler(void)
 	else if(USB.INTSTS0.BEMP)
 	{
 		/* Invoke callbacks for each buffer-empty interrupt */
-		uint16_t status = USB.BEMPSTS;
+		uint16_t status = USB.BEMPSTS & USB.BEMPENB;
 		USB.BEMPSTS = 0;
 
 		for(int i = 0; i <= 9; i++)
 		{
-			if(status & (1 << i)) usb_pipe_write_bemp(i);
+			if(status & (1 << i))
+				usb_pipe_write_bemp(i);
+		}
+	}
+	else if(USB.INTSTS0.BRDY)
+	{
+		uint16_t status = USB.BRDYSTS & USB.BRDYENB;
+		USB.BRDYSTS = 0;
+
+		for(int i = 0; i <= 9; i++)
+		{
+			if(status & (1 << i))
+				usb_pipe_read_brdy(i);
 		}
 	}
 	else USB_LOG("<%04X> -> ???\n", USB.INTSTS0.word);

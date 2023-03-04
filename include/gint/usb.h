@@ -137,8 +137,8 @@ struct usb_interface {
 	/* Answer class-specific SETUP requests */
 	/* TODO */
 
-	/* Receive data from an endpoint */
-	/* TODO */
+	/* Notification that an endpoint has data read to be read */
+	void (*notify_read)(int endpoint, int size);
 };
 
 /* usb_interface_endpoint_t: Parameters for an interface endpoint
@@ -265,6 +265,48 @@ int usb_commit_sync_timeout(int pipe, timeout_t const *timeout);
    This function returns immediately and invokes (callback) when the transfer
    of the remaining data completes. */
 int usb_commit_async(int pipe, gint_call_t callback);
+
+/* usb_read_sync(): Synchronously read from a USB pipe
+
+   This function waits for data to become available on the specified `pipe`,
+   and then reads up to `size` bytes into `data`. This function will return as
+   soon as any data gets read, even if it's less than `size`. Thus, in order to
+   read all available data you should call this function in a loop until you
+   get less bytes than you requested.
+
+   It is possible for this function to return 0 bytes. If the data available on
+   the pipe was consumed by a previous read call which perfectly filled the
+   provided buffer, the pipe will still be considered in the "data available"
+   state with 0 bytes left to read. The next read call will then successfully
+   return 0 bytes. This makes it possible to consistently detect the end of a
+   transfer as the first read which returns less bytes than requested.
+
+   If `use_dma=true`, uses the DMA for transfers. This requires 4-byte
+   alignment on the buffer, size, and number of bytes previously read in the
+   current transaction.
+
+   This function will use a FIFO to access the pipe. The FIFO will only be
+   released once the full buffer.
+
+   Returns the number of bytes read or a negative error code. */
+int usb_read_sync(int pipe, void *data, int size, bool use_dma);
+
+/* usb_read_sync_timeout(): Synchronous read with a timeout */
+int usb_read_sync_timeout(int pipe, void *data, int size, bool use_dma,
+	timeout_t const *timeout);
+
+/* usb_read_async(): Asynchronously read from a USB pipe
+
+   This function is similar to usb_read_sync() except that it is non-blocking;
+   it returns USB_READ_INACTIVE if there is no active transfer on the pipe. It
+   will also read 0 bytes under the same conditions as usb_read_sync().
+
+   Being asynchronous, this function starts the read process and returns
+   instantly; 0 on success, an error code otherwise. When the read finishes,
+   the provided callback is called with `*read_size` set to the number of bytes
+   read. */
+int usb_read_async(int pipe, void *data, int size, bool use_dma,
+	int *read_size, gint_call_t callback);
 
 //---
 // USB debugging functions

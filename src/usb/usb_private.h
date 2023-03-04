@@ -129,6 +129,9 @@ void usb_pipe_reset_fifos(void);
 /* usb_pipe_write_bemp(): Callback for the BEMP interrupt on a pipe */
 void usb_pipe_write_bemp(int pipe);
 
+/* usb_pipe_read_brdy(): Callback for the BRDY interrupt on a read pipe */
+void usb_pipe_read_brdy(int pipe);
+
 /* usb_pipe_init_transfers(): Initialize transfer information */
 void usb_pipe_init_transfers(void);
 
