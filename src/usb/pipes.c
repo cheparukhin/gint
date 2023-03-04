@@ -143,10 +143,12 @@ static void fifo_bind(fifo_t ct, int pipe, int mode)
 	}
 	/* RCNT=0 REW=0 DCLRM=reading DREQE=0 MBW=2 BIGEND=1 CURPIPE=pipe */
 	if(ct == D0F) {
+		USB.PIPESEL.PIPESEL = pipe;
 		USB.D0FIFOSEL.word = 0x0900 | (reading << 13) | pipe;
 		usb_while(!USB.D0FIFOCTR.FRDY || USB.PIPECFG.DIR != mode);
 	}
 	if(ct == D1F) {
+		USB.PIPESEL.PIPESEL = pipe;
 		USB.D1FIFOSEL.word = 0x0900 | (reading << 13) | pipe;
 		usb_while(!USB.D1FIFOCTR.FRDY || USB.PIPECFG.DIR != mode);
 	}
