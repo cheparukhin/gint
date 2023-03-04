@@ -52,15 +52,16 @@ void usb_configure(void);
 void usb_configure_clear_pipes(void);
 
 /* endpoint_t: Driver information for each open endpoint in the device
-
    There is one such structure for all 16 configurable endpoints, for each
-   direction (totaling 32). endpoint_get() is used to query the structure by
-   endpoint number (including the IN/OUT bit). */
+   direction (totaling 32). use_get_endpoint_*() is used to query the
+   structure by endpoint address (including the IN/OUT bit). */
 typedef struct {
 	/* Which interface this endpoint belongs to */
 	usb_interface_t const *intf;
-	/* Associated endpoint descriptor */
+	/* Associated endpoint descriptor. This contains the local address. */
 	usb_dc_endpoint_t const *dc;
+   /* Global address (endpoint number + direction) */
+   uint8_t global_address;
 	/* Associated pipe, must be a number from 1..9 */
 	uint8_t pipe;
 	/* Allocated pipe buffer area; this is valid for pipes 1..5. The
@@ -74,25 +75,18 @@ typedef struct {
 /* usb_configure_interfaces(): List configured interfaces */
 usb_interface_t const * const *usb_configure_interfaces(void);
 
-/* usb_configure_address(): Get the concrete endpoint address
+/* Returns the endpoint information structure for the endpoint identified by a
+   global address. Returns NULL if the address is unused. */
+endpoint_t *usb_get_endpoint_by_global_address(int global_address);
 
-   This function returns the endpoint address associated with the provided
-   interface-numbered endpoint. The value is defined if an interface-provided
-   endpoint descriptor with bEndpointAddress equal to either (address) or
-   (address ^ 0x80) has been processed.
+/* Returns the endpoint information structure for the endpoint identified by a
+   local (interface) address, NULL if the address is unused. */
+endpoint_t *usb_get_endpoint_by_local_address(usb_interface_t const *intf,
+   int local_address);
 
-   This function is used both to access endpoint data for an interface-provided
-   endpoint number, and to ensure that two interface-provided enpoint numbers
-   with same base and opposing directions are assigned the same concrete
-   endpoint number with its two opposing directions.
-
-   @intf     Interface that provided the address
-   @address  Endpoint address (as numbered by the interaface)
-   -> Returns the assigned endpoint address, or -1 if unassigned. */
-int usb_configure_address(usb_interface_t const *intf, int address);
-
-/* usb_configure_endpoint(): Get endpoint data for a concrete address */
-endpoint_t *usb_configure_endpoint(int endpoint);
+/* Returns the endpoint information structure for the endpoint identified by a
+   bound pipe. Returns NULL if the pipe is unused. */
+endpoint_t *usb_get_endpoint_by_pipe(int pipe);
 
 //---
 // Pipe operations

@@ -113,8 +113,9 @@ static void write_configuration_descriptor(int wLength)
 		else if(dc[1] == USB_DC_ENDPOINT)
 		{
 			usb_dc_endpoint_t edc = *(usb_dc_endpoint_t *)dc;
-			edc.bEndpointAddress =
-				usb_configure_address(interfaces[i], dc[2]);
+			endpoint_t *e = usb_get_endpoint_by_local_address(interfaces[i],
+				edc.bEndpointAddress);
+			edc.bEndpointAddress = e->global_address;
 			dcp_write(&edc, edc.bLength);
 		}
 		/* Forward other descriptors */

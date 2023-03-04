@@ -1,6 +1,7 @@
 #include <gint/usb.h>
 #include "usb_private.h"
 #include <stdlib.h>
+#include <string.h>
 
 //---
 // Endpoint assignment
@@ -15,32 +16,37 @@ GCONSTRUCTOR static void usb_alloc(void)
 	 conf_ep = malloc(32 * sizeof *conf_ep);
 }
 
-/* usb_configure_endpoint(): Get endpoint data for a concrete address */
-endpoint_t *usb_configure_endpoint(int endpoint)
+endpoint_t *usb_get_endpoint_by_global_address(int global_address)
 {
-	/* Refuse access to endpoint 0, which is for the DCP */
-	if(endpoint < 0 || ((endpoint & 0x0f) == 0)) return NULL;
+	global_address = (uint8_t)global_address;
 
-	int dir = (endpoint & 0x80) ? 0x10 : 0;
-	endpoint &= 0x7f;
+	/* Accept only valid non-DCP endpoints */
+	if((global_address & 0x70) || !(global_address & 0x0f))
+		return NULL;
 
-	if(endpoint <= 0 || endpoint > 15) return NULL;
-	return &conf_ep[dir + endpoint];
+	int dir = (global_address & 0x80) ? 0x10 : 0;
+	return &conf_ep[dir + (global_address & 0x0f)];
 }
 
-/* usb_configure_address(): Get the concrete endpoint address */
-int usb_configure_address(usb_interface_t const *intf, int address)
+endpoint_t *usb_get_endpoint_by_local_address(usb_interface_t const *intf,
+   int local_address)
 {
-	int dir  = address & 0x80;
-	int base = address & 0x0f;
-
 	for(int i = 0; i < 32; i++)
 	{
-		if(conf_ep[i].intf != intf) continue;
-		if((conf_ep[i].dc->bEndpointAddress & 0x0f) != base) continue;
-		return (i & 0x0f) | dir;
+		endpoint_t *ep = &conf_ep[i];
+		if(ep->intf == intf && ep->dc->bEndpointAddress == local_address)
+			return ep;
 	}
-	return -1;
+	return NULL;
+}
+
+endpoint_t *usb_get_endpoint_by_pipe(int pipe)
+{
+	for(int i = 0; i < 32; i++) {
+		if(conf_ep[i].pipe == pipe)
+			return &conf_ep[i];
+	}
+	return NULL;
 }
 
 //---
@@ -80,18 +86,8 @@ static int find_pipe(int type)
 int usb_configure_solve(usb_interface_t const **interfaces)
 {
 	/* Reset the previous configuration */
-	for(int i = 0; i < 16; i++)
-	{
-		conf_if[i] = NULL;
-	}
-	for(int i = 0; i < 32; i++)
-	{
-		conf_ep[i].intf    = NULL;
-		conf_ep[i].dc      = NULL;
-		conf_ep[i].pipe    = 0;
-		conf_ep[i].bufnmb  = 0;
-		conf_ep[i].bufsize = 0;
-	}
+	memset(conf_if, 0, 16 * sizeof *conf_if);
+	memset(conf_ep, 0, 32 * sizeof *conf_ep);
 
 	/* Next interface number to assign */
 	int next_interface = 0;
@@ -112,22 +108,26 @@ int usb_configure_solve(usb_interface_t const **interfaces)
 			uint8_t const *dc = intf->dc[k];
 			if(dc[1] != USB_DC_ENDPOINT) continue;
 
-			/* If the same endpoint with a different direction has
-			   already been assigned, use that */
-			int address = usb_configure_address(intf, dc[2]);
-			if(address == -1)
-			{
-				if(next_endpoint >= 16)
-					return USB_OPEN_TOO_MANY_ENDPOINTS;
+			/* If the endpoint number has already been assigned in the other
+			   direction, keep the same global endpoint number. */
+			endpoint_t *dual_ep = usb_get_endpoint_by_local_address(intf,
+				dc[2] ^ 0x80);
+
+			int address;
+			if(dual_ep)
+				address = dual_ep->global_address ^ 0x80;
+			else if(next_endpoint >= 16)
+				return USB_OPEN_TOO_MANY_ENDPOINTS;
+			else
 				address = (next_endpoint++) | (dc[2] & 0x80);
-			}
 
 			int pipe = find_pipe(dc[3] & 0x03);
 			if(pipe < 0) return USB_OPEN_TOO_MANY_ENDPOINTS;
 
-			endpoint_t *ep = usb_configure_endpoint(address);
+			endpoint_t *ep = usb_get_endpoint_by_global_address(address);
 			ep->intf = intf;
 			ep->dc = (void *)dc;
+			ep->global_address = address;
 			ep->pipe = pipe;
 			ep->bufnmb = 0;
 			ep->bufsize = 0;
@@ -144,8 +144,8 @@ int usb_configure_solve(usb_interface_t const **interfaces)
 		{
 			usb_interface_endpoint_t *params = &intf->params[k];
 
-			int a = usb_configure_address(intf, params->endpoint);
-			endpoint_t *ep = usb_configure_endpoint(a);
+			endpoint_t *ep = usb_get_endpoint_by_local_address(intf,
+				params->endpoint);
 			if(!ep) return USB_OPEN_INVALID_PARAMS;
 
 			uint bufsize = params->buffer_size >> 6;
@@ -217,11 +217,8 @@ usb_interface_t const * const *usb_configure_interfaces(void)
 // API for interfaces
 //---
 
-int usb_interface_pipe(usb_interface_t const *interface, int endpoint)
+int usb_interface_pipe(usb_interface_t const *intf, int address)
 {
-	int concrete_address = usb_configure_address(interface, endpoint);
-	endpoint_t const *ep = usb_configure_endpoint(concrete_address);
-	if(!ep) return -1;
-
-	return ep->pipe;
+	endpoint_t const *ep = usb_get_endpoint_by_local_address(intf, address);
+	return ep ? ep->pipe : -1;
 }
