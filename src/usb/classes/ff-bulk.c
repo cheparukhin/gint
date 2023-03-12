@@ -1,10 +1,13 @@
 #include <gint/usb.h>
 #include <gint/usb-ff-bulk.h>
 #include <gint/display.h>
+#include <gint/hardware.h>
+#include <gint/cpu.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
-static void notify_read(int endpoint, int size);
+static void notify_read(int endpoint);
 
 static usb_dc_interface_t dc_interface = {
 	.bLength              = sizeof(usb_dc_interface_t),
@@ -157,49 +160,133 @@ void usb_fxlink_videocapture(bool onscreen)
 }
 
 //---
+// Built-in command execution
+//---
+
+static char const * const str_MPU[] = {
+	[HWMPU_UNKNOWN] = "Unknown MPU",
+	[HWMPU_SH7337]  = "SH7737",
+	[HWMPU_SH7305]  = "SH7305",
+	[HWMPU_SH7355]  = "SH7355",
+	[HWMPU_SH7724]  = "SH7724",
+};
+static char const * const str_CALC[] = {
+	[HWCALC_FX9860G_SH3]   = "SH3-based fx-9860G-like",
+	[HWCALC_FX9860G_SH4]   = "SH4-based fx-9860G-like",
+	[HWCALC_G35PE2]        = "fx-9860G III/Graph 35+E II",
+	[HWCALC_PRIZM]         = "Prizm fx-CG 10/20",
+	[HWCALC_FXCG50]        = "fx-CG 50/Graph 90+E",
+	[HWCALC_FXCG_MANAGER]  = "fx-CG Manager",
+	[HWCALC_FX9860G_SLIM]  = "fx-9860G Slim",
+};
+
+static void execute_command(char const *cmd)
+{
+	if(!strncmp(cmd, "echo", 4)) {
+		char const *text = cmd+4 + strspn(cmd+4, " \t\n");
+		usb_fxlink_text(text, 0);
+	}
+	if(!strncmp(cmd, "identify", 8)) {
+#if defined(FX9860G)
+		char const *serial_number = (void *)0x8000ffd0;
+		char const *OS_version = (void *)0x80010020;
+		char const *BC_version = (void *)0x8000ffb0;
+#elif defined(FXCG50)
+		char const *serial_number = (void *)0x8001ffd0;
+		char const *OS_version = (void *)0x80020020;
+		char const *BC_version = (void *)0x8001ffb0;
+#endif
+
+		char str[256];
+		sprintf(str, "gint %.8s %s (0x%07x) on %s (%s) %.10s %.14s\n",
+			serial_number,
+			GINT_VERSION, GINT_HASH,
+			str_MPU[gint[HWMPU]], str_CALC[gint[HWCALC]],
+			OS_version, BC_version);
+		usb_fxlink_text(str, 0);
+	}
+}
+
+//---
 // Data reception
 //---
 
-/* Copy of the header for received BULK messages */
-static usb_fxlink_header_t recv_header;
-/* Size of transfer not yet read (implies valid header when non-zero) */
-static int recv_size = 0;
+/* User notification function */
+static void (*recv_handler)(void) = NULL;
 
-static void header_finished(void)
+bool usb_fxlink_handle_messages(usb_fxlink_header_t *header_ptr)
 {
-	recv_header.version = le32toh(recv_header.version);
-	recv_header.size = le32toh(recv_header.size);
-	recv_header.transfer_size = le32toh(recv_header.transfer_size);
+	if(!usb_poll(usb_ff_bulk_input()))
+		return false;
 
-	int major = (recv_header.version >> 8) & 0xff;
-	int minor = (recv_header.version & 0xff);
+	/* Read a message header first */
+	usb_fxlink_header_t header;
+	int rc = usb_read_sync(usb_ff_bulk_input(), &header, sizeof header, false);
+
+	if(rc < 0) {
+		USB_LOG("[ff-bulk] Header read failed: %d\n", rc);
+		return false;
+	}
+	if(rc < (int)sizeof header) {
+		USB_LOG("[ff-bulk] Incomplete header (%d/%d bytes)\n", rc,
+			sizeof header);
+		return false;
+	}
+
+
+	header.version = le32toh(header.version);
+	header.size = le32toh(header.size);
+	header.transfer_size = le32toh(header.transfer_size);
+
+	int major = (header.version >> 8) & 0xff;
+	int minor = (header.version & 0xff);
+	(void)minor;
+	(void)major;
 
 	USB_LOG("[ff-bulk %d.%d] New %.16s.%.16s (%d bytes)\n", major, minor,
-		recv_header.application, recv_header.type, recv_header.size);
+		header.application, header.type, header.size);
+
+	/* Handle built-in fxlink messages */
+	if(!strncmp(header.application, "fxlink", 16)
+			&& !strncmp(header.type, "command", 16)) {
+		USB_LOG("[ff-bulk] Receiving command (%d bytes)\n", header.size);
+		char *cmd = malloc(header.size + 1);
+		if(!cmd)
+			return false;
+		usb_read_sync(usb_ff_bulk_input(), cmd, header.size, false);
+		cmd[header.size] = 0;
+		USB_LOG("[ff-bulk] Command is: '%s'\n", cmd);
+		execute_command(cmd);
+		free(cmd);
+		return usb_fxlink_handle_messages(header_ptr);
+	}
+
+	*header_ptr = header;
+	return true;
 }
 
-static void notify_read(int endpoint, int size)
+void usb_fxlink_set_notifier(void (*notifier_function)(void))
+{
+	recv_handler = notifier_function;
+}
+
+void usb_fxlink_drop_transaction(void)
+{
+	while(1) {
+		int rc = usb_read_sync(usb_ff_bulk_input(), NULL, 512, false);
+		/* Break on error or short read */
+		if(rc != 512)
+			break;
+	}
+}
+
+static void notify_read(int endpoint)
 {
 	/* We only have one endpoint for reading, the bulk OUT */
 	(void)endpoint;
 
-	USB_LOG("[ff-bulk] Data available on %02x (%d bytes)\n", endpoint, size);
+//	USB_LOG("[ff-bulk] Data available on %02x\n", endpoint);
 
-	if(recv_size <= 0) {
-		usb_read_sync(usb_ff_bulk_input(), &recv_header, sizeof recv_header,
-			false);
-		header_finished();
-		recv_size = recv_header.size;
-	}
-	else {
-		USB_LOG("-> malloc dropping\n");
-
-		char *data = malloc(size);
-		usb_read_sync(usb_ff_bulk_input(), data, size, false);
-		free(data);
-
-		recv_size -= size;
-		if(recv_size < 0)
-			recv_size = 0;
-	}
+	if(recv_handler)
+		recv_handler();
 }

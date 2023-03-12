@@ -10,15 +10,22 @@
 
 /* Data tracking the progress of a multi-part multi-round async I/O operation.
 
-   * Multi-part refers to writes being constructed over several calls to
-     write(2) followed by a "commit" with fsync(2), and reads on a single data
-     transfer being made over several calls to read(2) (for asynchronous file
-     descriptors at least).
-   * Multi-round refers to the writes interacting multiple times with hardware
-     in order to communicate the complete data.
+   * Writes are multi-part because they are constructed over several calls to
+     write(2) followed by a "commit" with fynsc(2). They are additionally
+     multi-round because each call to write(2) requires mutiple rounds of
+     hardware communication when the hardware buffer is smaller than the data.
+
+   * Reads are multi-part because each transaction from the host requires
+     several calls to read(2) ("user segments") if the user's buffer is shorter
+     than the full transaction. In addition, reads are multi-round because a
+     single read(2) to a user buffer takes multiple rounds of hardware
+     communication ("hardware segments") whenever the user buffer is larger
+     than the hardware buffer.
 
    The process of performing such an I/O operation, as tracked by this
-   structure and use throughout gint, is as follows. For a write:
+   structure and use throughout gint, is as follows.
+
+   ## Writes
 
                                    WRITING ---------------------.
                                      ^ |                        | HW buffer
@@ -68,17 +75,32 @@
    FLYING-SYNC    type == ASYNCIO_SYNC         HW commit in progress
    ============================================================================
 
-   For a read:
+   The series of asyncio_op function calls for a write is as follows:
+
+     transaction ::= write* fsync
+     write ::= asyncio_op_start_write round+ asyncio_op_finish_write
+     round ::= asyncio_op_start_write_round asyncio_op_finish_write_round
+     fsync ::= asyncio_op_start_sync asyncio_op_finish_sync
+
+   Each write(2) (with a single user-provided buffer) is split into multiple
+   rounds that each fill the (small) hardware buffer. More writes can follow
+   until an fynsc(2) commits the pipe.
+
+   ## Reads
+
                      IN interrupt
      --> IDLE-EMPTY --------------> IDLE-READY
-             |  \                       | ^
-     read(2) |   \ Transaction  read(2) | | Buffer full
-             |    \ exhausted*          | |
+             |  \               read(2) | ^
+     read(2) |   \ Transaction          | | User buffer
+             |    \ exhausted*          | | filled
              |     '----<----------.    | |
              |                      \   | |
-             v       IN interrupt    \  v | .---.  Read from
-          WAITING ------------------> READING    v hardware
-                                            '---'
+             |       IN interrupt    \  | |
+             v   .--------->--------. \ v | .---.  Read from
+          WAITING                    READING     v hardware
+                 '---------<--------'       '---'
+               HW buffer exhausted with
+                 user buffer not full
 
    On this diagram, the right side indicates the presence of data to read from
    hardware while the bottom side indicates a read(2) request by the user.
@@ -86,13 +108,17 @@
    highlights that read(2) will always return at the end of a transaction even
    if the user-provided buffer is not full (to avoid waiting).
 
-   *The state returns to IDLE-EMPTY only if the transaction was exhausted while
-   the buffer is not full. This is to ensure that the caller can detect the end
-   of a data transfer by waiting for a read(2) which returns less bytes than
-   requested. In the case where a read(2) consumes exactly all remaining data,
-   we do not transition immediately to IDLE-EMPTY because we return as many
-   bytes as were requested. Instead, we return to IDLE-EMPTY after successfully
-   yielding 0 bytes in the next call.
+   A read(2) request (a "user segment") might consume several full hardware
+   buffers ("hardware segments") if the user buffer is large, thus looping
+   repeatedly between WAITING and READING. Conversely, each hardware segment
+   might fulfill many read(2) requests if the user buffer is small, thus
+   looping between IDLE-READY and READING.
+
+   * Note that if the transaction finishes right as the user buffer fills up,
+   we return to IDLE-READY and the next call to read(2) will successfully read
+   0 bytes and transition back to IDLE-EMPTY. This allows the user to read the
+   entire transaction by reading data until they get fewer bytes than requested
+   without running the risk of blocking on the next transaction.
 
    The invariants and meaning for each state are as follow:
 
@@ -100,12 +126,32 @@
    ============================================================================
    IDLE-EMPTY     type == ASYNCIO_NONE         No I/O operation
    ----------------------------------------------------------------------------
-   IDLE-READY     !data_r && buffer_used > 0   Hardware waiting for us to read
+   IDLE-READY     !data_r                      Hardware segment pending
    ----------------------------------------------------------------------------
-   WAITING        data_r && !buffer_used       Waiting for further HW data
+   WAITING        data_r && !round_size        User segment pending
    ----------------------------------------------------------------------------
-   READING        round_size > 0               DMA/CPU read from HW in progress
+   READING        round_size > 0               DMA/CPU read round in progress
    ============================================================================
+
+   The series of asyncio_op function calls for a read is a bit more complicated
+   because transactions are divided into two non-comparable sequences of
+   segments: one for packets received by the hardware buffer (on BRDY), one for
+   the data being copied to user buffers (on read(2)).
+
+   |<------ Transaction from the host (no size limit) ------>|
+
+   v BRDY      v BRDY      v BRDY      v BRDY      v BRDY
+   +-----------+-----------+-----------+-----------+---------+
+   | HW buffer | HW buffer | HW buffer | HW buffer | (short) |  HW segments
+   +-----------+------+----+-----------+-----------+---------+
+   | R1        | R2   | R3 | R4        | R5        | R6      |  Read rounds
+   +-----------+------+----+-----------+-----------+---------+
+   | User buffer #1   |  User buffer #2            | (short) |  User segments
+   +-----------+------+----+-----------+-----------+---------+
+   ^ read(2)          ^ read(2)                    ^ read(2)
+
+   Reads rounds are exactly the intersections between hardware segments and
+   read(2) user segments.
 
    States can be checked and transitioned with the API functions below. */
 
@@ -115,21 +161,23 @@ typedef volatile struct
 {
     /** User-facing information **/
 
-    /* Type of I/O operation (read/write/fsync) */
-    uint8_t type;
-    /* Whether the DMA should be used for hardware access */
-    bool dma;
-
     union {
         /* Address of data to transfer, incremented gradually [write] */
         void const *data_w;
         /* Address of buffer to store data to, incremented gradually [read] */
         void *data_r;
     };
-    /* Size of data left to transfer / buffer space available */
+    /* Size of data left to transfer to satisfy the complete request */
     int size;
     /* Callback at the end of the current write, final commit, or read */
     gint_call_t callback;
+    /* For reading operations, pointer to total amount of transferred data */
+    int *realized_size_r;
+
+    /* Type of I/O operation (read/write/fsync) */
+    uint8_t type;
+    /* Whether the DMA should be used for hardware access */
+    bool dma;
 
     /** Hardware state information **/
 
@@ -138,6 +186,12 @@ typedef volatile struct
     /* Size of data being read/written in the current round (which may itself
        be asynchronous if it's using the DMA) */
     uint16_t round_size;
+    /* For reading operations, whether the transaction is expected to continue
+       with another hardware segment after the current one */
+    bool cont_r;
+    /* For reading operations, whether there is a new hardware segment just
+       signaled by an interrupt not yet added to the operation */
+    bool interrupt_r;
     /* Hardware resource being used for access (meaning depends on hardware).
        Usually, this is assigned for the duration of hardware transaction.
        This value is user-managed and not modified by asyncio_op functions. */
@@ -168,52 +222,36 @@ void asyncio_op_clear(asyncio_op_t *op);
 bool asyncio_op_busy(asyncio_op_t const *op);
 
 //---
-// Operations and call functions
-//
-// Notice that for a write, the process is a single write call containing many
-// write rounds and only a single finish_call(), whereas for a read the process
-// is a single read reception contaning many read calls each with their own
-// finish_call(), and only a single finish_read_reception().
+// I/O functions
 //---
 
-/* asyncio_op_start_write(): Start a write call */
-void asyncio_op_start_write(asyncio_op_t *op, void const *data, size_t size,
-    bool use_dma, gint_call_t const *callback);
+/* Start/finish a write(2) call. */
+void asyncio_op_start_write(asyncio_op_t *op,
+    void const *data, size_t size, bool use_dma, gint_call_t const *callback);
+void asyncio_op_finish_write(asyncio_op_t *op);
 
-/* asyncio_op_start_sync(): Transition a write I/O operation to a fsync call */
-void asyncio_op_start_sync(asyncio_op_t *op, gint_call_t const *callback);
-
-/* asyncio_op_start_read(): Start a single-block read from hardware
-   Returns the size that will actually be read (may be smaller than `size`). */
-size_t asyncio_op_start_read(asyncio_op_t *op, void *data, size_t size,
-    bool use_dma, gint_call_t const *callback);
-
-/* asyncio_op_finish_call(): Update state after a read/write/fsync call
-
-   This function should be called when the read(2)/write(2)/fsync(2) call last
-   started on the operation has concluded, including all of the hardware
-   effects. This isn't the moment when the syscall returns, rather it is the
-   moment when it completes its work. */
-void asyncio_op_finish_call(asyncio_op_t *op);
-
-//---
-// Write round functions
-//---
-
-/* asyncio_op_start_write_round(): Start a single-block write to hardware */
+/* Start/finish a single-block write to hardware. */
 void asyncio_op_start_write_round(asyncio_op_t *op, size_t size);
-
-/* asyncio_op_finish_write_round(): Finish a write round and advance data */
 void asyncio_op_finish_write_round(asyncio_op_t *op);
 
-//---
-// Read group functions
-//---
+/* Start an fsync(2) operation (after one or more writes) and finish it. */
+void asyncio_op_start_sync(asyncio_op_t *op, gint_call_t const *callback);
+void asyncio_op_finish_sync(asyncio_op_t *op);
 
-/* asyncio_op_start_read_group(): Start a read call */
-void asyncio_op_start_read_group(asyncio_op_t *op, size_t total_size);
+/* Start/finish a read(2) call. */
+void asyncio_op_start_read(asyncio_op_t *op, void *data, size_t size,
+    bool use_dma, int *realized_size, gint_call_t const *callback);
+void asyncio_op_finish_read(asyncio_op_t *op);
 
-/* asyncio_op_fininsh_read_group(): Reset operation after a read group */
-void asyncio_op_finish_read_group(asyncio_op_t *op);
+/* Start/finish a hardware segment `cont` should be true if there will be
+   another segment in the same transaction. */
+void asyncio_op_start_read_hwseg(asyncio_op_t *op, size_t size, bool cont);
+void asyncio_op_finish_read_hwseg(asyncio_op_t *op);
+
+/* Start/finish a single-block read from hardware. The finish function returns
+   true if the current hardware segment finished with the round (op->cont_r
+   indicates whether more segments will follow). */
+void asyncio_op_start_read_round(asyncio_op_t *op, size_t size);
+bool asyncio_op_finish_read_round(asyncio_op_t *op);
 
 #endif /* GINT_USB_ASYNCIO */

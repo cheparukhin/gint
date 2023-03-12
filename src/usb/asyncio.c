@@ -31,6 +31,18 @@ void asyncio_op_start_write(asyncio_op_t *op, void const *data, size_t size,
     op->callback = *callback;
 }
 
+void asyncio_op_finish_write(asyncio_op_t *op)
+{
+    gint_call(op->callback);
+
+    /* Keep relevant states until the transaction finishes with an fsync(2) */
+    op->dma = false;
+    op->data_w = NULL;
+    op->size = 0;
+    op->callback = GINT_CALL_NULL;
+    op->round_size = 0;
+}
+
 void asyncio_op_start_write_round(asyncio_op_t *op, size_t size)
 {
     op->round_size = size;
@@ -53,55 +65,64 @@ void asyncio_op_start_sync(asyncio_op_t *op, gint_call_t const *callback)
     op->callback = *callback;
 }
 
-void asyncio_op_start_read_group(asyncio_op_t *op, size_t total_size)
+void asyncio_op_finish_sync(asyncio_op_t *op)
 {
-    op->type = ASYNCIO_READ;
-    op->size = total_size;
-    /* These are specified differently on each read(2) call */
-    op->dma = false;
-    op->data_r = NULL;
-    op->callback = GINT_CALL_NULL;
-    op->round_size = 0;
+    gint_call(op->callback);
+    asyncio_op_clear(op);
 }
 
-size_t asyncio_op_start_read(asyncio_op_t *op, void *data, size_t size,
-    bool use_dma, gint_call_t const *callback)
+void asyncio_op_start_read(asyncio_op_t *op, void *data, size_t size,
+    bool use_dma, int *realized_size, gint_call_t const *callback)
 {
     op->dma = use_dma;
     op->data_r = data;
     op->callback = *callback;
-    op->round_size = size;
+    op->realized_size_r = realized_size;
+    op->size = size;
 
-    return ((int)size < op->size ? (int)size : op->size);
+    if(realized_size)
+        *realized_size = 0;
 }
 
-void asyncio_op_finish_read_group(asyncio_op_t *op)
+void asyncio_op_finish_read(asyncio_op_t *op)
 {
-    asyncio_op_clear(op);
-}
-
-void asyncio_op_finish_call(asyncio_op_t *op)
-{
+    /* Note: In this function the type may be either READ or NONE depending of
+       whether there is a hardware segment being processed. */
     gint_call(op->callback);
+    op->dma = false;
+    op->data_r = NULL;
+    op->callback = GINT_CALL_NULL;
+    op->realized_size_r = NULL;
+    op->size = 0;
+}
 
-    /* Generally clean up the operation; for a write, keep relevant states
-       until the transaction finishes with an fsync(2); for a read, keep info
-       needed for further read(2) calls. */
-    if(op->type == ASYNCIO_WRITE) {
-        op->dma = false;
-        op->data_w = NULL;
-        op->size = 0;
-        op->callback = GINT_CALL_NULL;
-        op->round_size = 0;
-    }
-    else if(op->type == ASYNCIO_READ) {
-        op->dma = false;
-        op->data_r = NULL;
-        op->size -= op->round_size;
-        op->callback = GINT_CALL_NULL;
-        op->round_size = 0;
-    }
-    else {
-        asyncio_op_clear(op);
-    }
+void asyncio_op_start_read_hwseg(asyncio_op_t *op, size_t size, bool cont)
+{
+    op->type = ASYNCIO_READ;
+    op->buffer_used = size;
+    op->cont_r = cont;
+}
+
+void asyncio_op_finish_read_hwseg(asyncio_op_t *op)
+{
+    if(!op->cont_r)
+        op->type = ASYNCIO_NONE;
+    op->buffer_used = 0;
+}
+
+void asyncio_op_start_read_round(asyncio_op_t *op, size_t size)
+{
+    op->round_size = size;
+}
+
+bool asyncio_op_finish_read_round(asyncio_op_t *op)
+{
+    if(op->realized_size_r)
+        *op->realized_size_r += op->round_size;
+    op->buffer_used -= op->round_size;
+    op->data_r += op->round_size;
+    op->size -= op->round_size;
+    op->round_size = 0;
+
+    return (op->buffer_used == 0);
 }
