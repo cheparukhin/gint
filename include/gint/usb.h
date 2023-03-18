@@ -55,6 +55,9 @@ enum {
 	USB_READ_IDLE = -12,
 	/* No FIFO controller is available */
 	USB_READ_NOFIFO = -13,
+
+	/* (Internal codes) */
+	USB_ERROR_ZERO_LENGTH = -100,
 };
 
 /* usb_open(): Open the USB link
@@ -273,46 +276,31 @@ int usb_commit_async(int pipe, gint_call_t callback);
 /* usb_read_sync(): Synchronously read from a USB pipe
 
    This function waits for data to become available on the specified `pipe`,
-   and then reads up to `size` bytes into `data`. It synchronizes with USB
+   and then reads up to `size` bytes into `data`. It is "synchronized" with USB
    transactions on the pipe in the following ways:
 
-   1. If there is no active transaction when it is first called, it blocks
-      until one starts (which can freeze).
-   2. If there is an active transaction but all of its contents were consumed
-      by a previous read, it is marked as complete before usb_read_sync()
-      starts waiting.
+   1. If there is no active transaction, it waits for one to arrive.
+   2. If the active transaction has no data left to read, it is skipped.
+   3. If the transaction's data is completely read, the transaction is closed
+      even if `data` is full. (See usb_read_async() for the alternative.)
 
-   The second point has a subtle implication. In an application that always
-   reads synchronously from a pipe, the "resting" state between transactions
-   can show the last processed transaction as active with 0 bytes remaining to
-   read, as processed transactions are not marked as completed until a read
-   request is fulfilled *partially*. This is for three reasons:
+   Basically usb_read_sync() returns the next `size` bytes of data that the
+   calculator receives on the pipe, with a single exception: it doesn't read
+   across transactions, so if the active transaction has 100 bytes left and you
+   request 200, you will only get 100. usb_read_sync() only ever returns 0
+   bytes if there is an empty transaction, which is rare.
 
-   * Only marking transactions as complete upon partial reads makes it possible
-     to properly detect the end of transactions in asynchronous mode. See
-     usb_read_async() for more details.
-
-   * It further allows detecting the end of transactions in synchronous mode by
-     checking for partial reads *or* usb_poll() returning false.
-
-   * Marking transactions with 0 bytes left to read as complete *before* a
-     synchronous read (instead of after) avoids complications for sync reads
-     when switching between sync and async reads. It makes async reads handle
-     the switch with a 0-byte read, instead of the other way round. Thus, sync
-     reads don't need to worry about switches and can never return 0 bytes.
-
-   It is not an error for usb_read_sync() to return fewer bytes than requested.
-   If the active USB transaction has fewer bytes left than specified in `size`,
-   the remaining data will be returned without waiting for another transaction.
-   (Reads never carry across transactions.) Because usb_read_sync() will ignore
-   transactions with 0 bytes left, it can never return 0 bytes.
+   Because this is a blocking function, a call to usb_read_sync() will *FREEZE*
+   if there is no data to read on the pipe and the host doesn't send any. In
+   addition, it's not possible to detect how much data is left to read with
+   usb_read_sync()'s interface. If you want to avoid or debug a freeze, use
+   use usb_read_async() or set a timeout with usb_read_sync_timeout(). If you
+   want to read a transaction until the end without knowing its size in
+   advance, use usb_read_async().
 
    If `use_dma=true`, uses the DMA for transfers. This requires 4-byte
    alignment on the buffer, size, and number of bytes previously read in the
    current transaction.
-
-   This function will use a FIFO to access the pipe. The FIFO will only be
-   released once the transaction is completely consumed.
 
    Returns the number of bytes read or a negative error code. */
 int usb_read_sync(int pipe, void *data, int size, bool use_dma);
@@ -321,46 +309,77 @@ int usb_read_sync(int pipe, void *data, int size, bool use_dma);
 int usb_read_sync_timeout(int pipe, void *data, int size, bool use_dma,
 	timeout_t const *timeout);
 
+/* Flags for usb_read_async(), see below. */
+enum {
+	/* Use the DMA for data transfer (requires full 4-byte alignment). */
+	USB_READ_USE_DMA        = 0x01,
+	/* Ignore reads of 0 bytes from exhausted transactions. */
+	USB_READ_IGNORE_ZEROS   = 0x02,
+	/* Close transactions when exhausted even by non-partial reads. */
+	USB_READ_AUTOCLOSE      = 0x04,
+	/* Wait for the read to finish before returning. */
+	USB_READ_WAIT           = 0x08,
+	/* Block for a new transaction if none is currenty active. */
+	USB_READ_BLOCK          = 0x10,
+};
+
 /* usb_read_async(): Asynchronously read from a USB pipe
 
-   This function is similar to usb_read_sync() except that it doesn't
-   synchronize with transactions, resulting in two differences:
+   This function is similar to usb_read_sync() but it is asynchronous, ie. it
+   returns after starting the read and then runs in the background. Without
+   options, usb_read_async() is guaranteed to return quickly without waiting
+   for communications. The read itself also never blocks unless there is a
+   disagreement with the host on the size of transactions.
 
-   1. It returns USB_READ_INACTIVE if there is no active transaction.
-   2. If there is an active transaction with 0 bytes left to read, it returns 0
-      bytes and marks the transaction as complete (unless size == 0).
+   usb_read_async() is also slightly lower-level than usb_read_sync(). In
+   particular, it only closes transactions when the data is fully read *and*
+   the user buffer is not full. If the user requests exactly the number of
+   bytes left in the transaction, the entire contents will be read but the
+   transaction will be left in an "active with 0 bytes left" state. Only on the
+   next read will the transaction be closed.
 
-   Like usb_read_sync(), if the exact amount of data left in the transaction is
-   requested, the transaction will remain active with 0 bytes left to read and
-   the *next* read will return 0 bytes and mark it as complete. This way, the
-   end of the transaction can be detected consistently: it is sufficient to
-   loop until a read call returns fewer bytes than requested.
+   This behavior is designed so that a read closes a transaction if and only if
+   it returns fewer bytes than requested, which is useful for detecting the end
+   of transfers when their size isn't known in advance.
 
-   Being asynchronous, this function starts the read process and returns
-   instantly; 0 on success, an error code otherwise. When the read finishes,
-   the provided callback is called with `*read_size` set to the number of bytes
-   read. */
-int usb_read_async(int pipe, void *data, int size, bool use_dma,
-	int *read_size, gint_call_t callback);
+   This function returns a preliminary error code. If it is zero, then the
+   callback will be invoked later with *rc set to the final return value of the
+   read, which is itself either an error (< 0) or the number of bytes read.
 
-/* usb_poll(): Check whether there is data to read in a pipe
+   Due to its low-level nature, raw usb_read_async() is a bit impractical to
+   use and almost always requires repeated calls and callback waits. The
+   following flags are provided to make it more convenient by incorporating
+   features of usb_read_sync():
 
-   This function checks whether a transaction is active on the pipe with more
-   than 0 bytes left to read. Its main purpose is to simplify reading patterns
-   with usb_read_sync(), in the following ways:
+   * USB_READ_IGNORE_ZEROS causes usb_read_async() to ignore reads of 0 bytes
+     from transactions that were exhausted but not closed.
+   * USB_READ_AUTOCLOSE causes usb_read_async() to always close transactions
+     when exhausted even if the read is not partial. This is useful when the
+     size of the transaction is in fact known in advance.
+   * USB_READ_WAIT causes usb_read_async() to wait for the end of the transfer
+     before returning. Unless there is a driver bug or USB_READ_BLOCK is also
+     set, this cannot cause the function to freeze since the read will always
+     complete in finite time (returning USB_READ_IDLE if no transaction is
+     active). When USB_READ_WAIT it set, `callback` and `rc` are ignored; the
+     callback is not invoked, and the status of the entire read is returned.
+   * USB_READ_BLOCK causes usb_read_async() to wait for a transaction if none
+     is active. This can stall the transfer indefinitely if the host doesn't
+     transmit any data, and freeze the call entirely if USB_READ_WAIT is set.
+     This option really makes usb_read_async() a synchronous function.
+   * A timeout is supported (pass NULL to ignore).
 
-   1. When usb_poll() returns true, usb_read_sync() is guaranteed to not block
-      (unless the host fails to complete a transaction).
-   2. After a synchronous read which was completely fulfilled (ie. returned as
-      many bytes as were requested), usb_poll() will tell whether there is any
-      more data left. This is useful because if there is no data left, the next
-      call to usb_read_sync() would block. Thus, it is possible to detect the
-      end of the current transaction during synchronous reads by checking for
-      (1) partial reads, and (2) usb_poll() returning false after a full read.
+   With all options enabled, usb_read_async() becomes functionally identical to
+   usb_read_sync_timeout(). */
+int usb_read_async(int pipe, void *data, int size, int flags, int *rc,
+	timeout_t const *timeout, gint_call_t callback);
 
-   usb_poll() is of little interest to asynchronous applications since it is
-   easier to check the return status of usb_read_async(). */
-bool usb_poll(int pipe);
+/* usb_read_cancel(): Cancel an asynchronous read
+
+   Once started, an async read will run in the background and keep writing to
+   the provided buffer. This function cancels the operation so that no further
+   writes to the buffer are made and the associated memory can be safely
+   deallocated. */
+void usb_read_cancel(int pipe);
 
 //---
 // USB debugging functions

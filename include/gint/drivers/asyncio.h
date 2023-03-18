@@ -120,17 +120,33 @@
    entire transaction by reading data until they get fewer bytes than requested
    without running the risk of blocking on the next transaction.
 
-   The invariants and meaning for each state are as follow:
+   The invariants and meaning for each state are as follow. The right side
+   (presence of a hardware segment) is indicated by `buffer_used >= 0`, while
+   the bottom side (presence of a read(2) request) is indicated by `size > 0`.
+   As an exception, IDLE-EMPTY uses `buffer_used == 0` so that the default
+   zero-initialization of transfer data is sufficient.
 
-   State          Characterization             Description
+   State          Invariant characterization   Description
    ============================================================================
-   IDLE-EMPTY     type == ASYNCIO_NONE         No I/O operation
+   IDLE-EMPTY     type == ASYNCIO_NONE         No I/O operation, the pipe is
+                  && buffer_used == 0          idle with no request and no
+                  && size == 0                 hardware segment (but we might
+                  && round_size == 0           still be mid-transaction)
    ----------------------------------------------------------------------------
-   IDLE-READY     !data_r                      Hardware segment pending
+   IDLE-READY     type == ASYNCIO_READ         There is a hardware segment not
+                  && buffer_used >= 0          marked as complete, but no
+                  && size == 0                 read(2) request to consume it
+                  && round_size == 0
    ----------------------------------------------------------------------------
-   WAITING        data_r && !round_size        User segment pending
+   WAITING        type == ASYNCIO_READ         There is a read(2) request but
+                  && buffer_used < 0           no hardware segment, and either
+                  && size > 0                  the request is new or the
+                  && round_size == 0           transaction isn't exhausted
    ----------------------------------------------------------------------------
-   READING        round_size > 0               DMA/CPU read round in progress
+   READING        type == ASYNCIO_READ         A read round in progress and
+                  && buffer_used >= 0          either the read(2) request or
+                  && size > 0                  hardware segment will be
+                  && round_size > 0            exhausted when it ends
    ============================================================================
 
    The series of asyncio_op function calls for a read is a bit more complicated
@@ -147,7 +163,7 @@
    | R1        | R2   | R3 | R4        | R5        | R6      |  Read rounds
    +-----------+------+----+-----------+-----------+---------+
    | User buffer #1   |  User buffer #2            | (short) |  User segments
-   +-----------+------+----+-----------+-----------+---------+
+   +------------------+----------------------------+---------+
    ^ read(2)          ^ read(2)                    ^ read(2)
 
    Reads rounds are exactly the intersections between hardware segments and
@@ -159,7 +175,35 @@ enum { ASYNCIO_NONE, ASYNCIO_READ, ASYNCIO_WRITE, ASYNCIO_SYNC };
 
 typedef volatile struct
 {
-    /** User-facing information **/
+    /* Type of I/O operation (NONE/WRITE/SYNC/READ) */
+    uint8_t type;
+    /* Whether the DMA should be used for hardware access */
+    bool dma            :1;
+    /* For reading pipes, whether the transaction is expected to continue with
+       another hardware segment after the current one */
+    bool cont_r         :1;
+    /* For reading pipes, interrupt flag signaling an incoming hardware segment
+       not yet added to the operation */
+    bool interrupt_r    :1;
+    /* For reading pipes, whether the current read call should close the
+       current hardware segment if all the data is read even if the read call
+       is not partial */
+    bool autoclose_r    :1;
+    /* Hardware resource being used for access (meaning depends on hardware).
+       Usually, this is assigned for the duration of hardware transaction.
+       This value is user-managed and not modified by asyncio_op functions. */
+    uint8_t controller;
+
+    /* Number of bytes in short buffer (0..3) */
+    uint8_t shbuf_size;
+    /* Short buffer */
+    uint32_t shbuf;
+
+    /* Size of data currently in the hardware buffer */
+    int16_t buffer_used;
+    /* Size of data being read/written in the current round (which may itself
+       be asynchronous if it's using the DMA) */
+    uint16_t round_size;
 
     union {
         /* Address of data to transfer, incremented gradually [write] */
@@ -169,40 +213,10 @@ typedef volatile struct
     };
     /* Size of data left to transfer to satisfy the complete request */
     int size;
-    /* Callback at the end of the current write, final commit, or read */
-    gint_call_t callback;
     /* For reading operations, pointer to total amount of transferred data */
     int *realized_size_r;
-
-    /* Type of I/O operation (read/write/fsync) */
-    uint8_t type;
-    /* Whether the DMA should be used for hardware access */
-    bool dma;
-
-    /** Hardware state information **/
-
-    /* Size of data currently in the hardware buffer */
-    uint16_t buffer_used;
-    /* Size of data being read/written in the current round (which may itself
-       be asynchronous if it's using the DMA) */
-    uint16_t round_size;
-    /* For reading operations, whether the transaction is expected to continue
-       with another hardware segment after the current one */
-    bool cont_r;
-    /* For reading operations, whether there is a new hardware segment just
-       signaled by an interrupt not yet added to the operation */
-    bool interrupt_r;
-    /* Hardware resource being used for access (meaning depends on hardware).
-       Usually, this is assigned for the duration of hardware transaction.
-       This value is user-managed and not modified by asyncio_op functions. */
-    uint8_t controller;
-
-    /** Internal information **/
-
-    /* Number of bytes in short buffer (0..3) */
-    uint8_t shbuf_size;
-    /* Short buffer */
-    uint32_t shbuf;
+    /* Callback at the end of the current write, final commit, or read */
+    gint_call_t callback;
 
 } asyncio_op_t;
 
@@ -238,20 +252,42 @@ void asyncio_op_finish_write_round(asyncio_op_t *op);
 void asyncio_op_start_sync(asyncio_op_t *op, gint_call_t const *callback);
 void asyncio_op_finish_sync(asyncio_op_t *op);
 
-/* Start/finish a read(2) call. */
+/* Start a read(2) call. The call will finish automatically when the final
+   round finishes. If `autoclose` is set, the current hardware segment will
+   be marked as completed if the round reads it entirely, even if the request
+   is fulfilled. */
 void asyncio_op_start_read(asyncio_op_t *op, void *data, size_t size,
-    bool use_dma, int *realized_size, gint_call_t const *callback);
-void asyncio_op_finish_read(asyncio_op_t *op);
+    bool use_dma, int *realized_size, bool autoclose,
+    gint_call_t const *callback);
 
-/* Start/finish a hardware segment `cont` should be true if there will be
-   another segment in the same transaction. */
+/* Start a hardware segment. `cont` should be true if there will be another
+   segment in the same transaction. The segment will finish automatically when
+   it is completely consumed by a read round. */
 void asyncio_op_start_read_hwseg(asyncio_op_t *op, size_t size, bool cont);
-void asyncio_op_finish_read_hwseg(asyncio_op_t *op);
 
-/* Start/finish a single-block read from hardware. The finish function returns
-   true if the current hardware segment finished with the round (op->cont_r
-   indicates whether more segments will follow). */
-void asyncio_op_start_read_round(asyncio_op_t *op, size_t size);
-bool asyncio_op_finish_read_round(asyncio_op_t *op);
+bool asyncio_op_has_read_call(asyncio_op_t const *op);
+
+bool asyncio_op_has_read_hwseg(asyncio_op_t const *op);
+
+/* Start a single-block read from hardware. The requested size is automatically
+   t->size, however the round may of course be smaller depending on how much
+   data is available. Returns the round size. */
+int asyncio_op_start_read_round(asyncio_op_t *op);
+
+enum {
+    ASYNCIO_HWSEG_EXHAUSTED = 0x01,
+    ASYNCIO_REQUEST_FINISHED = 0x02,
+    ASYNCIO_TRANSACTION_EXHAUSTED = 0x04,
+};
+
+/* Finish a single-block read from hardware. This function also finishes the
+   current hardware segment and read call if appropriate, *except* that it
+   doesn't invoke the read(2) callback. You should make a copy of it before
+   calling and invoke it manually after. Returns a combination of the above
+   flags indicating what finished along with the round. */
+int asyncio_op_finish_read_round(asyncio_op_t *op);
+
+/* Cancel a read call. This keeps the hardware segment part intact. */
+void asyncio_op_cancel_read(asyncio_op_t *op);
 
 #endif /* GINT_USB_ASYNCIO */

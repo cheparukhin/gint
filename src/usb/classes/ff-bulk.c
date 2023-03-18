@@ -216,12 +216,18 @@ static void (*recv_handler)(void) = NULL;
 
 bool usb_fxlink_handle_messages(usb_fxlink_header_t *header_ptr)
 {
-	if(!usb_poll(usb_ff_bulk_input()))
+	if(!usb_is_open())
 		return false;
 
 	/* Read a message header first */
 	usb_fxlink_header_t header;
-	int rc = usb_read_sync(usb_ff_bulk_input(), &header, sizeof header, false);
+	timeout_t tm = timeout_make_ms(1000);
+
+	int rc = usb_read_async(usb_ff_bulk_input(), &header, sizeof header,
+		USB_READ_IGNORE_ZEROS | USB_READ_AUTOCLOSE | USB_READ_WAIT, NULL,
+		&tm, GINT_CALL_NULL);
+	if(rc == USB_READ_IDLE)
+		return false;
 
 	if(rc < 0) {
 		USB_LOG("[ff-bulk] Header read failed: %d\n", rc);
@@ -233,7 +239,6 @@ bool usb_fxlink_handle_messages(usb_fxlink_header_t *header_ptr)
 		return false;
 	}
 
-
 	header.version = le32toh(header.version);
 	header.size = le32toh(header.size);
 	header.transfer_size = le32toh(header.transfer_size);
@@ -242,6 +247,11 @@ bool usb_fxlink_handle_messages(usb_fxlink_header_t *header_ptr)
 	int minor = (header.version & 0xff);
 	(void)minor;
 	(void)major;
+
+	if(major != 1 || minor != 0) {
+		USB_LOG("[ff-bulk] Invalid message header!\n");
+		return usb_fxlink_handle_messages(header_ptr);
+	}
 
 	USB_LOG("[ff-bulk %d.%d] New %.16s.%.16s (%d bytes)\n", major, minor,
 		header.application, header.type, header.size);
@@ -272,11 +282,17 @@ void usb_fxlink_set_notifier(void (*notifier_function)(void))
 
 void usb_fxlink_drop_transaction(void)
 {
+	int block = USB_READ_BLOCK;
+
 	while(1) {
-		int rc = usb_read_sync(usb_ff_bulk_input(), NULL, 512, false);
-		/* Break on error or short read */
+		timeout_t tm = timeout_make_ms(1000);
+		int rc = usb_read_async(usb_ff_bulk_input(), NULL, 512,
+			USB_READ_WAIT | block, NULL, &tm, GINT_CALL_NULL);
+
+		/* Break on error or short read (end of transaction) */
 		if(rc != 512)
 			break;
+		block = 0;
 	}
 }
 

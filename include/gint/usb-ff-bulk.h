@@ -130,8 +130,8 @@ void usb_fxlink_set_notifier(void (*notifier_function)(void));
 /* usb_ff_bulk_output(): Pipe number for calculator -> host communication */
 int usb_ff_bulk_output(void);
 
-/* usb_ff_bulk_in(): Pipe number for host -> calculator communication */
-int usb_ff_bulk_in(void);
+/* usb_ff_bulk_input(): Pipe number for host -> calculator communication */
+int usb_ff_bulk_input(void);
 
 //---
 // Construction and analysis of fxlink protocol messages

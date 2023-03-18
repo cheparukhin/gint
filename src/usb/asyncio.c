@@ -1,5 +1,6 @@
 #include <gint/drivers/asyncio.h>
 #include <string.h>
+#include <assert.h>
 
 void asyncio_op_clear(asyncio_op_t *op)
 {
@@ -8,9 +9,9 @@ void asyncio_op_clear(asyncio_op_t *op)
 
 bool asyncio_op_busy(asyncio_op_t const *op)
 {
-    /* WAITING and READING states are busy */
+    /* WAITING and READING states are busy (ie. read(2) call in progress) */
     if(op->type == ASYNCIO_READ)
-        return op->round_size || op->data_r != NULL;
+        return op->size > 0;
     /* WRITING, FLYING-WRITE and PENDING states are busy */
     if(op->type == ASYNCIO_WRITE)
         return op->data_w != NULL;
@@ -72,28 +73,33 @@ void asyncio_op_finish_sync(asyncio_op_t *op)
 }
 
 void asyncio_op_start_read(asyncio_op_t *op, void *data, size_t size,
-    bool use_dma, int *realized_size, gint_call_t const *callback)
+    bool use_dma, int *realized_size, bool autoclose,
+    gint_call_t const *callback)
 {
+    assert(!asyncio_op_has_read_call(op) && size > 0 && !op->round_size);
+
+    op->type = ASYNCIO_READ;
     op->dma = use_dma;
+    op->autoclose_r = autoclose;
     op->data_r = data;
-    op->callback = *callback;
-    op->realized_size_r = realized_size;
     op->size = size;
+    op->realized_size_r = realized_size;
+    op->callback = *callback;
 
     if(realized_size)
         *realized_size = 0;
 }
 
-void asyncio_op_finish_read(asyncio_op_t *op)
+bool asyncio_op_has_read_call(asyncio_op_t const *op)
 {
-    /* Note: In this function the type may be either READ or NONE depending of
-       whether there is a hardware segment being processed. */
-    gint_call(op->callback);
-    op->dma = false;
-    op->data_r = NULL;
-    op->callback = GINT_CALL_NULL;
-    op->realized_size_r = NULL;
-    op->size = 0;
+    /* WAITING and READING states */
+    return (op->type == ASYNCIO_READ) && (op->size > 0);
+}
+
+bool asyncio_op_has_read_hwseg(asyncio_op_t const *op)
+{
+    /* IDLE-READY and READING states */
+    return (op->type == ASYNCIO_READ) && (op->buffer_used >= 0);
 }
 
 void asyncio_op_start_read_hwseg(asyncio_op_t *op, size_t size, bool cont)
@@ -103,26 +109,65 @@ void asyncio_op_start_read_hwseg(asyncio_op_t *op, size_t size, bool cont)
     op->cont_r = cont;
 }
 
-void asyncio_op_finish_read_hwseg(asyncio_op_t *op)
+int asyncio_op_start_read_round(asyncio_op_t *op)
 {
-    if(!op->cont_r)
-        op->type = ASYNCIO_NONE;
-    op->buffer_used = 0;
+    op->round_size = (op->size < op->buffer_used ? op->size : op->buffer_used);
+    return op->round_size;
 }
 
-void asyncio_op_start_read_round(asyncio_op_t *op, size_t size)
+int asyncio_op_finish_read_round(asyncio_op_t *op)
 {
-    op->round_size = size;
-}
+    int status = 0;
 
-bool asyncio_op_finish_read_round(asyncio_op_t *op)
-{
     if(op->realized_size_r)
         *op->realized_size_r += op->round_size;
     op->buffer_used -= op->round_size;
-    op->data_r += op->round_size;
+    if(op->data_r)
+        op->data_r += op->round_size;
     op->size -= op->round_size;
     op->round_size = 0;
 
-    return (op->buffer_used == 0);
+    bool read_fulfilled = (op->size == 0);
+    bool hwseg_exhausted =
+        (op->buffer_used == 0 && (op->autoclose_r || op->size > 0));
+    bool transaction_exhausted = hwseg_exhausted && !op->cont_r;
+
+    if(read_fulfilled || transaction_exhausted) {
+        op->dma = false;
+        op->autoclose_r = false;
+        op->data_r = NULL;
+        op->size = 0;
+        op->callback = GINT_CALL_NULL;
+        op->realized_size_r = NULL;
+        status |= ASYNCIO_REQUEST_FINISHED;
+    }
+    if(hwseg_exhausted) {
+        op->buffer_used = -1;
+        status |= ASYNCIO_HWSEG_EXHAUSTED;
+
+        if(status & ASYNCIO_REQUEST_FINISHED) {
+            op->type = ASYNCIO_NONE;
+            op->buffer_used = 0;
+        }
+    }
+    if(transaction_exhausted) {
+        status |= ASYNCIO_TRANSACTION_EXHAUSTED;
+    }
+
+    return status;
+}
+
+void asyncio_op_cancel_read(asyncio_op_t *op)
+{
+    op->dma = false;
+    op->data_r = NULL;
+    op->autoclose_r = false;
+    op->size = 0;
+    op->callback = GINT_CALL_NULL;
+    op->realized_size_r = NULL;
+
+    if(!asyncio_op_has_read_hwseg(op)) {
+        op->type = ASYNCIO_NONE;
+        op->buffer_used = 0;
+    }
 }
