@@ -75,29 +75,7 @@ _usb_pipe_read4:
 	bf.s	.unaligned
 	and	r3, _datasize
 
-#define VERSION 0
-
 .aligned:
-
-#if VERSION == 0
-	mov.l	@_fifo, r3
-	dt	r2
-
-	mov.l	r3, @_data
-	add	#4, _data
-
-	bf.s	.aligned
-	nop
-#elif VERSION == 1
-	mov	_fifo, r3
-	nop
-
-9:	movs.l	@r3, x0
-	dt	r2
-
-	bf.s	9b
-	movs.l	x0, @_data+
-#elif VERSION == 2
 	ldrs	.al_b
 	ldre	.al_e
 	ldrc	r2
@@ -105,7 +83,6 @@ _usb_pipe_read4:
 
 .al_b:	movs.l	@r3, x0
 .al_e:	movs.l	x0, @_data+
-#endif
 
 	bra	3f
 	nop
