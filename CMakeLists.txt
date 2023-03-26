@@ -127,6 +127,7 @@ set(SOURCES_COMMON
   src/usb/classes/ff-bulk.c
   src/usb/configure.c
   src/usb/pipes.c
+  src/usb/read4.S
   src/usb/setup.c
   src/usb/string.c
   src/usb/usb.c

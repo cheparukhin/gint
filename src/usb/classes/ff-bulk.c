@@ -12,7 +12,7 @@ static void notify_read(int endpoint);
 static usb_dc_interface_t dc_interface = {
 	.bLength              = sizeof(usb_dc_interface_t),
 	.bDescriptorType      = USB_DC_INTERFACE,
-	.bInterfaceNumber     = -1 /* Set by driver */,
+	.bInterfaceNumber     = -1, /* Set by driver */
 	.bAlternateSetting    = 0,
 	.bNumEndpoints        = 2,
 	.bInterfaceClass      = 0xff, /* Vendor-Specific */
@@ -283,10 +283,11 @@ void usb_fxlink_set_notifier(void (*notifier_function)(void))
 void usb_fxlink_drop_transaction(void)
 {
 	int block = USB_READ_BLOCK;
+	char buf[512];
 
 	while(1) {
 		timeout_t tm = timeout_make_ms(1000);
-		int rc = usb_read_async(usb_ff_bulk_input(), NULL, 512,
+		int rc = usb_read_async(usb_ff_bulk_input(), buf, 512,
 			USB_READ_WAIT | block, NULL, &tm, GINT_CALL_NULL);
 
 		/* Break on error or short read (end of transaction) */

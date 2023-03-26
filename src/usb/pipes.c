@@ -36,7 +36,7 @@ void usb_pipe_configure(int address, endpoint_t const *ep)
 	USB.PIPECFG.TYPE    = type;
 	USB.PIPECFG.BFRE    = 0;
 	/* Enable continuous mode on all bulk transfer pipes
-	   TODO: Also make it double mode*/
+	   TODO: Also make it double mode */
 	USB.PIPECFG.DBLB    = 0;
 	USB.PIPECFG.CNTMD   = (type == TYPE_BULK);
 	USB.PIPECFG.SHTNAK  = 1;
@@ -532,11 +532,17 @@ static void USB_LOG_TR(char const *p, asyncio_op_t *t, char const *fmt, ...)
 	int E = USB.INTENB0.BRDYE;
 	USB.INTENB0.BRDYE = 0;
 
+	char shbuf[16];
+	if(t->shbuf_size >= 4)
+		sprintf(shbuf, "!!%d", t->shbuf_size);
+	else
+		snprintf(shbuf, t->shbuf_size * 2 + 1, "%08x", t->shbuf);
+
 	char str[128];
-	snprintf(str, sizeof str - 1, "%s: %s buf=%d%s%s req=%d/%d%s ",
+	snprintf(str, sizeof str - 1, "%s: %s buf=%d%s%s req=%d/%d%s |%s| ",
 		p, t->type == ASYNCIO_READ ? "READ" : "NONE",
 		t->buffer_used, t->cont_r ? "+":"", t->interrupt_r ? "!":"",
-		t->round_size, t->size, t->autoclose_r ? "#" : "");
+		t->round_size, t->size, t->autoclose_r ? "#" : "", shbuf);
 
 	va_list args;
 	va_start(args, fmt);
@@ -623,31 +629,9 @@ static bool read_round(asyncio_op_t *t, int pipe)
 	if(t->controller == D0F) FIFO = &USB.D0FIFO;
 	if(t->controller == D1F) FIFO = &USB.D1FIFO;
 
-	void *dataptr = t->data_r;
-	if(dataptr) {
-		for(int i = 0; i < round_size / 4; i++) {
-			*(uint32_t *)dataptr = *FIFO;
-			dataptr += 4;
-		}
-		if(round_size & 2) {
-			*(uint16_t *)dataptr = *(uint16_t volatile *)FIFO;
-			dataptr += 2;
-		}
-		if(round_size & 1) {
-			*(uint8_t *)dataptr = *(uint8_t volatile *)FIFO;
-			dataptr += 1;
-		}
-	}
-	else {
-		volatile int x;
-		for(int i = 0; i < round_size / 4; i++)
-			x = *FIFO;
-		if(round_size & 2)
-			x = *(uint16_t volatile *)FIFO;
-		if(round_size & 1)
-			x = *(uint8_t volatile *)FIFO;
-		(void)x;
-	}
+	int fifosize = t->buffer_used - t->shbuf_size;
+	usb_pipe_read4(t->data_r, round_size, FIFO, fifosize, &t->shbuf,
+		&t->shbuf_size);
 
 	finish_read_round(t, pipe);
 	return false;

@@ -175,6 +175,23 @@ void usb_pipe_write4(void const *data, int size, uint32_t volatile *buffer,
 void usb_pipe_flush4(uint32_t buffer, int buffer_size,
    uint32_t volatile *FIFO);
 
+/* usb_pipe_read4(): Copy arbitrary ranges of memory from a 4-byte USB FIFO
+
+   This function performs arbitrarily-aligned reads of any size from a 4-byte
+   USB FIFO register to regular memory. It performs only 4-byte reads on the
+   FIFO (except when reading the last few bytes in the buffer) and copies read
+   data to the supplied buffer. Any excess bytes read from the FIFO are stored
+   in a short buffer to be used on the next call.
+
+   @data         Buffer to read into
+   @data_size    Read size (1 ≤ data_size ≤ fifo_size + *buffer_size)
+   @fifo         USB FIFO register to read from
+   @fifo_size    Amount of data left in the FIFO (excluding short buffer!)
+   @buffer       Address of short buffer
+   @buffer_size  Address of short buffer's size tracker */
+void usb_pipe_read4(void *data, int size, uint32_t volatile *FIFO,
+   int fifo_size, uint32_t volatile *buffer, uint8_t volatile *buffer_size);
+
 //---
 // Timeout waits
 //---
