@@ -391,6 +391,8 @@ void usb_read_cancel(int pipe);
 
 /* usb_set_log(): Set the logging function for the USB driver */
 void usb_set_log(void (*logger)(char const *format, va_list args));
+/* usb_get_log(): Get the logging function */
+void (*usb_get_log(void))(char const *format, va_list args);
 /* usb_log(): Send a message to the USB log */
 void usb_log(char const *format, ...);
 
@@ -398,6 +400,8 @@ void usb_log(char const *format, ...);
    The function is called atomically, thus cannot be interrupted, therefore it
    is safe to call usb_trace() in interrupt handlers. */
 void usb_set_trace(void (*tracer)(char const *message));
+/* usb_get_trace(): Get the tracing function */
+void (*usb_get_trace(void))(char const *message);
 /* usb_trace(): Trace the current state of the driver */
 void usb_trace(char const *message);
 

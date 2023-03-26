@@ -529,6 +529,9 @@ void usb_pipe_write_bemp(int pipe)
 #ifdef GINT_USB_DEBUG
 static void USB_LOG_TR(char const *p, asyncio_op_t *t, char const *fmt, ...)
 {
+	if(!usb_get_log())
+		return;
+
 	int E = USB.INTENB0.BRDYE;
 	USB.INTENB0.BRDYE = 0;
 

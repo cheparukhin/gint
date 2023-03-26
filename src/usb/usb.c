@@ -40,6 +40,11 @@ void usb_set_log(void (*logger)(char const *format, va_list args))
 	usb_logger = logger;
 }
 
+void (*usb_get_log(void))(char const *format, va_list args)
+{
+	return usb_logger;
+}
+
 void usb_log(char const *format, ...)
 {
 	if(!usb_logger) return;
@@ -52,6 +57,11 @@ void usb_log(char const *format, ...)
 void usb_set_trace(void (*tracer)(char const *message))
 {
 	usb_tracer = tracer;
+}
+
+void (*usb_get_trace(void))(char const *message)
+{
+	return usb_tracer;
 }
 
 void usb_trace(char const *message)
