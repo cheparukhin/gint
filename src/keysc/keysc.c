@@ -15,6 +15,7 @@
 #include <gint/hardware.h>
 
 #include <string.h>
+#include <stdlib.h>
 
 /* Keyboard scan frequency in Hertz. Start with 128 Hz, this frequency *must
    be high* for the keyboard to work! Reading at low frequencies produces a lot
@@ -62,6 +63,14 @@ static int keysc_tick(void)
 
 	keydev_process_state(&keysc_dev, scan);
 	keydev_tick(&keysc_dev, keysc_scan_us);
+
+	/* Freeze abort key combo: SHIFT+7+3+AC/ON */
+	if(keydown(KEY_SHIFT) && keydown(KEY_7) && keydown(KEY_3) &&
+		keydown(KEY_ACON))
+	{
+		abort();
+	}
+
 	return TIMER_CONTINUE;
 }
 
