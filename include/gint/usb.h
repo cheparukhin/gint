@@ -385,10 +385,6 @@ void usb_read_cancel(int pipe);
 // USB debugging functions
 //---
 
-#ifdef GINT_USB_DEBUG
-#define USB_LOG(...) usb_log(__VA_ARGS__)
-#define USB_TRACE(...) usb_trace(__VA_ARGS__)
-
 /* usb_set_log(): Set the logging function for the USB driver */
 void usb_set_log(void (*logger)(char const *format, va_list args));
 /* usb_get_log(): Get the logging function */
@@ -405,6 +401,9 @@ void (*usb_get_trace(void))(char const *message);
 /* usb_trace(): Trace the current state of the driver */
 void usb_trace(char const *message);
 
+#ifdef GINT_USB_DEBUG
+#define USB_LOG(...) usb_log(__VA_ARGS__)
+#define USB_TRACE(...) usb_trace(__VA_ARGS__)
 #else
 #define USB_LOG(...) do {} while(0)
 #define USB_TRACE(...) do {} while(0)
