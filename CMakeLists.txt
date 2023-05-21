@@ -70,6 +70,8 @@ set(SOURCES_COMMON
   src/fs/fugue/fugue_rmdir.c
   src/fs/fugue/fugue_unlink.c
   src/fs/fugue/util.c
+  # GDB remote serial protocol
+  src/gdb/gdb.c
   # Interrupt Controller driver
   src/intc/intc.c
   src/intc/inth.s
