@@ -378,7 +378,10 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 			// case 'G': // Write general register
 			// case 'P': // Write register
 			// case 'M': // Write memory
-			// case 'k': // Kill request
+
+			case 'k': // Kill request
+				abort();
+				return;
 
 			case 'Z':
 				gdb_handle_insert_hardware_breakpoint(packet_buffer);
