@@ -20,9 +20,8 @@ static void gdb_hexlify(char* output_string, const uint8_t* input_buffer, size_t
 }
 
 // TODO : bug in fxlibc ? strtoul doesn't support uppercase
-static uint32_t gdb_unhexlify(const char* input_string)
+static uint32_t gdb_unhexlify_sized(const char* input_string, size_t input_length)
 {
-	size_t input_length = strlen(input_string);
 	uint32_t ret = 0;
 	for (size_t i = 0; i < input_length; i++) {
 		uint8_t nibble_hex = tolower(input_string[i]);
@@ -31,6 +30,11 @@ static uint32_t gdb_unhexlify(const char* input_string)
 		ret = (ret << 4) | nibble;
 	}
 	return ret;
+}
+
+static uint32_t gdb_unhexlify(const char* input_string)
+{
+	return gdb_unhexlify_sized(input_string, strlen(input_string));
 }
 
 static bool gdb_started = false;
@@ -198,6 +202,59 @@ static void gdb_handle_read_register(gdb_cpu_state_t* cpu_state, const char* pac
 			    sizeof(cpu_state->regs[register_id]));
 	}
 	gdb_send_packet(reply_buffer, sizeof(reply_buffer));
+}
+
+static void gdb_handle_write_general_registers(gdb_cpu_state_t* cpu_state, const char* packet)
+{
+	if (!cpu_state) {
+		gdb_send_packet(NULL, 0);
+		return;
+	}
+
+	packet++; // consume 'G'
+
+	// Let's not handle incomplete 'G' packets as they're rarely used anyway
+	if (strlen(packet) != sizeof(cpu_state->regs)*2) {
+		gdb_send_packet(NULL, 0);
+		return;
+	}
+
+	for (size_t i = 0; i < sizeof(cpu_state->regs)/sizeof(uint32_t); i++) {
+		cpu_state->regs[i] = gdb_unhexlify_sized(&packet[i * sizeof(uint32_t) * 2],
+							 sizeof(uint32_t) * 2);
+	}
+	gdb_send_packet("OK", 2);
+}
+
+static void gdb_handle_write_register(gdb_cpu_state_t* cpu_state, const char* packet)
+{
+	if (!cpu_state) {
+		gdb_send_packet(NULL, 0);
+		return;
+	}
+
+	char register_id_hex[16] = {0}, value_hex[16] = {0};
+
+	packet++; // consume 'P'
+	for (size_t i = 0; i < sizeof(register_id_hex); i++) {
+		register_id_hex[i] = *(packet++); // consume register id
+		if (*packet == '=') break;
+	}
+	packet++; // consume '='
+	for (size_t i = 0; i < sizeof(value_hex); i++) {
+		value_hex[i] = *(packet++); // consume register value
+		if (*packet == '\0') break;
+	}
+
+	uint32_t register_id = gdb_unhexlify(register_id_hex);
+	uint32_t value = gdb_unhexlify(value_hex);
+
+	if (register_id >= sizeof(cpu_state->regs)/sizeof(uint32_t)) {
+		gdb_send_packet(NULL, 0);
+	} else {
+		cpu_state->regs[register_id] = value;
+		gdb_send_packet("OK", 2);
+	}
 }
 
 static void gdb_handle_read_memory(const char* packet)
@@ -374,9 +431,13 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 			case 'm':
 				gdb_handle_read_memory(packet_buffer);
 				break;
+			case 'G':
+				gdb_handle_write_general_registers(cpu_state, packet_buffer);
+				break;
+			case 'P':
+				gdb_handle_write_register(cpu_state, packet_buffer);
+				break;
 
-			// case 'G': // Write general register
-			// case 'P': // Write register
 			// case 'M': // Write memory
 
 			case 'k': // Kill request
