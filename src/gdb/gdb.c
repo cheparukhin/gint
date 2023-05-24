@@ -284,6 +284,34 @@ static void gdb_handle_read_memory(const char* packet)
 	free(reply_buffer);
 }
 
+static void gdb_handle_write_memory(const char* packet)
+{
+	char address_hex[16] = {0}, size_hex[16] = {0};
+	uint8_t* read_address;
+	size_t read_size;
+
+	packet++; // consume 'M'
+	for (size_t i = 0; i < sizeof(address_hex); i++) {
+		address_hex[i] = *(packet++); // consume address
+		if (*packet == ',') break;
+	}
+	packet++; // consume ','
+	for (size_t i = 0; i < sizeof(size_hex); i++) {
+		size_hex[i] = *(packet++); // consume size
+		if (*packet == ':') break;
+	}
+	packet++; // consume ':'
+
+	read_address = (uint8_t*) gdb_unhexlify(address_hex);
+	read_size = (size_t) gdb_unhexlify(size_hex);
+
+	// TODO : Detect invalid writes and prevent TLB misses
+	for (size_t i = 0; i < read_size; i++) {
+		read_address[i] = (uint8_t)gdb_unhexlify_sized(&packet[i * 2], 2);
+	}
+	gdb_send_packet("OK", 2);
+}
+
 static bool gdb_parse_hardware_breakpoint_packet(const char* packet, void** read_address)
 {
 	packet++; // consume 'z' or 'Z'
@@ -437,8 +465,9 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 			case 'P':
 				gdb_handle_write_register(cpu_state, packet_buffer);
 				break;
-
-			// case 'M': // Write memory
+			case 'M':
+				gdb_handle_write_memory(packet_buffer);
+				break;
 
 			case 'k': // Kill request
 				abort();
