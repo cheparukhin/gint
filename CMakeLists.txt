@@ -124,6 +124,9 @@ set(SOURCES_COMMON
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
   src/tmu/tmu.c
+  # UBC driver
+  src/ubc/ubc.c
+  src/ubc/ubc.S
   # USB driver
   src/usb/asyncio.c
   src/usb/classes/ff-bulk.c

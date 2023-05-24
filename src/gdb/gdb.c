@@ -8,8 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gdb_private.h"
-
 static void gdb_hexlify(char* output_string, const uint8_t* input_buffer, size_t input_size)
 {
 	const char* hex = "0123456789ABCDEF";
