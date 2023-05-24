@@ -66,6 +66,12 @@ typedef struct {
    in use.*/
 int gdb_start(void);
 
+/* gdb_main(): Main GDB loop
+
+   This function handles GDB messages sent over USB and will mutate the cpu_state
+   struct, memory and the UBC configuration accordingly. */
+void gdb_main(gdb_cpu_state_t* cpu_state);
+
 #ifdef __cplusplus
 }
 #endif

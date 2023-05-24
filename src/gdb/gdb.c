@@ -1,5 +1,6 @@
 #include <gint/cpu.h>
 #include <gint/gdb.h>
+#include <gint/ubc.h>
 #include <gint/usb-ff-bulk.h>
 #include <gint/usb.h>
 
@@ -226,11 +227,128 @@ static void gdb_handle_read_memory(const char* packet)
 	free(reply_buffer);
 }
 
-static void gdb_main(gdb_cpu_state_t* cpu_state)
+static bool gdb_parse_hardware_breakpoint_packet(const char* packet, void** read_address)
+{
+	packet++; // consume 'z' or 'Z'
+	if (*packet != '1') { // hardware breakpoint
+		return false;
+	}
+	packet++; // consume '1'
+	packet++; // consume ','
+
+	char address_hex[16] = {0}, kind_hex[16] = {0};
+	for (size_t i = 0; i < sizeof(address_hex); i++) {
+		address_hex[i] = *(packet++); // consume address
+		if (*packet == ',') break;
+	}
+	packet++; // consume ','
+	for (size_t i = 0; i < sizeof(kind_hex); i++) {
+		kind_hex[i] = *(packet++); // consume kind
+		if (*packet == '\0' || *packet == ';') break;
+	}
+
+	*read_address = (void*) gdb_unhexlify(address_hex);
+	uint32_t read_kind = gdb_unhexlify(kind_hex);
+
+	if (read_kind != 2) { // SuperH instructions are 2 bytes long
+		return false;
+	}
+
+	return true;
+}
+
+static void gdb_handle_insert_hardware_breakpoint(const char* packet)
+{
+	void* read_address;
+	if (!gdb_parse_hardware_breakpoint_packet(packet, &read_address)) {
+		gdb_send_packet(NULL, 0);
+		return;
+	}
+
+	void *channel0_addr, *channel1_addr;
+	bool channel0_used = ubc_get_break_address(0, &channel0_addr);
+	bool channel1_used = ubc_get_break_address(1, &channel1_addr);
+
+	/* As stated by GDB doc : "the operations should be implemented in an idempotent way."
+	 * Thus we first check if the breakpoint is already placed in one of the UBC channel.
+	 */
+	if ((channel0_used && channel0_addr == read_address) ||
+	    (channel1_used && channel1_addr == read_address)) {
+		gdb_send_packet("OK", 2);
+	} else if (!channel0_used) {
+		ubc_set_breakpoint(0, read_address, UBC_BREAK_BEFORE);
+		gdb_send_packet("OK", 2);
+	} else if (!channel1_used) {
+		ubc_set_breakpoint(1, read_address, UBC_BREAK_BEFORE);
+		gdb_send_packet("OK", 2);
+	} else {
+		/* TODO : We should find a proper way to inform GDB that we are
+		 *        limited by the number of UBC channels.
+		 */
+		gdb_send_packet(NULL, 0);
+	}
+}
+
+static void gdb_handle_remove_hardware_breakpoint(const char* packet)
+{
+	void* read_address;
+	if (!gdb_parse_hardware_breakpoint_packet(packet, &read_address)) {
+		gdb_send_packet(NULL, 0);
+		return;
+	}
+
+	void *channel0_addr, *channel1_addr;
+	bool channel0_used = ubc_get_break_address(0, &channel0_addr);
+	bool channel1_used = ubc_get_break_address(1, &channel1_addr);
+
+	if (channel0_used && channel0_addr == read_address) {
+		ubc_disable_channel(0);
+	}
+	if (channel1_used && channel1_addr == read_address) {
+		ubc_disable_channel(1);
+	}
+	gdb_send_packet("OK", 2);
+}
+
+static struct {
+	bool single_stepped;
+	bool channel0_used;
+	bool channel1_used;
+	void* channel0_addr;
+	void* channel1_addr;
+} gdb_single_step_backup = { false };
+static void gdb_handle_single_step(gdb_cpu_state_t* cpu_state)
+{
+	gdb_single_step_backup.channel0_used = ubc_get_break_address(0, &gdb_single_step_backup.channel0_addr);
+	gdb_single_step_backup.channel1_used = ubc_get_break_address(1, &gdb_single_step_backup.channel1_addr);
+
+	ubc_disable_channel(0);
+	ubc_set_breakpoint(1, (void*)cpu_state->reg.pc, UBC_BREAK_AFTER);
+
+	gdb_single_step_backup.single_stepped = true;
+}
+
+void gdb_main(gdb_cpu_state_t* cpu_state)
 {
 	if (cpu_state != NULL) {
 		gdb_send_stop_reply();
 	}
+
+	if (gdb_single_step_backup.single_stepped) {
+		if (gdb_single_step_backup.channel0_used) {
+			ubc_set_breakpoint(0, gdb_single_step_backup.channel0_addr, UBC_BREAK_BEFORE);
+		} else {
+			ubc_disable_channel(0);
+		}
+		if (gdb_single_step_backup.channel1_used) {
+			ubc_set_breakpoint(1, gdb_single_step_backup.channel1_addr, UBC_BREAK_BEFORE);
+		} else {
+			ubc_disable_channel(1);
+		}
+
+		gdb_single_step_backup.single_stepped = false;
+	}
+
 	while (1) {
 		char packet_buffer[256];
 		ssize_t packet_size = gdb_recv_packet(packet_buffer, sizeof(packet_buffer));
@@ -260,11 +378,18 @@ static void gdb_main(gdb_cpu_state_t* cpu_state)
 			// case 'G': // Write general register
 			// case 'P': // Write register
 			// case 'M': // Write memory
-			// case 'z': // Insert hbreak
-			// case 'Z': // Remove hbreak
 			// case 'k': // Kill request
-			// case 's': // Single step
 
+			case 'Z':
+				gdb_handle_insert_hardware_breakpoint(packet_buffer);
+				break;
+			case 'z':
+				gdb_handle_remove_hardware_breakpoint(packet_buffer);
+				break;
+
+			case 's':
+				gdb_handle_single_step(cpu_state);
+				return;
 			case 'c': // Continue
 				return;
 
@@ -290,6 +415,8 @@ int gdb_start(void)
 		return GDB_USB_ERROR;
 	}
 	usb_open_wait();
+
+	ubc_set_debug_handler(gdb_main);
 
 	gdb_started = true;
 	gdb_main(NULL);
