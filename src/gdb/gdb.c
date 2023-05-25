@@ -161,17 +161,62 @@ static void gdb_send_stop_reply(void)
 	gdb_send_packet("S05", 3); // SIGTRAP
 }
 
+static void gdb_handle_qXfer_packet(const char* packet, const char* data, size_t data_size)
+{
+	char offset_hex[16] = {0}, length_hex[16] = {0};
+	for (size_t i = 0; i < sizeof(offset_hex); i++) {
+		offset_hex[i] = *(packet++); // consume offset
+		if (*packet == ',') break;
+	}
+	packet++; // consume ','
+	for (size_t i = 0; i < sizeof(length_hex); i++) {
+		length_hex[i] = *(packet++); // consume length
+		if (*packet == '\0') break;
+	}
+
+	size_t offset = (size_t)gdb_unhexlify(offset_hex);
+	size_t length = (size_t)gdb_unhexlify(length_hex);
+
+	if (offset >= data_size) {
+		gdb_send_packet("l", 1);
+	} else if (offset + length >= data_size) {
+		char *reply_buffer = malloc(data_size - offset + 1);
+		reply_buffer[0] = 'l';
+		memcpy(&reply_buffer[1], &data[offset], data_size - offset);
+		gdb_send_packet(reply_buffer, data_size - offset + 1);
+		free(reply_buffer);
+	} else {
+		char *reply_buffer = malloc(length + 1);
+		reply_buffer[0] = 'm';
+		memcpy(&reply_buffer[1], &data[offset], length);
+		gdb_send_packet(reply_buffer, length + 1);
+		free(reply_buffer);
+	}
+}
+
+/* We implement the memory-map qXfer extension to mark add-in memory as read-only
+ * and enforce hardware breakpoints.
+ * See : https://sourceware.org/gdb/onlinedocs/gdb/Memory-Map-Format.html
+ *       https://sourceware.org/gdb/onlinedocs/gdb/Set-Breaks.html
+ */
+// TODO : Should we mark other regions as ROM ?
+static const char gdb_memory_map_xml[] = "<?xml version=\"1.0\"?>"
+"<!DOCTYPE memory-map PUBLIC \"+//IDN gnu.org//DTD GDB Memory Map V1.0//EN\" \"http://sourceware.org/gdb/gdb-memory-map.dtd\">"
+"<memory-map>"
+	"<memory type=\"rom\" start=\"0x00300000\" length=\"0x00200000\"/>" // add-in rom
+	"<memory type=\"ram\" start=\"0x08101400\" length=\"0x0007ac00\"/>" // add-in ram
+	"<memory type=\"ram\" start=\"0x8c000000\" length=\"0x01000000\"/>" // fx-CG50 stack
+	"<memory type=\"ram\" start=\"0x88000000\" length=\"0x01000000\"/>" // Prizm stack
+"</memory-map>";
+
 static void gdb_handle_query_packet(const char* packet)
 {
 	if (strncmp("qSupported", packet, 10) == 0) {
-		const char* qsupported_ans = "PacketSize=255;qXfer:memory-map:read";
+		const char* qsupported_ans = "PacketSize=255;qXfer:memory-map:read+";
 		gdb_send_packet(qsupported_ans, strlen(qsupported_ans));
 	} else if (strncmp("qXfer:memory-map:read::", packet, 23) == 0) {
-		/* TODO : Implement qXfer and memory map XML
-		 * https://sourceware.org/gdb/onlinedocs/gdb/Memory-Map-Format.html#Memory-Map-Format
-		 * Required for enforcing hbreak : https://sourceware.org/gdb/onlinedocs/gdb/Set-Breaks.html
-		 */
-		gdb_send_packet(NULL, 0);
+		// -1 to not send the NULL terminator
+		gdb_handle_qXfer_packet(&packet[23], gdb_memory_map_xml, sizeof(gdb_memory_map_xml) - 1);
 	} else {
 		gdb_send_packet(NULL, 0);
 	}
