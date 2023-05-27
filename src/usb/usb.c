@@ -12,7 +12,7 @@
 
 #define USB SH7305_USB
 
-static void usb_interrupt_handler(void);
+static void usb_interrupt_handler(gint_inth_callback_context_t* interrupt_context);
 
 /* Shorthand to clear a bit in INTSTS0 */
 #define INTSTS0_clear(field_name) {				\
@@ -213,7 +213,7 @@ int usb_open(usb_interface_t const **interfaces, gint_call_t callback)
 	USB.NRDYSTS = 0x0000;
 	USB.BEMPSTS = 0x0000;
 
-	intc_handler_function(0xa20, GINT_CALL(usb_interrupt_handler));
+	intc_handler_function(0xa20, GINT_CALL_FLAG(usb_interrupt_handler));
 	intc_priority(INTC_USB, 8);
 
 	/* Pull D+ up to 3.3V, notifying connection when possible. Read
@@ -251,8 +251,12 @@ void usb_close(void)
 // Userspace interrupt handler
 //---
 
-static void usb_interrupt_handler(void)
+gint_inth_callback_context_t* usb_interrupt_context;
+
+static void usb_interrupt_handler(gint_inth_callback_context_t* interrupt_context)
 {
+	usb_interrupt_context = interrupt_context;
+
 	GUNUSED static char const * const device_st[] = {
 		"powered", "default", "address", "configured",
 		"suspended-powered", "suspended-default", "suspended-address",
@@ -315,6 +319,8 @@ static void usb_interrupt_handler(void)
 
 	/* Restore PIPESEL which can have been used for transfers */
 	USB.PIPESEL.word = pipesel;
+
+	usb_interrupt_context = NULL;
 }
 
 //---

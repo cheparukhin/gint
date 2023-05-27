@@ -517,6 +517,14 @@ uint16_t usb_dc_string(uint16_t const *literal, size_t len);
    This is mostly used by the driver to answer GET_DESCRIPTOR requests. */
 usb_dc_string_t *usb_dc_string_get(uint16_t id);
 
+//---
+// USB interrupts
+//---
+
+/* usb_interrupt_context: Context of the function interrupted by a USB interrupt
+   The pointer is set back to NULL when the interrupt is finished being handled. */
+extern gint_inth_callback_context_t* usb_interrupt_context;
+
 #ifdef __cplusplus
 }
 #endif
