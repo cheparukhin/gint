@@ -209,11 +209,15 @@ _gint_inth_callback_reloc:
 	stc.l	r7_bank, @-r15
 	stc.l	spc, @-r15
 	stc.l	ssr, @-r15
+	/* We backup the address of the gint_inth_callback_context_t built on
+	   the stack to the user bank. */
+	ldc	r15, r4_bank
+
 	stc.l	sr, @-r15
 
 	/* Save some values to user bank; once we enable interrupts, the kernel
 	   bank might be overwritten at any moment. */
-	ldc	r4, r0_bank
+	ldc	r4, r3_bank
 
 	/* Enable interrupts and go back to user bank. On SH4, SR.IMASK is set
 	   to the level of the current interrupt, which makes sure we can only
@@ -243,15 +247,25 @@ _gint_inth_callback_reloc:
 .load_sr:
 	ldc	r1, sr
 
-	/* We are now in the user bank with r0 set. Perform the call. We want
+	/* We are now in the user bank with r3 set. Perform the call. We want
 	   to forward the return value to kernel bank, but this bank can be
 	   changed at any moment since interrupts are enabled. */
 	sts.l	pr, @-r15
-	mov.l	@(4, r0), r4
-	mov.l	@(8, r0), r5
-	mov.l	@(12, r0), r6
-	mov.l	@(16, r0), r7
-	mov.l	@r0, r0
+
+	/* We only set r4 to the value of the first argument in the gint_call_t
+	   if the address is even (i.e. GINT_CALL_FLAG() was not used). */
+	mov.l	@r3, r0
+	tst	#1, r0
+	bf	.do_not_set_r4
+	mov.l	@(4, r3), r4
+.do_not_set_r4:
+	/* And we make sure to realign the address in case it was odd. */
+	mov	#0xfe, r2
+	and	r2, r0
+
+	mov.l	@(8, r3), r5
+	mov.l	@(12, r3), r6
+	mov.l	@(16, r3), r7
 	jsr	@r0
 	nop
 	lds.l	@r15+, pr
