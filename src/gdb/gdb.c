@@ -37,7 +37,11 @@ static uint32_t gdb_unhexlify(const char* input_string)
 	return gdb_unhexlify_sized(input_string, strlen(input_string));
 }
 
-static bool gdb_started = false;
+static enum {
+	GDB_STATE_STOPPED,
+	GDB_STATE_FIRST_BREAK,
+	GDB_STATE_STARTED,
+} GPACKEDENUM gdb_state = GDB_STATE_STOPPED;
 
 static void gdb_send(const char *data, size_t size)
 {
@@ -460,10 +464,6 @@ static void gdb_handle_single_step(gdb_cpu_state_t* cpu_state)
 
 void gdb_main(gdb_cpu_state_t* cpu_state)
 {
-	if (cpu_state != NULL) {
-		gdb_send_stop_reply();
-	}
-
 	if (gdb_single_step_backup.single_stepped) {
 		if (gdb_single_step_backup.channel0_used) {
 			ubc_set_breakpoint(0, gdb_single_step_backup.channel0_addr, UBC_BREAK_BEFORE);
@@ -477,6 +477,10 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 		}
 
 		gdb_single_step_backup.single_stepped = false;
+	}
+
+	if (cpu_state != NULL) {
+		gdb_send_stop_reply();
 	}
 
 	while (1) {
@@ -538,9 +542,28 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 	}
 }
 
+static void gdb_notifier_function(void)
+{
+	// We ignore fxlink notifications when we're already inside GDB code.
+	if (ubc_dbh_lock || gdb_state != GDB_STATE_STARTED)
+		return;
+
+	// We make sure we are called during a USB interrupt.
+	if (usb_interrupt_context == NULL)
+		return;
+
+	// And we make sure an other step break is not already set up.
+	if (gdb_single_step_backup.single_stepped)
+		return;
+
+	gdb_cpu_state_t fake_state = {};
+	fake_state.reg.pc = usb_interrupt_context->spc;
+	gdb_handle_single_step(&fake_state);
+}
+
 int gdb_start(void)
 {
-	if (gdb_started) {
+	if (gdb_state != GDB_STATE_STOPPED) {
 		return GDB_ALREADY_STARTED;
 	}
 
@@ -553,10 +576,12 @@ int gdb_start(void)
 		return GDB_USB_ERROR;
 	}
 	usb_open_wait();
+	usb_fxlink_set_notifier(gdb_notifier_function);
 
 	ubc_set_debug_handler(gdb_main);
 
-	gdb_started = true;
+	gdb_state = GDB_STATE_FIRST_BREAK;
 	gdb_main(NULL);
+	gdb_state = GDB_STATE_STARTED;
 	return 0;
 }
