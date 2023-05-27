@@ -39,6 +39,11 @@ _ubc_dbh:
 	stc.l	R1_BANK, @-r15
 	stc.l	R0_BANK, @-r15
 
+	/* We set the ubc_dbh_lock before enabling interrupts */
+	mov.l	.ubc_dbh_lock, r0
+	mov	#1, r1
+	mov.b	r1, @r0
+
 	/* Enable interrupts and switch register bank
 	   Original SR is kept in r8 */
 	stc	sr, r8
@@ -54,6 +59,12 @@ _ubc_dbh:
 
 	/* Restore original SR to access the correct register bank */
 	ldc	r8, sr
+
+	/* We can release the ubc_dbh_lock now that interrupts have been
+	   disabled */
+	mov.l	.ubc_dbh_lock, r0
+	mov	#0, r1
+	mov.b	r1, @r0
 
 	ldc.l	@r15+, R0_BANK
 	ldc.l	@r15+, R1_BANK
@@ -83,7 +94,12 @@ _ubc_dbh:
 
 .align 4
 .handler:	.long _ubc_debug_handler
+.ubc_dbh_lock:	.long _ubc_dbh_lock
 .sr_mask:	.long ~0x300000f0  /* IMASK = 0 : mask no interrupts
                                       BL = 0    : do not block interrupts
                                       RB = 0    : use register BANK0
                                     */
+
+.data
+.global _ubc_dbh_lock
+_ubc_dbh_lock: .byte 0

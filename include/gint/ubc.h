@@ -27,6 +27,10 @@ void ubc_debug_handler(gdb_cpu_state_t* cpu_state);
    the UBC is reached. */
 void ubc_set_debug_handler(void (*h)(gdb_cpu_state_t*));
 
+/* ubc_dbh_lock: Lock set by ubc_dbh() when a UBC break is currently being
+   handled. */
+extern uint8_t ubc_dbh_lock;
+
 /* UBC Breakpoint types */
 typedef enum {
 	UBC_BREAK_BEFORE, /* Break before the instruction is executed */
