@@ -1,4 +1,5 @@
 #include <gint/cpu.h>
+#include <gint/exc.h>
 #include <gint/gdb.h>
 #include <gint/ubc.h>
 #include <gint/usb-ff-bulk.h>
@@ -306,10 +307,13 @@ static void gdb_handle_write_register(gdb_cpu_state_t* cpu_state, const char* pa
 	}
 }
 
+static volatile bool gdb_tlbh_enable = false;
+static volatile bool gdb_tlbh_caught = false;
+
 static void gdb_handle_read_memory(const char* packet)
 {
 	char address_hex[16] = {0}, size_hex[16] = {0};
-	void* read_address;
+	uint8_t* read_address;
 	size_t read_size;
 
 	packet++; // consume 'm'
@@ -323,13 +327,24 @@ static void gdb_handle_read_memory(const char* packet)
 		if (*packet == '\0') break;
 	}
 
-	read_address = (void*) gdb_unhexlify(address_hex);
+	read_address = (uint8_t*) gdb_unhexlify(address_hex);
 	read_size = (size_t) gdb_unhexlify(size_hex);
 
-	// TODO : Detect invalid reads and prevent TLB misses
 	char *reply_buffer = malloc(read_size * 2);
-	gdb_hexlify(reply_buffer, read_address, read_size);
-	gdb_send_packet(reply_buffer, read_size * 2);
+
+	gdb_tlbh_enable = true;
+	gdb_tlbh_caught = false;
+	for (size_t i = 0; i < read_size && !gdb_tlbh_caught; i++) {
+		gdb_hexlify(&reply_buffer[i * 2], &read_address[i], 1);
+	}
+	gdb_tlbh_enable = false;
+
+	if (gdb_tlbh_caught) {
+		gdb_send_packet("E22", 3); // EINVAL
+		gdb_tlbh_caught = false;
+	} else {
+		gdb_send_packet(reply_buffer, read_size * 2);
+	}
 	free(reply_buffer);
 }
 
@@ -354,11 +369,19 @@ static void gdb_handle_write_memory(const char* packet)
 	read_address = (uint8_t*) gdb_unhexlify(address_hex);
 	read_size = (size_t) gdb_unhexlify(size_hex);
 
-	// TODO : Detect invalid writes and prevent TLB misses
-	for (size_t i = 0; i < read_size; i++) {
+	gdb_tlbh_enable = true;
+	gdb_tlbh_caught = false;
+	for (size_t i = 0; i < read_size && !gdb_tlbh_caught; i++) {
 		read_address[i] = (uint8_t)gdb_unhexlify_sized(&packet[i * 2], 2);
 	}
-	gdb_send_packet("OK", 2);
+	gdb_tlbh_enable = false;
+
+	if (gdb_tlbh_caught) {
+		gdb_send_packet("E22", 3); // EINVAL
+		gdb_tlbh_caught = false;
+	} else {
+		gdb_send_packet("OK", 2);
+	}
 }
 
 static bool gdb_parse_hardware_breakpoint_packet(const char* packet, void** read_address)
@@ -561,6 +584,26 @@ static void gdb_notifier_function(void)
 	gdb_handle_single_step(&fake_state);
 }
 
+/* TODO : break and let the debugger attempt to fix the issue before panicking
+ *        in user code
+ */
+static int gdb_panic_handler(uint32_t code)
+{
+	// We make sure we currently want to handle TLB misses
+	if (!gdb_tlbh_enable)
+		return 1;
+
+	// We only handle TLB miss reads (0x040) and writes (0x060)
+	if (code != 0x040 && code != 0x060)
+		return 1;
+
+	gdb_tlbh_caught = true;
+
+	// We skip the offending instruction and continue
+	gint_exc_skip(1);
+	return 0;
+}
+
 int gdb_start(void)
 {
 	if (gdb_state != GDB_STATE_STOPPED) {
@@ -577,6 +620,9 @@ int gdb_start(void)
 	}
 	usb_open_wait();
 	usb_fxlink_set_notifier(gdb_notifier_function);
+
+	// TODO : Should we detect if other panic or debug handlers are setup ?
+	gint_exc_catch(gdb_panic_handler);
 
 	ubc_set_debug_handler(gdb_main);
 
