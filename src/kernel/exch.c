@@ -78,6 +78,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	if(code == 0x1040) name = "Add-in too large";
 	if(code == 0x1060) name = "Memory init failed";
 	if(code == 0x1080) name = "Stack overflow";
+	if(code == 0x10a0) name = "UBC in bank 1 code";
 
 	if(name[0]) dtext(1, 9, name);
 	else dprint(1, 9, "%03x", code);
@@ -118,6 +119,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	if(code == 0x1040) name = "Add-in not fully mapped (too large)";
 	if(code == 0x1060) name = "Memory initialization failed (heap)";
 	if(code == 0x1080) name = "Stack overflow during world switch";
+	if(code == 0x10a0) name = "UBC break in register bank 1 code";
 
 	dprint(6, 25, "%03x %s", code, name);
 

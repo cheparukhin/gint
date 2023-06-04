@@ -14,6 +14,12 @@ _ubc_getDBR:
 
 .global _ubc_dbh
 _ubc_dbh:
+	/* We don't support breaking in a context where register bank 1 is used */
+	stc	ssr, r0
+	mov.l	.sr_rb1_mask, r1
+	tst	r0, r1
+	bf	.dbh_panic
+
 	/* We backup registers in the correct order to build gdb_cpu_state_t */
 	stc.l	ssr,  @-r15
 	sts.l	macl, @-r15
@@ -92,9 +98,25 @@ _ubc_dbh:
 	rte
 	nop
 
+.dbh_panic:
+	stc	sr, r1
+	mov.l	.sr_mask, r0
+	and	r0, r1
+	ldc	r1, sr
+
+	mov.l	.panic_code, r4
+
+	mov.l	.panic, r0
+	mov.l	@r0, r0
+	jmp	@r0
+	nop
+
 .align 4
 .handler:	.long _ubc_debug_handler
 .ubc_dbh_lock:	.long _ubc_dbh_lock
+.panic_code:	.long 0x10a0
+.panic:		.long _gint_exc_panic
+.sr_rb1_mask:	.long (1 << 29)
 .sr_mask:	.long ~0x300000f0  /* IMASK = 0 : mask no interrupts
                                       BL = 0    : do not block interrupts
                                       RB = 0    : use register BANK0
