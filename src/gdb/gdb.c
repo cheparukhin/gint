@@ -209,7 +209,7 @@ static const char gdb_memory_map_xml[] = "<?xml version=\"1.0\"?>"
 "<!DOCTYPE memory-map PUBLIC \"+//IDN gnu.org//DTD GDB Memory Map V1.0//EN\" \"http://sourceware.org/gdb/gdb-memory-map.dtd\">"
 "<memory-map>"
 	"<memory type=\"rom\" start=\"0x00300000\" length=\"0x00200000\"/>" // add-in rom
-	"<memory type=\"ram\" start=\"0x08101400\" length=\"0x0007ac00\"/>" // add-in ram
+	"<memory type=\"ram\" start=\"0x08100000\" length=\"0x00080000\"/>" // add-in ram
 	"<memory type=\"ram\" start=\"0x8c000000\" length=\"0x01000000\"/>" // fx-CG50 stack
 	"<memory type=\"ram\" start=\"0x88000000\" length=\"0x01000000\"/>" // Prizm stack
 "</memory-map>";
