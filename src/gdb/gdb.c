@@ -55,7 +55,8 @@ static void gdb_send(const char *data, size_t size)
 	usb_commit_sync(pipe);
 }
 
-static char gdb_recv_buffer[1024];
+static char *gdb_recv_buffer = NULL;
+static const size_t gdb_recv_buffer_capacity = 256;
 static size_t gdb_recv_buffer_size = 0;
 static ssize_t gdb_recv(char *buffer, size_t buffer_size)
 {
@@ -74,7 +75,7 @@ static ssize_t gdb_recv(char *buffer, size_t buffer_size)
 	// TODO : should we abort or find a way to gracefully shutdown the debugger ?
 	if (strncmp(header.application, "gdb", 16) == 0
 	     && strncmp(header.type, "remote", 16) == 0) {
-		if (header.size > sizeof(gdb_recv_buffer) - gdb_recv_buffer_size) {
+		if (header.size > gdb_recv_buffer_capacity - gdb_recv_buffer_size) {
 			abort();
 		}
 		usb_read_sync(usb_ff_bulk_input(), &gdb_recv_buffer[gdb_recv_buffer_size], header.size, false);
@@ -618,6 +619,10 @@ int gdb_start(void)
 
 	if (usb_is_open()) {
 		return GDB_NO_INTERFACE;
+	}
+
+	if (!gdb_recv_buffer) {
+		gdb_recv_buffer = malloc(gdb_recv_buffer_capacity);
 	}
 
 	usb_interface_t const *interfaces[] = { &usb_ff_bulk, NULL };
