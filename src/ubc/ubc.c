@@ -111,10 +111,9 @@ void ubc_debug_handler(gdb_cpu_state_t* cpu_state)
 
 	if (ubc_application_debug_handler != NULL) {
 		ubc_application_debug_handler(cpu_state);
-	} else {
-		// TODO : Should we add a custom panic code ?
-		gint_panic(-1);
 	}
+	// For now we will ignore breaks when no debug handler is set
+	// TODO : Should we log or panic when no debug handler is set ?
 }
 
 // TODO : Should we use the struct designed for GDB or make it more generic ?

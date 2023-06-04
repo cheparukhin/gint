@@ -19,8 +19,8 @@ void* ubc_getDBR(void);
    The handler will backup the current CPU state and call ubc_debug_handler(). */
 void ubc_dbh(void);
 /* ubc_debug_handler(): C level UBC debug handler
-   The execution will be redirected to the handler set by the user or the add-in
-   will panic in case no handler has been set. */
+   The execution will be redirected to the handler set by the user or the break
+   will be ignored in case no handler has been set. */
 void ubc_debug_handler(gdb_cpu_state_t* cpu_state);
 /* ubc_set_debug_handler(): Set user debug handler
    Set a custom debug handler that will be called when a break condition from
