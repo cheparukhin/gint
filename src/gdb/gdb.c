@@ -474,13 +474,13 @@ static struct {
 	void* channel0_addr;
 	void* channel1_addr;
 } gdb_single_step_backup = { false };
-static void gdb_handle_single_step(gdb_cpu_state_t* cpu_state)
+static void gdb_handle_single_step(uint32_t pc, ubc_break_mode_t break_mode)
 {
 	gdb_single_step_backup.channel0_used = ubc_get_break_address(0, &gdb_single_step_backup.channel0_addr);
 	gdb_single_step_backup.channel1_used = ubc_get_break_address(1, &gdb_single_step_backup.channel1_addr);
 
 	ubc_disable_channel(0);
-	ubc_set_breakpoint(1, (void*)cpu_state->reg.pc, UBC_BREAK_AFTER);
+	ubc_set_breakpoint(1, (void*)pc, break_mode);
 
 	gdb_single_step_backup.single_stepped = true;
 }
@@ -553,7 +553,7 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 				break;
 
 			case 's':
-				gdb_handle_single_step(cpu_state);
+				gdb_handle_single_step(cpu_state->reg.pc, UBC_BREAK_AFTER);
 				return;
 			case 'c': // Continue
 				return;
@@ -579,29 +579,35 @@ static void gdb_notifier_function(void)
 	if (gdb_single_step_backup.single_stepped)
 		return;
 
-	gdb_cpu_state_t fake_state = {};
-	fake_state.reg.pc = usb_interrupt_context->spc;
-	gdb_handle_single_step(&fake_state);
+	gdb_handle_single_step(usb_interrupt_context->spc, UBC_BREAK_AFTER);
 }
 
-/* TODO : break and let the debugger attempt to fix the issue before panicking
- *        in user code
- */
 static int gdb_panic_handler(uint32_t code)
 {
-	// We make sure we currently want to handle TLB misses
-	if (!gdb_tlbh_enable)
-		return 1;
+	// If we are currently expecting to handle TLB misses
+	if (gdb_tlbh_enable) {
+		// We only handle TLB miss reads (0x040) and writes (0x060)
+		if (code != 0x040 && code != 0x060)
+			return 1;
 
-	// We only handle TLB miss reads (0x040) and writes (0x060)
-	if (code != 0x040 && code != 0x060)
-		return 1;
+		gdb_tlbh_caught = true;
 
-	gdb_tlbh_caught = true;
+		// We skip the offending instruction and continue
+		gint_exc_skip(1);
+		return 0;
+	}
+	// If we are in user code, let's break
+	else if (!ubc_dbh_lock && gdb_state == GDB_STATE_STARTED) {
+		// We make sure an other step break is not already set up
+		if (gdb_single_step_backup.single_stepped)
+			return 1;
 
-	// We skip the offending instruction and continue
-	gint_exc_skip(1);
-	return 0;
+		uint32_t spc;
+		__asm__("stc spc, %0" : "=r"(spc));
+		gdb_handle_single_step(spc, UBC_BREAK_BEFORE);
+		return 0;
+	}
+	return 1;
 }
 
 int gdb_start(void)
