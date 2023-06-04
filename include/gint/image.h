@@ -414,7 +414,7 @@ image_t *image_sub(image_t const *src, int x, int y, int w, int h,
 
 /* Make the last parameter optional */
 #define image_sub1(src, x, y, w, h, dst, ...) image_sub(src, x, y, w, h, dst)
-#define image_sub(...) image_sub(__VA_ARGS__, NULL)
+#define image_sub(...) image_sub1(__VA_ARGS__, NULL)
 
 /* image_at(): Build a reference to a position within a sub-image */
 #define image_at(img, x, y) image_sub(img, x, y, -1, -1)
@@ -434,9 +434,9 @@ image_t *image_sub(image_t const *src, int x, int y, int w, int h,
 // that allocation can fail, so you need to check whether the returned image is
 // valid.
 //
-// (You can still pass an invalid image to libimg functions when chaining
-//  transforms. The invalid image will be ignored or returned unchanged, so you
-//  can check for it at the end of any large chain.)
+// (You can still pass invalid images to transform functions. The invalid image
+//  will be ignored or returned unchanged, so you can chain calls and check for
+//  validity at the end of the chain.)
 //
 // Some functions support in-place transforms. This means they can be called
 // with the source as destination, and will transform the image without needing

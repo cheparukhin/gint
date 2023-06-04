@@ -414,6 +414,28 @@ void dprint_opt(int x, int y, int fg, int bg, int halign, int valign,
 void dprint(int x, int y, int fg, char const *format, ...);
 
 //---
+// Text rendering utilities
+//---
+
+/* dfont_glyph_index(): Obtain the glyph index of a Unicode code point
+
+   Returns the position of code_point in the character table of the given font,
+   or -1 if code_point is not part of that set. */
+int dfont_glyph_index(font_t const *font, uint32_t code_point);
+
+/* topti_glyph_offset(): Use a font index to find the location of a glyph
+
+   The provided glyph value (usuall obtained by dfont_glyph_index()) must be
+   nonnegative. Returns the offset the this glyph's data in the font's data
+   array. When using a proportional font, the size array is ignored. */
+int dfont_glyph_offset(font_t const *font, uint glyph_number);
+
+/* dtext_utf8_next(): Read the next UTF-8 code point of a string
+   Returns the next code point and advances the string. Returns 0 (NUL) at the
+   end of the string. */
+uint32_t dtext_utf8_next(uint8_t const **str_pointer);
+
+//---
 //	Image rendering (bopti)
 //---
 

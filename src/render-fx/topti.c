@@ -134,13 +134,13 @@ void topti_render(int x, int y, char const *str_char, font_t const *f,
 	/* Pull each character into the operator buffer */
 	while(1)
 	{
-		uint32_t code_point = topti_utf8_next(&str);
+		uint32_t code_point = dtext_utf8_next(&str);
 		if(!code_point || (size >= 0 && str - str0 > size)) break;
 
-		int glyph = topti_glyph_index(f, code_point);
+		int glyph = dfont_glyph_index(f, code_point);
 		if(glyph < 0) continue;
 
-		int index = topti_offset(f, glyph);
+		int index = dfont_glyph_offset(f, glyph);
 
 		/* Put glyph data into the operators */
 		int width = f->prop ? f->glyph_width[glyph] : f->width;

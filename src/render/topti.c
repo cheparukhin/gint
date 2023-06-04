@@ -3,7 +3,6 @@
 
 #include "../render/render.h"
 
-/* dfont(): Set the default font for text rendering */
 font_t const *dfont(font_t const * font)
 {
 	font_t const *old_font = topti_font;
@@ -12,14 +11,12 @@ font_t const *dfont(font_t const * font)
 	return old_font;
 }
 
-/* dfont_default(): Get gint's default font */
 font_t const *dfont_default(void)
 {
 	return gint_default_font;
 }
 
-/* topti_glyph_index(): Obtain the glyph index of a Unicode code point */
-int topti_glyph_index(font_t const *f, uint32_t code_point)
+int dfont_glyph_index(font_t const *f, uint32_t code_point)
 {
 	int glyph_start = 0;
 
@@ -37,8 +34,7 @@ int topti_glyph_index(font_t const *f, uint32_t code_point)
 	return -1;
 }
 
-/* topti_offset(): Use a font index to find the location of a glyph */
-int topti_offset(font_t const *f, uint glyph)
+int dfont_glyph_offset(font_t const *f, uint glyph)
 {
 	/* Non-proportional fonts don't need an index */
 	if(!f->prop) return glyph * f->storage_size;
@@ -57,8 +53,7 @@ int topti_offset(font_t const *f, uint glyph)
 	return offset;
 }
 
-/* topti_utf8_next(): Read the next UTF-8 code point of a string */
-uint32_t topti_utf8_next(uint8_t const **str_pointer)
+uint32_t dtext_utf8_next(uint8_t const **str_pointer)
 {
 	uint8_t const *str = *str_pointer;
 	uint8_t lead = *str++;
@@ -103,7 +98,6 @@ uint32_t topti_utf8_next(uint8_t const **str_pointer)
 	return 0x20;
 }
 
-/* dnsize(): Get the width and height of rendered text, with character limit */
 void dnsize(char const *str_char, int size, font_t const *f, int *w, int *h)
 {
 	uint8_t const *str = (void *)str_char;
@@ -121,7 +115,7 @@ void dnsize(char const *str_char, int size, font_t const *f, int *w, int *h)
 		int length = 0;
 		while(1)
 		{
-			code_point = topti_utf8_next(&str);
+			code_point = dtext_utf8_next(&str);
 			if(!code_point || (size >= 0 && str - str0 > size))
 				break;
 			length++;
@@ -136,23 +130,21 @@ void dnsize(char const *str_char, int size, font_t const *f, int *w, int *h)
 
 	while(1)
 	{
-		code_point = topti_utf8_next(&str);
+		code_point = dtext_utf8_next(&str);
 		if(!code_point || (size >= 0 && str - str0 > size)) break;
 
-		int glyph = topti_glyph_index(f, code_point);
+		int glyph = dfont_glyph_index(f, code_point);
 		if(glyph >= 0)
 			width += f->glyph_width[glyph] + f->char_spacing;
 	}
 	*w = width - f->char_spacing;
 }
 
-/* dsize(): Get the width and height of rendered text */
 void dsize(char const *str_char, font_t const *f, int *w, int *h)
 {
 	return dnsize(str_char, -1, f, w, h);
 }
 
-/* drsize(): Get width of rendered text with reverse size limit */
 char const *drsize(char const *str_char, font_t const *f, int width, int *w)
 {
 	uint8_t const *str = (void *)str_char;
@@ -166,7 +158,7 @@ char const *drsize(char const *str_char, font_t const *f, int width, int *w)
 		/* Record that last glyph considered fits */
 		str_char = (void *)str;
 
-		code_point = topti_utf8_next(&str);
+		code_point = dtext_utf8_next(&str);
 		if(!code_point)
 		{
 			break;
@@ -179,7 +171,7 @@ char const *drsize(char const *str_char, font_t const *f, int width, int *w)
 		}
 		else
 		{
-			int glyph = topti_glyph_index(f, code_point);
+			int glyph = dfont_glyph_index(f, code_point);
 			if(glyph >= 0) used_width += f->glyph_width[glyph];
 		}
 	}
