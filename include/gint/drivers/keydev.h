@@ -207,6 +207,9 @@ typedef struct {
 	/* Parameters for the standard repeat function */
 	int rep_standard_first, rep_standard_next;
 
+   /* State of keys that have changes since the last flip monitoring reset. */
+   GALIGNED(4) uint8_t state_flips[12];
+
 } keydev_t;
 
 /* keydev_std(): Standard keyboard input device
@@ -273,6 +276,17 @@ void keydev_set_async_filter(keydev_t *d, keydev_async_filter_t filter);
 
 /* keydev_keydown(): Check if a key is down according to generated events */
 bool keydev_keydown(keydev_t *d, int key);
+
+/* keydev_keypressed(): Check if a key was pressed
+   This compares to the state at the time of the last keydev_clear_flips(). */
+bool keydev_keypressed(keydev_t *d, int key);
+
+/* keydev_keyreleased(): Check if a key was released
+   This compares to the state at the time of the last keydev_clear_flips(). */
+bool keydev_keyreleased(keydev_t *d, int key);
+
+/* keydev_clear_flips(): Reset flip info used by keypressed()/keyreleased() */
+void keydev_clear_flips(keydev_t *d);
 
 /* keydev_transform(): Obtain current transform parameters */
 keydev_transform_t keydev_transform(keydev_t *d);

@@ -179,6 +179,7 @@ key_event_t keydev_unqueue_event(keydev_t *d)
 	if(ev.type == KEYEV_DOWN)
 	{
 		d->state_queue[row] |= col;
+		d->state_flips[row] ^= col;
 		/* Mark this key as the currently repeating one */
 		if(d->rep_key == 0 && can_repeat(d, ev.key))
 		{
@@ -191,6 +192,7 @@ key_event_t keydev_unqueue_event(keydev_t *d)
 	else if(ev.type == KEYEV_UP)
 	{
 		d->state_queue[row] &= ~col;
+		d->state_flips[row] ^= col;
 		/* End the current repeating streak */
 		if(d->rep_key == ev.key)
 		{
@@ -218,6 +220,27 @@ bool keydev_keydown(keydev_t *d, int key)
 }
 __attribute__((alias("keydev_keydown")))
 bool _WEAK_keydev_keydown(keydev_t *d, int key);
+
+bool keydev_keypressed(keydev_t *d, int key)
+{
+	int row = (key >> 4);
+	int col = 0x80 >> (key & 0x7);
+
+	return (d->state_queue[row] & col) && (d->state_flips[row] & col);
+}
+
+bool keydev_keyreleased(keydev_t *d, int key)
+{
+	int row = (key >> 4);
+	int col = 0x80 >> (key & 0x7);
+
+	return !(d->state_queue[row] & col) && (d->state_flips[row] & col);
+}
+
+void keydev_clear_flips(keydev_t *d)
+{
+	memset(d->state_flips, 0, sizeof d->state_flips);
+}
 
 //---
 // Event transforms

@@ -102,10 +102,24 @@ void clearevents(void)
 	while(pollevent().type != KEYEV_NONE);
 }
 
-/* keydown(): Current key state */
+void cleareventflips(void)
+{
+	keydev_clear_flips(&keysc_dev);
+}
+
 int keydown(int key)
 {
 	return keydev_keydown(&keysc_dev, key);
+}
+
+int keypressed(int key)
+{
+	return keydev_keypressed(&keysc_dev, key);
+}
+
+int keyreleased(int key)
+{
+	return keydev_keyreleased(&keysc_dev, key);
 }
 
 //---

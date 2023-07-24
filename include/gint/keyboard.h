@@ -60,6 +60,24 @@ extern "C" {
 
    * clearevents() reads all pending events from the input queue.
 
+   Games are often also interested in whether keys were pressed or released
+   _since the last frame_. gint doesn't know what a frame is, but you can track
+   key state flips by using cleareventflips() before reading events and
+   keypressed() and keyreleased() afterwards.
+
+   * keypressed() checks if the specified key is currently down and was up at
+     the time of the last cleareventflips().
+   * keyreleased() checks if the specified key is currently up and was down at
+     the time of the last cleareventflips().
+
+   A typical game loop might look like. cleareventflisps() must be called
+   _before_ clearevents().
+
+     cleareventflips();
+     clearevents(); // or pollevent(), waitevent()
+     if(keydown(KEY_RIGHT)) move();
+     if(keypressed(KEY_F6)) open_inventory();
+
    The previous functions are quite low-level. GUI programs that look like the
    system applications will prefer using a GetKey()-like functions that return
    a single key press at a time, heeds for releases, for SHIFT and ALPHA
@@ -162,6 +180,12 @@ key_event_t waitevent(volatile int *timeout);
 /* clearevents(): Read all events waiting in the queue */
 void clearevents(void);
 
+/* cleareventflips(): Set the time reference for keypressed()/keyreleased()
+   The two functions keypressed() and keyreleased() will use the keyboard state
+   at the time this function was called to determine whether any given key was
+   just pressed or jut released. */
+void cleareventflips(void);
+
 //---
 //	Key state functions
 //---
@@ -180,6 +204,16 @@ int keydown_all(int key1, ...);
    Returns nonzero if any one of the specified keys is currently pressed. The
    sequence should be terminated by a 0 integer. */
 int keydown_any(int key1, ...);
+
+/* keypressed(): Check if a key was just pressed
+   This function returns non-zero if the specified key is currently down, *and*
+   it was up at the time of the last call to cleareventflips(). */
+int keypressed(int key);
+
+/* keyreleased(): Check if a key was just released
+   This function returns non-zero if the specified key is currently up, *and*
+   it was down at the time of the last call to cleareventflips(). */
+int keyreleased(int key);
 
 //---
 //	High-level functions
