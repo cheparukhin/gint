@@ -56,7 +56,7 @@ static void keysc_scan(uint8_t *scan)
 }
 
 /* keysc_tick(): Update the keyboard to the next state */
-static int keysc_tick(void)
+int keysc_tick(void)
 {
 	uint8_t scan[12] = { 0 };
 	keysc_scan(scan);

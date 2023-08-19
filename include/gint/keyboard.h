@@ -70,7 +70,7 @@ extern "C" {
    * keyreleased() checks if the specified key is currently up and was down at
      the time of the last cleareventflips().
 
-   A typical game loop might look like. cleareventflisps() must be called
+   A typical game loop might look like. cleareventflips() must be called
    _before_ clearevents().
 
      cleareventflips();
@@ -116,13 +116,13 @@ typedef struct
 {
 	uint time	:16;	/* Time of event, unique over short periods */
 
-	uint		:3;	/* Reserved for future use */
+	uint		:2;	/* Reserved for future use */
 
 	uint mod	:1;	/* Whether modifiers are used */
 	uint shift	:1;	/* If mod=1, whether SHIFT was pressed */
 	uint alpha	:1;	/* If mod=1, whether ALPHA was pressed */
 
-	uint type	:2;	/* Type of key event */
+	uint type	:3;	/* Type of key event */
 	uint key	:8;	/* Hit key */
 
 } GPACKED(4) key_event_t;
@@ -130,10 +130,11 @@ typedef struct
 /* Keyboard event types, as in the [type] field of key_event_t */
 enum
 {
-	KEYEV_NONE = 0,		/* No event available (poll() only) */
-	KEYEV_DOWN = 1,		/* Key was pressed */
-	KEYEV_UP   = 2,		/* Key was released */
-	KEYEV_HOLD = 3,		/* A key that was pressed has been held down */
+	KEYEV_NONE   = 0,	/* No event available (poll() only) */
+	KEYEV_DOWN   = 1,	/* Key was pressed */
+	KEYEV_UP     = 2,	/* Key was released */
+	KEYEV_HOLD   = 3,	/* A key that was pressed has been held down */
+	KEYEV_OSMENU = 4,	/* We went to the main menu and back */
 };
 
 /* Keyboard frequency analysis is a runtime setting since gint 2.4. This macro
@@ -239,24 +240,29 @@ key_event_t getkey(void);
 /* The following are the option bits for getkey_opt(). */
 enum {
 	/* Enable modifiers keys */
-	GETKEY_MOD_SHIFT   = 0x01,
-	GETKEY_MOD_ALPHA   = 0x02,
+	GETKEY_MOD_SHIFT      = 0x0001,
+	GETKEY_MOD_ALPHA      = 0x0002,
 	/* SHIFT + OPTN (requires GETKEY_MOD_SHIFT) or LIGHT toggles backlight */
-	GETKEY_BACKLIGHT   = 0x04,
+	GETKEY_BACKLIGHT      = 0x0004,
 	/* MENU triggers a task switch and displays the main menu */
-	GETKEY_MENU        = 0x08,
+	GETKEY_MENU           = 0x0008,
 	/* Repeat arrow keys, or even all keys */
-	GETKEY_REP_ARROWS  = 0x10,
-	GETKEY_REP_ALL     = 0x20,
+	GETKEY_REP_ARROWS     = 0x0010,
+	GETKEY_REP_ALL        = 0x0020,
 	/* Enable custom repeat profiles; see getkey_set_repeat_profile() */
-	GETKEY_REP_PROFILE = 0x40,
+	GETKEY_REP_PROFILE    = 0x0040,
 	/* Enable application shortcuts; see getkey_set_feature_function() */
-	GETKEY_FEATURES    = 0x80,
+	GETKEY_FEATURES       = 0x0080,
+	/* After coming back from the main menu, redraw the screen with dupdate
+	   (has an effect on fx-CG 50 only) */
+	GETKEY_MENU_DUPDATE   = 0x0100,
+	/* After coming back from the main menu, send a KEYEV_OSMENU event */
+	GETKEY_MENU_EVENT     = 0x0200,
 
 	/* No modifiers */
-	GETKEY_NONE        = 0x00,
+	GETKEY_NONE           = 0x0000,
 	/* Default settings of getkey() */
-	GETKEY_DEFAULT     = 0xdf,
+	GETKEY_DEFAULT        = 0x01df,
 };
 
 /* getkey_feature_t: Custom feature function

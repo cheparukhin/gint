@@ -4,6 +4,7 @@
 
 #include <gint/keyboard.h>
 #include <gint/drivers/keydev.h>
+#include <gint/display.h>
 #include <gint/gint.h>
 #include <gint/defs/types.h>
 
@@ -64,10 +65,17 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 			e.key == KEY_MENU && !e.shift && !e.alpha)
 		{
 			gint_osmenu();
-			continue;
+			#ifdef FXCG50
+			if(opt & GETKEY_MENU_DUPDATE)
+				dupdate();
+			#endif
+
+			if(!(opt & GETKEY_MENU_EVENT))
+				continue;
+			e.type = KEYEV_OSMENU;
 		}
 
-		if(e.type == KEYEV_DOWN || e.type == KEYEV_HOLD)
+		if(e.type != KEYEV_NONE || e.type != KEYEV_UP)
 		{
 			/* Custom global features */
 			bool accepted = false;
