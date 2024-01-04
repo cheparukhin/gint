@@ -213,6 +213,38 @@ void dhline(int y, int color);
 void dvline(int x, int color);
 
 //---
+// Other geometric shapes
+//---
+
+/* dcircle(): Circle with border
+
+   This function renders a circle defined by its middle point (xm, ym) and a
+   radius r. The border and fill can be set separately. This function uses
+   Bresenham's algorithm and only renders circles of odd diameter; if you want
+   an even diameter, use dellipse() with a bounding box.
+
+   @xm @ym        Coordinates of center
+   @r             Radius (integer, >= 0)
+   @fill_color    Color of the disc inside the circle, C_NONE to disable
+   @border_color  Color of the circle itself, C_NONE to disable */
+void dcircle(int xm, int ym, int r, int fill_color, int border_color);
+
+/* dellipse(): Ellipse with border
+
+   This function renders a non-rotated ellipse, defined by its bounding box.
+   The border and fill can be set separately. The border is as 1-pixel thin
+   border given by Bresenham's algorithm.
+
+   To render an ellipse from its center coordinates (x,y) and semi-major/minor
+   axes a/b, use dellipse(x-a, y-b, x+a, y+b, fill_color, border_color).
+
+   @x1 @y1 @x2 @y2  Ellipse's bounding box (both bounds included, like drect())
+   @fill_color      Color of the surface inside the ellipse, C_NONE to disable
+   @border_color    Color of the ellipse itself, C_NONE to disable */
+void dellipse(int x1, int y1, int x2, int y2, int fill_color,
+   int border_color);
+
+//---
 //	Text rendering (topti)
 //---
 

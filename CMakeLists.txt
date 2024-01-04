@@ -102,6 +102,8 @@ set(SOURCES_COMMON
   # MMU driver
   src/mmu/mmu.c
   # Rendering
+  src/render/dcircle.c
+  src/render/dellipse.c
   src/render/dhline.c
   src/render/dimage.c
   src/render/dline.c
