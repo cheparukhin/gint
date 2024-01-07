@@ -142,6 +142,22 @@ void keydev_tick(keydev_t *d, uint us)
 
 	d->time++;
 
+	/* Disable repeat if the repeating key was released */
+	if(d->rep_key != 0)
+	{
+		int row = (d->rep_key >> 4);
+		int col = 0x80 >> (d->rep_key & 0x7);
+		if(!(d->state_now[row] & col))
+		{
+			d->rep_key = 0;
+			d->rep_count = -1;
+			d->rep_time = -1;
+			d->rep_delay = -1;
+			d->delayed_shift = 0;
+			d->delayed_alpha = 0;
+		}
+	}
+
 	if(d->rep_key != 0)
 	{
 		if(d->rep_delay >= 0)
@@ -193,16 +209,6 @@ key_event_t keydev_unqueue_event(keydev_t *d)
 	{
 		d->state_queue[row] &= ~col;
 		d->state_flips[row] ^= col;
-		/* End the current repeating streak */
-		if(d->rep_key == ev.key)
-		{
-			d->rep_key = 0;
-			d->rep_count = -1;
-			d->rep_time = -1;
-			d->rep_delay = -1;
-			d->delayed_shift = 0;
-			d->delayed_alpha = 0;
-		}
 	}
 
 	return ev;
