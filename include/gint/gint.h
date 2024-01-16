@@ -80,6 +80,14 @@ void gint_osmenu_native(void);
    @restart  0 to exit, 1 to restart by using gint_osmenu() */
 void gint_setrestart(int restart);
 
+/* gint_poweroff(): World switch and power off the calculator
+   Shows the CASIO logo / poweroff screen if show_logo is true. The program
+   will resume execution normally after powering on again. Don't call this
+   function with show_logo=false as a result of pressing AC/ON because the
+   calculator will restart immediately unless the user releases the AC/ON key
+   extremely quickly. */
+void gint_poweroff(bool show_logo);
+
 /* gint_set_onchip_save_mode(): Specify memory save policy for world switches
 
    World switches can cause corruption in on-chip memory in two ways. First, if

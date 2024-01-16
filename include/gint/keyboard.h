@@ -258,11 +258,13 @@ enum {
 	GETKEY_MENU_DUPDATE   = 0x0100,
 	/* After coming back from the main menu, send a KEYEV_OSMENU event */
 	GETKEY_MENU_EVENT     = 0x0200,
+	/* Enable power off with SHIFT + AC/ON */
+	GETKEY_POWEROFF       = 0x0400,
 
 	/* No modifiers */
 	GETKEY_NONE           = 0x0000,
 	/* Default settings of getkey() */
-	GETKEY_DEFAULT        = 0x01df,
+	GETKEY_DEFAULT        = 0x05df,
 };
 
 /* getkey_feature_t: Custom feature function

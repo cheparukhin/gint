@@ -45,6 +45,7 @@
 .global ___SetQuitHandler
 
 /* Reset */
+.global ___PowerOff
 .global ___Reset
 
 #define syscall_(id, syscall_table)	\
@@ -120,6 +121,8 @@ ___SetQuitHandler:
 
 /* Reset */
 
+___PowerOff:
+	syscall(0x3f4)
 ___Reset:
 	syscall(0x236)
 
@@ -198,6 +201,8 @@ ___SpecialMatrixCodeProcessing:
 
 /* Reset */
 
+___PowerOff:
+	syscall(0x1839)
 ___Reset:
 	syscall(0x1187)
 

@@ -75,6 +75,16 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 			e.type = KEYEV_OSMENU;
 		}
 
+		/* Poweroff */
+		if((opt & GETKEY_POWEROFF) && e.type == KEYEV_DOWN &&
+			e.key == KEY_ACON && e.shift && !e.alpha)
+		{
+			gint_poweroff(true);
+			if(opt & GETKEY_MENU_DUPDATE)
+				dupdate();
+			continue;
+		}
+
 		if(e.type != KEYEV_NONE || e.type != KEYEV_UP)
 		{
 			/* Custom global features */

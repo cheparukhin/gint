@@ -4,6 +4,7 @@
 #include <gint/exc.h>
 #include <gint/defs/call.h>
 #include <gint/hardware.h>
+#include <gint/display.h>
 #include "kernel.h"
 
 #include <stdlib.h>
@@ -213,4 +214,35 @@ int gint_get_onchip_save_mode(void **ptr)
 	if(ptr)
 		*ptr = onchip_save_buffer;
 	return onchip_save_mode;
+}
+
+void gint_copy_vram(void)
+{
+	void *__GetVRAMAddress(void);
+
+	#ifdef FX9860G
+	memcpy(__GetVRAMAddress(), gint_vram, 1024);
+	#endif
+
+	#ifdef FXCG50
+	/* TODO: Improve copied VRAM behavior in gint_osmenu() on fxcg50 */
+	uint16_t *vram1, *vram2;
+	dgetvram(&vram1, &vram2);
+
+	uint16_t *dst = __GetVRAMAddress();
+	uint16_t *src = (gint_vram == vram1) ? vram2 + 6 : vram1 + 6;
+
+	for(int y = 0; y < 216; y++, dst+=384, src+=396)
+	for(int x = 0; x < 384; x++)
+	{
+		dst[x] = src[x];
+	}
+	#endif
+}
+
+void gint_poweroff(bool show_logo)
+{
+	void __PowerOff(int show_logo);
+	gint_copy_vram();
+	gint_world_switch(GINT_CALL(__PowerOff, (int)show_logo));
 }

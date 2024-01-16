@@ -2,6 +2,7 @@
 #include <gint/display.h>
 #include <gint/hardware.h>
 #include <gint/keyboard.h>
+#include "kernel.h"
 
 #include <string.h>
 
@@ -12,7 +13,6 @@ int   __Timer_Deinstall(int id);
 int   __PutKeyCode(int row, int column, int keycode);
 int   __GetKeyWait(int *col,int *row,int type,int time,int menu,uint16_t *key);
 void  __ClearKeyBuffer(void); /* ? */
-void *__GetVRAMAddress(void);
 void  __ConfigureStatusArea(int mode);
 void __SetQuitHandler(void (*callback)(void));
 
@@ -95,27 +95,11 @@ static os_menu_function_t *find_os_menu_function(void)
 void gint_osmenu_native(void)
 {
 	__ClearKeyBuffer();
-
-	#ifdef FX9860G
-	memcpy(__GetVRAMAddress(), gint_vram, 1024);
-	#endif
+	gint_copy_vram();
 
 	#ifdef FXCG50
 	/* Unfortunately ineffective (main menu probably reenables it)
 	__ConfigureStatusArea(3); */
-
-	/* TODO: Improve copied VRAM behavior in gint_osmenu() on fxcg50 */
-	uint16_t *vram1, *vram2;
-	dgetvram(&vram1, &vram2);
-
-	uint16_t *dst = __GetVRAMAddress();
-	uint16_t *src = (gint_vram == vram1) ? vram2 + 6 : vram1 + 6;
-
-	for(int y = 0; y < 216; y++, dst+=384, src+=396)
-	for(int x = 0; x < 384; x++)
-	{
-		dst[x] = src[x];
-	}
 
 	/* Try to use the internal function directly if we could figure out its
 	   address by dynamically disassembling */
