@@ -11,6 +11,7 @@
 #include <gint/exc.h>
 #include <setjmp.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "kernel.h"
 
@@ -94,6 +95,21 @@ static void callarray(void (**f)(void), void (**l)(void))
 	while(f < l) (*(*f++))();
 }
 
+void gint_load_onchip_sections(void)
+{
+	/* Do not load data to ILRAM, XRAM or YRAM on SH3 - the areas don't
+	   exist. If you use them, you're responsible! */
+	if(!isSH3())
+	{
+		/* Clear the areas so that we have less to save in case of a
+		   return to menu leading to a poweroff. */
+		memset((void *)0xe5200000, 0, 4096);
+		regcpy(&lilram, &silram, &rilram);
+		memset((void *)0xe500e000, 0, 16384);
+		regcpy(&lxyram, &sxyram, &rxyram);
+	}
+}
+
 static int start2(int isappli, int optnum)
 {
 	/* We are currently in a dynamic userspace mapping of an add-in run
@@ -141,13 +157,7 @@ static int start2(int isappli, int optnum)
 	regcpy(&ldata,  &sdata,  &rdata);
 	regclr(&rbss, &sbss);
 
-	/* Do not load data to ILRAM, XRAM or YRAM on SH3 - the areas don't
-	   exist. If you use them, you're responsible! */
-	if(!isSH3())
-	{
-		regcpy(&lilram, &silram, &rilram);
-		regcpy(&lxyram, &sxyram, &rxyram);
-	}
+	gint_load_onchip_sections();
 
 	#ifdef FX9860G
 	/* Copy permanently-mapped code to start of user RAM (on fx-CG 50 it

@@ -3,8 +3,11 @@
 #include <gint/gint.h>
 #include <gint/exc.h>
 #include <gint/defs/call.h>
+#include <gint/hardware.h>
+#include "kernel.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 //---
 // World buffer
@@ -55,6 +58,9 @@ void gint_world_sync(void)
 //---
 // World switch with driver state saves
 //---
+
+static int onchip_save_mode = GINT_ONCHIP_REINITIALIZE;
+static void *onchip_save_buffer = NULL;
 
 void gint_world_switch_in(gint_world_t world_os, gint_world_t world_addin)
 {
@@ -144,12 +150,40 @@ int gint_world_switch(gint_call_t call)
 	extern void *gint_stack_top;
 	gint_world_switch_out(gint_world_addin, gint_world_os);
 
+	void *ILRAM = (void *)0xe5200000;
+	void *XRAM  = (void *)0xe500e000;
+	void *YRAM  = (void *)0xe5010000;
+
 	/* Watch out for stack overflows */
 	uint32_t *canary = gint_stack_top;
 	if(canary)
 		*canary = 0xb7c0ffee;
 
+	/* Save on-chip memory if requested */
+	if(!isSH3() && onchip_save_mode == GINT_ONCHIP_BACKUP) {
+		void *ptr = onchip_save_buffer;
+		memcpy(ptr, ILRAM, 4096);
+		ptr += 4096;
+		memcpy(ptr, XRAM, 8192);
+		ptr += 8192;
+		memcpy(ptr, YRAM, 8192);
+		ptr += 8192;
+	}
+
 	int rc = gint_call(call);
+
+	/* Restore or reinitialize on-chip memory */
+	if(!isSH3() && onchip_save_mode == GINT_ONCHIP_BACKUP) {
+		void *ptr = onchip_save_buffer;
+		memcpy(ILRAM, ptr, 4096);
+		ptr += 4096;
+		memcpy(XRAM, ptr, 8192);
+		ptr += 8192;
+		memcpy(YRAM, ptr, 8192);
+		ptr += 8192;
+	}
+	else if(!isSH3() && onchip_save_mode == GINT_ONCHIP_REINITIALIZE)
+		gint_load_onchip_sections();
 
 	/* The canary check needs to occur before switching in the gint world;
 	   otherwise we just crash due to the overflow. gint_panic() isn't
@@ -166,4 +200,17 @@ int gint_world_switch(gint_call_t call)
 void gint_switch(void (*function)(void))
 {
 	gint_world_switch(GINT_CALL(function));
+}
+
+void gint_set_onchip_save_mode(int mode, void *ptr)
+{
+	onchip_save_mode = mode;
+	onchip_save_buffer = ptr;
+}
+
+int gint_get_onchip_save_mode(void **ptr)
+{
+	if(ptr)
+		*ptr = onchip_save_buffer;
+	return onchip_save_mode;
 }

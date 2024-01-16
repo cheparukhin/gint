@@ -80,6 +80,48 @@ void gint_osmenu_native(void);
    @restart  0 to exit, 1 to restart by using gint_osmenu() */
 void gint_setrestart(int restart);
 
+/* gint_set_onchip_save_mode(): Specify memory save policy for world switches
+
+   World switches can cause corruption in on-chip memory in two ways. First, if
+   the calculator powers off while in the OS world, on-chip memory will be
+   wiped because it's not powered when the calculator is off. Second, the OS
+   may run code that overwrites on-chip memory (we don't have any examples of
+   that but it's not part of the add-in interface).
+
+   As a result, the best option is to backup on-chip memory and restore it when
+   loading back into the add-in. The issue is that there's 20 kB of on-chip
+   memory (4 kB ILRAM + 16 kB XYRAM) and on some machines (fx-9860G-like) or in
+   some applications we don't have that much memory lying around.
+
+   This function selects between three modes for handling this save:
+
+   * [Reinitialization mode]
+     Don't save on-chip memory at all, instead just reinitialize the globals
+     and leave the rest corrupted. This is useful if on-chip memory is used
+     only for temporaries (e.g. frames in Azur), for which we don't care if
+     they're corrupted, or code (e.g gint interrupt handling code), which will
+     be reloaded and is otherwise a constant.
+
+   * [Backup mode]
+     Save on-chip memory to a user-provided buffer of size GINT_ONCHIP_BUFSIZE.
+
+   * [Nothing mode]
+     Don't do anything, and let the world switch function choose its preferred
+     saving method. This allows application-specific compromises.
+
+   This is not a problem on SH3 because on-chip memory is only used on SH4. */
+enum {
+   GINT_ONCHIP_REINITIALIZE = 0,
+   GINT_ONCHIP_BACKUP = 1,
+   GINT_ONCHIP_NOTHING = 2,
+};
+#define GINT_ONCHIP_BUFSIZE (20 << 10)
+
+void gint_set_onchip_save_mode(int mode, void *ptr);
+
+/* gint_get_onchip_save_mode(): Get the current on-chip memory save policy */
+int gint_get_onchip_save_mode(void **ptr);
+
 /* This function has been moved to the INTC driver */
 __attribute__((deprecated("Use intc_handler() instead")))
 static GINLINE void *gint_inthandler(int code, void const *h, size_t size) {
