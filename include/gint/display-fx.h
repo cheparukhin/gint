@@ -61,6 +61,12 @@ typedef enum
 
 } color_t;
 
+/* Profiles:
+   0: MONO        (1 layer: color)
+   1: ALPHA       (2 layers: color, alpha)
+   2: GRAY        (2 layers: light, dark)
+   3: GRAY_ALPHA  (3 layers: light, dark, alpha) */
+
 //---
 //	Image rendering (bopti)
 //---
@@ -83,9 +89,15 @@ typedef struct
 	uint height	:12;
 
 	/* Raw layer data */
-	uint8_t data[];
+	uint8_t *data;
 
 } GPACKED(4) bopti_image_t;
+
+/* Number of layers in the image. */
+GINLINE static int image_layer_count(int profile)
+{
+	return profile + (profile <= 1);
+}
 
 #ifdef __cplusplus
 }

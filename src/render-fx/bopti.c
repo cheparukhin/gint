@@ -164,8 +164,7 @@ void bopti_render(bopti_image_t const *img, struct rbox *rbox, uint32_t *v1,
 	masks(rbox->visual_x, rbox->visual_x + rbox->width - 1, vm);
 
 	/* Number of layers per profile */
-	static const int layer_count[] = { 1, 2, 2, 3 };
-	int layers = layer_count[img->profile];
+	int layers = image_layer_count(img->profile);
 
 	/* For each pair of consecutive VRAM elements involved, create a mask
 	   from the intersection of the standard vram mask with the shift-mask
@@ -222,7 +221,7 @@ void bopti_render_scsp(bopti_image_t const *img, struct rbox *rbox,
 		(0xffffffff << (32 - rbox->width)) >> (rbox->visual_x & 31);
 
 	/* Number of layers */
-	int layers = img->profile - (img->profile >> 1) + 1;
+	int layers = image_layer_count(img->profile);
 
 	/* Number of longwords to skip between rows of [img] */
 	int img_stride = ((img->width + 31) >> 5) * layers;
