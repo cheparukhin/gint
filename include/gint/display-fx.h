@@ -61,12 +61,6 @@ typedef enum
 
 } color_t;
 
-/* Profiles:
-   0: MONO        (1 layer: color)
-   1: ALPHA       (2 layers: color, alpha)
-   2: GRAY        (2 layers: light, dark)
-   3: GRAY_ALPHA  (3 layers: light, dark, alpha) */
-
 //---
 //	Image rendering (bopti)
 //---
@@ -92,6 +86,19 @@ typedef struct
 	uint8_t *data;
 
 } GPACKED(4) bopti_image_t;
+
+/* Image formats ("profiles") */
+enum {
+	/* MONO: black/white, 1 layer (bw) */
+	IMAGE_MONO = 0,
+	/* MONO_ALPHA: black/white/transparent, 2 layers (alpha+bw) */
+	IMAGE_MONO_ALPHA = 1,
+	/* GRAY: black/dark/light/white, 2 layers (light+dark) */
+	IMAGE_GRAY = 2,
+	/* GRAY_ALPHA: black/dark/light/white/transparent, 3 layres
+	   (alpha+light+dark) */
+	IMAGE_GRAY_ALPHA = 3,
+};
 
 /* Number of layers in the image. */
 GINLINE static int image_layer_count(int profile)
