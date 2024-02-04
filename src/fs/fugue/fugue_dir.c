@@ -93,6 +93,8 @@ void *fugue_dir_explore(char const *path)
 	struct BFile_FileInfo info;
 	char *wildcard=NULL;
 	uint16_t *fc_path=NULL, *search=NULL;
+	/* We allocate by batches of 8 */
+	int sd=-1, rc, allocated=0;
 
 	dir_t *dp = malloc(sizeof *dp);
 	if(!dp) goto alloc_failure;
@@ -100,8 +102,6 @@ void *fugue_dir_explore(char const *path)
 	dp->count = 0;
 	dp->entries = NULL;
 	dp->pos = 0;
-	/* We allocate by batches of 8 */
-	int sd=-1, rc, allocated=0;
 
 	fc_path = malloc(512 * sizeof *fc_path);
 	if(!fc_path) goto alloc_failure;
@@ -149,6 +149,7 @@ void *fugue_dir_explore(char const *path)
 alloc_failure:
 	errno = ENOMEM;
 	fugue_dir_close(dp);
+	dp = NULL;
 end:
 	free(wildcard);
 	free(search);
