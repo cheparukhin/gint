@@ -43,17 +43,17 @@
      link, then one block_t pointer to the next link with LSB=1
    * For a larger block, the footer has a 4-byte block size, then a pointer to
      the previous link, and a pointer to the next link with LSB=0. */
-typedef struct {
-	uint :5;
+typedef volatile struct {
+	uint32_t :5;
 	/* Marks the last block of the sequence */
-	uint last: 1;
+	uint32_t last: 1;
 	/* Whether the block is used; in general this can be kept implicit, but
 	   it has to be specified for the last block */
-	uint used: 1;
+	uint32_t used: 1;
 	/* Boundary tag, vital to implement way #2 to merge adjacent blocks */
-	uint previous_used: 1;
+	uint32_t previous_used: 1;
 	/* Block size in bytes. */
-	uint size: 24;
+	uint32_t size: 24;
 } block_t;
 
 typedef kmalloc_gint_stats_t stats_t;
@@ -435,7 +435,10 @@ void kmalloc_init_arena(kmalloc_arena_t *a, bool enable_statistics)
 		index->stats = (void *)a->start + sizeof(index_t);
 		entry_block = (void *)index->stats + sizeof(stats_t);
 
-		memset(index->stats, 0, sizeof(stats_t));
+		/* Manual 4-byte memset to allow PRAM0 arena */
+		for(uint i = 0; i < sizeof(stats_t) / 4; i++)
+			((uint32_t *)index->stats)[i] = 0;
+		_Static_assert((sizeof(stats_t) & 3) == 0);
 	}
 	else
 	{
