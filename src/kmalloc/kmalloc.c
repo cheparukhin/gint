@@ -184,3 +184,12 @@ bool kmalloc_add_arena(kmalloc_arena_t *arena)
 	}
 	return false;
 }
+
+void kmalloc_remove_arena(kmalloc_arena_t *arena)
+{
+	for(int i = 0; i < KMALLOC_ARENA_MAX; i++)
+	{
+		if(arenas[i] == arena)
+			arenas[i] = NULL;
+	}
+}

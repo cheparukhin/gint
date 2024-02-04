@@ -108,6 +108,11 @@ void kmalloc_init_arena(kmalloc_arena_t *a, bool enable_statistics);
    success, false if the maximum number of arenas has been reached. */
 bool kmalloc_add_arena(kmalloc_arena_t *arena);
 
+/* kmalloc_remove_arena(): Remove an arena from the heap source
+   Removes an arena from the heap source. The arena should certainly be empty,
+   although this function will not check that. */
+void kmalloc_remove_arena(kmalloc_arena_t *arena);
+
 //---
 // Internal functions
 //---
