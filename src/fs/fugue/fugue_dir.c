@@ -118,7 +118,7 @@ void *fugue_dir_explore(char const *path)
 	if(rc < 0) {
 		if(rc != BFile_EntryNotFound)
 			errno = bfile_error_to_errno(rc);
-		goto end;
+		goto error;
 	}
 
 	do {
@@ -148,6 +148,7 @@ void *fugue_dir_explore(char const *path)
 
 alloc_failure:
 	errno = ENOMEM;
+error:
 	fugue_dir_close(dp);
 	dp = NULL;
 end:

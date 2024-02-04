@@ -63,6 +63,10 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 	/* If the entry is a directory, open it as such */
 	if(type == BFile_Type_Directory) {
 		void *dp = fugue_dir_explore(path);
+		if(!dp) {
+			rc = -1;
+			goto end;
+		}
 		fs_descriptor_t data = {
 			.type = &fugue_dir_descriptor_type,
 			.data = dp,
