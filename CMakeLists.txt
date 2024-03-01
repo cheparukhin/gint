@@ -107,6 +107,7 @@ set(SOURCES_COMMON
   src/render/dhline.c
   src/render/dimage.c
   src/render/dline.c
+  src/render/dpoly.c
   src/render/dprint.c
   src/render/drect_border.c
   src/render/dtext.c

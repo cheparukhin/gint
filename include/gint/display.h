@@ -244,6 +244,21 @@ void dcircle(int xm, int ym, int r, int fill_color, int border_color);
 void dellipse(int x1, int y1, int x2, int y2, int fill_color,
    int border_color);
 
+/* dpoly(): Render an arbitrary polygon
+
+   Renders the polygon defined by vertices (x[i], y[i]) for 0 < i < N. A fill
+   color and border color can be specified separately. For filling, N must be
+   at least 3. For border, N must be at least 2.
+
+   Note: this is a fairly slow function, not designed for rendering triangles
+   in 3D games. There are faster methods for that.
+
+   @x @y          Arrays of vertex coordinates
+   @N             Number of vertices (length of x and y)
+   @fill_color    Color of the polygon's interior, C_NONE to disable
+   @border_color  Color of the polygon's border, C_NONE to disable */
+void dpoly(int const *x, int const *y, int N, int fill_color, int border_color);
+
 //---
 //	Text rendering (topti)
 //---
