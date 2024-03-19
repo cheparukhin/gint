@@ -158,7 +158,7 @@ typedef struct {
 	int8_t queue_next;
 	int8_t queue_end;
 	/* Number of events lost because of missing queue space */
-	uint events_lost;
+	uint16_t events_lost;
 
 	/* Event transforms */
 	keydev_transform_t tr;
@@ -183,9 +183,9 @@ typedef struct {
 	// <Repeats>
 
 	/* Candidate key for repeats (or 0 if no key is candidate yet) */
-	int rep_key;
+	int16_t rep_key;
 	/* Number of repeats already sent */
-	int rep_count;
+	int16_t rep_count;
 	/* Time since key was first pressed (us) */
 	int rep_time;
 	/* Delay until next repeat, set by the repeat planner (us) */

@@ -40,19 +40,19 @@ extern void (*bdtors)(void), (*edtors)(void);
 int main(int isappli, int optnum);
 
 /* Whether to restart main through the OS menu rather than returning */
-int gint_restart = 0;
+int8_t gint_restart = 0;
 
 /* gint_setrestart(): Set whether to restart the add-in after exiting */
 void gint_setrestart(int restart)
 {
-	gint_restart = restart;
+	gint_restart = !!restart;
 }
 
+/* Return value of main() */
+static int8_t gint_exitcode;
 /* Jumping there will properly unwind and leave the add-in (CASIOWIN does not
    have an exit syscall and simply wants you to return from main()) */
 jmp_buf gint_exitbuf;
-/* Return value of main() */
-static int gint_exitcode;
 
 /* regcpy(): Copy a memory region using symbol information
    @l  Source pointer (load address)

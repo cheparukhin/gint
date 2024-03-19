@@ -17,17 +17,17 @@
 #include <string.h>
 #include <stdlib.h>
 
+/* Keyboard input device for this Key Scan Interface */
+static keydev_t keysc_dev;
+/* Keyboard scanner timer */
+int16_t keysc_tid = -1;
+
 /* Keyboard scan frequency in Hertz. Start with 128 Hz, this frequency *must
    be high* for the keyboard to work! Reading at low frequencies produces a lot
    of artifacts. See https://www.casiopeia.net/forum/viewtopic.php?p=20592. */
-int keysc_scan_Hz = 128;
+int16_t keysc_scan_Hz = 128;
 /* Approximation in microseconds, used by the timer and repeat delays */
 uint32_t keysc_scan_us = 7812; /* 1000000 / keysc_scan_Hz */
-
-/* Keyboard scanner timer */
-int keysc_tid = -1;
-/* Keyboard input device for this Key Scan Interface */
-static keydev_t keysc_dev;
 
 /* keydev_std(): Standard keyboard input device */
 keydev_t *keydev_std(void)
