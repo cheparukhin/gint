@@ -78,7 +78,7 @@ void fs_free_descriptor(int fd);
    exact file descriptor reuse_fd is used. (This is useful to reopen standard
    streams.) In this case, the only possible return values are -1 and reuse_fd
    itself. */
-int open_generic(fs_descriptor_type_t *type, void *data, int reuse_fd);
+int open_generic(fs_descriptor_type_t const *type, void *data, int reuse_fd);
 
 /* fs_path_normalize(): Normalize a path to eliminate ., .. and redundant /
 

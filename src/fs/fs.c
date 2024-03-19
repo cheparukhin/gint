@@ -42,7 +42,7 @@ void fs_free_descriptor(int fd)
 	fdtable[fd].data = NULL;
 }
 
-int open_generic(fs_descriptor_type_t *type, void *data, int fd)
+int open_generic(fs_descriptor_type_t const *type, void *data, int fd)
 {
 	if(!fdtable) {
 		errno = ENOMEM;
@@ -79,7 +79,7 @@ int open_generic(fs_descriptor_type_t *type, void *data, int fd)
 
 /* Standard streams */
 
-static fs_descriptor_type_t devnull = {
+static fs_descriptor_type_t const devnull = {
 	.read   = NULL,
 	.write  = NULL,
 	.lseek  = NULL,
