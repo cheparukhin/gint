@@ -1,4 +1,5 @@
 #include <gint/display.h>
+#include "../render/render.h"
 #include "render-fx.h"
 #include "bopti-asm.h"
 

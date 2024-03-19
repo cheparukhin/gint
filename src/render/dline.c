@@ -2,9 +2,6 @@
 #include <gint/defs/util.h>
 
 #include "../render/render.h"
-#ifdef FX9860G
-#include "../render-fx/render-fx.h"
-#endif
 
 /* dline(): Bresenham line drawing algorithm
    Remotely adapted from MonochromeLib code by Pierre "PerriotLL" Le Gall.
@@ -18,19 +15,13 @@ void dline(int x1, int y1, int x2, int y2, int color)
 	/* Possible optimizations */
 	if(y1 == y2)
 	{
-		#ifdef FX9860G
 		DMODE_OVERRIDE(gint_dhline, x1, x2, y1, color);
-		#endif
-
 		gint_dhline(x1, x2, y1, color);
 		return;
 	}
 	if(x1 == x2)
 	{
-		#ifdef FX9860G
 		DMODE_OVERRIDE(gint_dvline, y1, y2, x1, color);
-		#endif
-
 		gint_dvline(y1, y2, x1, color);
 		return;
 	}

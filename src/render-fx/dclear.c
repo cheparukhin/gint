@@ -1,5 +1,5 @@
 #include <gint/display.h>
-#include "render-fx.h"
+#include "../render/render.h"
 
 /* dclear() - fill the screen with a single color */
 void dclear(color_t color)

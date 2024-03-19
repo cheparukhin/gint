@@ -11,6 +11,7 @@
 #include <stdlib.h>
 
 #include "../render-fx/render-fx.h"
+#include "../render/render.h"
 
 /* Three additional video RAMS, allocated statically if --static-gray was set
    at configure time, or with malloc() otherwise. */

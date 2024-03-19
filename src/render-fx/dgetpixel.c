@@ -1,6 +1,6 @@
 #include <gint/display.h>
 #include <gint/defs/types.h>
-#include "render-fx.h"
+#include "../render/render.h"
 
 int dgetpixel(int x, int y)
 {

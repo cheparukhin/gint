@@ -1,6 +1,6 @@
 #include <gint/display.h>
 #include <gint/defs/types.h>
-#include "render-fx.h"
+#include "../render/render.h"
 
 /* dpixel() - change a pixel's color */
 void dpixel(int x, int y, int color)

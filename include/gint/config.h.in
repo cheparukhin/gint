@@ -16,6 +16,20 @@
      0x03f7c0a0 = Commit 3f7c0a0 */
 #define GINT_HASH 0x@GINT_GIT_HASH@
 
+/* GINT_HW_{FX,CG}: Identifies the type of hardware running the program. */
+#if defined(FX9860G)
+# define GINT_HW_FX 1
+# define GINT_HW_CG 0
+#elif defined(FXCG50)
+# define GINT_HW_FX 0
+# define GINT_HW_CG 1
+#endif
+
+/* GINT_OS_{FX,CG}: Identifies the type of OS API we're assuming. Currently I
+   see no reason this would be different from hardware, but who knows. */
+#define GINT_OS_FX GINT_HW_FX
+#define GINT_OS_CG GINT_HW_CG
+
 /* GINT_NO_OS_STACK: Disables using a chunk of the OS stack as a heap. The top
    section covering 355/512 ko is otherwise used. (fx-CG 50) */
 #cmakedefine GINT_NO_OS_STACK
@@ -40,5 +54,9 @@
 
 /* GINT_USB_DEBUG: Selects whether USB debug functions are enabled */
 #cmakedefine GINT_USB_DEBUG
+
+/* GINT_RENDER_DMODE: Selects whether the dmode override is available on
+   rendering functions. */
+#define GINT_RENDER_DMODE GINT_HW_FX
 
 #endif /* GINT_CONFIG */

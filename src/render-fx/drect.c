@@ -1,5 +1,6 @@
 #include <gint/defs/util.h>
 #include <gint/display.h>
+#include "../render/render.h"
 #include "render-fx.h"
 
 void drect(int x1, int y1, int x2, int y2, int color)
