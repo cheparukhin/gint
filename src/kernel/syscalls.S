@@ -9,6 +9,8 @@
 **	* File system, because it's a mess and we might ruin the ROM.
 */
 
+#include <gint/config.h>
+
 .text
 
 /* Dynamic allocation */
@@ -58,7 +60,7 @@
 
 #define syscall(id) syscall_(id, syscall_table)
 
-#ifdef FX9860G
+#if GINT_OS_FX
 
 /* Dynamic allocation */
 
@@ -129,9 +131,9 @@ ___Reset:
 syscall_table:
 	.long	0x80010070
 
-#endif /* FX9860G */
+#endif /* GINT_OS_FX */
 
-#ifdef FXCG50
+#if GINT_OS_CG
 
 /* Dynamic allocation */
 
@@ -209,4 +211,4 @@ ___Reset:
 syscall_table:
 	.long	0x80020070
 
-#endif /* FXCG50 */
+#endif /* GINT_OS_CG */

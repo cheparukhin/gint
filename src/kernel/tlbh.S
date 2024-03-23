@@ -1,6 +1,18 @@
+#include <gint/config.h>
+
 .global _gint_tlbh
 .section .gint.tlbh, "ax"
 .align 4
+
+#if GINT_OS_FX
+# define SYSCALL_TABLE 0x80010070
+# define SYSCALL_TLBH 3
+#elif GINT_OS_CG
+# define SYSCALL_TABLE 0x80020070
+# define SYSCALL_TLBH 12
+#else
+# error Unknown HW for tlbh.S!
+#endif
 
 _gint_tlbh:
 	sts.l	pr, @-r15
@@ -28,16 +40,9 @@ test_tea:
 
 map:
 	/* If TEA is mappable, map a page and return */
-	#ifdef FX9860G
-	mov	#3, r0
-	#endif
-	#ifdef FXCG50
-	mov	#12, r0
-	#endif
-
 	mov.l	.syscall, r2
 	jsr	@r2
-	nop
+	mov	#SYSCALL_TLBH, r0
 
 	lds.l	@r15+, macl
 	lds.l	@r15+, mach
@@ -73,12 +78,5 @@ panic:
 	.long	0x00300000
 .max_mapped_rom:
 	.long	0x00300000 + _srom
-
-#ifdef FX9860G
 .syscall:
-	.long	0x80010070
-#endif
-#ifdef FXCG50
-.syscall:
-	.long	0x80020070
-#endif
+	.long	SYSCALL_TABLE

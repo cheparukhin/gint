@@ -7,10 +7,11 @@
 
 #define CPP_ASM
 #include <gint/hardware.h>
+#include <gint/config.h>
 
 .global _gint_inth_7305
 
-#ifdef FX9860G
+#if GINT_HW_FX
 .global _gint_inth_7705
 #endif
 
@@ -100,7 +101,7 @@ _gint_inth_7305:
 1:	.long	0xff000028
 .first_entry:
 
-#ifdef FX9860G
+#if GINT_HW_FX
 
 /* SH7705-TYPE INTERRUPT HANDLER ENTRY - 56 BYTES */
 

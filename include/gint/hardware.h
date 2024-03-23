@@ -18,6 +18,8 @@
 extern "C" {
 #endif
 
+#include <gint/config.h>
+
 /* For compatibility with ASM, include the following bits only in C code */
 #ifndef CPP_ASM
 
@@ -40,20 +42,14 @@ void hw_detect(void);
    dual-platform version for libraries.
    Warning: this macro is also used hardcoded in exch.s. */
 
-#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
-#define isSH3() (gint[HWMPU] & 1)
-#define isSH4() (!isSH3())
-#endif
-
-#if defined(FX9860G)
-#define isSlim() (gint[HWCALC] == HWCALC_FX9860G_SLIM)
-#else
-#define isSlim() 0
-#endif
-
-#ifdef FXCG50
-#define isSH3() 0
-#define isSH4() 1
+#if GINT_HW_FX
+# define isSH3() (gint[HWMPU] & 1)
+# define isSH4() (!isSH3())
+# define isSlim() (gint[HWCALC] == HWCALC_FX9860G_SLIM)
+#elif GINT_HW_CG
+# define isSH3() 0
+# define isSH4() 1
+# define isSlim() 0
 #endif
 
 /* This bit should be set in all data longwords except HWMPU, HWCPUVR, HWCPUPR

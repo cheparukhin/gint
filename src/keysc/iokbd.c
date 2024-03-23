@@ -5,9 +5,10 @@
 #include <gint/defs/types.h>
 #include <gint/mpu/pfc.h>
 #include <gint/hardware.h>
+#include <gint/config.h>
 
 /* This file is SH7705-only. */
-#ifdef FX9860G
+#if GINT_HW_FX
 #define PFC SH7705_PFC
 
 /* iokbd_delay() - wait a bit so that I/O can keep up
@@ -162,4 +163,4 @@ void iokbd_scan(uint8_t *scan)
 	}
 }
 
-#endif /* FX9860G */
+#endif /* GINT_HW_FX */

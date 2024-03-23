@@ -57,7 +57,7 @@ bool mmu_is_rom(void const *ptr)
 //	SH7705 TLB
 //---
 
-#ifdef FX9860G
+#if GINT_HW_FX
 
 /* tlb_addr() - get the P4 address of a TLB address entry */
 GINLINE const tlb_addr_t *tlb_addr(uint way, uint E)

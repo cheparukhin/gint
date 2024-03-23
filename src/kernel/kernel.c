@@ -42,7 +42,7 @@ void kinit(void)
 {
 	uint32_t VBR = 0;
 
-	#ifdef FX9860G
+	#if GINT_HW_FX
 	/* On fx-9860G, VBR is loaded at the end of the user RAM. On SH4, the
 	   end of the user RAM hosts the stack, for which we leave 12 kB
 	   (0x3000 bytes). The VBR space takes about 0x600 bytes on SH3 due to
@@ -60,9 +60,9 @@ void kinit(void)
 	/* VBR is advanced 0x100 bytes because of an unused gap */
 	uram_end -= (isSH3() ? 0x600 : 0x1100);
 	VBR = uram_end - 0x100;
-	#endif /* FX9860G */
+	#endif
 
-	#ifdef FXCG50
+	#if GINT_HW_CG
 	/* On fx-CG 50, VBR is loaded at the start of the user RAM; the linker
 	   script leaves 5 kB (0x1400 bytes) before the start of the data
 	   segment. The stack is again placed at the end of the region, and we
@@ -96,7 +96,7 @@ void kinit(void)
 	kmalloc_add_arena(&static_ram);
 
 	/* Create an arena in the OS stack as well, for VRAM and more data */
-	#if defined(FXCG50) && !defined(GINT_NO_OS_STACK)
+	#if GINT_HW_CG && !defined(GINT_NO_OS_STACK)
 	static kmalloc_arena_t os_stack = { 0 };
 	os_stack.name = "_ostk";
 	os_stack.is_default = true;
@@ -107,13 +107,14 @@ void kinit(void)
 	os_stack.end = os_stack.start + (350 * 1024);
 	kmalloc_init_arena(&os_stack, true);
 	kmalloc_add_arena(&os_stack);
-	#endif /* FXCG50 && !GINT_NO_OS_STACK */
+	#endif
 
 	/* Allocate world buffers for the OS and for gint */
 	gint_world_os = gint_world_alloc();
 	gint_world_addin = gint_world_alloc();
 	gint_driver_flags = malloc(gint_driver_count());
 
+	/* Allocate VRAMs, which is important for panic screens */
 	extern bool dvram_init(void);
 	if(!dvram_init())
 		abort();

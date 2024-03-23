@@ -29,7 +29,7 @@ static void __osmenu_handler(void)
 	__Timer_Deinstall(__osmenu_id);
 }
 
-#ifdef FXCG50
+#if GINT_OS_CG
 typedef void (os_menu_function_t)(void);
 
 /* This method is possible thanks to reverse-engineering by Dr-Carlos.
@@ -97,7 +97,7 @@ void gint_osmenu_native(void)
 	__ClearKeyBuffer();
 	gint_copy_vram();
 
-	#ifdef FXCG50
+	#if GINT_OS_CG
 	/* Unfortunately ineffective (main menu probably reenables it)
 	__ConfigureStatusArea(3); */
 

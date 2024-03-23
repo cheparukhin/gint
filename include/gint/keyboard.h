@@ -253,8 +253,7 @@ enum {
 	GETKEY_REP_PROFILE    = 0x0040,
 	/* Enable application shortcuts; see getkey_set_feature_function() */
 	GETKEY_FEATURES       = 0x0080,
-	/* After coming back from the main menu, redraw the screen with dupdate
-	   (has an effect on fx-CG 50 only) */
+	/* After coming back from the main menu, redraw the screen with dupdate */
 	GETKEY_MENU_DUPDATE   = 0x0100,
 	/* After coming back from the main menu, send a KEYEV_OSMENU event */
 	GETKEY_MENU_EVENT     = 0x0200,

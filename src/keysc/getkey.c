@@ -8,7 +8,7 @@
 #include <gint/gint.h>
 #include <gint/defs/types.h>
 
-#ifdef FX9860G
+#if GINT_HW_FX
 #include <gint/drivers/t6k11.h>
 #endif
 
@@ -49,7 +49,7 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 				continue;
 		}
 
-		#ifdef FX9860G
+		#if GINT_HW_FX
 		/* Backlight toggle */
 		if((opt & GETKEY_BACKLIGHT) && e.type == KEYEV_DOWN &&
 			((e.key == KEY_LIGHT) ||
@@ -65,10 +65,8 @@ key_event_t getkey_opt(int opt, volatile int *timeout)
 			e.key == KEY_MENU && !e.shift && !e.alpha)
 		{
 			gint_osmenu();
-			#ifdef FXCG50
 			if(opt & GETKEY_MENU_DUPDATE)
 				dupdate();
-			#endif
 
 			if(!(opt & GETKEY_MENU_EVENT))
 				continue;

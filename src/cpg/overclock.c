@@ -141,7 +141,7 @@ void cpg_set_overclock_setting(struct cpg_overclock_setting const *s)
     cpu_atomic_end();
 }
 
-#ifdef FX9860G
+#if GINT_HW_FX
 
 static struct cpg_overclock_setting const settings_fx9860g_sh3[5] = {
     /* CLOCK_SPEED_F1 */
@@ -312,9 +312,9 @@ static struct cpg_overclock_setting const settings_g35pe2[5] = {
       .CS5aWCR = 0x00031B40 },
 };
 
-#endif /* FX9860G */
+#endif
 
-#ifdef FXCG50
+#if GINT_HW_CG
 
 static struct cpg_overclock_setting const settings_prizm[5] = {
     /* CLOCK_SPEED_F1 */
@@ -432,25 +432,25 @@ static struct cpg_overclock_setting const settings_fxcg50[5] = {
       .CS5aWCR = 0x000203C1 },
 };
 
-#endif /* FXCG50 */
+#endif
 
 static struct cpg_overclock_setting const *get_settings(void)
 {
-#ifdef FX9860G
+#if GINT_HW_FX
     if(gint[HWCALC] == HWCALC_FX9860G_SH3)
         return settings_fx9860g_sh3;
     if(gint[HWCALC] == HWCALC_FX9860G_SH4)
         return settings_fx9860g_sh4;
     if(gint[HWCALC] == HWCALC_G35PE2)
         return settings_g35pe2;
-#endif /* FX9860G */
+#endif
 
-#ifdef FXCG50
+#if GINT_HW_CG
     if(gint[HWCALC] == HWCALC_PRIZM)
         return settings_prizm;
     if(gint[HWCALC] == HWCALC_FXCG50)
         return settings_fxcg50;
-#endif /* FXCG50 */
+#endif
 
     return NULL;
 }

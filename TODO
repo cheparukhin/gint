@@ -3,7 +3,7 @@ Bugs to fix:
 
 Extensions on existing code:
 * clock:     mono support
-* usb:       add PC->calc reading, and interrupt pipes
+* usb:       and interrupt pipes
 * fs:        support RAM files
 * fs:        support USB streams as generic file descriptors
 * fugue:     support glob() to abstract away BFile entirely
@@ -24,3 +24,32 @@ Future directions:
 * Serial communication
 * Make fx9860g projects work out of the box on fxcg50
 * Base for Yatis' threads library
+
+TODO:
+* SPLIT CONFIG HEADER IN VARIANTS SO THEY DON'T CLASH WHEN INSTALLED
+
+Bits that need to abstract out into APIs:
+- display: Toggle backlight (or set level)
+  -> Have a backlight property with min/max values
+  @ getkey
+  @ justui jscene
+- os: OS interface to access OS info, like in fxos
+  @ usb/setup.c set_strings
+  @ usb/classes/ff-bulk.c identify command
+- render: current video mode
+  @ usb/classes/ff-bulk.c capture_vram
+- gray: make gray engine a subset of t6k11 which then supports two modes
+
+Video formats:
+- i1msb
+- 2i1msb
+- rgb565
+
+T6K11:
+  mode 0 :   i1msb   128x64   @64 Hz
+  mode 1 :   2i1msb  128x64   @64 Hz
+R61524:
+  mode 0 :   rgb565  396x224  @? Hz
+  mode 1 :   i3???   396x224  @? Hz
+  mode 2 :   i1msb   128x64   @? Hz # <- for g1a emulation :)
+  mode 3 :   2i1msb  128x64   @? Hz # <- for g1a emulation :)

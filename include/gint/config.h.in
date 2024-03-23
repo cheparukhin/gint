@@ -18,9 +18,11 @@
 #if defined(FX9860G)
 # define GINT_HW_FX 1
 # define GINT_HW_CG 0
+# define GINT_HW_SWITCH(FX,CG) (FX)
 #elif defined(FXCG50)
 # define GINT_HW_FX 0
 # define GINT_HW_CG 1
+# define GINT_HW_SWITCH(FX,CG) (CG)
 #endif
 
 /* Shorthand to simplify definitions below. Won't be needed for long. */
@@ -34,6 +36,7 @@
    see no reason this would be different from hardware, but who knows. */
 #define GINT_OS_FX GINT_HW_FX
 #define GINT_OS_CG GINT_HW_CG
+#define GINT_OS_SWITCH GINT_HW_SWITCH
 
 /* GINT_NO_OS_STACK: Disables using a chunk of the OS stack as a heap. The top
    section covering 355/512 ko is otherwise used. (fx-CG 50) */

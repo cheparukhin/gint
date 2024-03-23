@@ -6,6 +6,7 @@
 #include <gint/defs/attributes.h>
 #include <gint/hardware.h>
 #include <gint/gint.h>
+#include <gint/config.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -59,7 +60,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 
 	dfont(NULL);
 
-	#ifdef FX9860G
+	#if GINT_RENDER_MONO
 	memset(gint_vram, 0, 1024);
 	dtext(1, 0, "Exception! (SysERROR)");
 	for(int i = 0; i < 32; i++) gint_vram[i] = ~gint_vram[i];
@@ -96,7 +97,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	}
 	#endif
 
-	#ifdef FXCG50
+	#if GINT_RENDER_RGB
 	/* Don't require the DMA driver just for a clear */
 	memset(gint_vram, 0xff, DWIDTH*DHEIGHT*2);
 	dtext(6, 3, "An exception occured! (System ERROR)");

@@ -5,6 +5,7 @@
 #include <gint/drivers.h>
 #include <gint/drivers/states.h>
 #include <gint/clock.h>
+#include <gint/config.h>
 
 #include <gint/hardware.h>
 #include <gint/mpu/cpg.h>
@@ -26,7 +27,7 @@ const clock_frequency_t *clock_freq(void)
 //	SH7705 Clock signals
 //---
 
-#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
+#if GINT_HW_FX
 
 void sh7705_probe(void)
 {
@@ -57,7 +58,7 @@ void sh7705_probe(void)
 	freq.Pphi_f = (ckio * pll1) / freq.Pphi_div;
 }
 
-#endif /* FX9860G and platform-agnostic */
+#endif
 
 //---
 //	SH7305 clock signals
@@ -111,7 +112,7 @@ void cpg_compute_freq(void)
 {
 	/* This avoids warnings about sh7705_probe() being undefined when
 	   building for fxcg50 */
-	#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
+	#if GINT_HW_FX
 	isSH3() ? sh7705_probe() :
 	#endif
 	sh7305_probe();

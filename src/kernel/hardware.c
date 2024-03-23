@@ -8,6 +8,7 @@
 #include <gint/defs/types.h>
 #include <gint/defs/util.h>
 #include <gint/mpu/pfc.h>
+#include <gint/config.h>
 
 #include <string.h>
 
@@ -19,7 +20,7 @@ GBSS uint32_t gint[HW_KEYS];
 /* Product Register */
 #define PRR (*((volatile uint32_t *)0xff000044))
 
-#if defined(FX9860G) || (!defined(FX9860G) && !defined(FXCG50))
+#if GINT_HW_FX
 
 /* mpu_detect() - detect the underlying MPU
    Many thanks to Simon Lothar for relevant documentation.
@@ -116,9 +117,7 @@ void hw_detect(void)
 	else utlb_mapped_memory(NULL, NULL);
 }
 
-#endif /* FX9860G and platform-agnostic */
-
-#ifdef FXCG50
+#elif GINT_HW_CG
 
 /* hw_detect(): Basic hardware detection */
 void hw_detect(void)
@@ -146,4 +145,6 @@ void hw_detect(void)
 	utlb_mapped_memory(NULL, NULL);
 }
 
-#endif /* FXCG50 */
+#else
+#error unknown hardware type for hw_detect
+#endif

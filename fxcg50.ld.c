@@ -161,6 +161,11 @@ SECTIONS
 	_silram = SIZEOF(.ilram);
 	_sxyram = SIZEOF(.xyram);
 
+	_lgmapped = ABSOLUTE(0);
+	_sgmapped = ABSOLUTE(0);
+	_lreloc = ABSOLUTE(0);
+	_sreloc = ABSOLUTE(0);
+
 	/* gint's uninitialized BSS section, going to static RAM. All the large
 	   data arrays will be located here */
 	.gint.bss (NOLOAD) : {

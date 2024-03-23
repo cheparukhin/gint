@@ -32,6 +32,7 @@ extern "C" {
 #endif
 
 #include <gint/usb.h>
+#include <gint/config.h>
 struct usb_fxlink_header;
 
 /* This bulk transfer interface with class code 0xff/0x77 implements a simple
@@ -74,7 +75,7 @@ void usb_fxlink_screenshot(bool onscreen);
    automatically send new frames to fxlink. */
 void usb_fxlink_videocapture(bool onscreen);
 
-#ifdef FX9860G
+#if GINT_RENDER_MONO
 /* Similar to usb_fxlink_screenshot(), but takes a gray screenshot if the gray
    engine is currently running. */
 void usb_fxlink_screenshot_gray(bool onscreen);

@@ -25,12 +25,9 @@ extern uint32_t
 	ldata,  sdata,  rdata,		/* User's data section */
 	lilram, silram, rilram,		/* IL memory section */
 	lxyram, sxyram, rxyram,		/* X and Y memory section */
-	sbss, rbss;			/* User's BSS section */
-#ifdef FX9860G
-extern uint32_t
+	sbss, rbss,			/* User's BSS section */
 	lgmapped, sgmapped,		/* Permanently mapped functions */
 	lreloc, sreloc;			/* Relocatable references */
-#endif
 
 /* Constructor and destructor arrays */
 extern void (*bctors)(void), (*ectors)(void);
@@ -136,7 +133,7 @@ static int start2(int isappli, int optnum)
 	   1.00 and the fx-9860G emulator) is not clear yet, so gint can't load
 	   pages dynamically. Load everything preventively (works only if the
 	   add-in is small enough) */
-	#ifdef FX9860G
+	#if GINT_OS_FX
 	if(isSH3())
 	{
 		/* Try to map every ROM address up to _srom */
@@ -159,9 +156,8 @@ static int start2(int isappli, int optnum)
 
 	gint_load_onchip_sections();
 
-	#ifdef FX9860G
-	/* Copy permanently-mapped code to start of user RAM (on fx-CG 50 it
-	   is loaded along ILRAM contents) */
+	/* Copy permanently-mapped code to start of user RAM (this section is
+	   only used on fx-9860G; on fx-CG 50 it's fixed in ILRAM) */
 	void *rgmapped = mmu_uram();
 	regcpy(&lgmapped, &sgmapped, rgmapped);
 
@@ -171,7 +167,6 @@ static int start2(int isappli, int optnum)
 	{
 		fixups[i] += (uint32_t)rgmapped;
 	}
-	#endif
 
 	/* Install gint, switch VBR and initialize drivers */
 	kinit();
