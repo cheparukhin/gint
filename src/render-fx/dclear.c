@@ -1,6 +1,9 @@
 #include <gint/display.h>
 #include "../render/render.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 /* dclear() - fill the screen with a single color */
 void dclear(color_t color)
 {
@@ -46,3 +49,5 @@ void dclear(color_t color)
 		*--index = fill;
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

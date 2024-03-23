@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_rgb16_normal
 #include "image_macros.S"
 
@@ -199,3 +202,5 @@ _BACKWARD_LONG_COPY:
 3:	mov.l	r0, @-r5
 	END
 	EPILOGUE
+
+#endif

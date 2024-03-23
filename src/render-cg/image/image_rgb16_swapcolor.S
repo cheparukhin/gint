@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_rgb16_swapcolor
 #include "image_macros.S"
 
@@ -43,3 +46,5 @@ _gint_image_rgb16_swapcolor:
 
 	GEN_SWAPCOLOR_LOOP 0, 2
 9:	GEN_SWAPCOLOR_LOOP 1, -2
+
+#endif

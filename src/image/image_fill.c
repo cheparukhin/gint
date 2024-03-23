@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void image_fill(image_t *img, int value)
 {
@@ -24,3 +26,5 @@ void image_fill(image_t *img, int value)
         }
     }
 }
+
+#endif

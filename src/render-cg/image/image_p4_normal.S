@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_p4_normal
 #include "image_macros.S"
 
@@ -123,3 +126,5 @@ _gint_image_p4_normal:
 
 	GEN_NORMAL_LOOP 0, 2, r7, r11, 4, 2
 9:	GEN_NORMAL_LOOP 1, -2, r7, r11, 2, 4
+
+#endif

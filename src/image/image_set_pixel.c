@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void image_set_pixel(image_t const *img, int x, int y, int value)
 {
@@ -24,3 +26,5 @@ void image_set_pixel(image_t const *img, int x, int y, int value)
             data_u8[x >> 1] = (data_u8[x >> 1] & 0x0f) | (value << 4);
     }
 }
+
+#endif

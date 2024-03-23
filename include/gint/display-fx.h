@@ -9,7 +9,7 @@
 #ifndef GINT_DISPLAY_FX
 #define GINT_DISPLAY_FX
 
-#ifdef FX9860G
+#if GINT_RENDER_MONO
 
 #ifdef __cplusplus
 extern "C" {
@@ -110,6 +110,6 @@ GINLINE static int image_layer_count(int profile)
 }
 #endif
 
-#endif /* FX9860G */
+#endif /* GINT_RENDER_MONO */
 
 #endif /* GINT_DISPLAY_FX */

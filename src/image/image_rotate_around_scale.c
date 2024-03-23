@@ -2,6 +2,9 @@
 #include <math.h>
 #include "fixed.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 void image_rotate_around_scale(image_t const *src, float alpha, int gamma,
     bool resize, int *center_x, int *center_y, struct image_linear_map *map)
 {
@@ -58,3 +61,5 @@ void image_rotate_around_scale(image_t const *src, float alpha, int gamma,
     *center_x = new_center_x;
     *center_y = new_center_y;
 }
+
+#endif

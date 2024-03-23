@@ -12,6 +12,10 @@
 
 #include "../render-fx/render-fx.h"
 #include "../render/render.h"
+#include <gint/config.h>
+
+// TODO: Move the gray "engine" into the T6K11 driver.
+#if GINT_RENDER_MONO && GINT_HW_FX
 
 /* Three additional video RAMS, allocated statically if --static-gray was set
    at configure time, or with malloc() otherwise. */
@@ -270,3 +274,5 @@ void dgray_getscreen(uint32_t **light, uint32_t **dark)
 	if(light) *light = vrams[base & 2];
 	if(dark) *dark = vrams[base | 1];
 }
+
+#endif /* GINT_RENDER_MONO && GINT_HW_FX */

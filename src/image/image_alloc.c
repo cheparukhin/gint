@@ -1,6 +1,8 @@
 #include <gint/image.h>
 #include <stdlib.h>
 #include <gint/defs/util.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 image_t *image_alloc(int width, int height, int format)
 {
@@ -25,3 +27,5 @@ image_t *image_alloc(int width, int height, int format)
     img->flags |= IMAGE_FLAGS_DATA_ALLOC;
     return img;
 }
+
+#endif

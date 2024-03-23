@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _image_linear_rgb16
 .global _image_linear_p8
 
@@ -124,3 +127,5 @@ _image_linear_rgb16:
 
 _image_linear_p8:
 	GEN_LINEAR_LOOP mov.b, 1
+
+#endif

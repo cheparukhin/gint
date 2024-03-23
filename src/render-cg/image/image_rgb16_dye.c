@@ -1,5 +1,7 @@
 #include <gint/display.h>
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void dimage_rgb16_dye(int x, int y, image_t const *img, int eff, int dye_color)
 {
@@ -20,3 +22,5 @@ void dsubimage_rgb16_dye(int x, int y, image_t const *img,
 	cmd.loop = gint_image_rgb16_dye;
 	gint_image_rgb16_loop(DWIDTH, &cmd);
 }
+
+#endif

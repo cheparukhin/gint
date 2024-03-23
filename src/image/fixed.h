@@ -5,6 +5,8 @@
 #ifndef GINT_IMAGE_FIXED
 #define GINT_IMAGE_FIXED
 
+#include <stdint.h>
+
 /* Constants */
 #define fconst(x) ((x) * 65536)
 

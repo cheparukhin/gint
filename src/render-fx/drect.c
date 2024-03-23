@@ -3,6 +3,9 @@
 #include "../render/render.h"
 #include "render-fx.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 void drect(int x1, int y1, int x2, int y2, int color)
 {
 	if(x1 > x2) swap(x1, x2);
@@ -48,3 +51,5 @@ void drect(int x1, int y1, int x2, int y2, int color)
 		*--lword ^= m[0];
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

@@ -3,6 +3,9 @@
 #include <string.h>
 #undef image_sub
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 static image_t image_sub_default;
 
 image_t *image_sub(image_t const *src, int left, int top, int w, int h,
@@ -39,3 +42,5 @@ image_t *image_sub(image_t const *src, int left, int top, int w, int h,
     dst->palette = src->palette;
     return dst;
 }
+
+#endif

@@ -2,6 +2,9 @@
 #include <gint/defs/util.h>
 #include <string.h>
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 image_t *image_copy_alloc(image_t const *src, int new_format)
 {
     if(!image_valid(src))
@@ -18,3 +21,5 @@ image_t *image_copy_alloc(image_t const *src, int new_format)
     image_copy(src, dst, true);
     return dst;
 }
+
+#endif

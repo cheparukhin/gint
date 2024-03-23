@@ -1,6 +1,8 @@
 #include <gint/gray.h>
 #include "../render-fx/render-fx.h"
-#include "../render-fx/bopti-asm.h"
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 #pragma GCC optimize("O3")
 
@@ -37,3 +39,5 @@ void gsubimage(bopti_image_t const *img, struct rbox *r, GUNUSED int flags)
 		bopti_render(img, r, light, dark);
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

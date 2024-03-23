@@ -2,6 +2,9 @@
 #include <gint/mmu.h>
 #include <stdlib.h>
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 void image_free(image_t *img)
 {
     if(!img || mmu_is_rom(img))
@@ -14,3 +17,5 @@ void image_free(image_t *img)
 
     free(img);
 }
+
+#endif

@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_rgb16_loop
 
 /* gint's image renderer: 16-bit RGB entry point
@@ -67,3 +70,5 @@ _NO_VFLIP:
 
 	jmp	@r9
 	add	r4, r4
+
+#endif

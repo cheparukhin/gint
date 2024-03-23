@@ -1,6 +1,9 @@
 #include <gint/gray.h>
 #include "../render/render.h"
-#include "../render-fx/topti-asm.h"
+#include "../render-fx/render-fx.h"
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 /* gtext_opt(): Display a string of text */
 void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
@@ -23,3 +26,5 @@ void gtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],
 		topti_asm_text[bg], light, dark, size);
 }
+
+#endif /* GINT_RENDER_MONO */

@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 bool image_valid(image_t const *img)
 {
@@ -16,3 +18,5 @@ bool image_valid(image_t const *img)
     /* Invalid format */
     return false;
 }
+
+#endif

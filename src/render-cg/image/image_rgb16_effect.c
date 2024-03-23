@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void dsubimage_rgb16_effect(int x, int y, image_t const *img,
 	int left, int top, int w, int h, int eff, ...)
@@ -30,3 +32,5 @@ void dsubimage_rgb16_effect(int x, int y, image_t const *img,
 
 	va_end(args);
 }
+
+#endif

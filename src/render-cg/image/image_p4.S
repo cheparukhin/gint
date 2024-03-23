@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_p4_loop
 
 /* gint's image renderer: 4-bit indexed entry point
@@ -81,3 +84,5 @@ _NO_VFLIP:
 
 	jmp	@r9
 	subc	r7, r4
+
+#endif

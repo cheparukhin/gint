@@ -2,6 +2,9 @@
 #include <gint/defs/util.h>
 #include <string.h>
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 bool image_copy_palette(image_t const *src, image_t *dst, int size)
 {
     if(!image_valid(src) || !dst)
@@ -18,3 +21,5 @@ bool image_copy_palette(image_t const *src, image_t *dst, int size)
     memcpy(dst->palette, src->palette, 2*N);
     return true;
 }
+
+#endif

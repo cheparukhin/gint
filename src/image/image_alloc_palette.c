@@ -3,6 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 bool image_alloc_palette(image_t *img, int size)
 {
     if(!img || !IMAGE_IS_INDEXED(img->format))
@@ -29,3 +32,5 @@ bool image_alloc_palette(image_t *img, int size)
     img->flags |= IMAGE_FLAGS_PALETTE_ALLOC;
     return true;
 }
+
+#endif

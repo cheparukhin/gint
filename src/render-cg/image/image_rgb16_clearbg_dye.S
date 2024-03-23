@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_rgb16_clearbg
 .global _gint_image_rgb16_dye
 #include "image_macros.S"
@@ -51,3 +54,5 @@ _gint_image_rgb16_dye:
 
 	GEN_CLEARBG_DYE_LOOP 0, 4, r7, r0
 9:	GEN_CLEARBG_DYE_LOOP 1, -4, r7, r0
+
+#endif

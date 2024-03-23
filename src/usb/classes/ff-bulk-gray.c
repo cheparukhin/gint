@@ -1,9 +1,10 @@
-#ifdef FX9860G
-
 #include <gint/usb.h>
 #include <gint/usb-ff-bulk.h>
 #include <gint/display.h>
 #include <gint/gray.h>
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 static void capture_vram_gray(GUNUSED bool onscreen, char const *type)
 {
@@ -39,4 +40,4 @@ void usb_fxlink_videocapture_gray(bool onscreen)
 	capture_vram_gray(onscreen, "video");
 }
 
-#endif /* FX9860G */
+#endif /* GINT_RENDER_MONO */

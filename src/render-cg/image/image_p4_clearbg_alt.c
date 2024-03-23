@@ -1,5 +1,7 @@
 #include <gint/image.h>
 #include <gint/display.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void dimage_p4_clearbg_alt(int x, int y, image_t const *img, int eff, int bg)
 {
@@ -19,3 +21,5 @@ void dsubimage_p4_clearbg_alt(int x, int y, image_t const *img,
 	cmd.loop = gint_image_p4_clearbg_alt;
 	gint_image_p4_loop(DWIDTH, &cmd);
 }
+
+#endif

@@ -5,7 +5,9 @@
 
 #include "../render/render.h"
 #include "render-fx.h"
-#include "topti-asm.h"
+
+#include <gint/config.h>
+#if GINT_RENDER_MONO
 
 #undef dtext_opt
 
@@ -219,3 +221,5 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 	topti_render(x, y, str, topti_font, topti_asm_text[fg],
 		topti_asm_text[bg], gint_vram, gint_vram, size);
 }
+
+#endif /* GINT_RENDER_MONO */

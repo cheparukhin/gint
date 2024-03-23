@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 int image_alpha(int format)
 {
@@ -14,3 +16,5 @@ int image_alpha(int format)
         return 0x10000;
     }
 }
+
+#endif

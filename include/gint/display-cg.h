@@ -15,7 +15,7 @@
 #ifndef GINT_DISPLAY_CG
 #define GINT_DISPLAY_CG
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,6 +104,6 @@ void dgetvram(uint16_t **main, uint16_t **secondary);
 }
 #endif
 
-#endif /* FXCG50 */
+#endif /* GINT_RENDER_RGB */
 
 #endif /* GINT_DISPLAY_CG */

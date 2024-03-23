@@ -1,6 +1,9 @@
 #include <gint/image.h>
 #include <stdlib.h>
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 image_t *image_create(int width, int height, int format)
 {
     if(!IMAGE_IS_RGB16(format) && !IMAGE_IS_P8(format) && !IMAGE_IS_P4(format))
@@ -23,3 +26,5 @@ image_t *image_create(int width, int height, int format)
 
     return img;
 }
+
+#endif

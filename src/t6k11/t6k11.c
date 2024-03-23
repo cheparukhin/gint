@@ -9,6 +9,9 @@
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 #include <gint/hardware.h>
+#include <gint/config.h>
+
+#if GINT_HW_FX
 
 //---
 //	Device specification sheet
@@ -226,3 +229,5 @@ gint_driver_t drv_t6k11 = {
 	.state_size   = sizeof(t6k11_state_t),
 };
 GINT_DECLARE_DRIVER(26, drv_t6k11);
+
+#endif /* GINT_HW_FX */

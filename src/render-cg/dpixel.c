@@ -1,4 +1,6 @@
 #include <gint/display.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void dpixel(int x, int y, int color)
 {
@@ -11,3 +13,5 @@ void dpixel(int x, int y, int color)
 	if(color == C_INVERT) gint_vram[index] ^= 0xffff;
 	else gint_vram[index] = color;
 }
+
+#endif

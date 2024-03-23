@@ -1,6 +1,9 @@
 #include <gint/image.h>
 #undef image_target
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 bool image_target(image_t const *src, image_t *dst, ...)
 {
     if(!image_valid(src) || !image_valid(dst))
@@ -37,3 +40,5 @@ bool image_target(image_t const *src, image_t *dst, ...)
     va_end(args);
     return true;
 }
+
+#endif

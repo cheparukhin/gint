@@ -34,9 +34,8 @@
 extern "C" {
 #endif
 
-#ifndef FXCG50
-#error <gint/image.h> is only supported on FXCG50
-#else
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
@@ -838,7 +837,7 @@ bool image_target(image_t const *src, image_t *dst, ...);
 #define image_alpha_2(fmt, copy_alpha) \
         ((copy_alpha) ? 0x10000 : image_alpha(fmt))
 
-#endif /* FXCG50 */
+#endif /* GINT_RENDER_RGB */
 
 #ifdef __cplusplus
 }

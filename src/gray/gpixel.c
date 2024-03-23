@@ -1,5 +1,8 @@
 #include <gint/gray.h>
 #include <gint/defs/types.h>
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 /* gpixel(): Change a pixel's color */
 void gpixel(int x, int y, color_t color)
@@ -55,3 +58,5 @@ void gpixel(int x, int y, color_t color)
 		break;
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

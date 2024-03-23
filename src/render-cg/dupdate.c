@@ -1,6 +1,8 @@
 #include <gint/display.h>
 #include <gint/drivers/r61524.h>
 #include "render-cg.h"
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 /* dupdate(): Push the video RAM to the display driver */
 void dupdate(void)
@@ -19,3 +21,5 @@ void dupdate(void)
 }
 __attribute__((alias("dupdate")))
 void _WEAK_dupdate(void);
+
+#endif

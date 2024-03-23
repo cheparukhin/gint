@@ -1,7 +1,9 @@
 #include <gint/display.h>
 #include "../render/render.h"
 #include "render-fx.h"
-#include "bopti-asm.h"
+
+#include <gint/config.h>
+#if GINT_RENDER_MONO
 
 #pragma GCC optimize("O3")
 
@@ -43,3 +45,5 @@ void dsubimage(int x, int y, bopti_image_t const *img, int left, int top,
 		bopti_render(img, &r, gint_vram, NULL);
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

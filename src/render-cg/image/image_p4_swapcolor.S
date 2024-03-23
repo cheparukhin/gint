@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_p4_swapcolor
 #include "image_macros.S"
 
@@ -173,3 +176,5 @@ _gint_image_p4_swapcolor:
 
 	GEN_SWAPCOLOR_LOOP 0, 4, r13, r14, 6, 0
 9:	GEN_SWAPCOLOR_LOOP 1, -4, r13, r14, 0, 6
+
+#endif

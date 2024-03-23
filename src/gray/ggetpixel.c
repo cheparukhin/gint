@@ -1,5 +1,8 @@
 #include <gint/gray.h>
 #include <gint/defs/types.h>
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 int ggetpixel(int x, int y)
 {
@@ -13,3 +16,5 @@ int ggetpixel(int x, int y)
 	bool d = (dark [offset] & mask) != 0;
 	return (d << 1) | l;
 }
+
+#endif /* GINT_RENDER_MONO */

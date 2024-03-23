@@ -5,6 +5,7 @@
 #include <gint/kmalloc.h>
 #include <gint/defs/attributes.h>
 #include <gint/defs/util.h>
+#include <gint/config.h>
 
 #include <string.h>
 

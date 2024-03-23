@@ -1,5 +1,7 @@
 #include <gint/display.h>
 #include <gint/dma.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void dclear(uint16_t color)
 {
@@ -16,3 +18,5 @@ void dclear(uint16_t color)
 			dwindow.bottom - 1, color);
 	}
 }
+
+#endif

@@ -1,4 +1,7 @@
 #include <gint/gray.h>
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 /* gclear(): Fill the screen with a single color */
 void gclear(color_t color)
@@ -35,3 +38,5 @@ void gclear(color_t color)
 		dark += 8;
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

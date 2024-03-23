@@ -2,7 +2,9 @@
 #include <gint/defs/types.h>
 #include "../render/render.h"
 
-/* dpixel() - change a pixel's color */
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 void dpixel(int x, int y, int color)
 {
 	if(x < dwindow.left || x >= dwindow.right) return;
@@ -26,3 +28,5 @@ void dpixel(int x, int y, int color)
 		*lword ^= mask;
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

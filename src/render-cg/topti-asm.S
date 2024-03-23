@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _topti_glyph_fg_bg
 .global _topti_glyph_fg
 .global _topti_glyph_bg
@@ -200,3 +203,5 @@ _topti_glyph_bg:
 .align 4
 
 1:	.long 396*2
+
+#endif

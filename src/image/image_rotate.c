@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void image_rotate(image_t const *src, float angle, bool resize,
     struct image_linear_map *map)
@@ -11,3 +13,5 @@ void image_rotate(image_t const *src, float angle, bool resize,
 
     image_rotate_around(src, angle, resize, &center_x, &center_y, map);
 }
+
+#endif

@@ -8,6 +8,9 @@
 #include "../render/render.h"
 #include "topti-asm.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 /* Default font */
 extern font_t gint_font8x9;
 font_t const * gint_default_font = &gint_font8x9;
@@ -136,3 +139,5 @@ void dtext_opt(int x, int y, int fg, int bg, int halign, int valign,
 
 	topti_render(x, y, str, topti_font, fg, bg, size);
 }
+
+#endif

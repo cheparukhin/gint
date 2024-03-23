@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 int image_get_pixel(image_t const *img, int x, int y)
 {
@@ -23,3 +25,5 @@ int image_get_pixel(image_t const *img, int x, int y)
     }
     return 0;
 }
+
+#endif

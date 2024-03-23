@@ -1,6 +1,9 @@
 #include <gint/defs/util.h>
 #include "render-fx.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 void masks(int x1, int x2, uint32_t *masks)
 {
 	x1 = max(x1, dwindow.left);
@@ -22,3 +25,5 @@ void masks(int x1, int x2, uint32_t *masks)
 	masks[l1] &= (0xffffffffu >> x1);
 	masks[l2] &= (0xffffffffu << x2);
 }
+
+#endif /* GINT_RENDER_MONO */

@@ -1,24 +1,26 @@
+#include <gint/config.h>
+#if GINT_RENDER_MONO
 
 .global _topti_asm_text
 
-# REGISTER ALLOCATION:
-# r0: x or ~x
-# r1: light (except lighten/darken: swapped at some point with dark)
-# r2: dark  (except lighten/darken: swapped at some point with light)
-# r3: (tmp)
-# r4: vram (mono or light)
-# r5: vram (mono or dark)
-# r6: operators
-# r7: number of rows (r7>0, otherwise the font is clearly ill-formed)
+/* REGISTER ALLOCATION:
+   r0: x or ~x
+   r1: light (except lighten/darken: swapped at some point with dark)
+   r2: dark  (except lighten/darken: swapped at some point with light)
+   r3: (tmp)
+   r4: vram (mono or light)
+   r5: vram (mono or dark)
+   r6: operators
+   r7: number of rows (r7>0, otherwise the font is clearly ill-formed)
 
-# Mind that there are pipeline optimization efforts in this file:
-# * Doing memory accesses on 4-aligned instructions to avoid contention between
-#   IF and MA (1 cycle);
-# * Avoid using an operand just after it is fetched from memory because of the
-#   RAW dependency on the destination register (1 cycle);
-# * Using delayed slot jumps bf.s rather than bf (1 cycle);
-# * Executing the dt early to avoid waiting for its WB slot. Best if >=2
-#   instructions are between dt and bt.s. (not sure if it's needed).
+   Mind that there are pipeline optimization efforts in this file:
+   * Doing memory accesses on 4-aligned instructions to avoid contention
+     between IF and MA (1 cycle);
+   * Avoid using an operand just after it is fetched from memory because of the
+     RAW dependency on the destination register (1 cycle);
+   * Using delayed slot jumps bf.s rather than bf (1 cycle);
+   * Executing the dt early to avoid waiting for its WB slot. Best if >=2
+     instructions are between dt and bt.s. (not sure if it's needed). */
 
 .align 4
 _topti_asm_white:
@@ -171,7 +173,7 @@ _topti_asm_darken:
 	rts
 	nop
 
-# Export a table with these functions
+/* Export a table with these functions */
 
 .align 4
 _topti_asm_text:
@@ -183,3 +185,5 @@ _topti_asm_text:
 	.long	_topti_asm_invert
 	.long	_topti_asm_lighten
 	.long	_topti_asm_darken
+
+#endif /* GINT_RENDER_MONO */

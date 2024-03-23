@@ -9,6 +9,9 @@
 #include <gint/drivers/states.h>
 #include <gint/dma.h>
 #include <gint/drivers/r61524.h>
+#include <gint/config.h>
+
+#if GINT_RENDER_RGB
 
 #define DMA SH7305_DMA
 #define POWER SH7305_POWER
@@ -217,3 +220,5 @@ gint_driver_t drv_r61524 = {
 	.state_size   = sizeof(r61524_state_t),
 };
 GINT_DECLARE_DRIVER(26, drv_r61524);
+
+#endif /* GINT_RENDER_RGB */

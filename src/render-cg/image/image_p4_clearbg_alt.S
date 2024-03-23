@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_p4_clearbg_alt
 #include "image_macros.S"
 
@@ -151,3 +154,5 @@ _gint_image_p4_clearbg_alt:
 
 	GEN_CLEARBG_LOOP 0, 4, r13, r14, 6, 4
 9:	GEN_CLEARBG_LOOP 1, -4, r13, r14, 0, 2
+
+#endif

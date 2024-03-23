@@ -1,6 +1,9 @@
 #include <gint/image.h>
 #include "fixed.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 void image_scale(image_t const *src, int gamma_x, int gamma_y,
     struct image_linear_map *map)
 {
@@ -22,3 +25,5 @@ void image_scale(image_t const *src, int gamma_x, int gamma_y,
     map->dst_w = fround(src->width * gamma_x);
     map->dst_h = fround(src->height * gamma_y);
 }
+
+#endif

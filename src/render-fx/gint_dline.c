@@ -2,6 +2,9 @@
 #include <gint/defs/util.h>
 #include "render-fx.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 /* gint_dhline(): Optimized horizontal line using a rectangle mask */
 void gint_dhline(int x1, int x2, int y, int color)
 {
@@ -64,3 +67,5 @@ void gint_dvline(int y1, int y2, int x, int color)
 		while(lword > base) lword -= 4, *lword ^= mask;
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

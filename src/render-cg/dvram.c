@@ -1,6 +1,7 @@
 #include <gint/display.h>
 #include <gint/kmalloc.h>
 #include <gint/config.h>
+#if GINT_RENDER_RGB
 
 /* Up to two VRAM pointers can be set, for triple buffering. */
 static uint16_t *vram_1 = NULL, *vram_2 = NULL;
@@ -67,3 +68,5 @@ void dvram_switch(void)
 {
 	gint_vram = (gint_vram == vram_1) ? vram_2 : vram_1;
 }
+
+#endif

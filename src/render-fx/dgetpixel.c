@@ -2,6 +2,9 @@
 #include <gint/defs/types.h>
 #include "../render/render.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 int dgetpixel(int x, int y)
 {
 	if(x < dwindow.left || x >= dwindow.right) return -1;
@@ -14,3 +17,5 @@ int dgetpixel(int x, int y)
 
 	return (gint_vram[offset] & mask) ? C_BLACK : C_WHITE;
 }
+
+#endif /* GINT_RENDER_MONO */

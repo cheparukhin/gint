@@ -1,5 +1,7 @@
 #include <gint/display.h>
 #include <gint/defs/util.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 /* gint_dhline(): Optimized horizontal line */
 void gint_dhline(int x1, int x2, int y, uint16_t color)
@@ -43,3 +45,4 @@ void gint_dvline(int y1, int y2, int x, uint16_t color)
 	while(height-- > 0) *v = color, v += DWIDTH;
 }
 
+#endif

@@ -1,6 +1,9 @@
 #include <gint/defs/util.h>
 #include <gint/gray.h>
 #include "../render-fx/render-fx.h"
+#include <gint/config.h>
+
+#if GINT_RENDER_MONO
 
 /* grect(): Fill a rectangle on the screen */
 void grect(int x1, int y1, int x2, int y2, color_t color)
@@ -112,3 +115,5 @@ void grect(int x1, int y1, int x2, int y2, color_t color)
 		light++, dark++;
 	}
 }
+
+#endif /* GINT_RENDER_MONO */

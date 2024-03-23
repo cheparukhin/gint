@@ -1,6 +1,8 @@
 #include <gint/image.h>
 #include <gint/display.h>
 #include <gint/defs/util.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 bool gint_image_clip_input(image_t const *img, struct gint_image_box *b,
 	struct dwindow const *window)
@@ -119,3 +121,5 @@ bool gint_image_mkcmd(struct gint_image_box *box, image_t const *img,
 	cmd->output = (void *)gint_vram + (DWIDTH * box->y + cmd->x) * 2;
 	return true;
 }
+
+#endif

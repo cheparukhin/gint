@@ -5,6 +5,9 @@
 #ifndef GINT_RENDERCG_TOPTIASM
 #define GINT_RENDERCG_TOPTIASM
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 /* Text rendering functions
 
    @vram    Pointer to VRAM, offset for subglyph position
@@ -25,5 +28,7 @@ extern asm_text_t topti_glyph_fg;
 extern asm_text_t topti_glyph_bg;
 /* Opaque foreground, opaque background */
 extern asm_text_t topti_glyph_fg_bg;
+
+#endif
 
 #endif /* GINT_RENDERFX_TOPTIASM */

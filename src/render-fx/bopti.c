@@ -2,7 +2,9 @@
 #include <gint/defs/util.h>
 #include <gint/display.h>
 #include "render-fx.h"
-#include "bopti-asm.h"
+
+#include <gint/config.h>
+#if GINT_RENDER_MONO
 
 #pragma GCC optimize("O3")
 
@@ -305,3 +307,5 @@ int bopti_clip(bopti_image_t const *img, struct rbox *r)
 	/* Return non-zero if the result is empty */
 	return (width <= 0 || height <= 0);
 }
+
+#endif /* GINT_RENDER_MONO */

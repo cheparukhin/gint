@@ -1,3 +1,6 @@
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 .global _gint_image_p8_dye
 #include "image_macros.S"
 
@@ -116,3 +119,5 @@ _gint_image_p8_dye:
 
 	GEN_DYE_LOOP 0, 4, r13, r14, 4, 2
 9:	GEN_DYE_LOOP 1, -4, r13, r14, 2, 4
+
+#endif

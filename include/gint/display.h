@@ -15,15 +15,16 @@ extern "C" {
 
 #include <gint/defs/types.h>
 #include <gint/defs/call.h>
+#include <gint/config.h>
 
 /* Platform-specific functions include VRAM management and the definition of
    the color_t type. */
 
-#ifdef FX9860G
+#if GINT_RENDER_MONO
 #include <gint/display-fx.h>
 #endif
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 #include <gint/display-cg.h>
 #endif
 

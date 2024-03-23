@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void image_hflip(image_t const *src, image_t *dst, bool copy_alpha)
 {
@@ -45,3 +47,5 @@ void image_hflip(image_t const *src, image_t *dst, bool copy_alpha)
         }
     }
 }
+
+#endif

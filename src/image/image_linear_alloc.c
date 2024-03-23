@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 image_t *image_linear_alloc(image_t const *src, struct image_linear_map *map)
 {
@@ -18,3 +20,5 @@ image_t *image_linear_alloc(image_t const *src, struct image_linear_map *map)
     image_linear(src, dst, map);
     return dst;
 }
+
+#endif

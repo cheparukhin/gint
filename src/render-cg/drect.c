@@ -1,5 +1,7 @@
 #include <gint/defs/util.h>
 #include <gint/display.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 void drect(int x1, int y1, int x2, int y2, int color)
 {
@@ -50,3 +52,5 @@ void drect(int x1, int y1, int x2, int y2, int color)
 		base += DWIDTH;
 	}
 }
+
+#endif

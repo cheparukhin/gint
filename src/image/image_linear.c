@@ -2,6 +2,9 @@
 #include <gint/defs/util.h>
 #include "fixed.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_RGB
+
 void image_linear_rgb16(void *src, void *dst, struct image_linear_map *map);
 void image_linear_p8(void *src, void *dst, struct image_linear_map *map);
 
@@ -32,3 +35,5 @@ void image_linear(image_t const *src, image_t *dst,
     else if(IMAGE_IS_P8(src->format))
         image_linear_p8(src->data, dst->data, map);
 }
+
+#endif

@@ -1,6 +1,8 @@
 #include <gint/image.h>
 #include <stdlib.h>
 #include <string.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 static void copy_row_rgb16(uint16_t *src, uint16_t *dst, int src_alpha,
     int dst_alpha, int width)
@@ -60,3 +62,5 @@ void image_vflip(image_t const *src, image_t *dst, bool copy_alpha)
 
     free(row);
 }
+
+#endif

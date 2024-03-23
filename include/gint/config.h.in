@@ -5,8 +5,6 @@
 #ifndef GINT_CONFIG
 #define GINT_CONFIG
 
-#include <gint/defs/types.h>
-
 /* GINT_VERSION: Latest tag and number of additional commits
      "2.1.0"   = Release 2.1.0
      "2.1.1-5" = 5 commits after release 2.1.1 */
@@ -23,6 +21,13 @@
 #elif defined(FXCG50)
 # define GINT_HW_FX 0
 # define GINT_HW_CG 1
+#endif
+
+/* Shorthand to simplify definitions below. Won't be needed for long. */
+#if defined(FX9860G_G3A)
+# define GINT_FX9860G_G3A 1
+#else
+# define GINT_FX9860G_G3A 0
 #endif
 
 /* GINT_OS_{FX,CG}: Identifies the type of OS API we're assuming. Currently I
@@ -57,6 +62,11 @@
 
 /* GINT_RENDER_DMODE: Selects whether the dmode override is available on
    rendering functions. */
-#define GINT_RENDER_DMODE GINT_HW_FX
+#define GINT_RENDER_DMODE (GINT_HW_FX || GINT_FX9860G_G3A)
+
+/* GINT_RENDER_{MONO,RGB}: Enable the mono/rgb rendering API.
+   Currently these are exclusive. */
+#define GINT_RENDER_MONO (GINT_HW_FX || GINT_FX9860G_G3A)
+#define GINT_RENDER_RGB (GINT_HW_CG && !GINT_FX9860G_G3A)
 
 #endif /* GINT_CONFIG */

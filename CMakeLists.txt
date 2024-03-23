@@ -22,7 +22,7 @@ else()
 endif()
 configure_file(include/gint/config.h.in include/gint/config.h)
 
-set(SOURCES_COMMON
+set(SOURCES
   # Clock Pulse Generator driver
   src/cpg/cpg.c
   src/cpg/overclock.c
@@ -70,73 +70,6 @@ set(SOURCES_COMMON
   src/fs/fugue/fugue_rmdir.c
   src/fs/fugue/fugue_unlink.c
   src/fs/fugue/util.c
-  # Interrupt Controller driver
-  src/intc/intc.c
-  src/intc/inth.s
-  # Kernel
-  src/kernel/exch.c
-  src/kernel/exch.s
-  src/kernel/hardware.c
-  src/kernel/inth.S
-  src/kernel/kernel.c
-  src/kernel/osmenu.c
-  src/kernel/start.c
-  src/kernel/syscalls.S
-  src/kernel/tlbh.S
-  src/kernel/world.c
-  # Key Scan Interface driver
-  src/keysc/getkey.c
-  src/keysc/iokbd.c
-  src/keysc/keycodes.c
-  src/keysc/keydev.c
-  src/keysc/keydev_idle.c
-  src/keysc/keydev_process_key.c
-  src/keysc/keydown_all.c
-  src/keysc/keydown_any.c
-  src/keysc/keysc.c
-  src/keysc/scan_frequency.c
-  # Memory allocator
-  src/kmalloc/arena_gint.c
-  src/kmalloc/arena_osheap.c
-  src/kmalloc/kmalloc.c
-  # MMU driver
-  src/mmu/mmu.c
-  # Rendering
-  src/render/dcircle.c
-  src/render/dellipse.c
-  src/render/dhline.c
-  src/render/dimage.c
-  src/render/dline.c
-  src/render/dpoly.c
-  src/render/dprint.c
-  src/render/drect_border.c
-  src/render/dtext.c
-  src/render/dupdate_hook.c
-  src/render/dvline.c
-  src/render/dwindow.c
-  src/render/topti.c
-  # RTC driver
-  src/rtc/rtc.c
-  src/rtc/rtc_ticks.c
-  # Sound Processing Unit driver
-  src/spu/spu.c
-  # Timer Unit driver
-  src/tmu/inth-etmu.s
-  src/tmu/inth-tmu.s
-  src/tmu/sleep.c
-  src/tmu/tmu.c
-  # USB driver
-  src/usb/asyncio.c
-  src/usb/classes/ff-bulk.c
-  src/usb/configure.c
-  src/usb/pipes.c
-  src/usb/read4.S
-  src/usb/setup.c
-  src/usb/string.c
-  src/usb/usb.c
-  src/usb/write4.S
-)
-set(SOURCES_FX
   # Gray engine
   src/gray/engine.c
   src/gray/gclear.c
@@ -146,30 +79,6 @@ set(SOURCES_FX
   src/gray/grect.c
   src/gray/gsubimage.c
   src/gray/gtext.c
-  # Rendering
-  src/render-fx/bopti-asm-gray-scsp.s
-  src/render-fx/bopti-asm-gray.s
-  src/render-fx/bopti-asm-mono-scsp.s
-  src/render-fx/bopti-asm.s
-  src/render-fx/bopti.c
-  src/render-fx/dclear.c
-  src/render-fx/dgetpixel.c
-  src/render-fx/dpixel.c
-  src/render-fx/drect.c
-  src/render-fx/dsubimage.c
-  src/render-fx/dupdate.c
-  src/render-fx/gint_dline.c
-  src/render-fx/masks.c
-  src/render-fx/topti-asm.s
-  src/render-fx/topti.c
-  # T6K11 driver
-  src/t6k11/t6k11.c
-
-  src/usb/classes/ff-bulk-gray.c
-)
-set(SOURCES_CG
-  # R61524 driver
-  src/r61524/r61524.c
   # Image library
   src/image/image_alloc.c
   src/image/image_alloc_palette.c
@@ -201,7 +110,54 @@ set(SOURCES_CG
   src/image/image_valid.c
   src/image/image_vflip.c
   src/image/image_vflip_alloc.c
-  # Rendering
+  # Interrupt Controller driver
+  src/intc/intc.c
+  src/intc/inth.s
+  # Kernel
+  src/kernel/exch.c
+  src/kernel/exch.s
+  src/kernel/hardware.c
+  src/kernel/inth.S
+  src/kernel/kernel.c
+  src/kernel/osmenu.c
+  src/kernel/start.c
+  src/kernel/syscalls.S
+  src/kernel/tlbh.S
+  src/kernel/world.c
+  # Key Scan Interface driver
+  src/keysc/getkey.c
+  src/keysc/iokbd.c
+  src/keysc/keycodes.c
+  src/keysc/keydev.c
+  src/keysc/keydev_idle.c
+  src/keysc/keydev_process_key.c
+  src/keysc/keydown_all.c
+  src/keysc/keydown_any.c
+  src/keysc/keysc.c
+  src/keysc/scan_frequency.c
+  # Memory allocator
+  src/kmalloc/arena_gint.c
+  src/kmalloc/arena_osheap.c
+  src/kmalloc/kmalloc.c
+  # MMU driver
+  src/mmu/mmu.c
+  # R61524 display driver
+  src/r61524/r61524.c
+  # Format-agnostic rendering
+  src/render/dcircle.c
+  src/render/dellipse.c
+  src/render/dhline.c
+  src/render/dimage.c
+  src/render/dline.c
+  src/render/dpoly.c
+  src/render/dprint.c
+  src/render/drect_border.c
+  src/render/dtext.c
+  src/render/dupdate_hook.c
+  src/render/dvline.c
+  src/render/dwindow.c
+  src/render/topti.c
+  # RGB Rendering
   src/render-cg/dclear.c
   src/render-cg/dgetpixel.c
   src/render-cg/dpixel.c
@@ -210,9 +166,9 @@ set(SOURCES_CG
   src/render-cg/dupdate.c
   src/render-cg/dvram.c
   src/render-cg/gint_dline.c
-  src/render-cg/topti-asm.s
+  src/render-cg/topti-asm.S
   src/render-cg/topti.c
-  # Fast image renderer
+  # Fast RGB image renderer
   src/render-cg/image/image.c
   src/render-cg/image/image_rgb16.S
   src/render-cg/image/image_rgb16_normal.S
@@ -229,7 +185,7 @@ set(SOURCES_CG
   src/render-cg/image/image_p4_clearbg_alt.S
   src/render-cg/image/image_p4_swapcolor.S
   src/render-cg/image/image_p4_dye.S
-  # Interface to the fast image renderer
+  # Interface to the fast RGB image renderer
   src/render-cg/image/image_rgb16.c
   src/render-cg/image/image_rgb16_effect.c
   src/render-cg/image/image_rgb16_swapcolor.c
@@ -243,6 +199,45 @@ set(SOURCES_CG
   src/render-cg/image/image_p4_effect.c
   src/render-cg/image/image_p4_swapcolor.c
   src/render-cg/image/image_p4_dye.c
+  # Mono rendering
+  src/render-fx/bopti-asm-gray-scsp.S
+  src/render-fx/bopti-asm-gray.S
+  src/render-fx/bopti-asm-mono-scsp.S
+  src/render-fx/bopti-asm.S
+  src/render-fx/bopti.c
+  src/render-fx/dclear.c
+  src/render-fx/dgetpixel.c
+  src/render-fx/dpixel.c
+  src/render-fx/drect.c
+  src/render-fx/dsubimage.c
+  src/render-fx/dupdate.c
+  src/render-fx/gint_dline.c
+  src/render-fx/masks.c
+  src/render-fx/topti-asm.S
+  src/render-fx/topti.c
+  # RTC driver
+  src/rtc/rtc.c
+  src/rtc/rtc_ticks.c
+  # Sound Processing Unit driver
+  src/spu/spu.c
+  # T6K11 display driver
+  src/t6k11/t6k11.c
+  # Timer Unit driver
+  src/tmu/inth-etmu.s
+  src/tmu/inth-tmu.s
+  src/tmu/sleep.c
+  src/tmu/tmu.c
+  # USB driver
+  src/usb/asyncio.c
+  src/usb/classes/ff-bulk.c
+  src/usb/classes/ff-bulk-gray.c
+  src/usb/configure.c
+  src/usb/pipes.c
+  src/usb/read4.S
+  src/usb/setup.c
+  src/usb/string.c
+  src/usb/usb.c
+  src/usb/write4.S
 )
 
 set(ASSETS_FX src/font5x7.png)
@@ -259,8 +254,7 @@ if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   set(NAME "gint-fx")
   set(LINKER_SCRIPTS
     "${CMAKE_CURRENT_BINARY_DIR}/fx9860g.ld")
-  add_library(gint-fx STATIC ${SOURCES_COMMON} ${SOURCES_FX} ${ASSETS_FX}
-    ${LINKER_SCRIPTS})
+  add_library(${NAME} STATIC ${SOURCES} ${ASSETS_FX} ${LINKER_SCRIPTS})
 endif()
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fxCG50)
@@ -269,8 +263,16 @@ if("${FXSDK_PLATFORM_LONG}" STREQUAL fxCG50)
   set(LINKER_SCRIPTS
     "${CMAKE_CURRENT_BINARY_DIR}/fxcg50.ld"
     "${CMAKE_CURRENT_BINARY_DIR}/fxcg50_fastload.ld")
-  add_library(gint-cg STATIC ${SOURCES_COMMON} ${SOURCES_CG} ${ASSETS_CG}
-    ${LINKER_SCRIPTS})
+  add_library(${NAME} STATIC ${SOURCES} ${ASSETS_CG} ${LINKER_SCRIPTS})
+endif()
+
+if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G_G3A)
+  add_compile_definitions(FX9860G_G3A)
+  set(NAME "gint-fxg3a")
+  set(LINKER_SCRIPTS
+    "${CMAKE_CURRENT_BINARY_DIR}/fxcg50.ld"
+    "${CMAKE_CURRENT_BINARY_DIR}/fxcg50_fastload.ld")
+  add_library(${NAME} STATIC ${SOURCES} ${ASSETS_FX} ${LINKER_SCRIPTS})
 endif()
 
 set_target_properties("${NAME}" PROPERTIES OUTPUT_NAME "${NAME}")

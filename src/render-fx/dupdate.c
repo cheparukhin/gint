@@ -2,6 +2,9 @@
 #include <gint/drivers/t6k11.h>
 #include "../render/render.h"
 
+#include <gint/config.h>
+#if GINT_RENDER_MONO
+
 /* Standard video RAM for fx9860g is 1 bit per pixel */
 GSECTION(".bss") GALIGNED(32) static uint32_t fx_vram[256];
 
@@ -32,3 +35,5 @@ void dupdate(void)
 }
 __attribute__((alias("dupdate")))
 void _WEAK_dupdate(void);
+
+#endif /* GINT_RENDER_MONO */

@@ -1,4 +1,6 @@
 #include <gint/display.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 /* dsubimage(): Render a section of an image */
 void dsubimage(int x, int y, image_t const *img, int left, int top,
@@ -11,3 +13,5 @@ void dsubimage(int x, int y, image_t const *img, int left, int top,
 	else if(IMAGE_IS_P4(img->format))
 		return dsubimage_p4(x, y, img, left, top, w, h, flags);
 }
+
+#endif

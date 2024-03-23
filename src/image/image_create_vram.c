@@ -1,5 +1,7 @@
 #include <gint/image.h>
 #include <gint/display.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 image_t *image_create_vram(void)
 {
@@ -11,3 +13,5 @@ image_t *image_create_vram(void)
     img->data = gint_vram;
     return img;
 }
+
+#endif

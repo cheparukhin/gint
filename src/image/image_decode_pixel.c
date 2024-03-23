@@ -1,4 +1,6 @@
 #include <gint/image.h>
+#include <gint/config.h>
+#if GINT_RENDER_RGB
 
 int image_decode_pixel(image_t const *img, int pixel)
 {
@@ -10,3 +12,5 @@ int image_decode_pixel(image_t const *img, int pixel)
         return img->palette[pixel];
     return -1;
 }
+
+#endif
