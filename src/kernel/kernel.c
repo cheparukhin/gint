@@ -114,12 +114,9 @@ void kinit(void)
 	gint_world_addin = gint_world_alloc();
 	gint_driver_flags = malloc(gint_driver_count());
 
-	#ifdef FXCG50
-	/* Allocate VRAMs, which is important for panic screens */
 	extern bool dvram_init(void);
 	if(!dvram_init())
 		abort();
-	#endif
 
 	if(!gint_world_os || !gint_world_addin || !gint_driver_flags)
 		gint_panic(0x1060);

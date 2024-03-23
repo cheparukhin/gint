@@ -11,7 +11,7 @@
 #include <gint/drivers/r61524.h>
 #include <gint/config.h>
 
-#if GINT_RENDER_RGB
+#if GINT_HW_CG
 
 #define DMA SH7305_DMA
 #define POWER SH7305_POWER
@@ -199,6 +199,26 @@ void r61524_display_rect(uint16_t *vram, int xmin, int xmax, int ymin,
 	}
 }
 
+void r61524_display_mono_128x64(uint32_t *vram)
+{
+	dma_transfer_wait(0);
+	r61524_start_frame(0, 383, 0, 191);
+
+	for(int y = 0; y < 64; y++) {
+		for(int sy = 0; sy < 3; sy++) {
+			/* Get pixels manually, ooh, slow */
+			for(int x = 0; x < 128; x++) {
+				int pixel = vram[x >> 5] >> (~x & 31);
+				int color = (pixel & 1) ? 0x0000 : 0xffff;
+				write(color);
+				write(color);
+				write(color);
+			}
+		}
+		vram += 4;
+	}
+}
+
 //---
 // State and driver metadata
 //---
@@ -221,4 +241,4 @@ gint_driver_t drv_r61524 = {
 };
 GINT_DECLARE_DRIVER(26, drv_r61524);
 
-#endif /* GINT_RENDER_RGB */
+#endif /* GINT_HW_CG */

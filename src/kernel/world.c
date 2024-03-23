@@ -220,11 +220,11 @@ void gint_copy_vram(void)
 {
 	void *__GetVRAMAddress(void);
 
-	#ifdef FX9860G
+	#if GINT_OS_FX
 	memcpy(__GetVRAMAddress(), gint_vram, 1024);
 	#endif
 
-	#ifdef FXCG50
+	#if GINT_OS_CG && GINT_RENDER_RGB
 	/* TODO: Improve copied VRAM behavior in gint_osmenu() on fxcg50 */
 	uint16_t *vram1, *vram2;
 	dgetvram(&vram1, &vram2);
@@ -237,6 +237,10 @@ void gint_copy_vram(void)
 	{
 		dst[x] = src[x];
 	}
+	#endif
+
+	#if GINT_OS_CG && GINT_RENDER_MONO
+	// TODO: VRAM save mechanism for mono video mode on R61524
 	#endif
 }
 

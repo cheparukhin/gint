@@ -104,12 +104,12 @@ static void capture_vram(GUNUSED bool onscreen, char const *type)
 	void *source = gint_vram;
 	int size, format;
 
-	#ifdef FX9860G
+	#if GINT_RENDER_MONO
 	size = 1024;
 	format = USB_FXLINK_IMAGE_MONO;
 	#endif
 
-	#ifdef FXCG50
+	#if GINT_RENDER_RGB
 	if(onscreen) {
 		uint16_t *main, *secondary;
 		dgetvram(&main, &secondary);
@@ -187,11 +187,11 @@ static void execute_command(char const *cmd)
 		usb_fxlink_text(text, 0);
 	}
 	if(!strncmp(cmd, "identify", 8)) {
-#if defined(FX9860G)
+#if GINT_OS_FX
 		char const *serial_number = (void *)0x8000ffd0;
 		char const *OS_version = (void *)0x80010020;
 		char const *BC_version = (void *)0x8000ffb0;
-#elif defined(FXCG50)
+#elif GINT_OS_CG
 		char const *serial_number = (void *)0x8001ffd0;
 		char const *OS_version = (void *)0x80020020;
 		char const *BC_version = (void *)0x8001ffb0;

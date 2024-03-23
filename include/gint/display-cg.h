@@ -94,6 +94,10 @@ typedef image_t bopti_image_t;
 
    @main       Main VRAM area, used alone if [secondary] is NULL
    @secondary  Additional VRAM area, enables triple buffering if non-NULL */
+// TODO: In gint 3 the triple buffering mechanism will be removed. Applications
+// that want to change VRAMs in-between every frame will be able to do so by
+// talking directly to the video interface to set VRAM, and wrapping dupdate.
+// Basically it will just no longer be handled by gint itself.
 void dsetvram(uint16_t *main, uint16_t *secondary);
 
 /* dgetvram() - Get VRAM addresses
