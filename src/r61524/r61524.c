@@ -202,21 +202,79 @@ void r61524_display_rect(uint16_t *vram, int xmin, int xmax, int ymin,
 void r61524_display_mono_128x64(uint32_t *vram)
 {
 	dma_transfer_wait(0);
-	r61524_start_frame(0, 383, 0, 191);
+	r61524_start_frame(0, 395, 0, 223);
+
+	int border = 0xe71c; /* C_RGB(28, 28, 28) */
+
+	for(int i = 0; i < 16 * 396; i++)
+		write(border);
 
 	for(int y = 0; y < 64; y++) {
+		/* sub-y position */
 		for(int sy = 0; sy < 3; sy++) {
-			/* Get pixels manually, ooh, slow */
-			for(int x = 0; x < 128; x++) {
-				int pixel = vram[x >> 5] >> (~x & 31);
-				int color = (pixel & 1) ? 0x0000 : 0xffff;
-				write(color);
-				write(color);
-				write(color);
+			for(int i = 0; i < 6; i++)
+				write(border);
+
+			/* longword-x position */
+			for(int lwx = 0; lwx < 4; lwx++) {
+				int32_t i = vram[lwx];
+				/* sub-x position */
+				for(int sx = 0; sx < 32; sx++) {
+					int color = ~(i >> 31);
+					i <<= 1;
+					write(color);
+					write(color);
+					write(color);
+				}
 			}
+
+			for(int i = 0; i < 6; i++)
+				write(border);
 		}
 		vram += 4;
 	}
+
+	for(int i = 0; i < 16 * 396; i++)
+		write(border);
+}
+
+void r61524_display_gray_128x64(uint32_t *vram)
+{
+	dma_transfer_wait(0);
+	r61524_start_frame(0, 395, 0, 223);
+
+	int border = 0xe71c; /* C_RGB(28, 28, 28) */
+
+	for(int i = 0; i < 16 * 396; i++)
+		write(border);
+
+	for(int y = 0; y < 64; y++) {
+		/* sub-y position */
+		for(int sy = 0; sy < 3; sy++) {
+			for(int i = 0; i < 6; i++)
+				write(border);
+
+			/* longword-x position */
+			for(int lwx = 0; lwx < 4; lwx++) {
+				int32_t i = vram[lwx];
+				/* sub-x position */
+				for(int sx = 0; sx < 32; sx++) {
+					int color = ~(i >> 31);
+					i <<= 1;
+					write(color);
+					write(color);
+					write(color);
+				}
+			}
+
+			for(int i = 0; i < 6; i++)
+				write(border);
+		}
+		vram += 4;
+	}
+
+	for(int i = 0; i < 16 * 396; i++)
+		write(border);
 }
 
 //---
