@@ -14,8 +14,12 @@
 #include "../render/render.h"
 #include <gint/config.h>
 
-// TODO: Move the gray "engine" into the T6K11 driver.
-#if GINT_RENDER_MONO && GINT_HW_FX
+#if GINT_HW_CG
+#include <gint/drivers/r61524.h>
+#endif
+
+// TODO: Move the gray "engine" part into the T6K11 driver.
+#if GINT_RENDER_MONO
 
 /* Three additional video RAMS, allocated statically if --static-gray was set
    at configure time, or with malloc() otherwise. */
@@ -25,6 +29,8 @@ GBSS static uint32_t gvrams[3][256];
 
 /* Four VRAMs: two to draw and two to display */
 static uint32_t *vrams[4] = { NULL, NULL, NULL, NULL };
+
+#if GINT_HW_FX
 
 /* Current VRAM pair used for drawing; the value can either be 0 (draws to
    VRAMs 0 and 1) or 2 (draws to VRAMs 2 and 3). */
@@ -39,6 +45,10 @@ static int runs = 0;
 #define GRAY_CLOCK TIMER_Pphi_64
 /* Delays of the light and dark frames for the above setting */
 GBSS static int delays[2];
+
+static int gray_int(void);
+
+#endif
 
 /* The alternate rendering mode structure used to override d*() */
 static struct rendering_mode const gray_mode = {
@@ -68,13 +78,16 @@ static struct rendering_mode const gray_exit_mode = {
 //	Engine control (init/quit and start/stop)
 //---
 
-static int gray_int(void);
 static void gray_quit(void);
 
 /* gray_isinit(): Check whether the engine is initialized and ready to run */
 static int gray_isinit(void)
 {
-	return (vrams[0] && vrams[1] && vrams[2] && vrams[3] && timer >= 0);
+	return (vrams[0] && vrams[1] && vrams[2] && vrams[3]
+#if GINT_HW_FX
+		&& timer >= 0
+#endif
+		);
 }
 
 /* gray_init(): Initialize the engine
@@ -95,6 +108,7 @@ GCONSTRUCTOR static void gray_init(void)
 	vrams[3] = malloc(1024);
 	#endif /* GINT_STATIC_GRAY */
 
+#if GINT_HW_FX
 	/* Default delays from Graph 35+E II are different from other models */
 	if(gint[HWCALC] == HWCALC_G35PE2)
 	{
@@ -110,6 +124,7 @@ GCONSTRUCTOR static void gray_init(void)
 	/* Try to obtain the timer right away */
 	timer = timer_configure(GRAY_TIMER | GRAY_CLOCK, 1000,
 		GINT_CALL(gray_int));
+#endif
 
 	/* On failure, release the resources that we obtained */
 	if(!gray_isinit()) gray_quit();
@@ -128,10 +143,13 @@ GDESTRUCTOR static void gray_quit(void)
 	vrams[3] = NULL;
 	#endif /* GINT_STATIC_GRAY */
 
+#if GINT_HW_FX
 	if(timer >= 0) timer_stop(timer);
 	timer = -1;
+#endif
 }
 
+#if GINT_HW_FX
 /* gray_start(): Start the gray engine */
 static void gray_start(void)
 {
@@ -148,6 +166,7 @@ static void gray_stop(void)
 	runs = 0;
 	st = 0;
 }
+#endif
 
 //---
 //	Dynamic udpate and rendering mode
@@ -201,6 +220,7 @@ int dgray(int mode)
 	return 0;
 }
 
+#if GINT_HW_FX
 /* gray_int(): Interrupt handler */
 int gray_int(void)
 {
@@ -232,6 +252,19 @@ int gupdate(void)
 	st ^= 2;
 	return 0;
 }
+#elif GINT_HW_CG
+int gupdate(void)
+{
+	if(dmode == &gray_exit_mode)
+	{
+		dmode = NULL;
+		return 1;
+	}
+
+	r61524_display_gray_128x64(vrams[0], vrams[1]);
+	return 0;
+}
+#endif
 
 //---
 //	Query and configuration functions
@@ -243,6 +276,7 @@ int dgray_enabled(void)
 	return (dmode == &gray_mode);
 }
 
+#if GINT_HW_FX
 /* dgray_setdelays(): Set the gray engine delays */
 void dgray_setdelays(uint32_t light, uint32_t dark)
 {
@@ -274,5 +308,12 @@ void dgray_getscreen(uint32_t **light, uint32_t **dark)
 	if(light) *light = vrams[base & 2];
 	if(dark) *dark = vrams[base | 1];
 }
+#elif GINT_HW_CG
+void dgray_getvram(uint32_t **light, uint32_t **dark)
+{
+	*light = vrams[0];
+	*dark = vrams[1];
+}
+#endif
 
 #endif /* GINT_RENDER_MONO && GINT_HW_FX */

@@ -238,12 +238,13 @@ void r61524_display_mono_128x64(uint32_t *vram)
 		write(border);
 }
 
-void r61524_display_gray_128x64(uint32_t *vram)
+void r61524_display_gray_128x64(uint32_t *light, uint32_t *dark)
 {
 	dma_transfer_wait(0);
 	r61524_start_frame(0, 395, 0, 223);
 
 	int border = 0xe71c; /* C_RGB(28, 28, 28) */
+	int colors[] = { 0x0000, 0x528a, 0xad55, 0xffff };
 
 	for(int i = 0; i < 16 * 396; i++)
 		write(border);
@@ -256,11 +257,13 @@ void r61524_display_gray_128x64(uint32_t *vram)
 
 			/* longword-x position */
 			for(int lwx = 0; lwx < 4; lwx++) {
-				int32_t i = vram[lwx];
+				int32_t il = light[lwx];
+				int32_t id = dark[lwx];
 				/* sub-x position */
 				for(int sx = 0; sx < 32; sx++) {
-					int color = ~(i >> 31);
-					i <<= 1;
+					int color = colors[(id >= 0) * 2 + (il >= 0)];
+					il <<= 1;
+					id <<= 1;
 					write(color);
 					write(color);
 					write(color);
@@ -270,7 +273,8 @@ void r61524_display_gray_128x64(uint32_t *vram)
 			for(int i = 0; i < 6; i++)
 				write(border);
 		}
-		vram += 4;
+		light += 4;
+		dark += 4;
 	}
 
 	for(int i = 0; i < 16 * 396; i++)

@@ -55,6 +55,12 @@ void r61524_display_rect(uint16_t *vram, int xmin, int xmax, int ymin,
    TODO: Make that a video mode. */
 void r61524_display_mono_128x64(uint32_t *vram);
 
+/* r61524_display_mono_128x64(): Display a gray-style VRAM
+   This experimental function updates the display with the contents of a 128x64
+   gray VRAM pair, used with the fxg3a compilation target.
+   TODO: Make that a video mode. */
+void r61524_display_gray_128x64(uint32_t *light, uint32_t *dark);
+
 /* r61524_start_frame(): Prepare the display for a region update
 
    This function sets up the display driver to receive graphics data to update
