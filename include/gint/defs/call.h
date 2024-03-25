@@ -144,6 +144,19 @@ typedef struct {
 /* GINT_CALL_NULL: Empty function call */
 #define GINT_CALL_NULL ((gint_call_t){ .function = NULL, .args = {} })
 
+/* GINT_CALL_FLAG(): Build an indirect call to an odd address
+
+   This is used as a workaround to have an extra flag in gint_call_t structures
+   without altering their size and exploits the fact that SuperH code has to be
+   aligned on even addresses.
+   It is up to the caller to notice the presence of the flag and realign the
+   address properly.
+
+   This flag is currently only checked by gint_inth_callback to specify that the
+   called function will take the interrupt context as its first argument. */
+#define GINT_CALL_FLAG(func, ...) \
+	GINT_CALL((void*)((uint32_t)(func) | 1), __VA_ARGS__)
+
 /* gint_call(): Perform an indirect call */
 static GINLINE int gint_call(gint_call_t cb)
 {

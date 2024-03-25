@@ -130,6 +130,11 @@ void *intc_handler(int event_code, void const *handler, size_t size);
    the numerous constraints of intc_handler(), at the cost of always going back
    to userspace and a small time overhead.
 
+   Since gint_inth_callback is used to do the heavy lifting of setting up a sane
+   context for C code, the gint_call_t object can be built with GINT_CALL_FLAG
+   if the called function expects a gint_inth_callback_context_t structure as its
+   first argument.
+
    @event_code  Identifier of the interrupt block
    @function    Function to use as a handler
    Returns true on success, false if the event code is invalid. */

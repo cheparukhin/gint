@@ -70,6 +70,8 @@ set(SOURCES
   src/fs/fugue/fugue_rmdir.c
   src/fs/fugue/fugue_unlink.c
   src/fs/fugue/util.c
+  # GDB remote serial protocol
+  src/gdb/gdb.c
   # Gray engine
   src/gray/engine.c
   src/gray/gclear.c
@@ -227,6 +229,9 @@ set(SOURCES
   src/tmu/inth-tmu.s
   src/tmu/sleep.c
   src/tmu/tmu.c
+  # UBC driver
+  src/ubc/ubc.c
+  src/ubc/ubc.S
   # USB driver
   src/usb/asyncio.c
   src/usb/classes/ff-bulk.c

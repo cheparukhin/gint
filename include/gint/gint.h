@@ -155,9 +155,28 @@ static GINLINE void *gint_inthandler(int code, void const *h, size_t size) {
    .callback:
         .long	_gint_inth_callback
 
+   The gint_call_t object can be built with GINT_CALL_FLAG to specify that the
+   called function should get a pointer to a gint_inth_callback_context_t
+   strcture as its first argument.
+
    @call  Address of a gint_call_t object
    Returns the return value of the callback. */
 extern int (*gint_inth_callback)(gint_call_t const *call);
+
+/* gint_inth_callback_context_t: Context of the interrupted function when an
+   interrupt is handled by gint_inth_callback. */
+typedef struct {
+	uint32_t ssr;
+	uint32_t spc;
+	uint32_t r7;
+	uint32_t r6;
+	uint32_t r5;
+	uint32_t r4;
+	uint32_t r3;
+	uint32_t r2;
+	uint32_t r1;
+	uint32_t r0;
+} gint_inth_callback_context_t;
 
 /* gint_set_quit_handler(): Setup a call to be invoked when leaving the add-in
 
