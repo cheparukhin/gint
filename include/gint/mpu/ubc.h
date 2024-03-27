@@ -22,20 +22,21 @@ typedef volatile struct
 		uint32_t SZ	:3; /* Operand Size Select */
 		uint32_t	:4;
 		uint32_t CD	:2; /* Bus Select */
-		uint32_t ID	:2; /* Instruction Fetch / Operand Access Select */
+		uint32_t ID	:2; /* Ins. Fetch / Operand Access Select */
 		uint32_t	:1;
 		uint32_t RW	:2; /* Bus Command Select */
 		uint32_t CE	:1; /* Channel Enable */
 	);
 	lword_union(CRR0, /* Match operation setting 0 */
-		uint32_t	:30;
+		uint32_t	:18;
+		uint32_t _1	:1; /* Always set to 1 */
+		uint32_t	:11;
 		uint32_t PCB	:1; /* PC Break Select */
 		uint32_t BIE	:1; /* Break Enable */
 	);
 	uint32_t CAR0; /* Match address setting 0 */
 	uint32_t CAMR0; /* Match address mask setting 0 */
 	pad(0x10);
-
 
 	lword_union(CBR1, /* Match condition setting 1 */
 		uint32_t MFE	:1; /* Match Flag Enable */
@@ -47,13 +48,15 @@ typedef volatile struct
 		uint32_t ETBE	:1; /* Execution Count Value Enable */
 		uint32_t	:3;
 		uint32_t CD	:2; /* Bus Select */
-		uint32_t ID	:2; /* Instruction Fetch / Operand Access Select */
+		uint32_t ID	:2; /* Ins. Fetch / Operand Access Select */
 		uint32_t	:1;
 		uint32_t RW	:2; /* Bus Command Select */
 		uint32_t CE	:1; /* Channel Enable */
 	);
 	lword_union(CRR1, /* Match operation setting 1 */
-		uint32_t	:30;
+		uint32_t	:18;
+		uint32_t _1	:1; /* Always set to 1 */
+		uint32_t	:11;
 		uint32_t PCB	:1; /* PC Break Select */
 		uint32_t BIE	:1; /* Break Enable */
 	);

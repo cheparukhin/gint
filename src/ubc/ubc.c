@@ -55,9 +55,6 @@ static void hpoweroff(void)
 } while (0)
 bool ubc_set_breakpoint(int channel, void* break_address, ubc_break_mode_t break_mode)
 {
-	if (!hpowered())
-		hpoweron();
-
 	uint32_t pcb = break_mode == UBC_BREAK_AFTER ? 1 : 0;
 	if (channel == 0) {
 		UBC_BREAK_CHANNEL(CBR0, CRR0, CAR0, CAMR0);
@@ -73,9 +70,6 @@ bool ubc_set_breakpoint(int channel, void* break_address, ubc_break_mode_t break
 
 bool ubc_get_break_address(int channel, void** break_address)
 {
-	if (!hpowered())
-		hpoweron();
-
 	if (channel == 0 && UBC.CBR0.CE) {
 		*break_address = (void*) UBC.CAR0;
 		return true;
@@ -89,9 +83,6 @@ bool ubc_get_break_address(int channel, void** break_address)
 
 bool ubc_disable_channel(int channel)
 {
-	if (!hpowered())
-		hpoweron();
-
 	if (channel == 0) {
 		UBC.CBR0.CE = 0;
 		return true;
