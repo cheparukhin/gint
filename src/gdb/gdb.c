@@ -168,9 +168,14 @@ static ssize_t gdb_send_packet(const char* packet, size_t packet_length)
 	return buffer_length;
 }
 
+static int gdb_signal_number = 0;
+
 static void gdb_send_stop_reply(void)
 {
-	gdb_send_packet("S05", 3); // SIGTRAP
+	char str[4] = "S00";
+	uint8_t num = gdb_signal_number ? gdb_signal_number : 5 /* SIGTRAP */;
+	gdb_hexlify(str+1, &num, 1);
+	gdb_send_packet(str, 3);
 }
 
 static void gdb_handle_qXfer_packet(const char* packet, const char* data, size_t data_size)
@@ -586,6 +591,8 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 ret:
 	// We're started after the first round of exchanges
 	gdb_started = true;
+
+	gdb_signal_number = 0;
 }
 
 static void gdb_notifier_function(void)
@@ -629,6 +636,19 @@ static int gdb_panic_handler(uint32_t code)
 		uint32_t spc;
 		__asm__("stc spc, %0" : "=r"(spc));
 		gdb_handle_single_step(spc, UBC_BREAK_BEFORE);
+
+		// Break reason
+		if(code == 0x040 || code == 0x060 || code == 0x0e0 || code == 0x100)
+			gdb_signal_number = 11; /* SIGSEGV */
+		if(code == 0x160)
+			gdb_signal_number = 5; /* SIGTRAP */
+		if(code == 0x180 || code == 0x1a0)
+			gdb_signal_number = 4; /* SIGILL */
+		if(code >= 0x1000 && code != 0x10a0)
+			gdb_signal_number = 5; /* SIGTRAP */
+		if(code == 0x10a0)
+			gdb_signal_number = 7; /* SIGEMT (used here for bad UBC breaks) */
+
 		return 0;
 	}
 	return 1;
