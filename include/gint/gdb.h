@@ -11,19 +11,12 @@ extern "C" {
 
 #include <stdint.h>
 
-/* Error codes for GDB functions */
-enum {
-	GDB_NO_INTERFACE = -1,
-	GDB_ALREADY_STARTED = -2,
-	GDB_USB_ERROR = -3,
-};
-
 /* gdb_cpu_state_t: State of the CPU when breaking
    This struct keep the same register indices as those declared by GDB to allow
    easy R/W without needing a "translation" table.
    See : https://sourceware.org/git/?p=binutils-gdb.git;a=blob;f=gdb/sh-tdep.c;
          h=c402961b80a0b4589243023ea5362d43f644a9ec;hb=4f3e26ac6ee31f7bc4b04abd
-         8bdb944e7f1fc5d2#l327
+         8bdb944e7f1fc5d2#l361
  */
 // TODO : Should we expose r*b*, ssr, spc ? are they double-saved when breaking
 //        inside an interrupt handler ?
@@ -60,17 +53,27 @@ typedef struct {
 
 /* gdb_start(): Start the GDB remote serial protocol server
 
-   This function will start the GDB remote serial protocol implementation and
-   block until the program is resumed from the connected debugger.
-   It currently only supports USB communication and will fail if USB is already
-   in use.*/
+   This function starts the GDB stub (program that communicates with GDB). It
+   takes over USB, and returns once communication is established with a GDB
+   instance on the computer. Normally this is called by the panic handler after
+   a crash. It can also be called manually, in which case it should be followed
+   by a call to gdb_main() with the current state (NULL if you don't have any).
+
+   If the GDB stub is already started, this is a no-op. Returns 0 on success
+   and a negative value if the USB setup fails. */
 int gdb_start(void);
 
 /* gdb_main(): Main GDB loop
+   Main loop for when the program is in a paused state. Communicates with GDB
+   over USB and mutates the cpu_state struct, memory and the UBC configuration
+   accordingly. Returns once the program should resume. */
+void gdb_main(gdb_cpu_state_t *cpu_state);
 
-   This function handles GDB messages sent over USB and will mutate the cpu_state
-   struct, memory and the UBC configuration accordingly. */
-void gdb_main(gdb_cpu_state_t* cpu_state);
+/* gdb_start_on_exception(): Set the GDB stub to autostart on crashes
+   This function sets a crash handler that starts the GDB stub whenever a
+   System ERROR occurs. */
+// TODO: Get some visible signal on-screen when that happens
+void gdb_start_on_exception(void);
 
 #ifdef __cplusplus
 }

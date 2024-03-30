@@ -90,6 +90,9 @@ void usb_open_wait(void);
 /* usb_is_open(): Check whether the USB link is active */
 bool usb_is_open(void);
 
+/* usb_is_open_interface(): Check whether a particular interface is open */
+bool usb_is_open_interface(usb_interface_t const *interface);
+
 /* usb_close(): Close the USB link
 
    This function closes the link opened by usb_open(), and notifies the host of

@@ -38,11 +38,7 @@ static uint32_t gdb_unhexlify(const char* input_string)
 	return gdb_unhexlify_sized(input_string, strlen(input_string));
 }
 
-static enum {
-	GDB_STATE_STOPPED,
-	GDB_STATE_FIRST_BREAK,
-	GDB_STATE_STARTED,
-} GPACKEDENUM gdb_state = GDB_STATE_STOPPED;
+static bool gdb_started = false;
 
 static void gdb_send(const char *data, size_t size)
 {
@@ -52,6 +48,16 @@ static void gdb_send(const char *data, size_t size)
 	int pipe = usb_ff_bulk_output();
 	usb_write_sync(pipe, &header, sizeof(header), false);
 	usb_write_sync(pipe, data, size, false);
+	usb_commit_sync(pipe);
+}
+
+static void gdb_send_start(void)
+{
+	usb_fxlink_header_t header;
+	usb_fxlink_fill_header(&header, "gdb", "start", 0);
+
+	int pipe = usb_ff_bulk_output();
+	usb_write_sync(pipe, &header, sizeof(header), false);
 	usb_commit_sync(pipe);
 }
 
@@ -488,6 +494,13 @@ static void gdb_handle_single_step(uint32_t pc, ubc_break_mode_t break_mode)
 
 void gdb_main(gdb_cpu_state_t* cpu_state)
 {
+	if (!gdb_started && gdb_start()) {
+		// TODO: Visual signal "GDB stub error"
+		return;
+	}
+
+	// TODO: Visual signal "GDB stub idle"
+
 	if (gdb_single_step_backup.single_stepped) {
 		if (gdb_single_step_backup.channel0_used) {
 			ubc_set_breakpoint(0, gdb_single_step_backup.channel0_addr, UBC_BREAK_BEFORE);
@@ -508,12 +521,16 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 	}
 
 	while (1) {
+		// TODO: Visual signal "GDB stub communicating"
+
 		char packet_buffer[256];
 		ssize_t packet_size = gdb_recv_packet(packet_buffer, sizeof(packet_buffer));
 		if (packet_size <= 0) {
 			// TODO : Should we break or log on recv error ?
 			continue;
 		}
+
+		// TODO: Visual signal "GDB stub working"
 
 		switch (packet_buffer[0]) {
 			case '?': // Halt reason
@@ -544,7 +561,6 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 
 			case 'k': // Kill request
 				abort();
-				return;
 
 			case 'Z':
 				gdb_handle_insert_hardware_breakpoint(packet_buffer);
@@ -555,21 +571,27 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 
 			case 's':
 				gdb_handle_single_step(cpu_state->reg.pc, UBC_BREAK_AFTER);
-				return;
+				goto ret;
 			case 'c': // Continue
-				return;
+				goto ret;
 
 			default: // Unsupported packet
 				gdb_send_packet(NULL, 0);
 				break;
 		}
+
+		// TODO: Visual signal "GDB stub idle"
 	}
+
+ret:
+	// We're started after the first round of exchanges
+	gdb_started = true;
 }
 
 static void gdb_notifier_function(void)
 {
 	// We ignore fxlink notifications when we're already inside GDB code.
-	if (ubc_dbh_lock || gdb_state != GDB_STATE_STARTED)
+	if (ubc_dbh_lock || !gdb_started)
 		return;
 
 	// We make sure we are called during a USB interrupt.
@@ -585,7 +607,7 @@ static void gdb_notifier_function(void)
 
 static int gdb_panic_handler(uint32_t code)
 {
-	// If we are currently expecting to handle TLB misses
+	// Catch memory access errors from GDB trying to read/print stuff
 	if (gdb_tlbh_enable) {
 		// We only handle TLB miss reads (0x040) and writes (0x060)
 		if (code != 0x040 && code != 0x060)
@@ -598,11 +620,12 @@ static int gdb_panic_handler(uint32_t code)
 		return 0;
 	}
 	// If we are in user code, let's break
-	else if (!ubc_dbh_lock && gdb_state == GDB_STATE_STARTED) {
+	else if (!ubc_dbh_lock) {
 		// We make sure an other step break is not already set up
 		if (gdb_single_step_backup.single_stepped)
 			return 1;
 
+		// TODO: This only works for re-execution type exceptions
 		uint32_t spc;
 		__asm__("stc spc, %0" : "=r"(spc));
 		gdb_handle_single_step(spc, UBC_BREAK_BEFORE);
@@ -613,32 +636,35 @@ static int gdb_panic_handler(uint32_t code)
 
 int gdb_start(void)
 {
-	if (gdb_state != GDB_STATE_STOPPED) {
-		return GDB_ALREADY_STARTED;
+	if (gdb_started)
+		return 0;
+
+	if(usb_is_open() && !usb_is_open_interface(&usb_ff_bulk))
+		usb_close();
+
+	if(!usb_is_open()) {
+		usb_interface_t const *interfaces[] = { &usb_ff_bulk, NULL };
+		if(usb_open(interfaces, GINT_CALL_NULL) < 0)
+			return -1;
+		usb_open_wait();
 	}
 
-	if (usb_is_open()) {
-		return GDB_NO_INTERFACE;
-	}
+	usb_fxlink_set_notifier(gdb_notifier_function);
+	gdb_send_start();
 
 	if (!gdb_recv_buffer) {
 		gdb_recv_buffer = malloc(gdb_recv_buffer_capacity);
 	}
 
-	usb_interface_t const *interfaces[] = { &usb_ff_bulk, NULL };
-	if (usb_open(interfaces, GINT_CALL_NULL) < 0) {
-		return GDB_USB_ERROR;
-	}
-	usb_open_wait();
-	usb_fxlink_set_notifier(gdb_notifier_function);
-
 	// TODO : Should we detect if other panic or debug handlers are setup ?
 	gint_exc_catch(gdb_panic_handler);
-
 	ubc_set_debug_handler(gdb_main);
 
-	gdb_state = GDB_STATE_FIRST_BREAK;
-	gdb_main(NULL);
-	gdb_state = GDB_STATE_STARTED;
 	return 0;
+}
+
+void gdb_start_on_exception(void)
+{
+	gint_exc_catch(gdb_panic_handler);
+	ubc_set_debug_handler(gdb_main);
 }

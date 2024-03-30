@@ -229,6 +229,19 @@ bool usb_is_open(void)
 	return usb_open_status;
 }
 
+bool usb_is_open_interface(usb_interface_t const *interface)
+{
+	if(!usb_is_open())
+		return false;
+
+	usb_interface_t const * const *open = usb_configure_interfaces();
+	for(int i = 0; open[i]; i++) {
+		if(open[i] == interface)
+			return true;
+	}
+	return false;
+}
+
 void usb_open_wait(void)
 {
 	while(!usb_open_status) sleep();

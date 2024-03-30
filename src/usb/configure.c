@@ -8,7 +8,8 @@
 //---
 
 /* Current configuration: list of interfaces and endpoint assignments */
-static usb_interface_t const *conf_if[16];
+#define MAX_INTERFACES 16 /* actually 15 */
+static usb_interface_t const *conf_if[MAX_INTERFACES];
 static endpoint_t *conf_ep;
 
 GCONSTRUCTOR static void usb_alloc(void)
@@ -86,7 +87,7 @@ static int find_pipe(int type)
 int usb_configure_solve(usb_interface_t const **interfaces)
 {
 	/* Reset the previous configuration */
-	memset(conf_if, 0, 16 * sizeof *conf_if);
+	memset(conf_if, 0, MAX_INTERFACES * sizeof *conf_if);
 	memset(conf_ep, 0, 32 * sizeof *conf_ep);
 
 	/* Next interface number to assign */
@@ -98,7 +99,8 @@ int usb_configure_solve(usb_interface_t const **interfaces)
 
 	for(int i = 0; interfaces[i]; i++)
 	{
-		if(i == 16) return USB_OPEN_TOO_MANY_INTERFACES;
+		if(i == MAX_INTERFACES - 1)
+			return USB_OPEN_TOO_MANY_INTERFACES;
 		usb_interface_t const *intf = interfaces[i];
 
 		conf_if[next_interface++] = intf;
@@ -180,7 +182,7 @@ void usb_configure_log(void)
 {
 #ifdef GINT_USB_DEBUG
 	/* Log the final configuration */
-	for(int i = 0; i < 16 && conf_if[i]; i++)
+	for(int i = 0; conf_if[i]; i++)
 		USB_LOG("Interface #%d: %p\n", i, conf_if[i]);
 
 	for(int i = 0; i < 32; i++)
