@@ -220,10 +220,14 @@ static void gdb_handle_qXfer_packet(const char* packet, const char* data, size_t
 static const char gdb_memory_map_xml[] = "<?xml version=\"1.0\"?>"
 "<!DOCTYPE memory-map PUBLIC \"+//IDN gnu.org//DTD GDB Memory Map V1.0//EN\" \"http://sourceware.org/gdb/gdb-memory-map.dtd\">"
 "<memory-map>"
-	"<memory type=\"rom\" start=\"0x00300000\" length=\"0x00200000\"/>" // add-in rom
-	"<memory type=\"ram\" start=\"0x08100000\" length=\"0x00080000\"/>" // add-in ram
-	"<memory type=\"ram\" start=\"0x8c000000\" length=\"0x01000000\"/>" // fx-CG50 stack
-	"<memory type=\"ram\" start=\"0x88000000\" length=\"0x01000000\"/>" // Prizm stack
+	// P0 mapping of add-in file
+	"<memory type=\"rom\" start=\"0x00300000\" length=\"0x00200000\"/>"
+	// P0 mapping of user RAM area
+	"<memory type=\"ram\" start=\"0x08100000\" length=\"0x00080000\"/>"
+	// Physical mapping of RAM chip (fx-CG 50)
+	"<memory type=\"ram\" start=\"0x8c000000\" length=\"0x01000000\"/>"
+	// Physical mapping of RAM chip (fx-CG 10/20 + emulator)
+	"<memory type=\"ram\" start=\"0x88000000\" length=\"0x01000000\"/>"
 "</memory-map>";
 
 static void gdb_handle_query_packet(const char* packet)
@@ -479,6 +483,33 @@ static void gdb_handle_remove_hardware_breakpoint(const char* packet)
 	gdb_send_packet("OK", 2);
 }
 
+static void gdb_handle_continue_with_signal(gdb_cpu_state_t* cpu_state,
+	const char* packet)
+{
+	packet++; // consume 'C'
+	int signal = gdb_unhexlify_sized(packet, 2);
+	char exit[4] = { 'X', packet[0], packet[1], 0 };
+	packet += 2;
+
+	if(*packet == ';')
+		cpu_state->reg.pc = gdb_unhexlify(packet + 1);
+
+	// TODO: This is a heuristic replacing the normal signal system
+	uint32_t kills =
+		  (1 << 4) /* SIGILL */
+		+ (1 << 6) /* SIGABRT */
+		+ (1 << 7) /* SIGEMT */
+		+ (1 << 8) /* SIGFPE */
+		+ (1 << 9) /* SIGKILL */
+		+ (1 << 11) /* SIGSEGV */
+		+ (1 << 15); /* SIGTERM */
+	// Abort if the signal is kill by default
+	if((uint)signal < 32 && (kills >> signal) & 1) {
+		gdb_send_packet(exit, 3);
+		abort();
+	}
+}
+
 static struct {
 	bool single_stepped;
 	bool channel0_used;
@@ -578,6 +609,10 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 				gdb_handle_single_step(cpu_state->reg.pc, UBC_BREAK_AFTER);
 				goto ret;
 			case 'c': // Continue
+				goto ret;
+			case 'C': // Continue with signal
+				gdb_handle_continue_with_signal(cpu_state, packet_buffer);
+				// We'll often abort() at the signal rather than continuing
 				goto ret;
 
 			default: // Unsupported packet
