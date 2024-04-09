@@ -4,11 +4,39 @@
 #include <gint/ubc.h>
 #include <gint/usb-ff-bulk.h>
 #include <gint/usb.h>
+#include <gint/video.h>
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define GDB_VISUAL_FEEDBACK 1
+
+#if GDB_VISUAL_FEEDBACK
+
+enum { ICON_WORKING, ICON_ERROR, ICON_COMM, ICON_IDLE };
+
+static void gdb_show_stub_status(int icon)
+{
+	video_mode_t const *M = video_get_current_mode();
+	if(!M)
+		return;
+
+	// extern image_t gint_gdb_icons_i1msb;
+	extern image_t gint_gdb_icons_rgb565;
+
+	if(M->format == IMAGE_RGB565) {
+		image_t sub;
+		image_sub(&gint_gdb_icons_rgb565, 6*icon, 0, 7, 7, &sub);
+		if(!video_update(M->width-7, 0, &sub, 0))
+			abort();
+	}
+}
+
+#else
+# define gdb_show_stub_status(...) ((void)0)
+#endif
 
 static void gdb_hexlify(char* output_string, const uint8_t* input_buffer, size_t input_size)
 {
@@ -531,11 +559,11 @@ static void gdb_handle_single_step(uint32_t pc, ubc_break_mode_t break_mode)
 void gdb_main(gdb_cpu_state_t* cpu_state)
 {
 	if (!gdb_started && gdb_start()) {
-		// TODO: Visual signal "GDB stub error"
+		gdb_show_stub_status(ICON_ERROR);
 		return;
 	}
 
-	// TODO: Visual signal "GDB stub idle"
+	gdb_show_stub_status(ICON_IDLE);
 
 	if (gdb_single_step_backup.single_stepped) {
 		if (gdb_single_step_backup.channel0_used) {
@@ -557,7 +585,7 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 	}
 
 	while (1) {
-		// TODO: Visual signal "GDB stub communicating"
+		gdb_show_stub_status(ICON_COMM);
 
 		char packet_buffer[256];
 		ssize_t packet_size = gdb_recv_packet(packet_buffer, sizeof(packet_buffer));
@@ -566,7 +594,7 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 			continue;
 		}
 
-		// TODO: Visual signal "GDB stub working"
+		gdb_show_stub_status(ICON_WORKING);
 
 		switch (packet_buffer[0]) {
 			case '?': // Halt reason
@@ -620,7 +648,7 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 				break;
 		}
 
-		// TODO: Visual signal "GDB stub idle"
+		gdb_show_stub_status(ICON_IDLE);
 	}
 
 ret:

@@ -9,126 +9,115 @@
 #include <gint/drivers/states.h>
 #include <gint/dma.h>
 #include <gint/drivers/r61524.h>
+#include <gint/video.h>
+#include <gint/image.h>
 #include <gint/config.h>
 
 #if GINT_HW_CG
 
-#define DMA SH7305_DMA
-#define POWER SH7305_POWER
-
-//---
-//	Device specification sheet
-//---
-
-/* Registers and operations */
-enum {
-	device_code_read		= 0x000,
-	driver_output_control		= 0x001,
-	entry_mode			= 0x003,
-	display_control_2		= 0x008,
-	low_power_control		= 0x00b,
-
-	ram_address_horizontal		= 0x200,
-	ram_address_vertical		= 0x201,
-	write_data			= 0x202,
-
-	horizontal_ram_start		= 0x210,
-	horizontal_ram_end		= 0x211,
-	vertical_ram_start		= 0x212,
-	vertical_ram_end		= 0x213,
-};
-
-typedef word_union(entry_mode_t,
-	uint TRI	:1;
-	uint DFM	:1;
-	uint		:1;
-	uint BGR	:1;
-	uint		:2;
-	uint HWM	:1;
-	uint		:1;
-	uint ORG	:1;
-	uint		:1;
-	uint ID		:2;
-	uint AM		:1;
-	uint		:1;
-	uint EPF	:2;
-);
-
-//---
-//	Device communication primitives
-//---
+/* Registers */
+#define REG_DEVICE_CODE_READ    0x000
+#define REG_DRIVER_OUTPUT_CTL   0x001
+#define REG_ENTRY_MODE          0x003
+#define REG_DISPLAY_CTL2        0x008
+#define REG_LOW_POWER_CTL       0x00b
+#define REG_HADDR               0x200
+#define REG_VADDR               0x201
+#define REG_DATA                0x202
+#define REG_HSTART              0x210
+#define REG_HEND                0x211
+#define REG_VSTART              0x212
+#define REG_VEND                0x213
 
 /* Interface with the controller */
-static volatile uint16_t *intf = (void *)0xb4000000;
+static volatile uint16_t *DISPLAY = (void *)0xb4000000;
 /* Bit 4 of Port R controls the RS bit of the display driver */
 static volatile uint8_t *PRDR = (void *)0xa405013c;
 
+/* Select a register */
 GINLINE static void select(uint16_t reg)
 {
 	/* Clear RS and write the register number */
 	*PRDR &= ~0x10;
 	synco();
-	*intf = reg;
+	*DISPLAY = reg;
 	synco();
-
-	/* Set RS back. We don't do this in read()/write() because the display
-	   driver is optimized for consecutive GRAM access. LCD-transfers will
-	   be faster when executing select() followed by several calls to
-	   write(). (Although most applications should use the DMA instead.) */
+	/* Set RS=1 to allow consecutive reads/writes after a select() */
 	*PRDR |= 0x10;
 	synco();
 }
 
-GINLINE static uint16_t read(void)
-{
-	return *intf;
-}
-
 GINLINE static void write(uint16_t data)
 {
-	*intf = data;
+	*DISPLAY = data;
 }
 
-uint16_t r61524_get(int ID)
+GINLINE uint16_t r61524_get(int ID)
 {
 	select(ID);
-	return read();
+	return *DISPLAY;
 }
 
-void r61524_set(int ID, uint16_t value)
+GINLINE void r61524_set(int ID, uint16_t value)
 {
 	select(ID);
-	write(value);
+	*DISPLAY = value;
 }
 
 //---
-//	Window management
+// Window management
 //---
 
 void r61524_win_get(uint16_t *HSA, uint16_t *HEA, uint16_t *VSA, uint16_t *VEA)
 {
-	select(horizontal_ram_start);
-	*HSA = read();
-	select(horizontal_ram_end);
-	*HEA = read();
-
-	select(vertical_ram_start);
-	*VSA = read();
-	select(vertical_ram_end);
-	*VEA = read();
+	*HSA = r61524_get(REG_HSTART);
+	*HEA = r61524_get(REG_HEND);
+	*VSA = r61524_get(REG_VSTART);
+	*VEA = r61524_get(REG_VEND);
 }
 
 void r61524_win_set(uint16_t HSA, uint16_t HEA, uint16_t VSA, uint16_t VEA)
 {
-	select(horizontal_ram_start);
-	write(HSA);
-	select(horizontal_ram_end);
-	write(HEA);
+	r61524_set(REG_HSTART, HSA);
+	r61524_set(REG_HEND, HEA);
+	r61524_set(REG_VSTART, VSA);
+	r61524_set(REG_VEND, VEA);
+}
 
-	select(vertical_ram_start);
-	write(VSA);
-	select(vertical_ram_end);
-	write(VEA);
+//---
+// Backlight management
+//---
+
+void r61525_brightness_set(int level)
+{
+	bool GLOBAL_backlight_high_bit[7] = { /* at 0x80399530 */
+	    false, false, false, false,
+	    true, true, true,
+	};
+	uint8_t GLOBAL_backlight_table[7] = { /* at 0x80399537 */
+	    0x14, 0x4b, 0x78, 0xd2,
+	    0x6e, 0xa0, 0xc8,
+	};
+	uint8_t GLOBAL_0[10] = { /* at 0x8039953e */
+	    0x00, 0x01, 0x02, 0x03, 0x07,
+	    0x0f, 0x1f, 0x3f, 0x7f, 0xff,
+	};
+
+	if(level < 1)
+		level = 1;
+	if(level > 5)
+		level = 5;
+
+	int8_t volatile *PNDR = (void *)0xa4050138;
+	if(GLOBAL_backlight_high_bit[level])
+		*PNDR |= 0x10;
+	else
+		*PNDR &= 0xef;
+
+	synco();
+
+	r61524_set(0x5a2, GLOBAL_0[(level < 2) ? 9 : 5]);
+	r61524_set(0x5a1, GLOBAL_backlight_table[level]);
 }
 
 //---
@@ -141,13 +130,11 @@ void r61524_start_frame(int xmin, int xmax, int ymin, int ymax)
 {
 	/* Move the window to the desired region, then select address 0 */
 	r61524_win_set(395-xmax, 395-xmin, ymin, ymax);
-	select(ram_address_horizontal);
-	write(0);
-	select(ram_address_vertical);
-	write(0);
+	r61524_set(REG_HADDR, 0);
+	r61524_set(REG_VADDR, 0);
 
 	/* Bind address 0xb4000000 to the data write command */
-	select(write_data);
+	select(REG_DATA);
 }
 
 void r61524_display(uint16_t *vram, int start, int height, int method)
@@ -281,6 +268,45 @@ void r61524_display_gray_128x64(uint32_t *light, uint32_t *dark)
 		write(border);
 }
 
+static bool r61524_update(int x, int y, image_t const *fb, int flags)
+{
+	// TODO: r61524_update: Handle the mono cases
+	if(fb->format != IMAGE_RGB565)
+		return false;
+
+	uint w = fb->width;
+	uint h = fb->height;
+
+	dma_transfer_wait(0);
+	r61524_start_frame(x, x+w-1, y, y+h-1);
+
+	/* DMA if enabled */
+	bool dma_possible = (!x && w == 396 && fb->stride == 396*2 && !(h%4));
+	if((flags & VIDEO_UPDATE_ENABLE_DMA) && dma_possible) {
+		void *src = fb->data;
+		void *dst = (void *)DISPLAY;
+		int blocks = 99 * (h / 4);
+
+		if(flags & VIDEO_UPDATE_ATOMIC)
+			dma_transfer_atomic(0, DMA_32B, blocks, src, DMA_INC,
+				dst, DMA_FIXED);
+		else
+			dma_transfer_async(0, DMA_32B, blocks, src, DMA_INC,
+				dst, DMA_FIXED, GINT_CALL_NULL);
+		return true;
+	}
+
+	uint16_t *pixels = fb->data;
+
+	for(int y = 0; y < fb->height; y++) {
+		for(int x = 0; x < fb->width; x++)
+			write(pixels[x]);
+		pixels = (void *)pixels + fb->stride;
+	}
+
+	return true;
+}
+
 //---
 // State and driver metadata
 //---
@@ -302,5 +328,34 @@ gint_driver_t drv_r61524 = {
 	.state_size   = sizeof(r61524_state_t),
 };
 GINT_DECLARE_DRIVER(26, drv_r61524);
+
+//---
+// Video driver interface
+//---
+
+static video_mode_t r61524_modes[] = {
+	/* Standard full-screen full-color mode */
+	{ 396, 224, IMAGE_RGB565, -1 },
+#if 0
+	/* R61524 8-color mode with lower power consumption */
+	{ 396, 224, IMAGE_P8_RGB565, -1 }, // TODO: actually P3, that's closest
+	/* T6K11-emulation black-and-white mode */
+	{ 128, 64, IMAGE_I1MSB, -1 },
+	/* T6K11-emulation gray mode */
+	{ 128, 64, IMAGE_2I1MSB, -1 },
+#endif
+	{ 0 }
+};
+
+video_interface_t r61524_video = {
+	.driver          = &drv_r61524,
+	.modes           = r61524_modes,
+	.mode_get        = NULL, // TODO
+	.mode_set        = NULL, // TODO
+	.brightness_min  = 0, // TODO
+	.brightness_max  = 0, // TODO
+	.brightness_set  = NULL,
+	.update          = r61524_update,
+};
 
 #endif /* GINT_HW_CG */

@@ -243,10 +243,12 @@ set(SOURCES
   src/usb/string.c
   src/usb/usb.c
   src/usb/write4.S
+  # Video driver interface
+  src/video/video.c
 )
 
-set(ASSETS_FX src/font5x7.png)
-set(ASSETS_CG src/font8x9.png)
+set(ASSETS_FX src/font5x7.png src/gdb/icons-i1msb.png)
+set(ASSETS_CG src/font8x9.png src/gdb/icons-rgb565.png)
 fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 
 include_directories(

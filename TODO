@@ -53,3 +53,14 @@ R61524:
   mode 1 :   i3???   396x224  @? Hz
   mode 2 :   i1msb   128x64   @? Hz # <- for g1a emulation :)
   mode 3 :   2i1msb  128x64   @? Hz # <- for g1a emulation :)
+
+enum {
+    /* Indexed 1-bit, 0 is white, 1 is black. Row-major, left-to-right, each
+       row a set of 4-byte values with leftmost pixel on the MSB. */
+    IMAGE_FORMAT_I1MSB,
+    /* Indexed 2-bit: white, light gray, dark gray, black. Represented as a
+       pair of I1MSB buffers, the first being bit #0, the second bit #1. */
+    IMAGE_FORMAT_2I1MSB,
+    /* 16-bit RGB565. Row-major, left-to-right. */
+    IMAGE_FORMAT_RGB565,
+};

@@ -35,8 +35,6 @@ extern "C" {
 #endif
 
 #include <gint/config.h>
-#if GINT_RENDER_RGB
-
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
 
@@ -167,6 +165,8 @@ enum {
 //---
 // Image creation and destruction
 //---
+
+#if GINT_RENDER_RGB
 
 /* image_alloc(): Create a new (uninitialized) image
 
