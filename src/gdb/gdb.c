@@ -5,6 +5,8 @@
 #include <gint/usb-ff-bulk.h>
 #include <gint/usb.h>
 #include <gint/video.h>
+#include <gint/display.h>
+#include <gint/config.h>
 
 #include <ctype.h>
 #include <stdio.h>
@@ -19,11 +21,16 @@ enum { ICON_WORKING, ICON_ERROR, ICON_COMM, ICON_IDLE };
 
 static void gdb_show_stub_status(int icon)
 {
+// TODO[3]: Use normal way for both fx and cg (and remove display.h include)
+#if GINT_RENDER_MONO
+	extern bopti_image_t gint_gdb_icons_i1msb;
+	dsubimage(120, 0, &gint_gdb_icons_i1msb, 8*icon, 0, 8, 5, DIMAGE_NONE);
+	dupdate();
+#else
 	video_mode_t const *M = video_get_current_mode();
 	if(!M)
 		return;
 
-	// extern image_t gint_gdb_icons_i1msb;
 	extern image_t gint_gdb_icons_rgb565;
 
 	if(M->format == IMAGE_RGB565) {
@@ -32,6 +39,7 @@ static void gdb_show_stub_status(int icon)
 		if(!video_update(M->width-7, 0, &sub, 0))
 			abort();
 	}
+#endif
 }
 
 #else
@@ -721,6 +729,8 @@ int gdb_start(void)
 {
 	if (gdb_started)
 		return 0;
+
+	gdb_show_stub_status(ICON_WORKING);
 
 	if(usb_is_open() && !usb_is_open_interface(&usb_ff_bulk))
 		usb_close();
