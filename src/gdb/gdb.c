@@ -7,13 +7,26 @@
 #include <gint/video.h>
 #include <gint/display.h>
 #include <gint/config.h>
+#include <gint/hardware.h>
+#include <gint/fs.h>
 
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define GDB_VISUAL_FEEDBACK 1
+#define GDB_BRIDGE_LOGS 0
+
+/* Note about trap numbers:
+   - trapa #16...#23 were historically used for Linux's syscall
+     interface for syscalls with up to 0...7 arguments.
+   - trapa #31 is unified syscall interface (Linux)
+   - trapa #32 is GDB software breakpoint
+   - trapa #33 shall thus be our stubcall. */
+#define TRA_SWBREAK 32
+#define TRA_STUBCALL 33
 
 #if GDB_VISUAL_FEEDBACK
 
@@ -204,7 +217,22 @@ static ssize_t gdb_send_packet(const char* packet, size_t packet_length)
 	return buffer_length;
 }
 
+#if GDB_BRIDGE_LOGS
+static void gdb_send_bridge_log(const char* fmt, ...)
+{
+	char str[256];
+	va_list args;
+	va_start(args, fmt);
+	vsnprintf(str, sizeof str, fmt, args);
+	va_end(args);
+	usb_fxlink_text(str, strlen(str));
+}
+#else
+# define gdb_send_bridge_log(...)
+#endif
+
 static int gdb_signal_number = 0;
+static int gdb_trap_number = 0;
 
 static void gdb_send_stop_reply(void)
 {
@@ -400,6 +428,28 @@ static void gdb_handle_read_memory(const char* packet)
 	free(reply_buffer);
 }
 
+static void cache_ocbwb(void *start, void *end)
+{
+	/* Cache lines are 32-aligned */
+	void *p = (void *)((uintptr_t)start & -32);
+
+	while(p < end) {
+		__asm__("ocbwb @%0":: "r"(p));
+		p += 32;
+	}
+}
+
+static void cache_icbi(void *start, void *end)
+{
+	/* Cache lines are 32-aligned */
+	void *p = (void *)((uintptr_t)start & -32);
+
+	while(p < end) {
+		__asm__("icbi @%0":: "r"(p));
+		p += 32;
+	}
+}
+
 static void gdb_handle_write_memory(const char* packet)
 {
 	char address_hex[16] = {0}, size_hex[16] = {0};
@@ -427,6 +477,9 @@ static void gdb_handle_write_memory(const char* packet)
 		read_address[i] = (uint8_t)gdb_unhexlify_sized(&packet[i * 2], 2);
 	}
 	gdb_tlbh_enable = false;
+
+	cache_ocbwb(read_address, read_address + read_size);
+	cache_icbi(read_address, read_address + read_size);
 
 	if (gdb_tlbh_caught) {
 		gdb_send_packet("E22", 3); // EINVAL
@@ -470,6 +523,7 @@ static void gdb_handle_insert_hardware_breakpoint(const char* packet)
 {
 	void* read_address;
 	if (!gdb_parse_hardware_breakpoint_packet(packet, &read_address)) {
+		gdb_send_bridge_log("bad Z packet\n");
 		gdb_send_packet(NULL, 0);
 		return;
 	}
@@ -483,17 +537,22 @@ static void gdb_handle_insert_hardware_breakpoint(const char* packet)
 	 */
 	if ((channel0_used && channel0_addr == read_address) ||
 	    (channel1_used && channel1_addr == read_address)) {
+		gdb_send_bridge_log("hb %p: already exists\n", read_address);
 		gdb_send_packet("OK", 2);
 	} else if (!channel0_used) {
 		ubc_set_breakpoint(0, read_address, UBC_BREAK_BEFORE);
+		gdb_send_bridge_log("hb %p: using channel 0\n", read_address);
 		gdb_send_packet("OK", 2);
 	} else if (!channel1_used) {
 		ubc_set_breakpoint(1, read_address, UBC_BREAK_BEFORE);
+		gdb_send_bridge_log("hb %p: using channel 1\n", read_address);
 		gdb_send_packet("OK", 2);
 	} else {
 		/* TODO : We should find a proper way to inform GDB that we are
 		 *        limited by the number of UBC channels.
 		 */
+		gdb_send_bridge_log("hb %p: channels used (%p, %p)\n", read_address,
+			channel0_addr, channel1_addr);
 		gdb_send_packet(NULL, 0);
 	}
 }
@@ -564,6 +623,23 @@ static void gdb_handle_single_step(uint32_t pc, ubc_break_mode_t break_mode)
 	gdb_single_step_backup.single_stepped = true;
 }
 
+static bool gdb_handle_stubcall(gdb_cpu_state_t* cpu_state)
+{
+	char str[30];
+	int sc_num = cpu_state->reg.r3;
+
+	if(sc_num == 64) { /* write */
+		int len = snprintf(str, sizeof str, "Fwrite,%x,%08x,%x",
+			cpu_state->reg.r4,
+			cpu_state->reg.r5,
+			cpu_state->reg.r6);
+		gdb_send_packet(str, len);
+		return true;
+	}
+
+	return false;
+}
+
 void gdb_main(gdb_cpu_state_t* cpu_state)
 {
 	if (!gdb_started && gdb_start()) {
@@ -589,7 +665,13 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 	}
 
 	if (cpu_state != NULL) {
-		gdb_send_stop_reply();
+		/* Ajust PC after a software breakpoint */
+		if (gdb_trap_number == TRA_SWBREAK)
+			cpu_state->reg.pc -= 2;
+
+		/* Handle stubcall but fallback to normal stop if it fails */
+		if (gdb_trap_number != TRA_STUBCALL || !gdb_handle_stubcall(cpu_state))
+			gdb_send_stop_reply();
 	}
 
 	while (1) {
@@ -650,6 +732,9 @@ void gdb_main(gdb_cpu_state_t* cpu_state)
 				gdb_handle_continue_with_signal(cpu_state, packet_buffer);
 				// We'll often abort() at the signal rather than continuing
 				goto ret;
+			case 'F': // Continue after File I/O call response
+				// TODO: parse 'F' response packets.
+				goto ret;
 
 			default: // Unsupported packet
 				gdb_send_packet(NULL, 0);
@@ -664,6 +749,7 @@ ret:
 	gdb_started = true;
 
 	gdb_signal_number = 0;
+	gdb_trap_number = 0;
 }
 
 static void gdb_notifier_function(void)
@@ -720,10 +806,26 @@ static int gdb_panic_handler(uint32_t code)
 		if(code == 0x10a0)
 			gdb_signal_number = 7; /* SIGEMT (used here for bad UBC breaks) */
 
+		// Specific stop reasons
+		if(code == 0x160) {
+			uint32_t TRA = isSH3() ? 0xffffffd0 : 0xff000020;
+			gdb_trap_number = *(uint32_t volatile *)TRA >> 2;
+		}
+
 		return 0;
 	}
 	return 1;
 }
+
+static bool gdb_redirect_stdout = false;
+static bool gdb_redirect_stderr = false;
+
+static fs_descriptor_type_t const redirect_type = {
+    .read = NULL,
+    .write = (void *)gdb_stubcall_write,
+    .lseek = NULL,
+    .close = NULL,
+};
 
 int gdb_start(void)
 {
@@ -749,6 +851,16 @@ int gdb_start(void)
 		gdb_recv_buffer = malloc(gdb_recv_buffer_capacity);
 	}
 
+	// Redirect standard streams
+	if(gdb_redirect_stdout) {
+		close(STDOUT_FILENO);
+		open_generic(&redirect_type, (void *)STDOUT_FILENO, STDOUT_FILENO);
+	}
+	if(gdb_redirect_stderr) {
+		close(STDERR_FILENO);
+		open_generic(&redirect_type, (void *)STDERR_FILENO, STDERR_FILENO);
+	}
+
 	// TODO : Should we detect if other panic or debug handlers are setup ?
 	gint_exc_catch(gdb_panic_handler);
 	ubc_set_debug_handler(gdb_main);
@@ -760,4 +872,10 @@ void gdb_start_on_exception(void)
 {
 	gint_exc_catch(gdb_panic_handler);
 	ubc_set_debug_handler(gdb_main);
+}
+
+void gdb_redirect_streams(bool stdout, bool stderr)
+{
+	gdb_redirect_stdout = stdout;
+	gdb_redirect_stderr = stderr;
 }

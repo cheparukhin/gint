@@ -72,6 +72,7 @@ set(SOURCES
   src/fs/fugue/util.c
   # GDB remote serial protocol
   src/gdb/gdb.c
+  src/gdb/gdb.S
   # Gray engine
   src/gray/engine.c
   src/gray/gclear.c

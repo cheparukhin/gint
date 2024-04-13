@@ -75,6 +75,29 @@ void gdb_main(gdb_cpu_state_t *cpu_state);
 // TODO: Get some visible signal on-screen when that happens
 void gdb_start_on_exception(void);
 
+/* gdb_redirect_streams(): Select whether to redirect stdout/stderr
+
+   This function specifies whether stdout and stderr shall be redirected when
+   debugging. If redirected, stdout and stderr will change from their default
+   implementation (or the one supplied by the user via open_generic()) to a
+   stubcall that prints text in the GDB console. This setting must be set
+   before GDB starts, so usually just after gdb_start_on_exception().
+
+   This is intended to be used with debug methods that print text. For example,
+   if the program has a status() function that prints information useful when
+   debugging, one might want to invoke it from GDB with "call status()". With
+   default stdout/stderr this would be at best impractical to read the output
+   on the calculator, at worst buggy due to the program being interrupted.
+   Redirecting stdout/stderr allows the result to be printed in GDB.
+
+   The default is to not redirect stdout/stderr. */
+void gdb_redirect_streams(bool redirect_stdout, bool redirect_stderr);
+
+/** Stubcalls **/
+
+/* Write to a file descriptor on the remote debugger. */
+void gdb_stubcall_write(int fd, void const *buf, size_t size);
+
 #ifdef __cplusplus
 }
 #endif
