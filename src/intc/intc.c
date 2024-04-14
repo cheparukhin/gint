@@ -60,6 +60,8 @@ static struct info {
 	{ IPRF, 0x0f00, IMR5,  0x10, _ },
 	{ IPRF, 0x0f00, IMR5,  0x20, _ },
 	{ IPRF, 0x0f00, IMR5,  0x40, _ },
+	/* SCIF */
+	{ IPRG, 0xf000, IMR5,  0x01, _ /* Driver not SH3-compatible yet */ },
 	/* RTC */
 	{ IPRK, 0xf000, IMR10, 0x04, IPRA, 0x000f },
 	{ IPRK, 0xf000, IMR10, 0x02, IPRA, 0x000f },

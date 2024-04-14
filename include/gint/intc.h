@@ -41,6 +41,8 @@ enum {
 	INTC_DMA_DEI4,
 	INTC_DMA_DEI5,
 	INTC_DMA_DADERR,
+	/* Serial Communication Interface with FIFO (SCIF0) */
+	INTC_SCIF0,
 	/* Real-Time Clock [RTC]; a single IPR covers all 3 interrupts */
 	INTC_RTC_ATI,
 	INTC_RTC_PRI,
