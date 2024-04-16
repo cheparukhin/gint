@@ -104,7 +104,7 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 	dtext(6, 3, "An exception occured! (System ERROR)");
 
 	uint32_t *long_vram = (void *)gint_vram;
-	for(int i = 0; i < 198 * 16; i++) long_vram[i] = ~long_vram[i];
+	for(int i = 0; i < (DWIDTH/2) * 16; i++) long_vram[i] = ~long_vram[i];
 
 	char const *name = "";
 	if(code == 0x040) name = "TLB miss (nonexisting address) on read";
@@ -126,20 +126,25 @@ GNORETURN static void gint_default_panic(GUNUSED uint32_t code)
 
 	dtext(6, 45, "PC");
 	dprint(38, 45, "= %08x", PC);
-	dtext(261, 45, "(Error location)");
+	dtext(DWIDTH-135, 45, "(Error location)");
 
 	dtext(6, 60, "TEA");
 	dprint(38, 60, "= %08x", TEA);
-	dtext(234, 60, "(Offending address)");
+	dtext(DWIDTH-162, 60, "(Offending address)");
 
 	dtext(6, 75, "TRA");
 	dprint(38, 75, "= %#x", TRA);
-	dtext(281, 75, "(Trap number)");
+	dtext(DWIDTH-115, 75, "(Trap number)");
 
 	dtext(6, 95,  "The add-in crashed!");
 	if(kd == NULL) {
+#if GINT_HW_CG
 		dtext(6, 108, "Please press the RESET button to restart the");
 		dtext(6, 121, "calculator.");
+#else
+		dtext(6, 108, "Please press the RESET button to");
+		dtext(6, 121, "restart the calculator.");
+#endif
 	}
 	else {
 		dtext(6, 121, "[EXIT]: Exit the program with abort()");

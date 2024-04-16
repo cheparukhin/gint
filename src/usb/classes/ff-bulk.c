@@ -178,6 +178,7 @@ static char const * const str_CALC[] = {
 	[HWCALC_FXCG50]        = "fx-CG 50/Graph 90+E",
 	[HWCALC_FXCG_MANAGER]  = "fx-CG Manager",
 	[HWCALC_FX9860G_SLIM]  = "fx-9860G Slim",
+	[HWCALC_FXCP400]       = "fx-CP 400",
 };
 
 static void execute_command(char const *cmd)
@@ -191,7 +192,7 @@ static void execute_command(char const *cmd)
 		char const *serial_number = (void *)0x8000ffd0;
 		char const *OS_version = (void *)0x80010020;
 		char const *BC_version = (void *)0x8000ffb0;
-#elif GINT_OS_CG
+#elif GINT_OS_CG || GINT_OS_CP
 		char const *serial_number = (void *)0x8001ffd0;
 		char const *OS_version = (void *)0x80020020;
 		char const *BC_version = (void *)0x8001ffb0;

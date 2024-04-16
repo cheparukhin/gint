@@ -145,6 +145,25 @@ void hw_detect(void)
 	utlb_mapped_memory(NULL, NULL);
 }
 
+#elif GINT_HW_CP
+
+/* hw_detect(): Basic hardware detection */
+void hw_detect(void)
+{
+	gint[HWMPU] = HWMPU_SH7305;
+	gint[HWCPUVR] = PVR;
+	gint[HWCPUPR] = PRR;
+	gint[HWCALC] = HWCALC_FXCP400;
+	// TODO: What filesystem implementation on the fx-CP 400?
+	gint[HWFS] = HWFS_NONE;
+	gint[HWRAM] = 16 << 20;
+	// TOOD: How much ROM on the fx-CP 400?
+	gint[HWROM] = 0;
+
+	/* There is no userspace so not MMU being used */
+	gint[HWURAM] = 0;
+}
+
 #else
 #error unknown hardware type for hw_detect
 #endif

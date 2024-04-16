@@ -1,5 +1,11 @@
 #include <gint/config.h>
 #if GINT_RENDER_RGB
+// TODO: topti-asm: avoid duplicating DWIDTH here
+#if GINT_HW_CG
+# define DWIDTH 396
+#elif GINT_HW_CP
+# define DWIDTH 320
+#endif
 
 .global _topti_glyph_fg_bg
 .global _topti_glyph_fg
@@ -39,7 +45,7 @@
 
 _topti_glyph_fg_bg:
 
-	# Compute VRAM stride 2 * (396-width)
+	# Compute VRAM stride 2 * (DWIDTH-width)
 	mov.l	r8, @-r15
 	mov.l	1f, r8
 	mov.l	@(4, r15), r3
@@ -96,7 +102,7 @@ _topti_glyph_fg_bg:
 
 _topti_glyph_fg:
 
-	# Compute VRAM stride 2 * (396-width)
+	# Compute VRAM stride 2 * (DWIDTH-width)
 	mov.l	r8, @-r15
 	mov.l	1f, r8
 	mov.l	@(4, r15), r3
@@ -149,7 +155,7 @@ _topti_glyph_fg:
 
 _topti_glyph_bg:
 
-	# Compute VRAM stride 2 * (396-width)
+	# Compute VRAM stride 2 * (DWIDTH-width)
 	mov.l	r8, @-r15
 	mov.l	1f, r8
 	mov.l	@(4, r15), r3
@@ -202,6 +208,6 @@ _topti_glyph_bg:
 
 .align 4
 
-1:	.long 396*2
+1:	.long DWIDTH*2
 
 #endif

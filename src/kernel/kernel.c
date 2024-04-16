@@ -40,8 +40,6 @@ void *gint_stack_top = NULL;
 /* kinit(): Install and start gint */
 void kinit(void)
 {
-	uint32_t VBR = 0;
-
 	#if GINT_HW_FX
 	/* On fx-9860G, VBR is loaded at the end of the user RAM. On SH4, the
 	   end of the user RAM hosts the stack, for which we leave 12 kB
@@ -59,7 +57,7 @@ void kinit(void)
 
 	/* VBR is advanced 0x100 bytes because of an unused gap */
 	uram_end -= (isSH3() ? 0x600 : 0x1100);
-	VBR = uram_end - 0x100;
+	uint32_t VBR = uram_end - 0x100;
 	#endif
 
 	#if GINT_HW_CG
@@ -67,9 +65,14 @@ void kinit(void)
 	   script leaves 5 kB (0x1400 bytes) before the start of the data
 	   segment. The stack is again placed at the end of the region, and we
 	   leave 16 kB. */
-	VBR = (uint32_t)mmu_uram();
+	uint32_t VBR = (uint32_t)mmu_uram();
 	uint32_t uram_end = (uint32_t)mmu_uram() + mmu_uram_size() - 0x4000;
 	gint_stack_top = (void *)uram_end;
+	#endif
+
+	#if GINT_HW_CP
+	extern char gint_region_vbr;
+	uint32_t VBR = (uint32_t)&gint_region_vbr - 0x100;
 	#endif
 
 	/* Event handler entry points */
@@ -85,6 +88,7 @@ void kinit(void)
 	/* Initialize memory allocators */
 	kmalloc_init();
 
+	#if !GINT_HW_CP
 	/* Create an allocation arena with unused static RAM */
 	static kmalloc_arena_t static_ram = { 0 };
 	extern uint32_t euram;
@@ -94,6 +98,7 @@ void kinit(void)
 	static_ram.end = (void *)uram_end;
 	kmalloc_init_arena(&static_ram, true);
 	kmalloc_add_arena(&static_ram);
+	#endif
 
 	/* Create an arena in the OS stack as well, for VRAM and more data */
 	#if GINT_HW_CG && !defined(GINT_NO_OS_STACK)
@@ -142,6 +147,11 @@ void kinit(void)
 void kquit(void)
 {
 	gint_world_switch_out(gint_world_addin, gint_world_os);
+
+#if !GINT_OS_FX
+	extern void dvram_quit(void);
+	dvram_quit();
+#endif
 
 	gint_world_free(gint_world_os);
 	gint_world_free(gint_world_addin);

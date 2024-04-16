@@ -25,8 +25,13 @@ extern "C" {
 #include <gint/image.h>
 
 /* Dimensions of the VRAM */
+#if GINT_HW_CG
 #define DWIDTH 396
 #define DHEIGHT 224
+#elif GINT_HW_CP
+#define DWIDTH 320
+#define DHEIGHT 528
+#endif
 
 /* gint VRAM address. This value must always point to a 32-aligned buffer of
    size 177408. Any function can use it freely to perform rendering or store

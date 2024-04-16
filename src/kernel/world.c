@@ -244,9 +244,12 @@ void gint_copy_vram(void)
 	#endif
 }
 
-void gint_poweroff(bool show_logo)
+void gint_poweroff(GUNUSED bool show_logo)
 {
+// TODO: Power off on fx-CP
+#if !GINT_OS_CP
 	void __PowerOff(int show_logo);
 	gint_copy_vram();
 	gint_world_switch(GINT_CALL(__PowerOff, (int)show_logo));
+#endif
 }

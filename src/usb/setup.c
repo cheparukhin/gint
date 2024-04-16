@@ -17,10 +17,11 @@
 
 /* 0x6101: fx-9860G II, Protocol 7.00, etc.
    0x6102: fx-CP 400, fx-CG 50, Mass Storage, etc. */
-#define ID_PRODUCT GINT_HW_SWITCH(0x6101, 0x6102)
+#define ID_PRODUCT GINT_HW_SWITCH(0x6101, 0x6102, 0x6102)
 #define DESC_PRODUCT GINT_HW_SWITCH( \
-	u"CASIO fx-9860G family on gint", \
-    u"CASIO fx-CG family on gint")
+    u"CASIO fx-9860G family on gint", \
+    u"CASIO fx-CG family on gint", \
+    u"CASIO fx-CP family on gint")
 
 static usb_dc_device_t dc_device = {
 	.bLength              = sizeof(usb_dc_device_t),
@@ -56,7 +57,8 @@ static usb_dc_string_t dc_string0 = {
 
 GCONSTRUCTOR static void set_strings(void)
 {
-	char const *serial_base = (void *)GINT_OS_SWITCH(0x8000ffd0, 0x8001ffd0);
+	char const *serial_base =
+		(void *)GINT_OS_SWITCH(0x8000ffd0, 0x8001ffd0, 0x8001ffd0);
 
 	/* Convert the serial number to UTF-16 */
 	uint16_t serial[8];

@@ -29,8 +29,10 @@ typedef struct {
 } video_mode_t;
 
 /* Flags for the update function of the interface. */
-#define VIDEO_UPDATE_ENABLE_DMA  0x01
-#define VIDEO_UPDATE_ATOMIC      0x02
+#define VIDEO_UPDATE_NONE           0x00
+#define VIDEO_UPDATE_ENABLE_DMA     0x01
+#define VIDEO_UPDATE_ATOMIC         0x02
+#define VIDEO_UPDATE_FOREIGN_WORLD  0x04
 
 /* Video driver interface. */
 typedef struct {

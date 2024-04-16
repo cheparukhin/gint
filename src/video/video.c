@@ -2,10 +2,10 @@
 #include <gint/config.h>
 
 // TODO: video: Have interface set by gint pre-main call instead
-extern video_interface_t t6k11_video, r61524_video;
+extern video_interface_t t6k11_video, r61524_video, r61523_video;
 static video_interface_t const *current_intf =
-    GINT_HW_SWITCH(NULL, &r61524_video);
-static int current_mode_index = GINT_HW_SWITCH(-1, 0);
+    GINT_HW_SWITCH(NULL, &r61524_video, &r61523_video);
+static int current_mode_index = GINT_HW_SWITCH(-1, 0, 0);
 
 video_interface_t const *video_get_current_interface(void)
 {

@@ -16,6 +16,7 @@ void  __ClearKeyBuffer(void); /* ? */
 void  __ConfigureStatusArea(int mode);
 void __SetQuitHandler(void (*callback)(void));
 
+#if !GINT_OS_CP
 static int __osmenu_id;
 
 static void __osmenu_handler(void)
@@ -28,6 +29,7 @@ static void __osmenu_handler(void)
 	__Timer_Stop(__osmenu_id);
 	__Timer_Deinstall(__osmenu_id);
 }
+#endif
 
 #if GINT_OS_CG
 typedef void (os_menu_function_t)(void);
@@ -94,6 +96,8 @@ static os_menu_function_t *find_os_menu_function(void)
 
 void gint_osmenu_native(void)
 {
+// TODO: OS menu on fx-CP
+#if !GINT_OS_CP
 	__ClearKeyBuffer();
 	gint_copy_vram();
 
@@ -134,6 +138,7 @@ void gint_osmenu_native(void)
 		1 /* Delay in seconds */,
 		0 /* Enable return to main menu */,
 		&keycode);
+#endif
 }
 
 /* gint_osmenu() - switch out of gint and call the calculator's main menu */
@@ -157,7 +162,11 @@ static void __handler()
 
 static void __sethandler()
 {
+	(void)__handler;
+// TODO: Quit handler on fx-CP
+#if !GINT_OS_CP
 	__SetQuitHandler((void *)__handler);
+#endif
 }
 
 void gint_set_quit_handler(gint_call_t gcall, bool do_world_switch)

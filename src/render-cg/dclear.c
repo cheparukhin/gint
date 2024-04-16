@@ -5,6 +5,11 @@
 
 void dclear(uint16_t color)
 {
+	// TODO: CP: DMA support for dclear()
+#if GINT_HW_CP
+	for(int i = 0; i < DWIDTH * DHEIGHT; i++)
+		gint_vram[i] = color;
+#else
 	bool full_width = (dwindow.left == 0 && dwindow.right == DWIDTH);
 	bool dma_aligned = !(dwindow.top & 3) && !(dwindow.bottom & 3);
 
@@ -17,6 +22,7 @@ void dclear(uint16_t color)
 		drect(dwindow.left, dwindow.top, dwindow.right - 1,
 			dwindow.bottom - 1, color);
 	}
+#endif
 }
 
 #endif

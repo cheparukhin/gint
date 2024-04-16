@@ -151,11 +151,14 @@ static int start2(int isappli, int optnum)
 
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
-	regcpy(&ldata,  &sdata,  &rdata);
+	#if !GINT_OS_CP
+	regcpy(&ldata, &sdata, &rdata);
+	#endif
 	regclr(&rbss, &sbss);
 
 	gint_load_onchip_sections();
 
+	#if !GINT_OS_CP
 	/* Copy permanently-mapped code to start of user RAM (this section is
 	   only used on fx-9860G; on fx-CG 50 it's fixed in ILRAM) */
 	void *rgmapped = mmu_uram();
@@ -167,6 +170,7 @@ static int start2(int isappli, int optnum)
 	{
 		fixups[i] += (uint32_t)rgmapped;
 	}
+	#endif
 
 	/* Install gint, switch VBR and initialize drivers */
 	kinit();

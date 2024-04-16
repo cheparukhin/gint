@@ -25,9 +25,6 @@ Future directions:
 * Make fx9860g projects work out of the box on fxcg50
 * Base for Yatis' threads library
 
-TODO:
-* SPLIT CONFIG HEADER IN VARIANTS SO THEY DON'T CLASH WHEN INSTALLED
-
 Bits that need to abstract out into APIs:
 - display: Toggle backlight (or set level)
   -> Have a backlight property with min/max values
@@ -61,6 +58,25 @@ enum {
     /* Indexed 2-bit: white, light gray, dark gray, black. Represented as a
        pair of I1MSB buffers, the first being bit #0, the second bit #1. */
     IMAGE_FORMAT_2I1MSB,
-    /* 16-bit RGB565. Row-major, left-to-right. */
-    IMAGE_FORMAT_RGB565,
 };
+
+fx-CP port progress.
+DONE:
+- kernel can start add-ins, take over interrupts (but no interrupt sources yet)
+- panic handler works (no interactive choices, only RESET)
+- no OS menu (likely never) and poweroff (maybe later)
+- memory: 64 kB total + OS heap (no gint arena, no MMU)
+- r61523: prototype display driver
+- can use the rendering pipeline with no DMA acceleration
+IN-PROGRESS:
+- unification of the image/video interface
+TODO:
+- hardware info: rom and fs type
+- quit handler
+- DMA acceleration for dclear and dupdate
+- keyboard and touch screen input
+- drivers: cpg, dma, intc, rtc, tmu
+- find more memory, 64 kB is not enough
+- benchmark memory and display performance
+- improve API and performance of display driver
+- way off: filesystem, remote debugging, usb

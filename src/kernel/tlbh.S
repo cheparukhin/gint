@@ -10,11 +10,14 @@
 #elif GINT_OS_CG
 # define SYSCALL_TABLE 0x80020070
 # define SYSCALL_TLBH 12
+#elif GINT_OS_CP
+# define NOMMU 1
 #else
 # error Unknown HW for tlbh.S!
 #endif
 
 _gint_tlbh:
+#if ! NOMMU
 	sts.l	pr, @-r15
 	stc.l	gbr, @-r15
 	sts.l	mach, @-r15
@@ -50,10 +53,12 @@ map:
 	lds.l	@r15+, pr
 	rte
 	nop
+#endif
 
 panic:
-	/* Otherwise, panic by defaulting to the exception handler (the TLB
-	   miss may still be resolved by a panic handler) */
+	/* Otherwise, or if there is no MMU, panic by defaulting to the
+	   exception handler (the TLB miss may still be resolved by a panic
+	   handler) */
 	lds.l	@r15+, macl
 	lds.l	@r15+, mach
 	ldc.l	@r15+, gbr
@@ -66,6 +71,7 @@ panic:
 	jmp	@r0
 	nop
 
+#if ! NOMMU
 .align 4
 
 .gint:
@@ -80,3 +86,4 @@ panic:
 	.long	0x00300000 + _srom
 .syscall:
 	.long	SYSCALL_TABLE
+#endif

@@ -124,6 +124,7 @@ set(SOURCES
   src/kernel/kernel.c
   src/kernel/osmenu.c
   src/kernel/start.c
+  src/kernel/start.S
   src/kernel/syscalls.S
   src/kernel/tlbh.S
   src/kernel/world.c
@@ -144,6 +145,8 @@ set(SOURCES
   src/kmalloc/kmalloc.c
   # MMU driver
   src/mmu/mmu.c
+  # R61523 display driver
+  src/r61523/r61523.c
   # R61524 display driver
   src/r61524/r61524.c
   # Format-agnostic rendering
@@ -250,6 +253,7 @@ set(SOURCES
 
 set(ASSETS_FX src/font5x7.png src/gdb/icons-i1msb.png)
 set(ASSETS_CG src/font8x9.png src/gdb/icons-rgb565.png)
+set(ASSETS_CP ${ASSETS_CG})
 fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 
 include_directories(
@@ -283,6 +287,14 @@ if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G_G3A)
   add_library(${NAME} STATIC ${SOURCES} ${ASSETS_FX} ${LINKER_SCRIPTS})
 endif()
 
+if("${FXSDK_PLATFORM_LONG}" STREQUAL fxCP)
+  add_compile_definitions(FXCP)
+  set(NAME "gint-cp")
+  set(LINKER_SCRIPTS
+    "${CMAKE_CURRENT_BINARY_DIR}/fxcp_hh2.ld")
+  add_library(${NAME} STATIC ${SOURCES} ${ASSETS_CP} ${LINKER_SCRIPTS})
+endif()
+
 set_target_properties("${NAME}" PROPERTIES OUTPUT_NAME "${NAME}")
 
 # Generate linker scripts
@@ -296,6 +308,7 @@ endmacro()
 generate_linker_script("fx9860g.ld" "fx9860g.ld.c" "")
 generate_linker_script("fxcg50.ld" "fxcg50.ld.c" "")
 generate_linker_script("fxcg50_fastload.ld" "fxcg50.ld.c" "-DFXCG50_FASTLOAD")
+generate_linker_script("fxcp_hh2.ld" "fxcp_hh2.ld.c" "")
 
 # Library file
 install(TARGETS "${NAME}" DESTINATION "${FXSDK_LIB}")

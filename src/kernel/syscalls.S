@@ -45,6 +45,9 @@
 .global ___GetVRAMAddress
 .global ___ConfigureStatusArea
 .global ___SetQuitHandler
+/* VRAM backup on fx-CP */
+.global ___VRAMBackup
+.global ___VRAMRestore
 
 /* Reset */
 .global ___PowerOff
@@ -55,10 +58,17 @@
 	mov.l	1f, r0			;\
 	jmp	@r2			;\
 	nop				;\
-.align 4				;\
+.balign 4				;\
 1:	.long	id
 
 #define syscall(id) syscall_(id, syscall_table)
+
+#define fixed(address)			\
+	mov.l	1f, r0			;\
+	jmp	@r0			;\
+	nop				;\
+.balign 4				;\
+1:	.long	address
 
 #if GINT_OS_FX
 
@@ -212,3 +222,26 @@ syscall_table:
 	.long	0x80020070
 
 #endif /* GINT_OS_CG */
+
+#if GINT_OS_CP
+
+___malloc:
+	fixed(0x800cfb00)
+___realloc:
+	// TODO: realloc for fx-CP?
+	rts
+	mov	#0, r0
+___free:
+	fixed(0x800a76fc)
+
+___GetVRAMAddress:
+	fixed(0x8002e154)
+___VRAMBackup:
+	fixed(0x8002d3fa)
+___VRAMRestore:
+	fixed(0x8002d41a)
+
+___Reset:
+	fixed(0xa0000000)
+
+#endif /* GINT_OS_CP */

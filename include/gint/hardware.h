@@ -46,7 +46,7 @@ void hw_detect(void);
 # define isSH3() (gint[HWMPU] & 1)
 # define isSH4() (!isSH3())
 # define isSlim() (gint[HWCALC] == HWCALC_FX9860G_SLIM)
-#elif GINT_HW_CG
+#elif GINT_HW_CG || GINT_HW_CP
 # define isSH3() 0
 # define isSH4() 1
 # define isSlim() 0
@@ -109,6 +109,8 @@ void hw_detect(void);
 #define HWCALC_FXCG_MANAGER  6
 /* fx-9860G Slim, SH-3-based fx-9860G with hardware differences */
 #define HWCALC_FX9860G_SLIM  7
+/* fx-CP 400 */
+#define HWCALC_FXCP400       8
 
 /*
 **  Keyboard
