@@ -10,6 +10,8 @@ static int compare(void const *ptr1, void const *ptr2)
 static void dpoly_fill(int const *x, int const *y, int N, int color)
 {
 	int *nodeX = malloc(N * sizeof *nodeX);
+	if(!nodeX)
+		return;
 
 	/* Find vertical bounds */
 	int ymin = y[0], ymax = y[0];
