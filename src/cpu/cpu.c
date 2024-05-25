@@ -45,6 +45,15 @@ static void hsave(cpu_state_t *s)
 		s->CPUOPM = cpu_getCPUOPM();
 		s->SR = cpu_getSR().lword;
 	}
+
+	__asm__("stc r0_bank, %0" : "=r"(s->rN_bank[0]));
+	__asm__("stc r1_bank, %0" : "=r"(s->rN_bank[1]));
+	__asm__("stc r2_bank, %0" : "=r"(s->rN_bank[2]));
+	__asm__("stc r3_bank, %0" : "=r"(s->rN_bank[3]));
+	__asm__("stc r4_bank, %0" : "=r"(s->rN_bank[4]));
+	__asm__("stc r5_bank, %0" : "=r"(s->rN_bank[5]));
+	__asm__("stc r6_bank, %0" : "=r"(s->rN_bank[6]));
+	__asm__("stc r7_bank, %0" : "=r"(s->rN_bank[7]));
 }
 
 static void hrestore(cpu_state_t const *s)
@@ -55,6 +64,15 @@ static void hrestore(cpu_state_t const *s)
 		cpu_setCPUOPM(s->CPUOPM);
 		cpu_setSR((cpu_sr_t)s->SR);
 	}
+
+	__asm__("ldc %0, r0_bank" :: "r"(s->rN_bank[0]));
+	__asm__("ldc %0, r1_bank" :: "r"(s->rN_bank[1]));
+	__asm__("ldc %0, r2_bank" :: "r"(s->rN_bank[2]));
+	__asm__("ldc %0, r3_bank" :: "r"(s->rN_bank[3]));
+	__asm__("ldc %0, r4_bank" :: "r"(s->rN_bank[4]));
+	__asm__("ldc %0, r5_bank" :: "r"(s->rN_bank[5]));
+	__asm__("ldc %0, r6_bank" :: "r"(s->rN_bank[6]));
+	__asm__("ldc %0, r7_bank" :: "r"(s->rN_bank[7]));
 }
 
 gint_driver_t drv_cpu = {

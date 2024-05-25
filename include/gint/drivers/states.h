@@ -28,6 +28,7 @@ typedef struct {
 	uint32_t SR;
 	uint32_t VBR;
 	uint32_t CPUOPM;
+	uint32_t rN_bank[8];
 } cpu_state_t;
 
 /* Direct Memory Access controller (see dma/dma.c) */
