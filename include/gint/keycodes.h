@@ -79,6 +79,14 @@ enum {
 	KEY_HELP	= 0x20, /* fx-9860G Slim: 0x75 */
 	KEY_LIGHT	= 0x10, /* fx-9860G Slim: 0x76 */
 
+	/* Key codes for the CP-400 */
+	KEY_KBD		= 0xa1,
+	KEY_X		= 0xa2,
+	KEY_Y		= 0xa3,
+	KEY_Z		= 0xa4,
+	KEY_EQUALS	= 0xa5,
+	KEY_CLEAR       = KEY_ACON,
+
 	/* Key aliases (handle with care =D) */
 	KEY_X2		= KEY_SQUARE,
 	KEY_CARET	= KEY_POWER,

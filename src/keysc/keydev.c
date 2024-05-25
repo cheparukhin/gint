@@ -2,6 +2,7 @@
 //	gint:keydev - Generic input handling on keyboard devices
 //---
 
+#include <gint/config.h>
 #include <gint/keyboard.h>
 #include <gint/cpu.h>
 #include <gint/drivers/keydev.h>
@@ -10,6 +11,50 @@
 
 #include <string.h>
 #include <stdarg.h>
+
+#if GINT_HW_CP
+static uint8_t const CP_translation_table[] = {
+	KEY_SHIFT,   KEY_DIV,    KEY_MUL,    KEY_MINUS,   KEY_PLUS,   KEY_EXE,
+	KEY_DEL,     KEY_POWER,  KEY_9,      KEY_6,       KEY_3,      KEY_EXP,
+	KEY_RIGHT,   KEY_LEFT,   KEY_Z,      0,           0,          0,
+	KEY_UP,      KEY_DOWN,   KEY_8,      KEY_5,       KEY_2,      KEY_DOT,
+	KEY_KBD,     KEY_Y,      KEY_7,      KEY_4,       KEY_1,      KEY_0,
+	KEY_EQUALS,  KEY_X,      KEY_LEFTP,  KEY_RIGHTP,  KEY_COMMA,  KEY_NEG,
+};
+static int keymatrix_to_keycode(int row, int col)
+{
+	if(row == 0 && col == 1)
+		return KEY_CLEAR;
+	return CP_translation_table[6 * (row-1) + (7-col)];
+}
+static void keycode_to_keymatrix(int keycode, int *row, int *col)
+{
+	if(keycode == KEY_CLEAR) {
+		*row = 0;
+		*col = 1;
+		return;
+	}
+	for(int i = 0; i < (int)sizeof(CP_translation_table); i++) {
+		if(CP_translation_table[i] == keycode) {
+			*row = i / 6 + 1;
+			*col = 7 - (i % 6);
+			return;
+		}
+	}
+	*row = 0;
+	*col = 0;
+}
+#else
+static GINLINE int keymatrix_to_keycode(int row, int col)
+{
+	return (row << 4) + (7 - col);
+}
+static GINLINE void keycode_to_keymatrix(int keycode, int *row, int *col)
+{
+	*row = keycode >> 4;
+	*col = 7 - (keycode & 7);
+}
+#endif
 
 void keydev_init(keydev_t *d)
 {
@@ -78,16 +123,14 @@ void keydev_process_state(keydev_t *d, uint8_t scan[12])
 				: d->state_now[row] & ~scan[row];
 			if(!diff) continue;
 
-			ev.key = (row << 4);
-
-			for(int mask = 0x80; mask != 0; mask >>= 1)
+			for(int mask = 0x80, col = 7; mask; mask >>= 1, col--)
 			{
+				ev.key = keymatrix_to_keycode(row, col);
 				/* Update state only if the push succeeds */
 				if((diff & mask) && keydev_queue_push(d, ev))
 					d->state_now[row] = mode
 					? d->state_now[row] | mask
 					: d->state_now[row] & ~mask;
-				ev.key++;
 			}
 		}
 
@@ -145,9 +188,9 @@ void keydev_tick(keydev_t *d, uint us)
 	/* Disable repeat if the repeating key was released */
 	if(d->rep_key != 0)
 	{
-		int row = (d->rep_key >> 4);
-		int col = 0x80 >> (d->rep_key & 0x7);
-		if(!(d->state_now[row] & col))
+		int row, col;
+		keycode_to_keymatrix(d->rep_key, &row, &col);
+		if(!(d->state_now[row] & (1 << col)))
 		{
 			d->rep_key = 0;
 			d->rep_count = -1;
@@ -189,13 +232,14 @@ key_event_t keydev_unqueue_event(keydev_t *d)
 		return ev;
 
 	/* Update the event state accordingly */
-	int row = (ev.key >> 4);
-	int col = 0x80 >> (ev.key & 0x7);
+	int row, col;
+	keycode_to_keymatrix(ev.key, &row, &col);
+	int mask = 1 << col;
 
 	if(ev.type == KEYEV_DOWN)
 	{
-		d->state_queue[row] |= col;
-		d->state_flips[row] ^= col;
+		d->state_queue[row] |= mask;
+		d->state_flips[row] ^= mask;
 		/* Mark this key as the currently repeating one */
 		if(d->rep_key == 0 && can_repeat(d, ev.key))
 		{
@@ -207,8 +251,8 @@ key_event_t keydev_unqueue_event(keydev_t *d)
 	}
 	else if(ev.type == KEYEV_UP)
 	{
-		d->state_queue[row] &= ~col;
-		d->state_flips[row] ^= col;
+		d->state_queue[row] &= ~mask;
+		d->state_flips[row] ^= mask;
 	}
 
 	return ev;
@@ -219,28 +263,31 @@ key_event_t _WEAK_keydev_unqueue_event(keydev_t *d);
 /* keydev_keydown(): Check if a key is down according to generated events */
 bool keydev_keydown(keydev_t *d, int key)
 {
-	int row = (key >> 4);
-	int col = 0x80 >> (key & 0x7);
+	int row, col;
+	keycode_to_keymatrix(key, &row, &col);
+	int mask = 1 << col;
 
-	return (d->state_queue[row] & col) != 0;
+	return (d->state_queue[row] & mask) != 0;
 }
 __attribute__((alias("keydev_keydown")))
 bool _WEAK_keydev_keydown(keydev_t *d, int key);
 
 bool keydev_keypressed(keydev_t *d, int key)
 {
-	int row = (key >> 4);
-	int col = 0x80 >> (key & 0x7);
+	int row, col;
+	keycode_to_keymatrix(key, &row, &col);
+	int mask = 1 << col;
 
-	return (d->state_queue[row] & col) && (d->state_flips[row] & col);
+	return (d->state_queue[row] & mask) && (d->state_flips[row] & mask);
 }
 
 bool keydev_keyreleased(keydev_t *d, int key)
 {
-	int row = (key >> 4);
-	int col = 0x80 >> (key & 0x7);
+	int row, col;
+	keycode_to_keymatrix(key, &row, &col);
+	int mask = 1 << col;
 
-	return !(d->state_queue[row] & col) && (d->state_flips[row] & col);
+	return !(d->state_queue[row] & mask) && (d->state_flips[row] & mask);
 }
 
 void keydev_clear_flips(keydev_t *d)
