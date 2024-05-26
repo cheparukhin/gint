@@ -267,7 +267,7 @@ typedef void **gint_world_t;
    the section name and the linker then sorts by name. If your driver has a
    level lower than 10, you must add a leading 0. */
 #define GINT_DECLARE_DRIVER(level, name) \
-	GSECTION(".gint.drivers." #level) extern gint_driver_t name;
+	GSECTION(".gint.drivers." #level) GVISIBLE extern gint_driver_t name;
 
 //---
 // Internal driver control

@@ -50,19 +50,19 @@ SECTIONS
 		*(.text.entry)
 
 		_bctors = . ;
-		*(.ctors .ctors.*)
+		KEEP(*(.ctors .ctors.*))
 		_ectors = . ;
 
 		_bdtors = . ;
-		*(.dtors .dtors.*)
+		KEEP(*(.dtors .dtors.*))
 		_edtors = . ;
 
 		_gint_exch_start = . ;
-		*(.gint.exch)
+		KEEP(*(.gint.exch))
 		_gint_exch_size = ABSOLUTE(. - _gint_exch_start);
 
 		_gint_tlbh_start = . ;
-		*(.gint.tlbh)
+		KEEP(*(.gint.tlbh))
 		_gint_tlbh_size = ABSOLUTE(. - _gint_tlbh_start);
 
 		*(.text .text.*)

@@ -259,7 +259,7 @@ fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "${PROJECT_BINARY_DIR}/include")
-add_compile_options(-Wall -Wextra -std=c11 -Os -g -fstrict-volatile-bitfields -mtas)
+add_compile_options(-Wall -Wextra -std=c11 -Os -g -fstrict-volatile-bitfields -mtas -flto)
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   add_compile_definitions(FX9860G)
@@ -296,6 +296,12 @@ if("${FXSDK_PLATFORM_LONG}" STREQUAL fxCP)
 endif()
 
 set_target_properties("${NAME}" PROPERTIES OUTPUT_NAME "${NAME}")
+
+# Generate the archive with gcc-ar instead of ar as it will load the LTO plugin
+# which is required to generate a usable archive.
+set(CMAKE_C_ARCHIVE_CREATE "${CMAKE_C_COMPILER_AR} qcs <TARGET> <OBJECTS>")
+# Also the ranlib rule (useless because ar is passed the s flag anyway)
+set(CMAKE_C_ARCHIVE_FINISH "${CMAKE_C_COMPILER_RANLIB} <TARGET>")
 
 # Generate linker scripts
 macro(generate_linker_script OUTPUT INPUT OPTIONS)

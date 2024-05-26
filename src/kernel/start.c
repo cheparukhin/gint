@@ -34,7 +34,7 @@ extern void (*bctors)(void), (*ectors)(void);
 extern void (*bdtors)(void), (*edtors)(void);
 
 /* User-provided main() function */
-int main(int isappli, int optnum);
+int main(void);
 
 /* Whether to restart main through the OS menu rather than returning */
 int8_t gint_restart = 0;
@@ -188,7 +188,10 @@ static int start2(int isappli, int optnum)
 	   what it wants in exit() after main() finishes executing */
 	if(!setjmp(gint_exitbuf)) {
 		callarray(&bctors, &ectors);
-		exit(main(isappli, optnum));
+		// TODO: record isappli and optnum in globals
+		(void)isappli;
+		(void)optnum;
+		exit(main());
 	}
 	else {
 		callarray(&bdtors, &edtors);

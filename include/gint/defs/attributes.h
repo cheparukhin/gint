@@ -34,6 +34,9 @@
 /* Transparent unions */
 #define GTRANSPARENT	__attribute__((transparent_union))
 
+/* Functions and globals that are visible through whole-program optimization */
+#define GVISIBLE  __attribute__((externally_visible))
+
 /* Weak symbols */
 #define GWEAK		__attribute__((weak))
 
