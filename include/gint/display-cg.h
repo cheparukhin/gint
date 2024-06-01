@@ -109,6 +109,35 @@ void dsetvram(uint16_t *main, uint16_t *secondary);
    Returns the VRAM buffer addresses used to render on fx-CG 50. */
 void dgetvram(uint16_t **main, uint16_t **secondary);
 
+
+//---
+// VRAM backup
+// On the fx-CP gint backs up the VRAM when loading and restores it when
+// leaving. While this is a transparent mechanism, the following parts of the
+// implementation are exposed at the internal API level.
+//---
+
+/* Encode the VRAM contents between [in_start] and [in_end] at [output]. While
+   [*in_end] is excluded from the encoding, it will be modified temporarily to
+   serve as bounds check, so it must not be accessed asynchronously during the
+   encoding. The size of the output is not known but is at most the distance
+   between in_end and in_start in bytes. Setting output = in_start to compress
+   in-place is supported. Returns the end pointer after encoding. */
+uint8_t *gint_vrambackup_encode(
+   uint8_t *output, uint16_t *in_start, uint16_t *in_end);
+
+/* Predefine palette based on the GUI at the Hollyhock loading screen. Contains
+   109 entries plus a 110th dummy entry used internally as bounds check. */
+extern uint16_t gint_vrambackup_palette[110];
+
+/* Get the pointer to the encoded VRAM backup created at load time. If [size]
+   is not NULL, sets the size in [*size]. The pointer is heap allocated and
+   remains owned by gint. */
+void *gint_vrambackup_get(int *size);
+
+/* Decode the load-time VRAM backup back to VRAM. */
+void gint_vrambackup_show(void);
+
 #ifdef __cplusplus
 }
 #endif

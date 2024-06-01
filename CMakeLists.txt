@@ -171,6 +171,7 @@ set(SOURCES
   src/render-cg/dsubimage.c
   src/render-cg/dupdate.c
   src/render-cg/dvram.c
+  src/render-cg/dvram.S
   src/render-cg/gint_dline.c
   src/render-cg/topti-asm.S
   src/render-cg/topti.c

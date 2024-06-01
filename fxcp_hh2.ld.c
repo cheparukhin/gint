@@ -36,7 +36,7 @@ SECTIONS
 	   - All text from .text and .text.* (including user code) */
 	.text : {
 		*(.text.header)
-		*(.hh2info)
+		KEEP(*(.hh2info))
 		*(.text.entry)
 
 		_bctors = . ;
