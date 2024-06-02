@@ -35,8 +35,10 @@ SECTIONS
 	   - Compiler-provided constructors (.ctors) and destructors (.dtors)
 	   - All text from .text and .text.* (including user code) */
 	.text : {
-		*(.text.header)
-		KEEP(*(.hh2info))
+		KEEP(*(.hh2.header))
+		KEEP(*(.hh2.info))
+		KEEP(*(.hh2.stage2))
+
 		*(.text.entry)
 
 		_bctors = . ;
