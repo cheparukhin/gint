@@ -10,8 +10,10 @@ MEMORY
 {
 	/* VRAM backup - our main fixed area to load code, size 320x528x2 */
 	ram (rwx): o = 0x8c052800, l = 337920
-	/* End-of-RAM area, 64 kB are safe to use according to experience */
-	eram (rwx): o = 0x8cff0000, l = 61184 /* 64k - 0x1100 */
+	/* End-of-RAM area, 104 kB are safe to use according to experience. What
+	   happens is HollyHock itself is loaded at 0x8cfe0000 (128 kB before the
+	   end) so we have to fit after it. CPBoy uses 0x8cfe6000, follow that. */
+	eram (rwx): o = 0x8cfe6000, l = 102144 /* 104k - 0x1100 */
 	/* Space for the vbr */
 	vbr (rwx): o = 0x8cffef00, l = 0x1100
 	/* On-chip IL memory */
