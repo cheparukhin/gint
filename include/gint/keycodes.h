@@ -85,7 +85,7 @@ enum {
 	KEY_Y		= 0xa3,
 	KEY_Z		= 0xa4,
 	KEY_EQUALS	= 0xa5,
-	KEY_CLEAR       = KEY_ACON,
+	KEY_CLEAR       = KEY_EXIT,
 
 	/* Key aliases (handle with care =D) */
 	KEY_X2		= KEY_SQUARE,
