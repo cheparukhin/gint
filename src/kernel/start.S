@@ -34,7 +34,7 @@ _start_header:
 	jmp	@r0
 	nop
 	/* Offset to hardcoded filename, used to patch binary after linking */
-	.word	(.stage2_filename - _start_header)
+	.word	.stage2_filename
 	/* Address of stage-2 */
 1:	.long	_stage2
 	/* Stage-1 load address at end of RAM (specified in linker script) */
@@ -48,13 +48,71 @@ _start_header:
 .align 2
 
 _stage2:
-	/* No-op load */
+	mov.l	r8, @-r15
+	sts.l	pr, @-r15
+
+	/* Open the binary file in read mode */
+	mov.l	.open, r1
+	mov.l	.path, r4
+	jsr	@r1
+	mov	#1, r5 /* OPEN_READ */
+
+	cmp/pz	r0
+	bf	.end
+	mov	r0, r8
+
+	/* Seek to required offset */
+	mov.l	.lseek, r1
+	mov	r8, r4
+	mov.l	.off, r5
+	jsr	@r1
+	mov	#0, r6 /* SEEK_SET */
+
+	/* Load the binary */
+	mov.l	.read, r1
+	mov.l	.load, r5
+	mov.l	.size, r6
+	jsr	@r1
+	mov	r8, r4
+
+	/* Close the file regardless of read result */
+	mov.l	r0, @-r15
+	mov.l	.close, r1
+	jsr	@r1
+	mov	r8, r4
+
+	mov.l	.size, r1
+	mov.l	@r15+, r0
+	cmp/eq	r0, r1
+	bf	.end
+
+	lds.l	@r15+, pr
 	mov.l	1f, r0
 	jmp	@r0
-	nop
-	nop
+	mov.l	@r15+, r8
+
+.end:
+	lds.l	@r15+, pr
+	rts
+	mov.l	@r15+, r8
+
+.balign 4
 
 1:	.long	_start
+
+	/* Filepath */
+.path:	.long .stage2_path
+	/* Offset of segment in file */
+.off:	.long _gint_hh2_stage2_offset
+	/* Segment size */
+.size:	.long _gint_hh2_stage2_size
+	/* Load address */
+.load:	.long _gint_hh2_stage2_load
+
+.open:	.long 0x80057854
+.lseek:	.long 0x80057a96
+.read:	.long 0x800578a2
+.close:	.long 0x80057912
 
 .align 2
 	.zero 2

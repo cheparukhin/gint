@@ -121,6 +121,7 @@ void kinit(void)
 
 	/* Allocate VRAMs, which is important for panic screens */
 	extern bool dvram_init(void);
+	// TODO: Cannot _Exit() yet, the gint_exitbuf isn't setup!
 	if(!dvram_init())
 		abort();
 
