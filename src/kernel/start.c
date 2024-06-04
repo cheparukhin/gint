@@ -42,7 +42,8 @@ int8_t gint_restart = 0;
 /* gint_setrestart(): Set whether to restart the add-in after exiting */
 void gint_setrestart(int restart)
 {
-	gint_restart = !!restart;
+	/* There is now return-to-menu so no restart on CP */
+	gint_restart = restart && !GINT_OS_CP;
 }
 
 /* Return value of main() */
