@@ -20,8 +20,7 @@ The only subtlety is that the stage-2 loader must know the binary file's path
 to load from the filesystem, and HollyHock doesn't (yet) give it to us. We
 write the path in the final binary with the fxsdk/scripts/patch_hh2_filename.py
 script from the fxSDK. This is fragile (i.e. not renaming-proof), but a start.
-Since the header is variable-size, I leave the offset of stage-2 in the binary
-at offset 0x06. I could avoid this by patching the ELF, not bin, but I'm lazy.
+We find the filename by looking up the .stage2_filename symbol in the ELF.
 */
 
 /* 16-byte header */
@@ -33,8 +32,8 @@ _start_header:
 	mov.l	1f, r0
 	jmp	@r0
 	nop
-	/* Offset to hardcoded filename, used to patch binary after linking */
-	.word	.stage2_filename
+	nop
+
 	/* Address of stage-2 */
 1:	.long	_stage2
 	/* Stage-1 load address at end of RAM (specified in linker script) */
