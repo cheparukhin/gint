@@ -26,6 +26,9 @@ bool dvram_init(void)
 {
 	return true;
 }
+void dvram_quit(void)
+{
+}
 
 /* dupdate(): Push the video RAM to the display driver */
 void dupdate(void)
