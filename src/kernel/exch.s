@@ -16,8 +16,31 @@ _gint_exch:
 	mov.l	@r0, r0
 	tst	#1, r0
 	mov.l	.expevt_sh4, r8
-	bt	catch
+	mov.l	.tra_sh4, r9
+	bt	syscall
 	mov.l	.expevt_sh3, r8
+	mov.l	.tra_sh3, r9
+
+syscall:
+	/* If this is trapa #31, save context and run the syscall interface. */
+	mov.l	@r8, r4
+	mov.w	.expevt_trapa, r5
+	mov.l	@r9, r0
+	cmp/eq	r4, r5
+	bf	catch
+	cmp/eq	#31*4, r0
+	bf	catch
+
+	add	#-20, r15
+	mov.l	.syscall_entry_plus1, r0
+	mov	r15, r4
+	mov.l	.callback, r1
+	mov.l	@r1, r1
+	jsr	@r1
+	mov.l	r0, @r4
+
+	bra	end
+	add	#20, r15
 
 catch:
 	/* Panic if the catcher is NULL */
@@ -89,3 +112,13 @@ end:
 	.long	(0xf << 4)
 .SR_clear_BL:
 	.long	~(1 << 28)
+.callback:
+	.long	_gint_inth_callback
+.syscall_entry_plus1:
+	.long	_syscall_entry + 1
+.tra_sh3:
+	.long	0xffffffd0
+.tra_sh4:
+	.long	0xff000020
+.expevt_trapa:
+	.word	0x160

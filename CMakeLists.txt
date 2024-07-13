@@ -125,6 +125,7 @@ set(SOURCES
   src/kernel/osmenu.c
   src/kernel/start.c
   src/kernel/start.S
+  src/kernel/syscall.c
   src/kernel/syscalls.S
   src/kernel/tlbh.S
   src/kernel/world.c
