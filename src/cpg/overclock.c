@@ -30,6 +30,7 @@
 /* SH7305 CPG */
 #define SH4_PLL_32x  0b011111
 #define SH4_PLL_26x  0b011001
+#define SH4_PLL_25X  0b011000
 #define SH4_PLL_16x  0b001111
 #define SH4_DIV_2    0
 #define SH4_DIV_4    1
@@ -421,7 +422,7 @@ static struct cpg_overclock_setting const settings_fxcg50[5] = {
       .CS5aWCR = 0x000203C1 },
     /* CLOCK_SPEED_F5 */
     { .FLLFRQ  = 0x00004000 + 900,
-      .FRQCR  = (SH4_PLL_26x<<24)+(SH4_DIV_2<<20)+(SH4_DIV_4<<12)+(SH4_DIV_4<<8)+SH4_DIV_8,
+      .FRQCR  = (SH4_PLL_25x<<24)+(SH4_DIV_2<<20)+(SH4_DIV_4<<12)+(SH4_DIV_4<<8)+SH4_DIV_8,
       .CS0BCR  = 0x24920400,
       .CS2BCR  = 0x24923400,
       .CS3BCR  = 0x24924400,
