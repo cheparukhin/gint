@@ -83,7 +83,7 @@ void kinit(void)
 	/* Load the event handler entry points into memory */
 	memcpy((void *)VBR + 0x100, gint_exch, exch_size);
 	memcpy((void *)VBR + 0x400, gint_tlbh, tlbh_size);
-	memcpy((void *)VBR + 0x600, inth_entry, 64);
+	memcpy((void *)VBR + 0x600, inth_entry, isSH3() ? 64 : 32);
 
 	/* Initialize memory allocators */
 	kmalloc_init();

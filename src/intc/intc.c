@@ -168,8 +168,8 @@ void *intc_handler(int event_code, const void *handler, size_t size)
 	/* On SH4, just use the code as offset */
 	else
 	{
-		/* 0x40 is the size of the entry gate */
-		dest = (void *)cpu_getVBR() + 0x640 + (event_code - 0x400);
+		/* 0x20 is the size of the entry gate */
+		dest = (void *)cpu_getVBR() + 0x620 + (event_code - 0x400);
 	}
 
 	return memcpy(dest, handler, size);

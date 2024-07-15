@@ -9,5 +9,5 @@ void syscall_entry(gint_inth_callback_context_t *ptr)
 	(void)ptr;
 
 	++debug_syscall_count;
-	debug_syscall_lastnr = ptr->r3;
+	debug_syscall_lastnr = ptr->r[3];
 }

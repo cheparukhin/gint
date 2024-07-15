@@ -766,7 +766,7 @@ static void gdb_notifier_function(void)
 	if (gdb_single_step_backup.single_stepped)
 		return;
 
-	gdb_handle_single_step(usb_interrupt_context->spc, UBC_BREAK_AFTER);
+	gdb_handle_single_step(usb_interrupt_context->pc, UBC_BREAK_AFTER);
 }
 
 static int gdb_panic_handler(uint32_t code)
