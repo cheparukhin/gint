@@ -30,7 +30,7 @@
 /* SH7305 CPG */
 #define SH4_PLL_32x  0b011111
 #define SH4_PLL_26x  0b011001
-#define SH4_PLL_25X  0b011000
+#define SH4_PLL_25x  0b011000
 #define SH4_PLL_16x  0b001111
 #define SH4_DIV_2    0
 #define SH4_DIV_4    1
