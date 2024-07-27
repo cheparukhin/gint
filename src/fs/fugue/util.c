@@ -49,6 +49,11 @@ int bfile_type_to_dirent(int bfile_type)
 	case BFile_Type_DotDot:         return DT_DIR;
 	case BFile_Type_MainMem:        return DT_BLK;
 	case BFile_Type_File:           return DT_REG;
+	case BFile_Type_Addin:          return DT_REG;
+	case BFile_Type_Eact:           return DT_REG;
+	case BFile_Type_Language:       return DT_REG;
+	case BFile_Type_Bitmap:         return DT_REG;
+	case BFile_Type_Volume:         return DT_BLK;
 	case BFile_Type_Archived:       return DT_REG;
 	default:                        return DT_UNKNOWN;
 	}
