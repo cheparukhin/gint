@@ -34,9 +34,6 @@ int bfile_type_to_mode_t(int bfile_type)
 	case BFile_Type_Directory:      return S_IFDIR;
 	case BFile_Type_Dot:            return S_IFDIR;
 	case BFile_Type_DotDot:         return S_IFDIR;
-	case BFile_Type_MainMem:        return S_IFBLK;
-	case BFile_Type_File:           return S_IFREG;
-	case BFile_Type_Archived:       return S_IFREG;
 	default:                        return S_IFREG;
 	}
 }
@@ -47,7 +44,7 @@ int bfile_type_to_dirent(int bfile_type)
 	case BFile_Type_Directory:      return DT_DIR;
 	case BFile_Type_Dot:            return DT_DIR;
 	case BFile_Type_DotDot:         return DT_DIR;
-	case BFile_Type_MainMem:        return DT_BLK;
+	case BFile_Type_MainMem:        return DT_REG;
 	case BFile_Type_File:           return DT_REG;
 	case BFile_Type_Addin:          return DT_REG;
 	case BFile_Type_Eact:           return DT_REG;
