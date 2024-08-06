@@ -629,7 +629,7 @@ static bool gdb_handle_stubcall(gdb_cpu_state_t* cpu_state)
 	int sc_num = cpu_state->reg.r3;
 
 	if(sc_num == 64) { /* write */
-		int len = snprintf(str, sizeof str, "Fwrite,%x,%08x,%x",
+		int len = snprintf(str, sizeof str, "Fwrite,%lx,%08lx,%lx",
 			cpu_state->reg.r4,
 			cpu_state->reg.r5,
 			cpu_state->reg.r6);
