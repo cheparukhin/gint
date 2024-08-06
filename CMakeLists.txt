@@ -23,6 +23,8 @@ endif()
 configure_file(include/gint/config.h.in include/gint/config.h)
 
 set(SOURCES
+  # Hardware Abstraction Layer for the standard library
+  src/fxlibc_hal.c
   # Clock Pulse Generator driver
   src/cpg/cpg.c
   src/cpg/overclock.c
