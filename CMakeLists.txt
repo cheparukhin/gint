@@ -263,7 +263,7 @@ fxconv_declare_assets(${ASSETS_FX} ${ASSETS_CG})
 include_directories(
   "${PROJECT_SOURCE_DIR}/include"
   "${PROJECT_BINARY_DIR}/include")
-add_compile_options(-Wall -Wextra -std=c11 -Os -g -fstrict-volatile-bitfields -mtas -ffreestanding -flto)
+add_compile_options(-Wall -Wextra -std=c11 -Os -g -fstrict-volatile-bitfields -mtas -flto)
 
 if("${FXSDK_PLATFORM_LONG}" STREQUAL fx9860G)
   add_compile_definitions(FX9860G)
