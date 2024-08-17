@@ -43,7 +43,10 @@ SECTIONS
 	   - All text from .text and .text.* (including user code) */
 	.hh2 : {
 		KEEP(*(.hh2.header))
-		KEEP(*(.hh2.info))
+		KEEP(*(.hh2.info.name))
+		KEEP(*(.hh2.info.description))
+		KEEP(*(.hh2.info.author))
+		KEEP(*(.hh2.info.version))
 		KEEP(*(.hh2.stage2))
 		. = ALIGN(16);
 	} > eram AT> bin
