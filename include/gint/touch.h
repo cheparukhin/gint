@@ -8,22 +8,26 @@
 extern "C" {
 #endif
 
+#include <gint/config.h>
+
+#if GINT_HW_CP
+
 /* touch_calib - tounch-screen calibration information */
 typedef struct {
-    int x_mul;
+    int x_base;
     int x_div;
-    int y_mul;
+    int y_base;
     int y_div;
     int dual_debounce_frame;
     int dual_sensi_entry;
     int dual_sensi_leave;
-} touch_calib;
+} touch_calibration_t;
 
 /* touch_calib_get() - get calibration information */
-extern int touch_calib_get(touch_calib *calib);
+extern int touch_calib_get(touch_calibration_t *calib);
 
 /* touch_calib_set() - set calibration information */
-extern int touch_calib_set(touch_calib *calib);
+extern int touch_calib_set(touch_calibration_t *calib);
 
 // low-level API
 
@@ -31,6 +35,8 @@ extern int touch_calib_set(touch_calib *calib);
 
 /* touch_next_event() - get the next touchscreen event */
 extern key_event_t touch_next_event(void);
+
+#endif /* GINT_HW_CP */
 
 #ifdef __cplusplus
 }

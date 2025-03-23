@@ -1,10 +1,13 @@
 //---
-// gint:touch   - touchscreen driver (high-level)
+// gint:touch   - touch driver (high-level)
 //----
 #include <string.h>
 
 #include <gint/touch.h>
 #include <gint/cpu.h>
+#include <gint/config.h>
+
+#if GINT_HW_CP
 
 #include "./i2c.h"
 #include "./adconv.h"
@@ -24,26 +27,26 @@ extern struct _touch_drv_info __touch_drv_info;
 // user-API
 
 /* touch_calib_get() - get calibration information */
-int touch_calib_get(touch_calib *calib)
+int touch_calib_get(touch_calibration_t *calib)
 {
     if (calib == NULL)
         return -1;
-    memcpy(calib, &__touch_drv_info.calibration, sizeof(touch_calib));
+    memcpy(calib, &__touch_drv_info.calibration, sizeof(*calib));
     return 0;
 }
 
 /* touch_calib_set() - set calibration information */
-int touch_calib_set(touch_calib *calib)
+int touch_calib_set(touch_calibration_t *calib)
 {
     if (calib == NULL)
         return -1;
-    memcpy(&__touch_drv_info.calibration, calib, sizeof(touch_calib));
+    memcpy(&__touch_drv_info.calibration, calib, sizeof(*calib));
     return 0;
 }
 
 // low-level API
 
-/* touch_next_event() - get the next touchscreen event */
+/* touch_next_event() - get the next touch event */
 key_event_t touch_next_event(void)
 {
     struct _touch_adconv adconv;
@@ -53,11 +56,11 @@ key_event_t touch_next_event(void)
     int type;
 
     evt.type = KEYEV_TOUCH_RELEASE;
-    type = touchscreen_adconv_get_raw(&adraw);
+    type = touch_adconv_get_raw(&adraw);
     if (type != 0)
     {
-        type = touchscreen_adconv_get_conv(&adconv, &adraw, type);
-        type = touchscreen_adconv_get_dots(&addots, &adconv, type);
+        type = touch_adconv_get_conv(&adconv, &adraw, type);
+        type = touch_adconv_get_dots(&addots, &adconv, type);
         if (type == 1)
         {
             evt.type = KEYEV_TOUCH_DRAG;
@@ -88,3 +91,5 @@ key_event_t touch_next_event(void)
     cpu_atomic_end();
     return evt;
 }
+
+#endif /* GINT_HW_CP */
