@@ -155,6 +155,9 @@ void hw_detect(void)
 	uint8_t *productID = (void *)0x8001ffd0;
 	if(!memcmp(productID, "\xff\xff\xff\xff\xff\xff\xff\xff", 8))
 		gint[HWCALC] = HWCALC_FXCG_MANAGER;
+	/* Tell circuit10's emulator apart using the lack of OS version */
+	if(!memcmp(version, "UUUUUUUUUU", 10))
+		gint[HWCALC] = HWCALC_FXCG50;
 
 	/* Basic memory information */
 	gint[HWRAM] = (gint[HWCALC] == HWCALC_PRIZM) ? (2 << 20) : (8 << 20);
