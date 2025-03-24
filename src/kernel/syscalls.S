@@ -258,10 +258,9 @@ ___PutKeyCode:           casiowin_call(#20)
 ___GetKeyWait:           casiowin_call(#21)
 ___ClearKeyBuffer:       casiowin_call(#22)
 ___GetVRAMAddress:       casiowin_call(#23)
-___ConfigureStatusArea:  casiowin_call(#24)
-___SetQuitHandler:       casiowin_call(#25)
-___PowerOff:             casiowin_call(#26)
-___Reset:                casiowin_call(#27)
+___SetQuitHandler:       casiowin_call(#24)
+___PowerOff:             casiowin_call(#25)
+___Reset:                casiowin_call(#26)
 
 .data
 .CASIOWIN_API:
