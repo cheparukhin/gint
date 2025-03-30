@@ -35,6 +35,22 @@ int touch_calib_get(touch_calibration_t *calib)
     return 0;
 }
 
+int touch_calib_get_os(touch_calibration_t *calib)
+{
+    void *os_version = (void *)0x80020020;
+    if(!memcmp(os_version, "02.01.200", 9) ||
+       !memcmp(os_version, "02.01.700", 9)) {
+        int const *os_calibration = (void *)0x8c1bea50;
+        calib->x_base = os_calibration[0];
+        calib->y_base = os_calibration[1];
+        calib->x_div = os_calibration[2];
+        calib->y_div = os_calibration[3];
+        return 0;
+    }
+
+    return -1;
+}
+
 /* touch_calib_set() - set calibration information */
 int touch_calib_set(touch_calibration_t *calib)
 {

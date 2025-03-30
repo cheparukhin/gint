@@ -37,6 +37,8 @@ static void _touch_configure(void)
     __touch_drv_info.calibration.dual_debounce_frame = 0;
     __touch_drv_info.calibration.dual_sensi_entry = 0x18;
     __touch_drv_info.calibration.dual_sensi_leave = 0x24;
+
+    touch_calib_get_os(&__touch_drv_info.calibration);
 }
 
 /* _touch_hsave() - save hardware state */
