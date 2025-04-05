@@ -3,11 +3,20 @@
 #include <gint/fs.h>
 #include <errno.h>
 #include "util.h"
+#include "bfilecp.h"
 
 int fugue_mkdir(char const *path, GUNUSED mode_t mode)
 {
 	ENOTSUP_IF_NOT_FUGUE(-1);
 
+#if GINT_OS_CP
+	int rc = BFile_Mkdir(path);
+	if(rc < 0) {
+		errno = bfile_error_to_errno(rc);
+		return -1;
+	}
+	return 0;
+#else
 	uint16_t *fcpath = fs_path_normalize_fc(path);
 	if(!fcpath) {
 		errno = ENOMEM;
@@ -23,4 +32,5 @@ int fugue_mkdir(char const *path, GUNUSED mode_t mode)
 
 	free(fcpath);
 	return 0;
+#endif
 }
