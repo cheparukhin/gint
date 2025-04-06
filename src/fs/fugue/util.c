@@ -12,7 +12,7 @@ int bfile_error_to_errno(int e)
 {
 #if GINT_OS_CP
 	switch(e) {
-	case BFileCP_ENOMEM:			return ENOMEM;
+	case BFileCP_ENOMEM:			return ENOENT;
 	case BFileCP_EINVAL:			return EINVAL;
 	case BFileCP_EDEVFAIL:			return EIO;
 	case BFileCP_EMOUNTED:			return ENODEV;
@@ -206,8 +206,12 @@ char **fs_split_components(char *path, int *count)
 
 /* Generalization of fs_path_normalize(). Returns a [char *] if use_fc=false,
    otherwise returns an [uint16_t *]. */
-static void *path_normalize(char const *path, bool use_fc)
+static void *path_normalize(
+	char const *path, bool use_fc, char const *prefix8, int dirsep)
 {
+	if(!prefix8)
+		prefix8 = "/";
+
 	char *path_dup = strdup(path);
 	if(!path_dup) return NULL;
 
@@ -231,7 +235,8 @@ static void *path_normalize(char const *path, bool use_fc)
 	}
 
 	/* Count total length */
-	int length = (use_fc ? 7 : 1) + (wr >= 1 ? wr - 1 : 0);
+	int prefix8_len = strlen(prefix8);
+	int length = (use_fc ? 7 : prefix8_len) + (wr >= 1 ? wr - 1 : 0);
 	for(int i = 0; i < wr; i++) {
 		length += utf8_len(comps[i]);
 	}
@@ -241,11 +246,16 @@ static void *path_normalize(char const *path, bool use_fc)
 		uint16_t *fc = malloc((length + 1) * sizeof *fc);
 		uint16_t *fc_init = fc;
 
+#if GINT_OS_CP
+		memcpy(fc, u"\\fls0\\", 6*2);
+		fc += 6;
+#else
 		memcpy(fc, u"\\\\fls0\\", 7*2);
 		fc += 7;
+#endif
 
 		for(int i = 0; i < wr; i++) {
-			if(i > 0) *fc++ = '\\';
+			if(i > 0) *fc++ = dirsep;
 			utf8_to_fc(fc, comps[i], (size_t)-1);
 			fc += utf8_len(comps[i]);
 		}
@@ -258,10 +268,11 @@ static void *path_normalize(char const *path, bool use_fc)
 	else {
 		char *utf8 = malloc(length + 1);
 		char *utf8_init = utf8;
-		*utf8++ = '/';
+		memcpy(utf8, prefix8, prefix8_len);
+		utf8 += prefix8_len;
 
 		for(int i = 0; i < wr; i++) {
-			if(i > 0) *utf8++ = '/';
+			if(i > 0) *utf8++ = dirsep;
 			strcpy(utf8, comps[i]);
 			utf8 += utf8_len(comps[i]);
 		}
@@ -273,12 +284,17 @@ static void *path_normalize(char const *path, bool use_fc)
 	}
 }
 
+
 char *fs_path_normalize(char const *path)
 {
-	return path_normalize(path, false);
+	return path_normalize(path, false, NULL, '/');
 }
 
+char *fs_path_normalize_opt(char const *path, char const *prefix, int dirsep)
+{
+	return path_normalize(path, false, prefix, dirsep);
+}
 uint16_t *fs_path_normalize_fc(char const *path)
 {
-	return path_normalize(path, true);
+	return path_normalize(path, true, NULL, '\\');
 }

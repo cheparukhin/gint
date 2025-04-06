@@ -22,15 +22,15 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 	}
 
 #if GINT_OS_CP
-	char *normpath = fs_path_normalize(path);
+	char *normpath = fs_path_normalize_opt(path, "\\fls0\\", '\\');
 	if(!normpath) {
 		errno = ENOMEM;
 		free(fcpath);
 		return -1;
 	}
-#define NORMALIZED_PATH normpath
+# define NORMALIZED_PATH normpath
 #else
-#define NORMALIZED_PATH fcpath
+# define NORMALIZED_PATH fcpath
 #endif
 
 	/* Open mode */
@@ -48,7 +48,11 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 	   respond well. fs_path_normalize_fc() normalizes the path so we just
 	   have to check for the fixed string "\\fls0\". */
 	bool exists;
+#if GINT_OS_CP
+	if(!memcmp(fcpath, u"\\fls0\\", 14)) {
+#else
 	if(!memcmp(fcpath, u"\\\\fls0\\", 16)) {
+#endif
 		exists = true;
 		type = BFile_Type_Directory;
 	}
@@ -127,7 +131,7 @@ int fugue_open(char const *path, int flags, GUNUSED mode_t mode)
 
 	if(fugue_fd < 0) {
 		errno = bfile_error_to_errno(fugue_fd);
-		rc = fugue_fd;
+		rc = -1;
 		goto end;
 	}
 

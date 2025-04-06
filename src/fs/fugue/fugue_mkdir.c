@@ -10,12 +10,14 @@ int fugue_mkdir(char const *path, GUNUSED mode_t mode)
 	ENOTSUP_IF_NOT_FUGUE(-1);
 
 #if GINT_OS_CP
-	int rc = BFile_Mkdir(path);
-	if(rc < 0) {
-		errno = bfile_error_to_errno(rc);
+	char *normpath = fs_path_normalize_opt(path, "\\fls0\\", '\\');
+	if(!normpath) {
+		errno = ENOMEM;
 		return -1;
 	}
-	return 0;
+
+	int rc = BFile_Mkdir(normpath);
+	free(normpath);
 #else
 	uint16_t *fcpath = fs_path_normalize_fc(path);
 	if(!fcpath) {
@@ -24,13 +26,12 @@ int fugue_mkdir(char const *path, GUNUSED mode_t mode)
 	}
 
 	int rc = BFile_Create(fcpath, BFile_Folder, NULL);
+	free(fcpath);
+#endif
+
 	if(rc < 0) {
 		errno = bfile_error_to_errno(rc);
-		free(fcpath);
-		return -1;
+		rc = -1;
 	}
-
-	free(fcpath);
-	return 0;
-#endif
+	return rc;
 }

@@ -16,29 +16,44 @@ int fugue_unlink(char const *path)
 		return -1;
 	}
 
+#if GINT_OS_CP
+	char *normpath = fs_path_normalize_opt(path, "\\fls0\\", '\\');
+	if(!normpath) {
+		errno = ENOMEM;
+		free(fcpath);
+		return -1;
+	}
+#endif
+
 	int type, size, rc;
 	rc = BFile_Ext_Stat(fcpath, &type, &size);
 	if(rc < 0) {
 		errno = bfile_error_to_errno(rc);
-		free(fcpath);
-		return -1;
+		rc = -1;
+		goto end;
 	}
 	if(bfile_type_to_mode_t(type) != S_IFREG) {
 		errno = ENOTDIR;
-		free(fcpath);
-		return -1;
+		rc = -1;
+		goto end;
 	}
 
 #if GINT_OS_CP
-	rc = BFile_Remove(path);
+	rc = BFile_Remove(normpath);
 #else
 	rc = BFile_Remove(fcpath);
 #endif
-	free(fcpath);
 
 	if(rc < 0) {
 		errno = bfile_error_to_errno(rc);
-		return -1;
+		rc = -1;
 	}
-	return 0;
+	rc = 0;
+
+end:
+	free(fcpath);
+#if GINT_OS_CP
+	free(normpath);
+#endif
+	return rc;
 }
