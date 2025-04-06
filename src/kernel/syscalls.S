@@ -291,35 +291,41 @@ ___VRAMRestore:
 ___Reset:
 	fixed(0xa0000000)
 
-_BFile_Remove:
-	fixed(0x80057fc8) // atomic + HH2 (= 0x8005794e)
-_BFile_Rename:
-	fixed(0x80057a06)
-_BFile_Open:
-	fixed(0x80057854)
-_BFile_Close:
-	fixed(0x80057912)
-_BFile_Seek:
-	fixed(0x80057a96)
-_BFile_Read:
-	fixed(0x800578a2)
-_BFile_Write:
-	fixed(0x800578da)
 _BFile_FindFirst:
 	fixed(0x8005a2ac)
 _BFile_FindNext:
 	fixed(0x8005a5f0)
 _BFile_FindClose:
 	fixed(0x8005a8ba)
-_BFile_FStat:
-	fixed(0x8005798e)
+_BFile_Remove:
+	fixed(0x80057fc8)
+_BFile_Open:
+	fixed(0x80057f1c)
+_BFile_Write:
+	fixed(0x80057f74)
+_BFile_Close:
+	fixed(0x80057fa2)
+_BFile_Read:
+	fixed(0x80057f46)
+// _BFile_Flush:
+// 	fixed(0x8005809a)
 _BFile_Mkdir:
-	fixed(0x80057814)
-/*
-_BFile_GetAddr:
-	fixed(0x80057c6a)
+	fixed(0x80057ef6)
+// _BFile_Mount:
+// 	fixed(0x80057e7c)
 _BFile_Stat:
-	fixed(0x800579c2)
-*/
+	fixed(0x80057fee)
+// _BFile_Reclaim:
+// 	fixed(0x80058114)
+// _BFile_FsInfo:
+// 	fixed(0x800580ea)
+// _BFile_Salvage:
+// 	fixed(0x8005813e)
+_BFile_Rename:
+	fixed(0x80058042)
+_BFile_FStat:
+	fixed(0x80057fee)
+_BFile_Seek:
+	fixed(0x8005806c)
 
 #endif /* GINT_OS_CP */
