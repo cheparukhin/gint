@@ -129,15 +129,35 @@ int touch_adconv_get_dots(
             dots->y2 = 0;
             dots->z2 = 0;
             break;
-        case 2:
+        case 2: {
             dots->type = TS_DOTS_TYPE_DUAL;
-            dots->x1 = ((adconv->x1 - x_base) * 0x100) / x_div;
-            dots->y1 = ((adconv->y1 - y_base) * 0x100) / y_div;
+            int xmin = ((adconv->x1 - x_base) * 0x100) / x_div;
+            int ymin = ((adconv->y1 - y_base) * 0x100) / y_div;
+            // x2 end-to-end: ~185 (changes along the height)
+            // y2 end-to-end: 470
+            // x2 *= 1.64
+            // y2 *= 0.96
+            int xmax = xmin + adconv->x2 * 0x1ba / 0x100;
+            int ymax = ymin + adconv->y2 * 0x11f / 0x100;
             dots->z1 = adconv->z1;
-            dots->x2 = ((adconv->x2 - x_base) * 0x100) / x_div;
-            dots->y2 = ((adconv->y2 - y_base) * 0x100) / y_div;
             dots->z2 = adconv->z2;
+
+            if(dots->z2 >= 0) {
+                dots->x1 = xmin;
+                dots->y1 = ymin;
+                dots->x2 = xmax;
+                dots->y2 = ymax;
+            }
+            else {
+                dots->x1 = xmin;
+                dots->y1 = ymax;
+                dots->x2 = xmax;
+                dots->y2 = ymin;
+            }
+            dots->z1 = adconv->x2;
+            dots->z2 = adconv->y2;
             break;
+        }
     }
     cpu_atomic_end();
     return type;
