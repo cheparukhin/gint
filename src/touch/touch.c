@@ -190,12 +190,12 @@ static key_event_t make_event(struct _touch_addots const *dots)
 
     // TODO: Handle dual touch here
     if(dots->touches != 1) {
-        if(prev_type != KEYEV_TOUCH_RELEASE && prev_type != KEYEV_NONE)
-            evt.type = KEYEV_TOUCH_RELEASE;
+        if(prev_type != KEYEV_TOUCH_UP && prev_type != KEYEV_NONE)
+            evt.type = KEYEV_TOUCH_UP;
     }
     else {
-        if(prev_type == KEYEV_TOUCH_RELEASE || prev_type == KEYEV_NONE)
-            evt.type = KEYEV_TOUCH_PRESSED;
+        if(prev_type == KEYEV_TOUCH_UP || prev_type == KEYEV_NONE)
+            evt.type = KEYEV_TOUCH_DOWN;
         /* Don't emit successive DRAG events at the same location */
         else if(dots->x1 != prev_x || dots->y1 != prev_y)
             evt.type = KEYEV_TOUCH_DRAG;
