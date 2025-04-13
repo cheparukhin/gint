@@ -256,7 +256,6 @@ set(SOURCES
   # Touch-screen driver
   src/touch/i2c.c
   src/touch/i2c_inth.c
-  src/touch/adconv.c
   src/touch/touch.c
   src/touch/driver.c
 )
