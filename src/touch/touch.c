@@ -192,6 +192,8 @@ static key_event_t make_event(struct _touch_addots const *dots)
     if(dots->touches != 1) {
         if(prev_type != KEYEV_TOUCH_UP && prev_type != KEYEV_NONE)
             evt.type = KEYEV_TOUCH_UP;
+        evt.x = prev_x;
+        evt.y = prev_y;
     }
     else {
         if(prev_type == KEYEV_TOUCH_UP || prev_type == KEYEV_NONE)
