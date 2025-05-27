@@ -150,7 +150,7 @@ static void write_configuration_descriptor(int wLength)
 
 	/* Write the configuration descriptor */
 	dc_configuration.wTotalLength = htole16(total_length);
-    dc_configuration.bNumInterfaces = interface_count;          /* Small hack to get it to work, need to test */
+    dc_configuration.bNumInterfaces = interface_count;
 	dcp_write(&dc_configuration, dc_configuration.bLength);
 	/* For the first call, the host usually wants only this */
 	if(wLength <= dc_configuration.bLength) return;
