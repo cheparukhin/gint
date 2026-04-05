@@ -138,9 +138,11 @@ void hw_detect(void)
 	}
 	/* Tell Math+/fx-CG 100 apart from CG-50 by checking model number */
 	else {
-		bool cg50  = !memcmp(model, "810A", 4);
-		bool g90pe = !memcmp(model, "811A", 4);
-		gint[HWCALC] = cg50 || g90pe ? HWCALC_FXCG50 : HWCALC_FXCG100;
+		bool cg50   = !memcmp(model, "810A", 4);
+		bool g90pe  = !memcmp(model, "811A", 4);
+		bool cg50au = !memcmp(model, "810F", 4);
+		gint[HWCALC] = cg50 || g90pe || cg50au ? HWCALC_FXCG50 :
+		               HWCALC_FXCG100;
 	}
 
 	gint[HWFS] = HWFS_FUGUE;
