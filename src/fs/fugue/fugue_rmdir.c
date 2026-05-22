@@ -35,17 +35,17 @@ int fugue_rmdir(char const *path)
 	}
 
 #if GINT_OS_CP
-	int rc = BFile_Remove(path);
+	char *normpath = fs_path_normalize_opt(path, "\\fls0\\", '\\');
 #else
-	uint16_t *fcpath = fs_path_normalize_fc(path);
-	if(!fcpath) {
+	uint16_t *normpath = fs_path_normalize_fc(path);
+#endif
+	if(!normpath) {
 		errno = ENOMEM;
 		return -1;
 	}
 
-	int rc = BFile_Remove(fcpath);
-	free(fcpath);
-#endif
+	int rc = BFile_Remove(normpath);
+	free(normpath);
 
 	if(rc < 0) {
 		errno = bfile_error_to_errno(rc);
