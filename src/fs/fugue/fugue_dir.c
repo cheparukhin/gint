@@ -118,11 +118,12 @@ void *fugue_dir_explore(char const *path)
 	rc = BFile_FindFirst(search, &sd, fc_path, &info);
 	if(rc < 0) {
 #if GINT_OS_CP
-		if(rc != BFileCP_ENOENT) // BFileCP_EOUTOFBOUND?
+		if(rc == -1)
 #else
-		if(rc != BFile_EntryNotFound)
+		if(rc == BFile_EntryNotFound)
 #endif
-			errno = bfile_error_to_errno(rc);
+			goto end;
+		errno = bfile_error_to_errno(rc);
 		goto error;
 	}
 
