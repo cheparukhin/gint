@@ -219,7 +219,7 @@ _gint_get_CASIOWIN_API:
 	.long 0x1da6, 0x8023fdc4, 0x80333b04  /* BFile_Size */
 	.long 0x1da9, 0x8023ff2c, 0x80333c6c  /* BFile_Seek */
 	.long 0x1dab, 0x8024003c, 0x80333d7c  /* BFile_GetPos */
-	.long 0x1daf, 0x8024025e, 0x80333f9e  /* BFile_Write */
+	.long 0x1daf, 0x8024025e, 0x80333f9e  /* BFile_WriteFsync */
 	.long 0x1dac, 0x80240082, 0x80333dc2  /* BFile_Read */
 	.long 0x1db6, 0x80240888, 0x803345c8  /* BFile_FindFirst */
 	.long 0x1db8, 0x80240b06, 0x80334846  /* BFile_FindNext */
