@@ -97,38 +97,34 @@ void *__realloc_c (void *ptr, size_t new_size) {
 	extern void *__malloc(size_t size);
 	extern void __free(void *ptr);
 
-	void *block = NULL;
-	size_t *old_size_ptr = (size_t *)ptr - 1;
-
-	if (new_size == 0)
-	{
+	if (!new_size) {
 		if (ptr) __free(ptr);
 		return NULL;
 	}
 
-	if (new_size > *old_size_ptr)
-	{
-		block = __malloc(new_size);
+	if (!ptr) return __malloc(new_size);
 
-		if (!block || !ptr) return block;
-
-
+	size_t *old_size_ptr = (size_t *)ptr - 1;
+	if (new_size > *old_size_ptr) {
+		// A complete realloc would now traverse the free list to see if there
+		// is a block after this with enought size. Modern versions of hhk3 do
+		// expose the neccessary head offset for this.
+		void *block = __malloc(new_size);
+		if (!block) return NULL;
 		memcpy(block, ptr, *old_size_ptr);
 		__free(ptr);
-
 		return block;
 	}
 
-	new_size = (new_size + (4 - 1)) % 4; // round up to 4 bytes
+	// free needs 8 bytes: a size of the block and
+	// a pointer to the next free block in the list.
+	new_size = (new_size + 3) & ~3; // round up to 4
 
-	size_t diff = *old_size_ptr - new_size;
+	if (new_size + sizeof(size_t) + sizeof(void *) > *old_size_ptr) return ptr;
 
-	if (diff > sizeof(size_t) + sizeof(void *)) return ptr;
-
-	// construct heap block and donate it
-	*old_size_ptr = new_size;
-	*(size_t *)((uintptr_t)ptr + new_size) = diff;
-	__free((void *)((uintptr_t)ptr + new_size));
+	*((size_t *)ptr + new_size / 4) = *old_size_ptr - new_size - sizeof(size_t);
+	// let free handle the free list insert and merge
+	__free((char *)ptr + new_size + sizeof(size_t));
 
 	return ptr;
 }
