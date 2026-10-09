@@ -20,7 +20,7 @@
 
 static void inth_dsp(int num)
 {
-#if GINT_HW_FX
+#if GINT_RENDER_MONO
 	int fg = C_BLACK, bg = C_WHITE;
 #else
 	int fg = C_WHITE, bg = C_RED;
