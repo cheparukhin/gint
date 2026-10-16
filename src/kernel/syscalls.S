@@ -151,7 +151,7 @@ syscall_table:
 #define CASIOWIN_API_VERSIONS 4
 .global _gint_set_CASIOWIN_API
 .global _gint_get_CASIOWIN_API
-.global _gint_cgdoom_get_CASIOWIN_API
+.global _gint_cg100_get_CASIOWIN_API
 
 /* System for dynamically selecting between the syscall and fixed version of
    each function based on the OS version.
@@ -200,7 +200,7 @@ _gint_set_CASIOWIN_API:
 	rts
 	mov.l	r4, @r0
 
-_gint_cgdoom_get_CASIOWIN_API:
+_gint_cg100_get_CASIOWIN_API:
 _gint_get_CASIOWIN_API:
 	mov.l	3f, r0
 	rts

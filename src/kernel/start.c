@@ -173,7 +173,7 @@ static int start2(int load_type, u32 *load_info)
 
 	gint_load_onchip_sections();
 
-	/* CGDoom: fx-9860G only. fxcg50.ld sets _lreloc and _sreloc to 0, and
+	/* fx-9860G only. fxcg50.ld sets _lreloc and _sreloc to 0, and
 	   GCC 16 assumes a 4-aligned object is at address 4 or above, so it runs
 	   the loop below 2^30 times from address 0 (TLB error at 0x1000). */
 	#if GINT_OS_FX

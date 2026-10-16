@@ -4,10 +4,11 @@ This repository preserves the history of [upstream gint](https://git.planet-casi
 The fork starts at `463f180ffb71ccdcef05c928ad19f2a480b14bc1` on upstream's `dev` branch.
 Upstream's authorship and licensing statements in README.md remain applicable.
 
-The initial compatibility commits migrate CGDoom's existing patch:
+The compatibility additions provide:
 
 - Exact OS 02.00.0000 and 02.20.0000 selection and the 2.20 fixed-address call table.
-- The `GINT_CGDOOM_OS_COMPAT` marker and API-query symbol used by CGDoom.
+- The `GINT_CG100_OS_COMPAT` capability marker and
+  `gint_cg100_get_CASIOWIN_API()` query for consumers requiring this runtime.
 - LCD controller 0x32/0x52 handling during world switches.
 - Exclusion of the fx-9860G-only relocation stage on CG models.
 
@@ -16,9 +17,7 @@ adds tests of actual SuperH startup code. See [the audit](docs/linker-symbol-aud
 and [the startup test instructions](tests/startup/README.md).
 
 Keep general compiler/startup fixes separate from model-specific compatibility
-changes so they can be reviewed and proposed upstream independently. No changes
-are submitted to upstream automatically. Preserve the upstream remote when
-cloning for development:
+changes for review. Preserve the upstream remote to follow its development:
 
 ```sh
 git remote add upstream https://git.planet-casio.com/Lephenixnoir/gint.git
