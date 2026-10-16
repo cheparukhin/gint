@@ -14,11 +14,16 @@ option(GINT_USB_DEBUG "Enable debug functions for the USB driver")
 set(CMAKE_INSTALL_MESSAGE LAZY)
 
 # Generate <gint/config.h> with commit hash, version name and options
-if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+# An exported source archive has no .git. Its builder can pass both values.
+if(DEFINED GINT_GIT_HASH AND DEFINED GINT_GIT_VERSION)
+  # Use the explicitly supplied, pinned source identity.
+elseif(DEFINED GINT_GIT_HASH OR DEFINED GINT_GIT_VERSION)
+  message(FATAL_ERROR "Pass both GINT_GIT_HASH and GINT_GIT_VERSION")
+elseif(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   git_version_number(SHORT_HASH "GINT_GIT_HASH" TAG_RELATIVE "GINT_GIT_VERSION")
 else()
   set(GINT_GIT_HASH "0000000")
-  set(GINT_GIT_VERSION "${PROJECT_VERSION}")
+  set(GINT_GIT_VERSION "${PROJECT_VERSION}-unversioned")
 endif()
 configure_file(include/gint/config.h.in include/gint/config.h)
 
