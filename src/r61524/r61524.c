@@ -351,11 +351,19 @@ static bool r61524_update(int x, int y, image_t const *fb, int flags)
 
 static void hsave(r61524_state_t *s)
 {
+	/* CGDoom: old window registers are different commands on new LCDs. */
+	uint16_t version = r61524_get_version();
+	if(version == 0x32 || version == 0x52)
+		return;
 	r61524_win_get(&s->HSA, &s->HEA, &s->VSA, &s->VEA);
 }
 
 static void hrestore(r61524_state_t const *s)
 {
+	/* CGDoom: old window registers are different commands on new LCDs. */
+	uint16_t version = r61524_get_version();
+	if(version == 0x32 || version == 0x52)
+		return;
 	r61524_win_set(s->HSA, s->HEA, s->VSA, s->VEA);
 }
 
