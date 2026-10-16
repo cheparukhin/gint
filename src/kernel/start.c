@@ -4,6 +4,7 @@
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
+#include <gint/defs/linker.h>
 #include <gint/mmu.h>
 #include <gint/drivers.h>
 #include <gint/gint.h>
@@ -20,18 +21,18 @@
    - s* represents the size of the section
    - r* represents the relocation address (destination address in RAM)
    gint's BSS section is not mentioned here because it's never initialized */
-extern uint32_t
-	brom, srom,			/* Limits of ROM mappings */
-	ldata,  sdata,  rdata,		/* User's data section */
-	lilram, silram, rilram,		/* IL memory section */
-	lxyram, sxyram, rxyram,		/* X and Y memory section */
-	sbss, rbss,			/* User's BSS section */
-	lgmapped, sgmapped,		/* Permanently mapped functions */
-	lreloc, sreloc;			/* Relocatable references */
+extern unsigned char
+	brom[], srom[],
+	ldata[], sdata[], rdata[],
+	lilram[], silram[], rilram[],
+	lxyram[], sxyram[], rxyram[],
+	sbss[], rbss[],
+	lgmapped[], sgmapped[],
+	lreloc[], sreloc[];
 
-/* Constructor and destructor arrays */
-extern void (*bctors)(void), (*ectors)(void);
-extern void (*bdtors)(void), (*edtors)(void);
+/* Linker boundaries, possibly equal for an empty table. */
+extern void (*bctors[])(void), (*ectors[])(void);
+extern void (*bdtors[])(void), (*edtors[])(void);
 
 /* User-provided main() function */
 int main(void);
@@ -68,11 +69,13 @@ static void regcpy(uint32_t * __restrict l, int32_t s, uint32_t * __restrict r)
 		s -= 16;
 	}
 }
-#define regcpy(l, s, r) regcpy(l, (int32_t)s, r)
+#define regcpy(l, s, r) regcpy((void *)gint_linker_value(l), \
+    (int32_t)gint_linker_value(s), (void *)gint_linker_value(r))
 
 /* regclr(): Clear a memory region using symbol information
    @r  Source pointer (base address)
    @s  Size of area (should be a multiple of 16) */
+#if !GINT_OS_CP
 static void regclr(uint32_t *r, int32_t s)
 {
 	while(s > 0)
@@ -84,14 +87,22 @@ static void regclr(uint32_t *r, int32_t s)
 		s -= 16;
 	}
 }
-#define regclr(r, s) regclr(r, (int32_t)s)
+#define regclr(r, s) regclr((void *)gint_linker_value(r), \
+    (int32_t)gint_linker_value(s))
+#endif
 
 /* callarray(): Call an array of functions (constructors or destructors)
    @f  First element of array
    @l  First element outside of the array */
 static void callarray(void (**f)(void), void (**l)(void))
 {
-	while(f < l) (*(*f++))();
+    uintptr_t cursor = gint_linker_value(f);
+    uintptr_t end = gint_linker_value(l);
+    while(cursor < end) {
+        void (**entry)(void) = (void *)cursor;
+        (*entry)();
+        cursor += sizeof *entry;
+    }
 }
 
 void gint_load_onchip_sections(void)
@@ -104,9 +115,9 @@ void gint_load_onchip_sections(void)
 		/* Clear the areas so that we have less to save in case of a
 		   return to menu leading to a poweroff. */
 		memset((void *)0xe5200000, 0, 4096);
-		regcpy(&lilram, &silram, &rilram);
+		regcpy(lilram, silram, rilram);
 		memset((void *)0xe500e000, 0, 16384);
-		regcpy(&lxyram, &sxyram, &rxyram);
+		regcpy(lxyram, sxyram, rxyram);
 	}
 }
 
@@ -142,8 +153,9 @@ static int start2(int load_type, u32 *load_info)
 		/* Try to map every ROM address up to _srom */
 		volatile uint8_t *x = (void *)0x00300000;
 		uint32_t loaded = 0;
+		uint32_t image_size = gint_linker_value(srom);
 
-		while(loaded < (uint32_t)&srom)
+		while(loaded < image_size)
 		{
 			GUNUSED volatile uint8_t y = *x;
 			loaded += 1024;
@@ -155,8 +167,8 @@ static int start2(int load_type, u32 *load_info)
 	/* Load data sections and wipe the bss section. This has to be done
 	   first for static and global variables to be initialized */
 	#if !GINT_OS_CP
-	regcpy(&ldata, &sdata, &rdata);
-	regclr(&rbss, &sbss);
+	regcpy(ldata, sdata, rdata);
+	regclr(rbss, sbss);
 	#endif
 
 	gint_load_onchip_sections();
@@ -168,11 +180,12 @@ static int start2(int load_type, u32 *load_info)
 	/* Copy permanently-mapped code to start of user RAM (this section is
 	   only used on fx-9860G; on fx-CG 50 it's fixed in ILRAM) */
 	void *rgmapped = mmu_uram();
-	regcpy(&lgmapped, &sgmapped, rgmapped);
+	regcpy(lgmapped, sgmapped, rgmapped);
 
 	/* Relocate references to this code */
-	uint32_t volatile *fixups = &lreloc;
-	for(uint i = 0; i < (uint32_t)&sreloc / 4; i++)
+	uint32_t volatile *fixups = (void *)gint_linker_value(lreloc);
+	uint32_t relocation_size = gint_linker_value(sreloc);
+	for(uint i = 0; i < relocation_size / sizeof *fixups; i++)
 	{
 		fixups[i] += (uint32_t)rgmapped;
 	}
@@ -196,11 +209,11 @@ static int start2(int load_type, u32 *load_info)
 	/* Here, we use exit() to allow the standard library to do
 	   what it wants in exit() after main() finishes executing */
 	if(!setjmp(gint_exitbuf)) {
-		callarray(&bctors, &ectors);
+		callarray(bctors, ectors);
 		exit(main());
 	}
 	else {
-		callarray(&bdtors, &edtors);
+		callarray(bdtors, edtors);
 	}
 
 	/* Before leaving the application, we need to clean everything we

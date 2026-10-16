@@ -11,6 +11,7 @@
 #include <gint/cpu.h>
 #include <gint/exc.h>
 #include <gint/config.h>
+#include <gint/defs/linker.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -89,20 +90,20 @@ void kinit(u32 *load_info)
 	#endif
 
 	#if GINT_HW_CP
-	extern char gint_region_vbr;
-	uint32_t VBR = (uint32_t)&gint_region_vbr - 0x100;
+	extern unsigned char gint_region_vbr[];
+	uint32_t VBR = gint_linker_value(gint_region_vbr) - 0x100;
 	#endif
 
 	/* Event handler entry points */
-	extern uint32_t gint_exch_start;
-	extern uint32_t gint_exch_end;
-	extern uint32_t gint_tlbh_start;
-	extern uint32_t gint_tlbh_end;
+	extern unsigned char gint_exch_start[];
+	extern unsigned char gint_exch_end[];
+	extern unsigned char gint_tlbh_start[];
+	extern unsigned char gint_tlbh_end[];
 	void *inth_entry = isSH3() ? gint_inth_7705 : gint_inth_7305;
 	uint32_t exch_size = \
-		(uint32_t)&gint_exch_end - (uint32_t)&gint_exch_start;
+		gint_linker_value(gint_exch_end) - gint_linker_value(gint_exch_start);
 	uint32_t tlbh_size = \
-		(uint32_t)&gint_tlbh_end - (uint32_t)&gint_tlbh_start;
+		gint_linker_value(gint_tlbh_end) - gint_linker_value(gint_tlbh_start);
 
 	/* Load the event handler entry points into memory */
 	memcpy((void *)VBR + 0x100, gint_exch, exch_size);
@@ -115,10 +116,10 @@ void kinit(u32 *load_info)
 	#if !GINT_HW_CP
 	/* Create an allocation arena with unused static RAM */
 	static kmalloc_arena_t static_ram = { 0 };
-	extern uint32_t euram;
+	extern unsigned char euram[];
 	static_ram.name = "_uram";
 	static_ram.is_default = isSH4();
-	static_ram.start = mmu_uram() + ((uint32_t)&euram - 0x08100000);
+	static_ram.start = mmu_uram() + (gint_linker_value(euram) - 0x08100000);
 	static_ram.end = (void *)uram_end;
 	kmalloc_init_arena(&static_ram, true);
 	kmalloc_add_arena(&static_ram);

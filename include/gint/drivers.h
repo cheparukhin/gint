@@ -11,6 +11,8 @@ extern "C" {
 
 #include <gint/defs/attributes.h>
 #include <gint/defs/types.h>
+#include <gint/defs/linker.h>
+#include <stddef.h>
 
 /* Device drivers and driver cycles
 
@@ -287,7 +289,8 @@ extern uint8_t *gint_driver_flags;
 
 /* Number of drivers in the (gint_drivers) array */
 #define gint_driver_count() \
-	((gint_driver_t *)&gint_drivers_end - (gint_driver_t *)&gint_drivers)
+	((ptrdiff_t)((gint_linker_value(gint_drivers_end) - \
+	    gint_linker_value(gint_drivers)) / sizeof(gint_driver_t)))
 
 /* Allocate a new world buffer (single block), returns NULL on error */
 gint_world_t gint_world_alloc(void);

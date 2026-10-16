@@ -11,3 +11,7 @@ notes/**
 # GiteaPC config files
 giteapc-config.make
 giteapc-config-*.make
+
+# Local test reports
+/build*.log
+__pycache__/
