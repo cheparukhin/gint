@@ -148,9 +148,10 @@ syscall_table:
 #endif /* GINT_OS_FX */
 
 #if GINT_OS_CG
-#define CASIOWIN_API_VERSIONS 3
+#define CASIOWIN_API_VERSIONS 4
 .global _gint_set_CASIOWIN_API
 .global _gint_get_CASIOWIN_API
+.global _gint_cgdoom_get_CASIOWIN_API
 
 /* System for dynamically selecting between the syscall and fixed version of
    each function based on the OS version.
@@ -199,6 +200,7 @@ _gint_set_CASIOWIN_API:
 	rts
 	mov.l	r4, @r0
 
+_gint_cgdoom_get_CASIOWIN_API:
 _gint_get_CASIOWIN_API:
 	mov.l	3f, r0
 	rts
@@ -208,33 +210,33 @@ _gint_get_CASIOWIN_API:
 3:	.long	.CASIOWIN_API
 
 .CASIOWIN_TABLE:
-	.long 0x1f44, 0x8025e0fc, 0x80366708  /* malloc */
-	.long 0x1f42, 0x8025dec8, 0x803664d4  /* free */
-	.long 0x1f46, 0x8025ec3c, 0x803672c8  /* realloc */
-	.long 0x1db4, 0x802404d2, 0x80334212  /* BFile_Remove */
-	.long 0x1db3, 0x80240482, 0x803341c2  /* BFile_Rename */
-	.long 0x1dae, 0x802401b0, 0x80333ef0  /* BFile_Create */
-	.long 0x1da3, 0x8023fb90, 0x803338d0  /* BFile_Open */
-	.long 0x1da4, 0x8023fd0e, 0x80333a4e  /* BFile_Close */
-	.long 0x1da6, 0x8023fdc4, 0x80333b04  /* BFile_Size */
-	.long 0x1da9, 0x8023ff2c, 0x80333c6c  /* BFile_Seek */
-	.long 0x1dab, 0x8024003c, 0x80333d7c  /* BFile_GetPos */
-	.long 0x1daf, 0x8024025e, 0x80333f9e  /* BFile_WriteFsync */
-	.long 0x1dac, 0x80240082, 0x80333dc2  /* BFile_Read */
-	.long 0x1db6, 0x80240888, 0x803345c8  /* BFile_FindFirst */
-	.long 0x1db8, 0x80240b06, 0x80334846  /* BFile_FindNext */
-	.long 0x1dba, 0x80240c10, 0x80334950  /* BFile_FindClose */
-	.long 0x08d9, 0x800b130c, 0x8010de28  /* Timer_Install */
-	.long 0x08db, 0x800b1456, 0x8010df72  /* Timer_Start */
-	.long 0x08dc, 0x800b14b2, 0x8010dfce  /* Timer_Stop */
-	.long 0x08da, 0x800b13d4, 0x8010def0  /* Timer_Deinstall */
-	.long 0x12c6, 0,          0           /* PutKeyCode */
-	.long 0x12bf, 0x8017be56, 0x802382fe  /* GetKeyWait */
-	.long 0x12c7, 0,          0           /* ClearKeyBuffer */
-	.long 0x01e6, 0x8004579a, 0x8007569e  /* GetVRAMAddress */
-	.long 0x1e6e, 0,          0           /* SetQuitHandler */
-	.long 0x1839, 0,          0           /* PowerOff */
-	.long 0x1187, 0,          0           /* Reset */
+	.long 0x1f44, 0x8025e0fc, 0x80366708, 0x803cbfb0  /* malloc */
+	.long 0x1f42, 0x8025dec8, 0x803664d4, 0x803cbd7c  /* free */
+	.long 0x1f46, 0x8025ec3c, 0x803672c8, 0x803ccb74  /* realloc */
+	.long 0x1db4, 0x802404d2, 0x80334212, 0x80398f3e  /* BFile_Remove */
+	.long 0x1db3, 0x80240482, 0x803341c2, 0x80398eee  /* BFile_Rename */
+	.long 0x1dae, 0x802401b0, 0x80333ef0, 0x80398c1c  /* BFile_Create */
+	.long 0x1da3, 0x8023fb90, 0x803338d0, 0x803985fc  /* BFile_Open */
+	.long 0x1da4, 0x8023fd0e, 0x80333a4e, 0x8039877a  /* BFile_Close */
+	.long 0x1da6, 0x8023fdc4, 0x80333b04, 0x80398830  /* BFile_Size */
+	.long 0x1da9, 0x8023ff2c, 0x80333c6c, 0x80398998  /* BFile_Seek */
+	.long 0x1dab, 0x8024003c, 0x80333d7c, 0x80398aa8  /* BFile_GetPos */
+	.long 0x1daf, 0x8024025e, 0x80333f9e, 0x80398cca  /* BFile_WriteFsync */
+	.long 0x1dac, 0x80240082, 0x80333dc2, 0x80398aee  /* BFile_Read */
+	.long 0x1db6, 0x80240888, 0x803345c8, 0x803992f4  /* BFile_FindFirst */
+	.long 0x1db8, 0x80240b06, 0x80334846, 0x80399572  /* BFile_FindNext */
+	.long 0x1dba, 0x80240c10, 0x80334950, 0x8039967c  /* BFile_FindClose */
+	.long 0x08d9, 0x800b130c, 0x8010de28, 0x80110100  /* Timer_Install */
+	.long 0x08db, 0x800b1456, 0x8010df72, 0x8011024a  /* Timer_Start */
+	.long 0x08dc, 0x800b14b2, 0x8010dfce, 0x801102a6  /* Timer_Stop */
+	.long 0x08da, 0x800b13d4, 0x8010def0, 0x801101c8  /* Timer_Deinstall */
+	.long 0x12c6, 0,          0, 0  /* PutKeyCode */
+	.long 0x12bf, 0x8017be56, 0x802382fe, 0x8029bfba  /* GetKeyWait */
+	.long 0x12c7, 0,          0, 0  /* ClearKeyBuffer */
+	.long 0x01e6, 0x8004579a, 0x8007569e, 0x80076552  /* GetVRAMAddress */
+	.long 0x1e6e, 0,          0, 0  /* SetQuitHandler */
+	.long 0x1839, 0,          0, 0  /* PowerOff */
+	.long 0x1187, 0,          0, 0  /* Reset */
 
 #define casiowin_call(id) bra _CASIOWIN_call; mov id, r0
 

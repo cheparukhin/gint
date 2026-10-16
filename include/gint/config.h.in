@@ -5,6 +5,9 @@
 #ifndef GINT_CONFIG
 #define GINT_CONFIG
 
+/* CGDoom: OS 2.00/2.20 tables and new-LCD world switches. */
+#define GINT_CGDOOM_OS_COMPAT 1
+
 /* GINT_VERSION: Latest tag and number of additional commits
      "2.1.0"   = Release 2.1.0
      "2.1.1-5" = 5 commits after release 2.1.1 */

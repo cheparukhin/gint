@@ -49,8 +49,10 @@ void kinit(u32 *load_info)
 	char *version = (void *)0x80020020;
 	if(!memcmp(version, "01.00", 5))
 		gint_set_CASIOWIN_API(1);
-	else if(gint[HWCALC] == HWCALC_FXCG100 && !memcmp(version, "02.00", 5))
+	else if(gint[HWCALC] == HWCALC_FXCG100 && !memcmp(version, "02.00.0000", 10))
 		gint_set_CASIOWIN_API(2);
+	else if(gint[HWCALC] == HWCALC_FXCG100 && !memcmp(version, "02.20.0000", 10))
+		gint_set_CASIOWIN_API(3);
 	else
 		gint_set_CASIOWIN_API(0);
 	#endif
