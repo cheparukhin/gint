@@ -1,5 +1,9 @@
 # gint project
 
+This is the CG100 maintenance fork. See [fork scope and provenance](FORK.md),
+[the linker-symbol audit](docs/linker-symbol-audit.md), and
+[GCC 16 startup tests](tests/startup/README.md).
+
 gint (pronounce “guin”) is an add-in unikernel for CASIO calculators of the
 fx-9860G II and fx-CG 50 families. It provides a mostly free-standing runtime
 and is used to develop add-ins under Linux, along with specialized GCC
